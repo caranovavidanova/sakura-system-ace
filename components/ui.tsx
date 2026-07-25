@@ -1,4 +1,11 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  LabelHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react'
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -61,8 +68,50 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea className={`${inputBase} resize-y ${className}`} {...rest} />
 }
 
+export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  const { className = '', ...rest } = props
+  return <select className={`${inputBase} ${className}`} {...rest} />
+}
+
 export function Label(props: LabelHTMLAttributes<HTMLLabelElement>) {
   return <label {...props} />
+}
+
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">{children}</h2>
+  )
+}
+
+export function Radio({
+  label,
+  ...rest
+}: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <input
+        type="radio"
+        className="h-4 w-4 accent-amber-500"
+        {...rest}
+      />
+      {label}
+    </label>
+  )
+}
+
+export function IconButton({
+  className = '',
+  ...rest
+}: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type="button"
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400 ${className}`}
+      {...rest}
+    >
+      ×
+    </button>
+  )
 }
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost'

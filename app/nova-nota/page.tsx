@@ -76,7 +76,7 @@ export default function NovaNotaPage() {
   return (
     <PageShell>
       <PageHeader
-        title="Enviar Nota Fiscal"
+        title="Entrada de Peças"
         subtitle="Tire uma foto da nota de peças — os dados são lidos automaticamente."
       />
 

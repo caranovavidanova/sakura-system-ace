@@ -10,7 +10,7 @@ const acoes = [
   {
     href: "/nova-nota",
     icon: "📷",
-    titulo: "Enviar Nota Fiscal",
+    titulo: "Entrada de Peças",
   },
   {
     href: "/revisao",

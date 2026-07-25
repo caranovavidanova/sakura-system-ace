@@ -29,12 +29,12 @@ export default function Home() {
           <Link
             key={acao.href}
             href={acao.href}
-            className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-6 py-6 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md active:translate-y-0 active:shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-6 py-6 shadow-md shadow-brand-950/20 transition-all duration-150 hover:-translate-y-0.5 hover:border-gold-400 hover:shadow-lg active:translate-y-0 active:shadow-md"
           >
-            <span className="text-4xl">{acao.icon}</span>
-            <span className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              {acao.titulo}
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-50 text-3xl">
+              {acao.icon}
             </span>
+            <span className="text-xl font-semibold text-zinc-900">{acao.titulo}</span>
           </Link>
         ))}
       </div>

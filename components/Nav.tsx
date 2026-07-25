@@ -13,16 +13,18 @@ export function Nav() {
   const pathname = usePathname()
 
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/80">
+    <header className="sticky top-0 z-10 border-b border-brand-800 bg-brand-950/95 backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
-        >
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-xs text-zinc-950">
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-500 text-base text-brand-950 shadow-sm">
             🔧
           </span>
-          Amigão
+          <span className="flex flex-col leading-none">
+            <span className="text-sm font-bold tracking-wide text-gold-400">Amigão</span>
+            <span className="hidden text-[10px] font-medium uppercase tracking-widest text-brand-300 sm:block">
+              Sistema da Borracharia
+            </span>
+          </span>
         </Link>
         <nav className="flex items-center gap-1">
           {links.map((link) => {
@@ -33,8 +35,8 @@ export function Nav() {
                 href={link.href}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-zinc-900 text-white dark:bg-amber-500 dark:text-zinc-950'
-                    : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                    ? 'bg-gold-500 text-brand-950'
+                    : 'text-brand-200 hover:bg-brand-800 hover:text-white'
                 }`}
               >
                 {link.label}

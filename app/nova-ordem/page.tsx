@@ -308,9 +308,9 @@ export default function NovaOrdemPage() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between border-t border-zinc-200 pt-4 text-sm dark:border-zinc-800">
-              <span className="font-medium text-zinc-600 dark:text-zinc-400">Total pago</span>
-              <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            <div className="flex items-center justify-between border-t border-zinc-200 pt-4 text-sm">
+              <span className="font-medium text-zinc-600">Total pago</span>
+              <span className="text-base font-bold text-gold-600">
                 {totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </span>
             </div>
@@ -357,7 +357,7 @@ function PagamentoRow({
   const groupName = useId()
 
   return (
-    <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-3">
         <div className="flex-1">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -16,8 +16,8 @@ export function PageShell({ children }: { children: ReactNode }) {
 export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h1>
-      {subtitle && <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+      <h1 className="text-2xl font-bold tracking-tight text-gold-400 sm:text-3xl">{title}</h1>
+      {subtitle && <p className="mt-1.5 text-sm text-brand-200">{subtitle}</p>}
     </div>
   )
 }
@@ -25,7 +25,7 @@ export function PageHeader({ title, subtitle }: { title: string; subtitle?: stri
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 ${className}`}
+      className={`rounded-2xl border border-zinc-200 bg-white p-5 shadow-md shadow-brand-950/20 ${className}`}
     >
       {children}
     </div>
@@ -45,18 +45,18 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <span className="mb-1.5 block text-sm font-medium text-zinc-700">
         {label}
-        {required && <span className="ml-0.5 text-amber-600 dark:text-amber-500">*</span>}
+        {required && <span className="ml-0.5 text-gold-600">*</span>}
       </span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-zinc-400 dark:text-zinc-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-zinc-400">{hint}</span>}
     </label>
   )
 }
 
 const inputBase =
-  'block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:disabled:bg-zinc-900'
+  'block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/30 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400'
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   const { className = '', ...rest } = props
@@ -79,7 +79,9 @@ export function Label(props: LabelHTMLAttributes<HTMLLabelElement>) {
 
 export function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">{children}</h2>
+    <h2 className="mb-4 border-l-4 border-gold-500 pl-3 text-base font-bold text-brand-900">
+      {children}
+    </h2>
   )
 }
 
@@ -88,12 +90,8 @@ export function Radio({
   ...rest
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-      <input
-        type="radio"
-        className="h-4 w-4 accent-amber-500"
-        {...rest}
-      />
+    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-700">
+      <input type="radio" className="h-4 w-4 accent-gold-500" {...rest} />
       {label}
     </label>
   )
@@ -106,7 +104,7 @@ export function IconButton({
   return (
     <button
       type="button"
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400 ${className}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 ${className}`}
       {...rest}
     >
       ×
@@ -117,12 +115,9 @@ export function IconButton({
 type ButtonVariant = 'primary' | 'secondary' | 'ghost'
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary:
-    'bg-zinc-900 text-white hover:bg-zinc-700 disabled:hover:bg-zinc-900 dark:bg-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:disabled:hover:bg-amber-500',
-  secondary:
-    'bg-zinc-100 text-zinc-900 hover:bg-zinc-200 disabled:hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:disabled:hover:bg-zinc-800',
-  ghost:
-    'bg-transparent text-zinc-600 hover:bg-zinc-100 disabled:hover:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-800',
+  primary: 'bg-gold-500 text-brand-950 hover:bg-gold-400 disabled:hover:bg-gold-500',
+  secondary: 'bg-brand-50 text-brand-900 hover:bg-brand-100 disabled:hover:bg-brand-50',
+  ghost: 'bg-transparent text-brand-600 hover:bg-brand-50 disabled:hover:bg-transparent',
 }
 
 export function Button({
@@ -136,7 +131,7 @@ export function Button({
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${buttonVariants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${buttonVariants[variant]} ${className}`}
       {...rest}
     >
       {loading && <Spinner />}
@@ -166,8 +161,8 @@ export function Spinner({ className = '' }: { className?: string }) {
 export function Alert({ kind, children }: { kind: 'success' | 'error'; children: ReactNode }) {
   const styles =
     kind === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300'
-      : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+      : 'border-red-200 bg-red-50 text-red-800'
   return (
     <div className={`animate-in flex items-start gap-2 rounded-lg border px-4 py-3 text-sm ${styles}`}>
       <span aria-hidden="true">{kind === 'success' ? '✓' : '⚠'}</span>

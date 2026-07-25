@@ -84,7 +84,7 @@ export default function NovaNotaPage() {
         <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label
             htmlFor="foto"
-            className="relative flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-center transition-colors hover:border-amber-400 hover:bg-amber-50/40 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-amber-500 dark:hover:bg-amber-500/5"
+            className="relative flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-center transition-colors hover:border-gold-400 hover:bg-gold-50/60"
           >
             {preview ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -92,7 +92,7 @@ export default function NovaNotaPage() {
             ) : (
               <>
                 <span className="text-3xl">📷</span>
-                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <span className="text-sm font-medium text-zinc-600">
                   Toque para tirar ou escolher uma foto
                 </span>
               </>

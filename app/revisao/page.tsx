@@ -157,15 +157,15 @@ export default function RevisaoPage() {
     <PageShell>
       <PageHeader title="Fila de Revisão" subtitle="Confira os dados recebidos antes de lançar no sistema." />
 
-      <div className="mb-6 inline-flex rounded-full bg-zinc-100 p-1 dark:bg-zinc-900">
+      <div className="mb-6 inline-flex rounded-full bg-brand-900 p-1">
         {(['pendentes', 'historico'] as const).map((valor) => (
           <button
             key={valor}
             onClick={() => setAba(valor)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
               aba === valor
-                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-50'
-                : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+                ? 'bg-gold-500 text-brand-950'
+                : 'text-brand-200 hover:text-white'
             }`}
           >
             {valor === 'pendentes' ? 'Pendentes' : 'Histórico'}
@@ -176,7 +176,7 @@ export default function RevisaoPage() {
       {carregando && (
         <div className="flex flex-col gap-3">
           {[0, 1].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900" />
+            <div key={i} className="h-24 animate-pulse rounded-2xl bg-brand-900/60" />
           ))}
         </div>
       )}
@@ -184,28 +184,28 @@ export default function RevisaoPage() {
       {!carregando && (
         <div className="flex flex-col gap-8">
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand-300">
               Ordens de Serviço
             </h2>
             {ordens.length === 0 && <EmptyState texto="Nenhuma ordem por aqui." />}
             <div className="flex flex-col gap-3">
               {ordens.map((ordem) => (
                 <Card key={ordem.id}>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                  <p className="font-medium text-zinc-900">
                     {ordem.nome_cliente}
                     {ordem.telefone_cliente && (
-                      <span className="font-normal text-zinc-500 dark:text-zinc-400"> — {ordem.telefone_cliente}</span>
+                      <span className="font-normal text-zinc-500"> — {ordem.telefone_cliente}</span>
                     )}
                   </p>
                   {(ordem.carro_modelo || ordem.carro_placa) && (
-                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm text-zinc-600">
                       {ordem.carro_modelo}
                       {ordem.carro_modelo && ordem.carro_placa && ' — '}
                       {ordem.carro_placa}
                     </p>
                   )}
                   {ordem.servico_descricao && (
-                    <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{ordem.servico_descricao}</p>
+                    <p className="mt-2 text-sm text-zinc-700">{ordem.servico_descricao}</p>
                   )}
                   {aba === 'pendentes' && (
                     <Button variant="secondary" className="mt-3" onClick={() => confirmarOrdem(ordem.id)}>
@@ -218,7 +218,7 @@ export default function RevisaoPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand-300">
               Notas Fiscais
             </h2>
             {notas.length === 0 && <EmptyState texto="Nenhuma nota por aqui." />}
@@ -226,20 +226,20 @@ export default function RevisaoPage() {
               {notas.map((nota) => (
                 <Card key={nota.id}>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                    <p className="font-medium text-zinc-900">
                       {nota.fornecedor || 'Fornecedor não identificado'}
                     </p>
                     <a
                       href={nota.foto_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="shrink-0 text-sm font-medium text-amber-600 hover:underline dark:text-amber-500"
+                      className="shrink-0 text-sm font-medium text-gold-600 hover:underline"
                     >
                       Ver foto ↗
                     </a>
                   </div>
 
-                  <div className="mt-3 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <div className="mt-3 flex flex-col divide-y divide-zinc-100">
                     {nota.itens.map((item) => (
                       <div key={item.id} className="py-4 first:pt-0 last:pb-0">
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -270,7 +270,7 @@ export default function RevisaoPage() {
                               Salvar alterações
                             </Button>
                             {salvoItem === item.id && (
-                              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                              <span className="text-sm font-medium text-emerald-600">
                                 ✓ Salvo
                               </span>
                             )}
@@ -297,7 +297,7 @@ export default function RevisaoPage() {
 
 function EmptyState({ texto }: { texto: string }) {
   return (
-    <p className="rounded-xl border border-dashed border-zinc-200 py-6 text-center text-sm text-zinc-400 dark:border-zinc-800">
+    <p className="rounded-xl border border-dashed border-brand-700 py-6 text-center text-sm text-brand-300">
       {texto}
     </p>
   )
@@ -316,7 +316,7 @@ function Campo({
 }) {
   return (
     <label className={`block text-xs ${className}`}>
-      <span className="mb-1 block font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
+      <span className="mb-1 block font-medium text-zinc-500">{label}</span>
       <Input value={valor ?? ''} onChange={(e) => onChange(e.target.value)} className="py-1.5 text-sm" />
     </label>
   )

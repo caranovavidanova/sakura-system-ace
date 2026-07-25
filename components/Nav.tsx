@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -16,8 +17,8 @@ export function Nav() {
     <header className="sticky top-0 z-10 border-b border-brand-800 bg-brand-950/95 backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-500 text-base text-brand-950 shadow-sm">
-            🔧
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gold-500 bg-white shadow-sm">
+            <Image src="/logo.jpg" alt="Pneus Amigão" width={40} height={40} className="h-full w-full scale-125 object-cover" priority />
           </span>
           <span className="flex flex-col leading-none">
             <span className="text-sm font-bold tracking-wide text-gold-400">Amigão</span>

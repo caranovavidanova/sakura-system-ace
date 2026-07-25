@@ -2,8 +2,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
 const PROMPT = `
 Você é um assistente que extrai dados de notas fiscais de peças automotivas para cadastro em sistema.
 
@@ -47,8 +45,8 @@ export async function POST(req: NextRequest) {
     const imgBuffer = await imgResponse.arrayBuffer()
     const base64 = Buffer.from(imgBuffer).toString('base64')
 
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
-
 
     const result = await model.generateContent([
       PROMPT,

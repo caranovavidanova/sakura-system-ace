@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { mensagemDeErro } from "@/lib/errors";
 import type { NovoCliente, NovoVeiculo } from "@/types/cliente";
 
 interface ClienteFormProps {
@@ -42,7 +43,8 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
       const veiculos = veiculo.placa.trim() ? [veiculo] : [];
       await onSalvar(cliente, veiculos);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao salvar cliente.");
+      console.error("Erro ao salvar cliente:", err);
+      setErro(mensagemDeErro(err));
     } finally {
       setSalvando(false);
     }

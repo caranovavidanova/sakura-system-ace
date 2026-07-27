@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { criarCliente, excluirCliente, listarClientes } from "@/lib/clientes";
+import { mensagemDeErro } from "@/lib/errors";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Cliente, NovoCliente, NovoVeiculo } from "@/types/cliente";
 import { ClienteForm } from "./ClienteForm";
@@ -20,7 +21,8 @@ export function ClientesPage() {
     try {
       setClientes(await listarClientes());
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao carregar clientes.");
+      console.error("Erro ao carregar clientes:", err);
+      setErro(mensagemDeErro(err));
     } finally {
       setCarregando(false);
     }

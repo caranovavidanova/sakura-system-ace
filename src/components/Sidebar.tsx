@@ -11,9 +11,10 @@ const modulos: ModuloLink[] = [
   { label: "Clientes", path: "/clientes", disponivel: true },
   { label: "Peças", path: "/pecas", disponivel: true },
   { label: "Estoque", path: "/estoque", disponivel: true },
-  { label: "Ordens de Serviço", path: "/ordens-servico", disponivel: false },
-  { label: "Caixa Diário", path: "/caixa", disponivel: false },
-  { label: "Relatórios", path: "/relatorios", disponivel: false },
+  { label: "Ordens de Serviço", path: "/ordens-servico", disponivel: true },
+  { label: "Caixa Diário", path: "/caixa", disponivel: true },
+  { label: "Relatórios", path: "/relatorios", disponivel: true },
+  { label: "Lucratividade", path: "/lucratividade", disponivel: true },
 ];
 
 export function Sidebar() {

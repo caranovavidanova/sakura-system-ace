@@ -12,6 +12,10 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Migration inicial do banco de dados (Supabase): tabelas `clientes` e `veiculos`.
 - Cadastro de Peças/Produtos: criar, listar, excluir peças, com campos fiscais (NCM, CFOP, CST/CSOSN, alíquota de ICMS).
 - Estoque: registro de entradas/saídas por peça, saldo atual calculado automaticamente e histórico de movimentações.
+- Ordens de Serviço: cliente + veículo + peças usadas + serviços realizados, com baixa automática de estoque para peças e faturamento que gera lançamento no caixa.
+- Caixa Diário: lançamentos manuais e automáticos (das OS faturadas), com totais de entradas/saídas/saldo por dia.
+- Relatórios: comparativo de vendas diárias, semanais e mensais.
+- Lucratividade: margem por peça/serviço e lucro do período (receita, custo e margem), com filtro de data.
 
 ### Corrigido
 - Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.

@@ -11,6 +11,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Cadastro de Clientes: criar, listar, excluir clientes e associar um veículo.
 - Migration inicial do banco de dados (Supabase): tabelas `clientes` e `veiculos`.
 - Cadastro de Peças/Produtos: criar, listar, excluir peças, com campos fiscais (NCM, CFOP, CST/CSOSN, alíquota de ICMS).
+- Estoque: registro de entradas/saídas por peça, saldo atual calculado automaticamente e histórico de movimentações.
 
 ### Corrigido
 - Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.

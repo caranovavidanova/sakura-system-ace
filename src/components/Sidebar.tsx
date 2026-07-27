@@ -10,7 +10,7 @@ const modulos: ModuloLink[] = [
   { label: "Painel de Controle", path: "/", disponivel: false },
   { label: "Clientes", path: "/clientes", disponivel: true },
   { label: "Peças", path: "/pecas", disponivel: true },
-  { label: "Estoque", path: "/estoque", disponivel: false },
+  { label: "Estoque", path: "/estoque", disponivel: true },
   { label: "Ordens de Serviço", path: "/ordens-servico", disponivel: false },
   { label: "Caixa Diário", path: "/caixa", disponivel: false },
   { label: "Relatórios", path: "/relatorios", disponivel: false },

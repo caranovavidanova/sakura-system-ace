@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { PecasPage } from "./pages/pecas/PecasPage";
+import { EstoquePage } from "./pages/estoque/EstoquePage";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/clientes" replace />} />
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/pecas" element={<PecasPage />} />
+          <Route path="/estoque" element={<EstoquePage />} />
         </Routes>
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
+import { PecasPage } from "./pages/pecas/PecasPage";
 
 export default function App() {
   return (
@@ -10,6 +11,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/clientes" replace />} />
           <Route path="/clientes" element={<ClientesPage />} />
+          <Route path="/pecas" element={<PecasPage />} />
         </Routes>
       </main>
     </div>

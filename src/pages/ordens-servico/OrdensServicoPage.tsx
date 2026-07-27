@@ -24,6 +24,9 @@ export function OrdensServicoPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [ordemFaturando, setOrdemFaturando] = useState<OrdemServico | null>(null);
+  const [formaPagamento, setFormaPagamento] = useState("pix");
+  const [faturando, setFaturando] = useState(false);
 
   async function carregar() {
     if (!isSupabaseConfigured) {
@@ -59,18 +62,18 @@ export function OrdensServicoPage() {
     await carregar();
   }
 
-  async function handleFaturar(ordem: OrdemServico) {
-    const formaPagamento = prompt(
-      "Forma de pagamento (ex: dinheiro, pix, cartão):",
-      "pix",
-    );
-    if (!formaPagamento) return;
+  async function confirmarFaturamento() {
+    if (!ordemFaturando) return;
+    setFaturando(true);
     try {
-      await faturarOrdem(ordem, formaPagamento);
+      await faturarOrdem(ordemFaturando, formaPagamento);
+      setOrdemFaturando(null);
       await carregar();
     } catch (err) {
       console.error("Erro ao faturar ordem de serviço:", err);
-      alert(mensagemDeErro(err));
+      setErro(mensagemDeErro(err));
+    } finally {
+      setFaturando(false);
     }
   }
 
@@ -118,6 +121,48 @@ export function OrdensServicoPage() {
         />
       )}
 
+      {ordemFaturando && (
+        <div className="space-y-4 rounded-2xl border border-sakura-gray/30 bg-white p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-sakura-purple-dark">
+            Faturar OS de {ordemFaturando.cliente?.nome ?? "cliente"} — total{" "}
+            {totalOrdem(ordemFaturando.itens ?? []).toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+          </h3>
+          <label className="flex max-w-xs flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
+            <select
+              value={formaPagamento}
+              onChange={(e) => setFormaPagamento(e.target.value)}
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            >
+              <option value="dinheiro">Dinheiro</option>
+              <option value="pix">Pix</option>
+              <option value="cartao_debito">Cartão de débito</option>
+              <option value="cartao_credito">Cartão de crédito</option>
+            </select>
+          </label>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setOrdemFaturando(null)}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmarFaturamento}
+              disabled={faturando}
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {faturando ? "Faturando..." : "Confirmar faturamento"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {erro && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           {erro}
@@ -161,7 +206,10 @@ export function OrdensServicoPage() {
                   <td className="px-4 py-3 text-right">
                     {ordem.status !== "faturada" && (
                       <button
-                        onClick={() => handleFaturar(ordem)}
+                        onClick={() => {
+                          setOrdemFaturando(ordem);
+                          setFormaPagamento("pix");
+                        }}
                         className="text-xs font-medium text-sakura-purple hover:underline"
                       >
                         Faturar

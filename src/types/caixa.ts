@@ -1,3 +1,5 @@
+import type { ItemOS } from "@/types/os";
+
 export type TipoCaixa = "entrada" | "saida";
 
 export interface MovimentoCaixa {
@@ -8,6 +10,11 @@ export interface MovimentoCaixa {
   forma_pagamento: string | null;
   valor: number;
   descricao: string | null;
+  ordem_servico?: {
+    id: string;
+    cliente: { nome: string } | null;
+    itens: ItemOS[];
+  } | null;
 }
 
 export type NovoMovimentoCaixa = Omit<MovimentoCaixa, "id" | "data">;

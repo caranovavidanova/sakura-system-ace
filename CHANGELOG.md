@@ -6,7 +6,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ## [Não lançado]
 
 ### Adicionado
-- Logo Sakura System refinado (flor de lótus em camadas com gradiente rosa) e componente `Logo` reutilizável, com a assinatura "by Sakura Corp" em itálico, aplicado ao menu lateral.
+- Logo Sakura System refinado (flor de lótus em camadas com gradiente rosa) e componente `Logo` reutilizável, com o wordmark oficial ("Sakura System" / "by Sakura Corp" em itálico serifado) aplicado ao menu lateral.
 - Estrutura inicial do projeto: Electron + Vite + React + TypeScript + Tailwind CSS.
 - Identidade visual Sakura System (paleta rosa/roxo) aplicada ao layout base e menu lateral.
 - Cadastro de Clientes: criar, listar, excluir clientes e associar um veículo.

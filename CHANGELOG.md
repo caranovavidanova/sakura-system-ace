@@ -10,3 +10,9 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Identidade visual Sakura System (paleta rosa/roxo) aplicada ao layout base e menu lateral.
 - Cadastro de Clientes: criar, listar, excluir clientes e associar um veículo.
 - Migration inicial do banco de dados (Supabase): tabelas `clientes` e `veiculos`.
+
+### Corrigido
+- Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.
+
+### Segurança
+- Adicionadas policies temporárias de RLS liberando acesso via chave pública, até a autenticação de usuário ser implementada.

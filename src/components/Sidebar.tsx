@@ -7,7 +7,7 @@ interface ModuloLink {
 }
 
 const modulos: ModuloLink[] = [
-  { label: "Painel de Controle", path: "/", disponivel: false },
+  { label: "Painel de Controle", path: "/", disponivel: true },
   { label: "Clientes", path: "/clientes", disponivel: true },
   { label: "Peças", path: "/pecas", disponivel: true },
   { label: "Estoque", path: "/estoque", disponivel: true },
@@ -36,6 +36,7 @@ export function Sidebar() {
             <NavLink
               key={modulo.path}
               to={modulo.path}
+              end={modulo.path === "/"}
               className={({ isActive }) =>
                 `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                   isActive

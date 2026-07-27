@@ -16,6 +16,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Caixa Diário: lançamentos manuais e automáticos (das OS faturadas), com totais de entradas/saídas/saldo por dia.
 - Relatórios: comparativo de vendas diárias, semanais e mensais.
 - Lucratividade: margem por peça/serviço e lucro do período (receita, custo e margem), com filtro de data.
+- Painel de Controle: indicadores tipo velocímetro de faturamento (mês atual vs. anterior) e margem bruta do mês, além da fila de atendimento (ordens de serviço em aberto).
 
 ### Corrigido
 - Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.

@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { Logo } from "./Logo";
 
 interface ModuloLink {
   label: string;
@@ -20,14 +21,9 @@ const modulos: ModuloLink[] = [
 export function Sidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-sakura-gray/40 bg-white">
-      <div className="flex items-center gap-3 px-6 py-6">
-        <img src="/sakura-icon.svg" alt="" className="h-9 w-9" />
-        <div>
-          <p className="text-sm font-semibold text-sakura-purple-dark">
-            Sakura System
-          </p>
-          <p className="text-xs text-sakura-gray">AutoCenter Edition</p>
-        </div>
+      <div className="px-6 py-6">
+        <Logo />
+        <p className="mt-1 text-xs text-sakura-gray">AutoCenter Edition</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
@@ -61,10 +57,6 @@ export function Sidebar() {
           ),
         )}
       </nav>
-
-      <div className="px-6 py-4 text-[11px] text-sakura-gray">
-        by Sakura Corp
-      </div>
     </aside>
   );
 }

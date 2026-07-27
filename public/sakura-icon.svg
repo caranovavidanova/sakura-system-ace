@@ -1,12 +1,27 @@
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(32,32)">
-    <g fill="#FFC9F3" stroke="#B38DAC" stroke-width="1.5">
-      <path d="M0,-22 C8,-16 8,-6 0,0 C-8,-6 -8,-16 0,-22 Z" />
-      <path d="M0,-22 C8,-16 8,-6 0,0 C-8,-6 -8,-16 0,-22 Z" transform="rotate(72)" />
-      <path d="M0,-22 C8,-16 8,-6 0,0 C-8,-6 -8,-16 0,-22 Z" transform="rotate(144)" />
-      <path d="M0,-22 C8,-16 8,-6 0,0 C-8,-6 -8,-16 0,-22 Z" transform="rotate(216)" />
-      <path d="M0,-22 C8,-16 8,-6 0,0 C-8,-6 -8,-16 0,-22 Z" transform="rotate(288)" />
-    </g>
-    <circle r="4" fill="#B38DAC" />
+  <defs>
+    <linearGradient id="petala" x1="32" y1="44" x2="32" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F2A9DE" />
+      <stop offset="100%" stop-color="#FFF6FC" />
+    </linearGradient>
+    <linearGradient id="petalb" x1="32" y1="44" x2="32" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E993D2" />
+      <stop offset="100%" stop-color="#FFFAFD" />
+    </linearGradient>
+  </defs>
+
+  <g fill="url(#petala)" stroke="#C97DBB" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M32,44 C20,36 18,20 32,6 C46,20 44,36 32,44 Z" transform="rotate(-72 32 44)" />
+    <path d="M32,44 C20,36 18,20 32,6 C46,20 44,36 32,44 Z" transform="rotate(-36 32 44)" />
+    <path d="M32,44 C20,36 18,20 32,6 C46,20 44,36 32,44 Z" transform="rotate(36 32 44)" />
+    <path d="M32,44 C20,36 18,20 32,6 C46,20 44,36 32,44 Z" transform="rotate(72 32 44)" />
   </g>
+
+  <g fill="url(#petalb)" stroke="#C97DBB" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M32,44 C23,37 22,24 32,12 C42,24 41,37 32,44 Z" transform="rotate(-20 32 44)" />
+    <path d="M32,44 C22.5,36 21.5,21 32,8 C42.5,21 41.5,36 32,44 Z" />
+    <path d="M32,44 C23,37 22,24 32,12 C42,24 41,37 32,44 Z" transform="rotate(20 32 44)" />
+  </g>
+
+  <path d="M18,46 C18,52 24,56 32,56 C40,56 46,52 46,46" fill="none" stroke="#C97DBB" stroke-width="1.2" stroke-linecap="round" />
 </svg>

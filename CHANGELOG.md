@@ -6,6 +6,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ## [Não lançado]
 
 ### Adicionado
+- Logo Sakura System refinado (flor de lótus em camadas com gradiente rosa) e componente `Logo` reutilizável, com a assinatura "by Sakura Corp" em itálico, aplicado ao menu lateral.
 - Estrutura inicial do projeto: Electron + Vite + React + TypeScript + Tailwind CSS.
 - Identidade visual Sakura System (paleta rosa/roxo) aplicada ao layout base e menu lateral.
 - Cadastro de Clientes: criar, listar, excluir clientes e associar um veículo.
@@ -20,6 +21,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 
 ### Corrigido
 - Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.
+- `npm run lint` estava quebrado (faltava o arquivo de configuração do ESLint e os plugins de React); adicionado `eslint.config.js` com as regras básicas de hooks do React.
 
 ### Segurança
 - Adicionadas policies temporárias de RLS liberando acesso via chave pública, até a autenticação de usuário ser implementada.

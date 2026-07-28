@@ -451,10 +451,10 @@ screenshots Playwright com dados simulados (sandbox não acessa `*.supabase.co`,
   uma taxa mensal única ou uma taxa por quantidade de parcelas; ele escolheu a segunda, mais fiel ao
   que maquininha de cartão costuma oferecer).
 
-**⏳ Implementado e mergeado direto em `main` nesta sessão (ajustes na tela de OS pedidos pelo usuário
-em cima de um print da tela), ainda sem confirmação do usuário rodando com Supabase real** — Validado
-no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots Playwright com dados simulados
-(sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (migration 0014)** — mergeado via PR
+[#11](https://github.com/caranovavidanova/amigao/pull/11), a pedido do usuário em cima de um print da
+tela de OS. Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots Playwright
+com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
 
 - **Card "Prazos" removido** (não vingou) — os campos `previsao_entrega`/`data_retorno` foram tirados
   da tela **e do banco** (migration 0014, `drop column`) a pedido explícito do usuário ("remova os
@@ -530,41 +530,15 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0014) — as de 0001 a 0013 já foram confirmadas funcionando pelo
-usuário nesse projeto. **A migration 0014 ainda não foi rodada no Supabase de verdade** (remove as
-colunas `previsao_entrega`/`data_retorno` de `ordens_servico` — ver seção 7) — ver tutorial abaixo.
-Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto
-Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0014) — todas já confirmadas funcionando pelo usuário nesse
+projeto. Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro
+projeto Supabase do zero.
 
-*(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10 — múltiplos veículos, login,
-redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migration 0013 —
-foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7. Só o tutorial
-da versão mais recente fica abaixo; sessões passadas ficam registradas na seção 10.)*
-
-### Tutorial: pegar a versão nova (migration 0014, já mergeada direto em `main`) e rodar
-
-Pra rodar essa versão nova (card "Prazos" removido da tela de OS, botões de nota fiscal movidos pra
-uma aba "Fechamento" que só aparece quando a OS está Concluída/Faturada, botões de garantia — ver
-seção 7):
-
-1. Feche o app se estiver aberto.
-2. No terminal, dentro da pasta `sakura-system-autocenter`:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-3. **Rode a migration nova no Supabase**: abra `supabase/migrations/0014_os_remove_prazos.sql`
-   no VS Code, copie todo o conteúdo, cole numa "New query" no SQL Editor do Supabase e clique em
-   "Run".
-4. `npm install && npm run dev`.
-5. O que testar:
-   - Abrir qualquer OS não deve mais mostrar o card "Prazos" (Previsão de entrega / Agendar retorno).
-   - Numa OS **aberta ou em andamento**, a tela continua como sempre, sem abas.
-   - Numa OS **Concluída ou Faturada**, deve aparecer uma aba **"Fechamento"** ao lado de "Detalhes" —
-     clique nela e confira o resumo da OS + os botões "Emitir NFe"/"Emitir NFS-e"/"Imprimir
-     garantia"/"Baixar garantia" (todos ainda avisam "não disponível" ao clicar, é esperado).
-
-Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+*(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
+redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
+0013/0014 — foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7.
+Sessões passadas ficam registradas na seção 10; o tutorial volta a aparecer aqui quando houver uma
+versão nova ainda não confirmada.)*
 
 ## 10. Estado do Git
 
@@ -609,11 +583,16 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
   parcelas calculadas, config de juros — migration 0013, ver seção 7) foi **mergeado direto em `main`
   nesta mesma sessão**, sem passar por PR. Se precisar achar esse commit específico depois, procurar
   por "técnico" ou "parcelas" no `git log` de `main`.
-- **Sessão seguinte** (card "Prazos" removido, nota fiscal + garantia movidos pra aba "Fechamento",
-  migration 0014 — ver seção 7): desenvolvida na branch `claude/caranovavidanova-amigao-kad1fu` (esta
-  sessão roda num ambiente onde o próprio orquestrador exige um branch nomeado antes do merge, em vez
-  de commitar direto em `main` como as sessões anteriores) e mergeada em `main` via PR ainda dentro
-  desta mesma sessão, seguindo a mesma decisão da seção 3 de não deixar PR esperando aprovação manual.
+- PR [#11](https://github.com/caranovavidanova/amigao/pull/11) (`claude/caranovavidanova-amigao-kad1fu`
+  → `main`): card "Prazos" removido, nota fiscal + garantia movidos pra aba "Fechamento", migration
+  0014 — ver seção 7. Desenvolvida numa branch nomeada (este ambiente de sessão exige um branch antes
+  do merge, diferente das sessões anteriores que commitavam direto em `main`) e **mergeada nesta mesma
+  sessão**, seguindo a decisão da seção 3 de não deixar PR esperando aprovação manual. Confirmada pelo
+  usuário rodando de verdade (migration 0014 executada no Supabase).
+- **A partir daqui, sessões neste ambiente devem seguir o mesmo padrão**: criar/reusar a branch
+  `claude/caranovavidanova-amigao-kad1fu`, commitar, abrir PR e mergear direto — sem deixar PR
+  esperando aprovação manual (mesma decisão da seção 3), só que passando por PR em vez de commit
+  direto em `main` (restrição do orquestrador desta sessão, não uma mudança de decisão do usuário).
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

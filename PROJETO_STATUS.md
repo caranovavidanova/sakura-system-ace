@@ -32,10 +32,13 @@ base arquitetural.
   `sakura-purple-dark` e `sakura-pink-soft` criadas para acessibilidade).
 - Estilo: painel visual e acolhedor, cards com indicadores tipo velocímetro/gauge, navegação
   lateral por módulos, bastante espaçamento (oposto da densidade de ERP tradicional).
-- **Logo**: `public/sakura-icon.svg` (flor sozinha, usada como favicon/ícone da janela) e
-  `public/sakura-logo.svg` (flor + wordmark "Sakura System" / "by Sakura Corp", usado no menu
-  lateral via `src/components/Logo.tsx`). Ambos foram desenhados à mão em SVG (gradientes +
-  `<text>` de verdade), **não** são a arte oficial do usuário.
+- **Logo**: `public/sakura-icon.svg` (flor sozinha, usada como favicon/ícone da janela — continua
+  com a flor) e `public/sakura-logo.svg` (usado no menu lateral via `src/components/Logo.tsx`).
+  **A pedido do usuário, `sakura-logo.svg` NÃO tem mais a flor** — só o wordmark "Sakura System" /
+  "by Sakura Corp" em itálico serifado, com fonte maior aproveitando o espaço que a flor ocupava
+  (viewBox `0 0 620 170`, texto começando perto da margem esquerda). A flor só aparece no ícone da
+  janela/favicon (`sakura-icon.svg`), não mais no menu lateral. Ambos os arquivos foram desenhados
+  à mão em SVG (gradientes + `<text>` de verdade), **não** são a arte oficial do usuário.
   - **Pendência**: o usuário tem um arquivo SVG "oficial" da logo (gerado por um traçador de
     imagem, tipo VTracer) com a flor + texto desenhados como ~200 `<path>` vetoriais em vez de
     `<text>`. Ele tentou colar esse arquivo direto no chat duas vezes; na primeira veio cortado
@@ -175,14 +178,38 @@ Todos os itens abaixo foram testados pelo usuário na máquina dele e confirmado
 foi formalmente "lançada" (tag/versão) — o usuário preferiu continuar em desenvolvimento antes de
 fechar a versão.
 
-**Testado só nesta sessão (via sandbox, ainda não confirmado pelo usuário na máquina dele):**
+**✅ Confirmado pelo usuário nesta sessão, rodando de verdade:**
 
+- **Conexão real com o Supabase funcionando** — Painel de Controle mostrando dados reais (não mais
+  o aviso "não configurado"), sem erros no console. Levou algumas idas e vindas por causa de erros
+  de digitação no `.env` (ver dica de suporte abaixo) — no fim funcionou com a URL
+  `https://rlgdjiowvnfzsedehyga.supabase.co` + chave anon/publishable.
 - Correção da tela em branco (item 8 da seção 6).
 - DevTools abre automaticamente em modo dev (`mainWindow.webContents.openDevTools()` quando há
-  `VITE_DEV_SERVER_URL`) — facilita o usuário mandar prints de erro daqui pra frente.
+  `VITE_DEV_SERVER_URL`) — facilita o usuário mandar prints de erro daqui pra frente. **Foi essa
+  ferramenta que permitiu diagnosticar tanto o bug da tela branca quanto os erros de `.env` abaixo.**
 - `npm run lint` funcionando (estava completamente quebrado — faltava `eslint.config.js` e os
   pacotes de lint do React nunca tinham sido instalados).
 - Reorganização do Caixa Diário (item 5 acima).
+- Logo do menu lateral sem a flor (só o wordmark, maior) — ver seção 2.
+
+**Dica de suporte para a próxima vez que o usuário mexer no `.env`:** ele erra na edição manual com
+uma certa frequência (não é falta de atenção, é só a curva de aprendizado normal de quem não
+programa). Dois erros já vistos: (1) editar o `.env` errado porque o VS Code estava com uma pasta
+"container" aberta e havia uma pasta `amigao` duplicada dentro dela — sempre confirme o caminho
+com `pwd`/o prompt do terminal antes de editar; (2) colar o valor por cima do nome da variável sem
+apagar o que já estava lá, duplicando o `VITE_SUPABASE_URL=VITE_SUPABASE_URL=...`. **A forma mais
+confiável de corrigir remotamente (sem depender do editor)** é pedir pra rodar no mesmo terminal
+que roda `npm run dev`:
+```powershell
+@"
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+"@ | Set-Content .env -Encoding utf8
+```
+e sempre confirmar com `Get-Content .env` antes de reiniciar o app — o Vite só lê o `.env` quando o
+servidor inicia, não recarrega sozinho, então depois de editar sempre precisa `Ctrl+C` + `npm run dev`
+de novo.
 - Migrations idempotentes (`drop policy if exists` antes de cada `create policy`).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)

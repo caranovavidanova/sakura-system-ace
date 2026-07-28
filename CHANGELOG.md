@@ -7,6 +7,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 
 ### Adicionado
 - Logo oficial da Sakura System (flor de lótus com sombreamento em camadas + wordmark "Sakura System" / "by Sakura Corp" em itálico serifado) aplicado ao menu lateral e ao ícone do app.
+- Wordmark do menu lateral simplificado: removida a flor do logo do topo (ela continua só no ícone/favicon), texto "Sakura System" / "by Sakura Corp" aumentado para ocupar o espaço liberado.
 - Caixa Diário agora mostra o cliente e o lucro de cada lançamento vindo de OS, além de um resumo por forma de recebimento (dinheiro, cartão, PIX etc.) — uma única linha por lançamento, sem repetir informação.
 - Estrutura inicial do projeto: Electron + Vite + React + TypeScript + Tailwind CSS.
 - Identidade visual Sakura System (paleta rosa/roxo) aplicada ao layout base e menu lateral.

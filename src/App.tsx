@@ -11,6 +11,7 @@ import { LucratividadePage } from "./pages/lucratividade/LucratividadePage";
 import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
 import { PainelPage } from "./pages/painel/PainelPage";
 import { RelatoriosPage } from "./pages/relatorios/RelatoriosPage";
+import { ServicosPage } from "./pages/servicos/ServicosPage";
 import { MODULOS, temPermissao } from "./types/operador";
 
 // Se o operador não tiver permissão pro Início (o "/" padrão),
@@ -73,6 +74,14 @@ export default function App() {
             element={
               <PermissaoRoute modulo="estoque">
                 <EstoquePage />
+              </PermissaoRoute>
+            }
+          />
+          <Route
+            path="/servicos"
+            element={
+              <PermissaoRoute modulo="servicos">
+                <ServicosPage />
               </PermissaoRoute>
             }
           />

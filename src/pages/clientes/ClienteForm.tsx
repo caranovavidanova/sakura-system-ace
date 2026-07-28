@@ -18,6 +18,7 @@ const clienteVazio: NovoCliente = {
   bairro: "",
   cidade: "",
   uf: "",
+  data_nascimento: null,
 };
 
 const veiculoVazio: NovoVeiculo = {
@@ -101,6 +102,17 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
             value={cliente.email ?? ""}
             onChange={(v) => setCliente({ ...cliente, email: v })}
           />
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">Data de nascimento</span>
+            <input
+              type="date"
+              value={cliente.data_nascimento ?? ""}
+              onChange={(e) =>
+                setCliente({ ...cliente, data_nascimento: e.target.value || null })
+              }
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            />
+          </label>
         </div>
       </section>
 

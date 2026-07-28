@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d7ecf7" />
+      <stop offset="55%" stop-color="#f6dcef" />
+      <stop offset="100%" stop-color="#ffc9f3" />
+    </linearGradient>
+    <radialGradient id="petala" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="55%" stop-color="#ffe3f7" />
+      <stop offset="100%" stop-color="#f6b8e4" />
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#ceu)" />
+
+  <g opacity="0.3">
+    <path d="M-50 950 C 250 850, 300 650, 500 500 C 650 380, 700 300, 650 150"
+      stroke="#6e4d68" stroke-width="14" fill="none" stroke-linecap="round" />
+    <path d="M300 700 C 420 620, 480 560, 560 470" stroke="#6e4d68" stroke-width="8" fill="none" stroke-linecap="round" />
+    <path d="M420 560 C 480 500, 520 460, 600 420" stroke="#6e4d68" stroke-width="7" fill="none" stroke-linecap="round" />
+  </g>
+
+  <g id="galho">
+    <path d="M-50 1000 C 300 900, 380 700, 560 560 C 680 470, 760 380, 760 200"
+      stroke="#8a5f7d" stroke-width="16" fill="none" stroke-linecap="round" />
+    <path d="M120 880 C 260 800, 320 760, 420 680" stroke="#8a5f7d" stroke-width="9" fill="none" stroke-linecap="round" />
+    <path d="M380 700 C 460 640, 520 600, 620 540" stroke="#8a5f7d" stroke-width="8" fill="none" stroke-linecap="round" />
+    <path d="M560 580 C 620 520, 660 480, 740 400" stroke="#8a5f7d" stroke-width="7" fill="none" stroke-linecap="round" />
+  </g>
+
+  <g id="flores">
+    <ellipse cx="344.6" cy="725.0" rx="9.7" ry="6.6" transform="rotate(0 344.6 725.0)" fill="url(#petala)" />
+    <ellipse cx="338.7" cy="733.2" rx="9.7" ry="6.6" transform="rotate(72 338.7 733.2)" fill="url(#petala)" />
+    <ellipse cx="329.1" cy="730.0" rx="9.7" ry="6.6" transform="rotate(144 329.1 730.0)" fill="url(#petala)" />
+    <ellipse cx="329.1" cy="720.0" rx="9.7" ry="6.6" transform="rotate(216 329.1 720.0)" fill="url(#petala)" />
+    <ellipse cx="338.7" cy="716.8" rx="9.7" ry="6.6" transform="rotate(288 338.7 716.8)" fill="url(#petala)" />
+    <circle cx="336.0" cy="725.0" r="3.4" fill="#f2a5c9" />
+    <ellipse cx="727.9" cy="347.0" rx="11.2" ry="7.6" transform="rotate(0 727.9 347.0)" fill="url(#petala)" />
+    <ellipse cx="721.1" cy="356.4" rx="11.2" ry="7.6" transform="rotate(72 721.1 356.4)" fill="url(#petala)" />
+    <ellipse cx="710.0" cy="352.8" rx="11.2" ry="7.6" transform="rotate(144 710.0 352.8)" fill="url(#petala)" />
+    <ellipse cx="710.0" cy="341.2" rx="11.2" ry="7.6" transform="rotate(216 710.0 341.2)" fill="url(#petala)" />
+    <ellipse cx="721.1" cy="337.6" rx="11.2" ry="7.6" transform="rotate(288 721.1 337.6)" fill="url(#petala)" />
+    <circle cx="718.0" cy="347.0" r="4.0" fill="#f2a5c9" />
+    <ellipse cx="614.2" cy="256.0" rx="10.4" ry="7.1" transform="rotate(0 614.2 256.0)" fill="url(#petala)" />
+    <ellipse cx="607.9" cy="264.8" rx="10.4" ry="7.1" transform="rotate(72 607.9 264.8)" fill="url(#petala)" />
+    <ellipse cx="597.5" cy="261.4" rx="10.4" ry="7.1" transform="rotate(144 597.5 261.4)" fill="url(#petala)" />
+    <ellipse cx="597.5" cy="250.6" rx="10.4" ry="7.1" transform="rotate(216 597.5 250.6)" fill="url(#petala)" />
+    <ellipse cx="607.9" cy="247.2" rx="10.4" ry="7.1" transform="rotate(288 607.9 247.2)" fill="url(#petala)" />
+    <circle cx="605.0" cy="256.0" r="3.7" fill="#f2a5c9" />
+    <ellipse cx="593.2" cy="577.0" rx="10.4" ry="7.1" transform="rotate(0 593.2 577.0)" fill="url(#petala)" />
+    <ellipse cx="586.9" cy="585.8" rx="10.4" ry="7.1" transform="rotate(72 586.9 585.8)" fill="url(#petala)" />
+    <ellipse cx="576.5" cy="582.4" rx="10.4" ry="7.1" transform="rotate(144 576.5 582.4)" fill="url(#petala)" />
+    <ellipse cx="576.5" cy="571.6" rx="10.4" ry="7.1" transform="rotate(216 576.5 571.6)" fill="url(#petala)" />
+    <ellipse cx="586.9" cy="568.2" rx="10.4" ry="7.1" transform="rotate(288 586.9 568.2)" fill="url(#petala)" />
+    <circle cx="584.0" cy="577.0" r="3.7" fill="#f2a5c9" />
+    <ellipse cx="737.3" cy="380.0" rx="8.2" ry="5.5" transform="rotate(0 737.3 380.0)" fill="url(#petala)" />
+    <ellipse cx="732.2" cy="386.9" rx="8.2" ry="5.5" transform="rotate(72 732.2 386.9)" fill="url(#petala)" />
+    <ellipse cx="724.1" cy="384.3" rx="8.2" ry="5.5" transform="rotate(144 724.1 384.3)" fill="url(#petala)" />
+    <ellipse cx="724.1" cy="375.7" rx="8.2" ry="5.5" transform="rotate(216 724.1 375.7)" fill="url(#petala)" />
+    <ellipse cx="732.2" cy="373.1" rx="8.2" ry="5.5" transform="rotate(288 732.2 373.1)" fill="url(#petala)" />
+    <circle cx="730.0" cy="380.0" r="2.9" fill="#f2a5c9" />
+    <ellipse cx="439.9" cy="671.0" rx="13.4" ry="9.1" transform="rotate(0 439.9 671.0)" fill="url(#petala)" />
+    <ellipse cx="431.7" cy="682.3" rx="13.4" ry="9.1" transform="rotate(72 431.7 682.3)" fill="url(#petala)" />
+    <ellipse cx="418.4" cy="678.0" rx="13.4" ry="9.1" transform="rotate(144 418.4 678.0)" fill="url(#petala)" />
+    <ellipse cx="418.4" cy="664.0" rx="13.4" ry="9.1" transform="rotate(216 418.4 664.0)" fill="url(#petala)" />
+    <ellipse cx="431.7" cy="659.7" rx="13.4" ry="9.1" transform="rotate(288 431.7 659.7)" fill="url(#petala)" />
+    <circle cx="428.0" cy="671.0" r="4.8" fill="#f2a5c9" />
+    <ellipse cx="683.9" cy="289.0" rx="8.9" ry="6.0" transform="rotate(0 683.9 289.0)" fill="url(#petala)" />
+    <ellipse cx="678.4" cy="296.5" rx="8.9" ry="6.0" transform="rotate(72 678.4 296.5)" fill="url(#petala)" />
+    <ellipse cx="669.6" cy="293.7" rx="8.9" ry="6.0" transform="rotate(144 669.6 293.7)" fill="url(#petala)" />
+    <ellipse cx="669.6" cy="284.3" rx="8.9" ry="6.0" transform="rotate(216 669.6 284.3)" fill="url(#petala)" />
+    <ellipse cx="678.4" cy="281.5" rx="8.9" ry="6.0" transform="rotate(288 678.4 281.5)" fill="url(#petala)" />
+    <circle cx="676.0" cy="289.0" r="3.2" fill="#f2a5c9" />
+    <ellipse cx="746.6" cy="461.0" rx="9.7" ry="6.6" transform="rotate(0 746.6 461.0)" fill="url(#petala)" />
+    <ellipse cx="740.7" cy="469.2" rx="9.7" ry="6.6" transform="rotate(72 740.7 469.2)" fill="url(#petala)" />
+    <ellipse cx="731.1" cy="466.0" rx="9.7" ry="6.6" transform="rotate(144 731.1 466.0)" fill="url(#petala)" />
+    <ellipse cx="731.1" cy="456.0" rx="9.7" ry="6.6" transform="rotate(216 731.1 456.0)" fill="url(#petala)" />
+    <ellipse cx="740.7" cy="452.8" rx="9.7" ry="6.6" transform="rotate(288 740.7 452.8)" fill="url(#petala)" />
+    <circle cx="738.0" cy="461.0" r="3.4" fill="#f2a5c9" />
+    <ellipse cx="688.2" cy="503.0" rx="12.6" ry="8.6" transform="rotate(0 688.2 503.0)" fill="url(#petala)" />
+    <ellipse cx="680.5" cy="513.7" rx="12.6" ry="8.6" transform="rotate(72 680.5 513.7)" fill="url(#petala)" />
+    <ellipse cx="667.9" cy="509.6" rx="12.6" ry="8.6" transform="rotate(144 667.9 509.6)" fill="url(#petala)" />
+    <ellipse cx="667.9" cy="496.4" rx="12.6" ry="8.6" transform="rotate(216 667.9 496.4)" fill="url(#petala)" />
+    <ellipse cx="680.5" cy="492.3" rx="12.6" ry="8.6" transform="rotate(288 680.5 492.3)" fill="url(#petala)" />
+    <circle cx="677.0" cy="503.0" r="4.5" fill="#f2a5c9" />
+    <ellipse cx="197.9" cy="848.0" rx="11.2" ry="7.6" transform="rotate(0 197.9 848.0)" fill="url(#petala)" />
+    <ellipse cx="191.1" cy="857.4" rx="11.2" ry="7.6" transform="rotate(72 191.1 857.4)" fill="url(#petala)" />
+    <ellipse cx="180.0" cy="853.8" rx="11.2" ry="7.6" transform="rotate(144 180.0 853.8)" fill="url(#petala)" />
+    <ellipse cx="180.0" cy="842.2" rx="11.2" ry="7.6" transform="rotate(216 180.0 842.2)" fill="url(#petala)" />
+    <ellipse cx="191.1" cy="838.6" rx="11.2" ry="7.6" transform="rotate(288 191.1 838.6)" fill="url(#petala)" />
+    <circle cx="188.0" cy="848.0" r="4.0" fill="#f2a5c9" />
+    <ellipse cx="125.2" cy="885.0" rx="12.6" ry="8.6" transform="rotate(0 125.2 885.0)" fill="url(#petala)" />
+    <ellipse cx="117.5" cy="895.7" rx="12.6" ry="8.6" transform="rotate(72 117.5 895.7)" fill="url(#petala)" />
+    <ellipse cx="104.9" cy="891.6" rx="12.6" ry="8.6" transform="rotate(144 104.9 891.6)" fill="url(#petala)" />
+    <ellipse cx="104.9" cy="878.4" rx="12.6" ry="8.6" transform="rotate(216 104.9 878.4)" fill="url(#petala)" />
+    <ellipse cx="117.5" cy="874.3" rx="12.6" ry="8.6" transform="rotate(288 117.5 874.3)" fill="url(#petala)" />
+    <circle cx="114.0" cy="885.0" r="4.5" fill="#f2a5c9" />
+    <ellipse cx="760.5" cy="437.0" rx="14.1" ry="9.6" transform="rotate(0 760.5 437.0)" fill="url(#petala)" />
+    <ellipse cx="751.9" cy="448.9" rx="14.1" ry="9.6" transform="rotate(72 751.9 448.9)" fill="url(#petala)" />
+    <ellipse cx="737.9" cy="444.4" rx="14.1" ry="9.6" transform="rotate(144 737.9 444.4)" fill="url(#petala)" />
+    <ellipse cx="737.9" cy="429.6" rx="14.1" ry="9.6" transform="rotate(216 737.9 429.6)" fill="url(#petala)" />
+    <ellipse cx="751.9" cy="425.1" rx="14.1" ry="9.6" transform="rotate(288 751.9 425.1)" fill="url(#petala)" />
+    <circle cx="748.0" cy="437.0" r="5.0" fill="#f2a5c9" />
+    <ellipse cx="539.2" cy="618.0" rx="14.9" ry="10.1" transform="rotate(0 539.2 618.0)" fill="url(#petala)" />
+    <ellipse cx="530.1" cy="630.6" rx="14.9" ry="10.1" transform="rotate(72 530.1 630.6)" fill="url(#petala)" />
+    <ellipse cx="515.3" cy="625.8" rx="14.9" ry="10.1" transform="rotate(144 515.3 625.8)" fill="url(#petala)" />
+    <ellipse cx="515.3" cy="610.2" rx="14.9" ry="10.1" transform="rotate(216 515.3 610.2)" fill="url(#petala)" />
+    <ellipse cx="530.1" cy="605.4" rx="14.9" ry="10.1" transform="rotate(288 530.1 605.4)" fill="url(#petala)" />
+    <circle cx="526.0" cy="618.0" r="5.3" fill="#f2a5c9" />
+    <ellipse cx="277.5" cy="785.0" rx="14.1" ry="9.6" transform="rotate(0 277.5 785.0)" fill="url(#petala)" />
+    <ellipse cx="268.9" cy="796.9" rx="14.1" ry="9.6" transform="rotate(72 268.9 796.9)" fill="url(#petala)" />
+    <ellipse cx="254.9" cy="792.4" rx="14.1" ry="9.6" transform="rotate(144 254.9 792.4)" fill="url(#petala)" />
+    <ellipse cx="254.9" cy="777.6" rx="14.1" ry="9.6" transform="rotate(216 254.9 777.6)" fill="url(#petala)" />
+    <ellipse cx="268.9" cy="773.1" rx="14.1" ry="9.6" transform="rotate(288 268.9 773.1)" fill="url(#petala)" />
+    <circle cx="265.0" cy="785.0" r="5.0" fill="#f2a5c9" />
+    <ellipse cx="480.9" cy="666.0" rx="8.9" ry="6.0" transform="rotate(0 480.9 666.0)" fill="url(#petala)" />
+    <ellipse cx="475.4" cy="673.5" rx="8.9" ry="6.0" transform="rotate(72 475.4 673.5)" fill="url(#petala)" />
+    <ellipse cx="466.6" cy="670.7" rx="8.9" ry="6.0" transform="rotate(144 466.6 670.7)" fill="url(#petala)" />
+    <ellipse cx="466.6" cy="661.3" rx="8.9" ry="6.0" transform="rotate(216 466.6 661.3)" fill="url(#petala)" />
+    <ellipse cx="475.4" cy="658.5" rx="8.9" ry="6.0" transform="rotate(288 475.4 658.5)" fill="url(#petala)" />
+    <circle cx="473.0" cy="666.0" r="3.2" fill="#f2a5c9" />
+    <circle cx="719.0" cy="410.0" r="8.0" fill="#f6c3de" />
+    <circle cx="376.0" cy="710.0" r="11.0" fill="#f6c3de" />
+    <circle cx="644.0" cy="530.0" r="8.0" fill="#f6c3de" />
+    <circle cx="497.0" cy="615.0" r="9.0" fill="#f6c3de" />
+    <circle cx="573.0" cy="591.0" r="10.0" fill="#f6c3de" />
+    <circle cx="151.0" cy="868.0" r="10.0" fill="#f6c3de" />
+    <circle cx="750.0" cy="433.0" r="9.0" fill="#f6c3de" />
+    <circle cx="238.0" cy="814.0" r="9.0" fill="#f6c3de" />
+    <circle cx="675.0" cy="362.0" r="9.0" fill="#f6c3de" />
+    <circle cx="701.0" cy="494.0" r="10.0" fill="#f6c3de" />
+  </g>
+</svg>

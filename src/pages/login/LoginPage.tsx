@@ -26,14 +26,24 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-sakura-bg">
-      <div className="w-full max-w-sm rounded-2xl border border-sakura-gray/30 bg-white p-8 shadow-sm">
-        <div className="mb-8 flex justify-center">
-          <Logo />
+    <div
+      className="flex h-screen items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url(/sakura-login-bg.svg)" }}
+    >
+      <div className="w-full max-w-sm rounded-3xl border border-white/40 bg-white/30 p-8 shadow-xl backdrop-blur-xl">
+        <div className="mb-6 flex justify-center">
+          <Logo className="drop-shadow-sm" />
         </div>
 
+        <h1 className="text-center text-xl font-semibold text-sakura-purple-dark">
+          Bem-vindo de volta
+        </h1>
+        <p className="mb-6 text-center text-sm text-sakura-purple-dark/70">
+          Entre com seu usuário para continuar
+        </p>
+
         {!isSupabaseConfigured && (
-          <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="mb-4 rounded-xl bg-amber-50/90 px-4 py-3 text-sm text-amber-800">
             O Supabase ainda não está configurado. Defina{" "}
             <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
             no arquivo <code>.env</code> para conseguir entrar.
@@ -42,7 +52,7 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {erro && (
-            <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+            <p className="rounded-lg bg-red-50/90 px-4 py-2 text-sm text-red-700">
               {erro}
             </p>
           )}
@@ -54,7 +64,7 @@ export function LoginPage() {
               autoFocus
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/40 focus:border-sakura-purple"
             />
           </label>
 
@@ -64,14 +74,14 @@ export function LoginPage() {
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/40 focus:border-sakura-purple"
             />
           </label>
 
           <button
             type="submit"
             disabled={entrando}
-            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white shadow-md hover:opacity-90 disabled:opacity-50"
           >
             {entrando ? "Entrando..." : "Entrar"}
           </button>

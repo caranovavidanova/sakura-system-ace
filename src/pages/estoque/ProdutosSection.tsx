@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { atualizarStatusPeca, criarPeca, excluirPeca } from "@/lib/pecas";
+import { criarMovimento } from "@/lib/estoque";
 import { mensagemDeErro } from "@/lib/errors";
 import type { NovaPeca, Peca } from "@/types/peca";
 import { PecaForm } from "./PecaForm";
@@ -19,8 +20,17 @@ export function ProdutosSection({ pecas, saldos, onRecarregar }: ProdutosSection
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function handleSalvar(peca: NovaPeca) {
-    await criarPeca(peca);
+  async function handleSalvar(peca: NovaPeca, quantidadeInicial: number | null) {
+    const pecaCriada = await criarPeca(peca);
+    if (quantidadeInicial && quantidadeInicial > 0) {
+      await criarMovimento({
+        peca_id: pecaCriada.id,
+        tipo: "entrada",
+        quantidade: quantidadeInicial,
+        motivo: "ajuste",
+        referencia: "Estoque inicial (cadastro do produto)",
+      });
+    }
     setMostrarFormulario(false);
     await onRecarregar();
   }

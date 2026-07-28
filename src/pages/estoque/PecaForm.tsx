@@ -3,34 +3,85 @@ import { mensagemDeErro } from "@/lib/errors";
 import type { NovaPeca } from "@/types/peca";
 
 interface PecaFormProps {
-  onSalvar: (peca: NovaPeca) => Promise<void>;
+  onSalvar: (peca: NovaPeca, quantidadeInicial: number | null) => Promise<void>;
   onCancelar: () => void;
 }
 
 const pecaVazia: NovaPeca = {
   codigo_interno: "",
+  codigo_barras: "",
   descricao: "",
+  marca: "",
+  modelo: "",
+  aplicacao: "",
   unidade: "UN",
   preco_custo: null,
   preco_venda: null,
   ncm: "",
+  cest: "",
   cfop_padrao: "",
+  origem: "",
   cst_ou_csosn: "",
   aliquota_icms: null,
   ativo: true,
 };
 
+const OPCOES_ORIGEM = [
+  { valor: "0", label: "0 - Nacional" },
+  { valor: "1", label: "1 - Estrangeira, importação direta" },
+  { valor: "2", label: "2 - Estrangeira, adquirida no mercado interno" },
+  { valor: "3", label: "3 - Nacional, +40% conteúdo importado" },
+  { valor: "4", label: "4 - Nacional, produção básica" },
+  { valor: "5", label: "5 - Nacional, até 40% conteúdo importado" },
+  { valor: "6", label: "6 - Estrangeira, importação direta, sem similar nacional" },
+  { valor: "7", label: "7 - Estrangeira, mercado interno, sem similar nacional" },
+  { valor: "8", label: "8 - Nacional, +70% conteúdo importado" },
+];
+
+function arredondar(valor: number): number {
+  return Math.round(valor * 100) / 100;
+}
+
 export function PecaForm({ onSalvar, onCancelar }: PecaFormProps) {
   const [peca, setPeca] = useState<NovaPeca>(pecaVazia);
+  const [margemTexto, setMargemTexto] = useState("");
+  const [quantidadeInicial, setQuantidadeInicial] = useState<number | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  function aoMudarCusto(novoCusto: number | null) {
+    const margem = parseFloat(margemTexto);
+    const novoPeca = { ...peca, preco_custo: novoCusto };
+    if (novoCusto !== null && !isNaN(margem)) {
+      novoPeca.preco_venda = arredondar(novoCusto * (1 + margem / 100));
+    }
+    setPeca(novoPeca);
+  }
+
+  function aoMudarMargem(texto: string) {
+    setMargemTexto(texto);
+    const margem = parseFloat(texto);
+    if (peca.preco_custo !== null && !isNaN(margem)) {
+      setPeca({ ...peca, preco_venda: arredondar(peca.preco_custo * (1 + margem / 100)) });
+    }
+  }
+
+  function aoMudarPrecoVenda(novoPreco: number | null) {
+    setPeca({ ...peca, preco_venda: novoPreco });
+    if (peca.preco_custo !== null && peca.preco_custo > 0 && novoPreco !== null) {
+      const margem = ((novoPreco - peca.preco_custo) / peca.preco_custo) * 100;
+      setMargemTexto((Math.round(margem * 10) / 10).toString());
+    } else {
+      setMargemTexto("");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
     setSalvando(true);
     try {
-      await onSalvar(peca);
+      await onSalvar(peca, quantidadeInicial);
     } catch (err) {
       console.error("Erro ao salvar peça:", err);
       setErro(mensagemDeErro(err));
@@ -52,7 +103,7 @@ export function PecaForm({ onSalvar, onCancelar }: PecaFormProps) {
 
       <section>
         <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-          Dados do produto
+          Dados cadastrais
         </h3>
         <div className="grid grid-cols-2 gap-4">
           <Campo
@@ -62,45 +113,90 @@ export function PecaForm({ onSalvar, onCancelar }: PecaFormProps) {
             onChange={(v) => setPeca({ ...peca, descricao: v })}
           />
           <Campo
-            label="Código interno"
+            label="Código de barras"
+            value={peca.codigo_barras ?? ""}
+            onChange={(v) => setPeca({ ...peca, codigo_barras: v })}
+          />
+          <Campo
+            label="Referência"
             value={peca.codigo_interno ?? ""}
             onChange={(v) => setPeca({ ...peca, codigo_interno: v })}
           />
           <Campo
+            label="Marca"
+            value={peca.marca ?? ""}
+            onChange={(v) => setPeca({ ...peca, marca: v })}
+          />
+          <Campo
+            label="Modelo"
+            value={peca.modelo ?? ""}
+            onChange={(v) => setPeca({ ...peca, modelo: v })}
+          />
+          <Campo
             label="Unidade (UN, PC, KG...)"
+            required
             value={peca.unidade ?? ""}
             onChange={(v) => setPeca({ ...peca, unidade: v.toUpperCase() })}
           />
-          <CampoNumero
-            label="Preço de custo"
-            value={peca.preco_custo}
-            onChange={(v) => setPeca({ ...peca, preco_custo: v })}
-          />
-          <CampoNumero
-            label="Preço de venda"
-            value={peca.preco_venda}
-            onChange={(v) => setPeca({ ...peca, preco_venda: v })}
-          />
         </div>
+        <label className="mt-4 flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">Aplicação</span>
+          <textarea
+            value={peca.aplicacao ?? ""}
+            onChange={(e) => setPeca({ ...peca, aplicacao: e.target.value })}
+            rows={2}
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+          />
+        </label>
       </section>
 
       <section>
         <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-          Dados fiscais
+          Tributos
         </h3>
         <div className="grid grid-cols-2 gap-4">
           <Campo
             label="NCM"
+            required
             value={peca.ncm ?? ""}
             onChange={(v) => setPeca({ ...peca, ncm: v })}
           />
           <Campo
+            label="C.E.S.T"
+            required
+            value={peca.cest ?? ""}
+            onChange={(v) => setPeca({ ...peca, cest: v })}
+          />
+          <Campo
             label="CFOP padrão"
+            required
             value={peca.cfop_padrao ?? ""}
             onChange={(v) => setPeca({ ...peca, cfop_padrao: v })}
           />
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">
+              Origem
+              <span className="text-red-500"> *</span>
+            </span>
+            <select
+              required
+              value={peca.origem ?? ""}
+              onChange={(e) => setPeca({ ...peca, origem: e.target.value })}
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            >
+              <option value="" disabled>
+                Selecione
+              </option>
+              {OPCOES_ORIGEM.map((opcao) => (
+                <option key={opcao.valor} value={opcao.valor}>
+                  {opcao.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Campo
             label="CST / CSOSN"
+            required
             value={peca.cst_ou_csosn ?? ""}
             onChange={(v) => setPeca({ ...peca, cst_ou_csosn: v })}
           />
@@ -108,6 +204,39 @@ export function PecaForm({ onSalvar, onCancelar }: PecaFormProps) {
             label="Alíquota ICMS (%)"
             value={peca.aliquota_icms}
             onChange={(v) => setPeca({ ...peca, aliquota_icms: v })}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+          Preços
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <CampoNumero
+            label="Aquisição (custo)"
+            value={peca.preco_custo}
+            onChange={aoMudarCusto}
+          />
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">Margem %</span>
+            <input
+              type="number"
+              step="0.1"
+              value={margemTexto}
+              onChange={(e) => aoMudarMargem(e.target.value)}
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            />
+          </label>
+          <CampoNumero
+            label="Preço final"
+            value={peca.preco_venda}
+            onChange={aoMudarPrecoVenda}
+          />
+          <CampoNumero
+            label="Qtde. estoque inicial"
+            value={quantidadeInicial}
+            onChange={setQuantidadeInicial}
           />
         </div>
       </section>

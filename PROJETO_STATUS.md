@@ -428,10 +428,10 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   verdade com o Supabase dele (criar admin, logar, cadastrar operador limitado, conferir sidebar
   filtrada, confirmar que reabrir o app pede login de novo) e pedir explicitamente pra abrir e
   mergear o PR.
-- **Branch `claude/sakura-autocenter-status-4pek1l`**: contém o redesenho do Início (cartões de
-  tendência + calendário) e do Login (vidro fosco + fundo floral), ver seção 7. Só commitada e
-  enviada pro GitHub nesta sessão — **nenhum PR foi aberto** (só se abre PR a pedido explícito) e o
-  usuário ainda não rodou essas mudanças com o Supabase dele.
+- PR [#8](https://github.com/caranovavidanova/amigao/pull/8) (`claude/sakura-autocenter-status-4pek1l`
+  → `main`): redesenho do Início (cartões de tendência + calendário) e do Login (vidro fosco + fundo
+  floral), ver seção 7. Aberto a pedido do usuário nesta sessão — ainda não mergeado, usuário ainda
+  não rodou essas mudanças com o Supabase dele.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

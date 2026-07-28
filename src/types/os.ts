@@ -29,8 +29,6 @@ export interface OrdemServico {
   parcelas: number;
   data_abertura: string;
   data_fechamento: string | null;
-  previsao_entrega: string | null;
-  data_retorno: string | null;
   vendedor_id: string | null;
   criado_por_id: string | null;
   atualizado_por_id: string | null;
@@ -47,8 +45,6 @@ export interface NovaOrdemServico {
   veiculo_id: string | null;
   km_entrada: number | null;
   descricao_problema: string | null;
-  previsao_entrega: string | null;
-  data_retorno: string | null;
   vendedor_id: string | null;
 }
 
@@ -59,8 +55,6 @@ export type PatchOrdemServico = Partial<
     | "veiculo_id"
     | "km_entrada"
     | "descricao_problema"
-    | "previsao_entrega"
-    | "data_retorno"
     | "vendedor_id"
     | "status"
   >

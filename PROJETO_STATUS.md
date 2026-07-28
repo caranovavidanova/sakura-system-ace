@@ -687,19 +687,26 @@ sozinhos quando sai uma versão nova.
 **Toda vez que quiser publicar uma versão nova** (inclusive a primeira, pra já ter um instalador pra
 levar pro PC da borracharia):
 
-```powershell
-git checkout main
-git pull origin main
-git tag v0.1.0
-git push origin v0.1.0
-```
+1. **Peça pra mim (Claude) atualizar o campo `"version"` do `package.json`** pro número da versão
+   nova primeiro, numa mensagem separada — ex: "atualiza a versão pra 0.1.2 e publica". Isso é
+   importante: o nome da release no GitHub vem desse campo, **não** da tag do Git — se esquecer
+   desse passo, o `electron-builder` continua achando que está construindo a versão anterior e
+   atualiza a release errada em vez de criar uma nova (foi exatamente isso que aconteceu tentando a
+   v0.1.1 nesta sessão — ver bug documentado abaixo).
+2. Depois que eu confirmar que atualizei e mergeei, no terminal:
+   ```powershell
+   git checkout main
+   git pull origin main
+   git tag v0.1.2
+   git push origin v0.1.2
+   ```
+   (o número da tag precisa ser **exatamente igual** ao que ficou em `"version"` no `package.json`.)
 
-(troque `v0.1.0` por um número maior a cada vez, ex: `v0.1.1`, `v0.2.0`.) Isso dispara o build
-automaticamente no GitHub — demora uns 5 a 10 minutos. Quando terminar, o instalador aparece em
-`github.com/caranovavidanova/amigao/releases` — baixe o arquivo `.exe` de lá e rode no PC da
-borracharia (o Windows/SmartScreen deve avisar "editor desconhecido"; é normal sem certificado de
-assinatura pago — clique em "Mais informações" → "Executar assim mesmo"). Da próxima vez que você
-publicar uma tag nova, esse mesmo PC vai se atualizar sozinho, sem precisar reinstalar.
+Isso dispara o build automaticamente no GitHub — demora uns 5 a 10 minutos. Quando terminar, o
+instalador aparece em `github.com/caranovavidanova/amigao/releases` — baixe o arquivo `.exe` de lá e
+rode no PC da borracharia (o Windows/SmartScreen deve avisar "editor desconhecido"; é normal sem
+certificado de assinatura pago — clique em "Mais informações" → "Executar assim mesmo"). Da próxima
+vez que você publicar uma tag nova, esse mesmo PC vai se atualizar sozinho, sem precisar reinstalar.
 
 **🐛 Achado e corrigido testando a v0.1.0 de verdade nesta sessão**: por padrão o `electron-builder`
 publica a release do GitHub como **rascunho (Draft)** — ela builda certinho, mas fica invisível/
@@ -709,7 +716,14 @@ atualização automática (o `electron-updater` só enxerga releases publicadas,
 partir da tag seguinte (a v0.1.0 precisou ser publicada manualmente essa vez só), as próximas já saem
 publicadas direto, sem esse passo manual.
 
-## 10. Estado do Git
+**🐛 Segundo bug achado testando a v0.1.1 nesta mesma sessão**: publicar uma tag `v0.1.1` sem antes
+atualizar o campo `"version"` do `package.json` (que continuava `"0.1.0"`) fez o `electron-builder`
+**atualizar a release "0.1.0" já existente** (trocando os arquivos internamente) em vez de criar uma
+release "0.1.1" nova — porque o nome da release que ele publica no GitHub vem do `"version"` do
+`package.json`, não da tag do Git que disparou o build. Isso confundiu bastante o processo (a tag
+`v0.1.1` existia e apontava pro commit certo, mas nenhuma release "0.1.1" aparecia). **Regra daqui pra
+frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da tag **antes** de publicar
+— documentado no tutorial acima como passo 1.
 
 - Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —
   foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`).

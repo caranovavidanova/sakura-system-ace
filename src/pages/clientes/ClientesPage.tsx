@@ -40,8 +40,18 @@ export function ClientesPage() {
 
   async function handleExcluir(id: string) {
     if (!confirm("Excluir este cliente?")) return;
-    await excluirCliente(id);
-    await carregar();
+    try {
+      await excluirCliente(id);
+      await carregar();
+    } catch (err) {
+      console.error("Erro ao excluir cliente:", err);
+      const mensagem = mensagemDeErro(err);
+      setErro(
+        mensagem.includes("ordens_servico")
+          ? "Não é possível excluir esse cliente porque ele já tem Ordens de Serviço vinculadas."
+          : mensagem,
+      );
+    }
   }
 
   return (

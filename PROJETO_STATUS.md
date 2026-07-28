@@ -246,33 +246,38 @@ URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
 confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seguras de rodar de novo
 (idempotentes) caso precise reconectar ou usar outro projeto Supabase do zero.
 
-## 10. Estado do Git — ATENÇÃO, branches divergentes
+## 10. Estado do Git
 
 - Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —
-  foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`). `main`
-  **ainda está na versão antiga** (Pneus Amigão, navy/dourado) — nenhum merge do Sakura System foi
-  feito para `main` ainda.
-- **Branches em jogo, cuidado para não trabalhar na desatualizada:**
-  - `claude/sakura-system-autocenter-qjzqab` — **a mais completa e atualizada**. Tem: todo o
-    histórico do Sakura System + logo/wordmark refinados + fix da tela branca + fix do lint +
-    DevTools automático + Caixa Diário reorganizado + migrations idempotentes. **PR aberto**:
-    [#2](https://github.com/caranovavidanova/amigao/pull/2) contra `main`, ainda não mergeado.
-  - `claude/sakura-autocenter-status-m6sio5` — criada vazia (a partir de `main` desatualizada);
-    resetada nesta sessão para ficar idêntica à `qjzqab`, mais um commit corrigindo o `AGENTS.md`
-    (tinha um texto de outro projeto mandando ler docs do Next.js que não existem aqui — removido).
-    Sem PR aberto ainda.
-  - `claude/sakura-system-autocenter-cyfuwh` — mesma base até `bde5db0`, mas só tem UM commit a
-    mais que a `qjzqab` não tem: a criação deste `PROJETO_STATUS.md`. **Não tem** nenhum dos
-    commits de logo/caixa/fixes. Sem PR aberto.
-  - `claude/software-visual-identity-cjr8f6` — tentativa antiga e divergente, mantendo a marca
-    "Pneus Amigão" (contradiz a direção já validada pelo usuário). PR
-    [#1](https://github.com/caranovavidanova/amigao/pull/1) **fechado sem merge** — já resolvido,
-    não precisa mais perguntar ao usuário sobre isso.
-- **Antes de abrir uma nova sessão nesse repo**: confira em qual branch as instruções da tarefa
-  mandam trabalhar. Se for uma branch diferente de `qjzqab`, ela provavelmente está desatualizada —
-  traga os commits que faltam (`git log branchA..branchB`) antes de continuar, ou avise o usuário
-  da divergência antes de fazer trabalho que pode se perder.
+  foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`).
+- **`main` agora É o Sakura System** — nesta sessão, a branch `claude/sakura-autocenter-status-m6sio5`
+  (histórico completo do Sakura System + fix do `AGENTS.md` + este arquivo atualizado) foi mergeada
+  em `main` a pedido do usuário, especificamente para permitir clonar o projeto em outro computador
+  (ex: PC do trabalho) sem precisar trocar de branch — um `git clone` simples já traz a versão
+  certa. O PR [#2](https://github.com/caranovavidanova/amigao/pull/2) (`qjzqab` → `main`) foi
+  fechado por já estar contido nesse merge.
+- Branches antigas que **não** precisam mais ser usadas (mantidas só por histórico, seguro ignorar
+  ou apagar): `claude/sakura-system-autocenter-qjzqab`, `claude/sakura-system-autocenter-cyfuwh`,
+  `claude/software-visual-identity-cjr8f6` (essa mantinha a marca "Pneus Amigão", PR #1 fechado sem
+  merge).
+- **Sessões futuras**: pode trabalhar direto a partir de `main` — não é mais necessário conferir
+  divergência entre branches antes de começar.
 - `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
+
+## 12. Trabalhando de outro computador
+
+O código (tudo que está commitado e no GitHub) e o banco de dados (Supabase) já são 100% na nuvem —
+dá pra continuar em qualquer computador com internet. Dois passos manuais em cada computador novo,
+porque nunca ficam salvos no Git (por segurança):
+
+```bash
+git clone https://github.com/caranovavidanova/amigao.git
+cd amigao
+npm install
+cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehyga.supabase.co
+                        # e VITE_SUPABASE_ANON_KEY=<chave anon, em Settings -> API no Supabase>
+npm run dev
+```
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

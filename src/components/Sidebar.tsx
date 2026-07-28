@@ -1,23 +1,15 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { MODULOS } from "@/types/operador";
 import { Logo } from "./Logo";
 
-interface ModuloLink {
-  label: string;
-  path: string;
-  disponivel: boolean;
-}
-
-const modulos: ModuloLink[] = [
-  { label: "Painel de Controle", path: "/", disponivel: true },
-  { label: "Clientes", path: "/clientes", disponivel: true },
-  { label: "Estoque", path: "/estoque", disponivel: true },
-  { label: "Ordens de Serviço", path: "/ordens-servico", disponivel: true },
-  { label: "Caixa Diário", path: "/caixa", disponivel: true },
-  { label: "Relatórios", path: "/relatorios", disponivel: true },
-  { label: "Lucratividade", path: "/lucratividade", disponivel: true },
-];
-
 export function Sidebar() {
+  const { operador, logout } = useAuth();
+
+  const modulosLiberados = operador?.admin
+    ? MODULOS
+    : MODULOS.filter((modulo) => operador?.permissoes.includes(modulo.chave));
+
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-sakura-gray/40 bg-white">
       <div className="px-6 py-6">
@@ -26,12 +18,33 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
-        {modulos.map((modulo) =>
-          modulo.disponivel ? (
+        {modulosLiberados.length === 0 && (
+          <p className="px-4 py-2.5 text-xs text-sakura-gray">
+            Nenhum módulo liberado. Fale com o administrador.
+          </p>
+        )}
+        {modulosLiberados.map((modulo) => (
+          <NavLink
+            key={modulo.chave}
+            to={modulo.rota}
+            end={modulo.chave === "painel"}
+            className={({ isActive }) =>
+              `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-sakura-pink-soft text-sakura-purple-dark"
+                  : "text-sakura-purple-dark/70 hover:bg-sakura-pink-soft"
+              }`
+            }
+          >
+            {modulo.label}
+          </NavLink>
+        ))}
+
+        {operador?.admin && (
+          <>
+            <div className="my-2 border-t border-sakura-gray/20" />
             <NavLink
-              key={modulo.path}
-              to={modulo.path}
-              end={modulo.path === "/"}
+              to="/configuracoes"
               className={({ isActive }) =>
                 `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                   isActive
@@ -40,22 +53,26 @@ export function Sidebar() {
                 }`
               }
             >
-              {modulo.label}
+              Configurações
             </NavLink>
-          ) : (
-            <div
-              key={modulo.path}
-              className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm text-sakura-gray"
-              title="Em breve"
-            >
-              <span>{modulo.label}</span>
-              <span className="rounded-full bg-sakura-gray/20 px-2 py-0.5 text-[10px]">
-                em breve
-              </span>
-            </div>
-          ),
+          </>
         )}
       </nav>
+
+      {operador && (
+        <div className="border-t border-sakura-gray/20 px-6 py-4">
+          <p className="text-sm font-medium text-sakura-purple-dark">
+            {operador.nome}
+          </p>
+          <p className="text-xs text-sakura-gray">@{operador.usuario}</p>
+          <button
+            onClick={() => logout()}
+            className="mt-2 text-xs font-medium text-sakura-purple hover:underline"
+          >
+            Sair
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

@@ -61,6 +61,8 @@ base arquitetural.
 | Roteamento | `react-router-dom` com `HashRouter` | Electron carrega arquivo local (`file://`); `HashRouter` evita problemas de rota que `BrowserRouter` teria |
 | Versionamento | SemVer + `CHANGELOG.md` | Pedido explícito do usuário — só "lançar" versão quando testado e funcionando |
 | Lint | ESLint 9 flat config (`eslint.config.js`) só com `rules-of-hooks` + `exhaustive-deps` | `eslint-plugin-react-hooks` v7 traz um conjunto de regras experimentais (derivadas do React Compiler) que reprovariam o padrão "fetch on mount" usado em todas as páginas; optamos por só as duas regras clássicas |
+| Autenticação | Supabase Auth (e-mail/senha), mas o operador só digita **usuário** — o app monta `usuario@sakura.local` por baixo dos panos | Pedido explícito do usuário (login rápido, sem digitar e-mail). Ver seção 6 pra detalhes/limitações |
+| Permissões por módulo | Checadas **na interface do app**, não reforçadas em RLS por categoria | Decisão explícita do usuário nesta sessão — mais rápido de construir, resolve o problema real (organizar telas por operador); ver seção 6 pro trade-off de segurança |
 
 ## 4. Estrutura de pastas
 
@@ -69,17 +71,18 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── electron/main.ts            # processo principal (janela, autoUpdater, abre DevTools em modo dev)
 ├── electron/preload.ts         # bridge (hoje só expõe versão do app)
 ├── src/
-│   ├── main.tsx, App.tsx       # entrada React + rotas
-│   ├── components/             # Sidebar.tsx, Logo.tsx, Gauge.tsx (reutilizáveis)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, errors.ts)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, ordens-servico, caixa, relatorios, lucratividade
+│   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
+│   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
+│   ├── components/             # Sidebar.tsx, Logo.tsx, Gauge.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts)
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, ordens-servico, caixa, relatorios, lucratividade, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
 │   │       EstoquePage.tsx tem abas "Produtos" (ProdutosSection.tsx + PecaForm.tsx) e
 │   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, estoque.ts, os.ts, caixa.ts)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0006), todas idempotentes (seguro rodar de novo)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, estoque.ts, os.ts, caixa.ts, operador.ts)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0007), todas idempotentes (seguro rodar de novo)
 ├── eslint.config.js             # flat config do ESLint 9
 ├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
 └── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
@@ -113,6 +116,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
   só para tipo peça), descricao, quantidade, preco_unitario, desconto
 - **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
   faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao
+- **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
+  permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
+  estoque, ordens_servico, caixa, relatorios, lucratividade), ativo, criado_em. Única tabela com RLS
+  de verdade (baseada em login) — ver seção 6.
 
 Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -120,14 +127,21 @@ entrada em `caixa_movimentos` com o valor total da OS.
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
-1. **RLS totalmente aberto.** Todas as tabelas têm uma policy `for all using (true) with check
-   (true)` — ou seja, **qualquer pessoa com a chave pública (que vai dentro do app instalado) tem
-   acesso total de leitura/escrita**. Isso foi uma decisão consciente e temporária porque o sistema
-   ainda não tem login de usuário. **Antes de considerar o sistema pronto para uso real em produção,
-   isso precisa ser substituído** por policies que verificam autenticação (e futuramente
-   multi-loja/tenant). Não tratar isso como "só depois" indefinidamente.
-2. **Sem autenticação nenhuma.** Não há tela de login, não há conceito de usuário/permissão no
-   sistema. Qualquer pessoa que abrir o app tem acesso a tudo.
+1. **RLS ainda aberto nas tabelas de negócio** (clientes, veículos, peças, estoque, OS, caixa — todas
+   com `for all using (true) with check (true)`). Isso **não mudou** com a chegada do login: foi uma
+   decisão explícita desta sessão (ver seção 3) manter a permissão só na interface, não em RLS por
+   categoria, por ser mais rápido de construir e resolver o problema real do usuário (organizar o que
+   cada operador vê). Consequência real: **qualquer pessoa com a chave `anon`** (que vai dentro do
+   app instalado) ainda consegue ler/escrever essas tabelas direto pela API do Supabase, sem passar
+   pela tela de login — a autenticação hoje protege a experiência dentro do app, não o banco em si.
+   A única tabela com RLS de verdade é `operadores` (ver item 2). Se em algum momento o risco mudar
+   (ex: sistema for vendido pra terceiros, não só famílias de confiança), vale revisitar essa decisão.
+2. **Autenticação implementada nesta sessão** (Supabase Auth, login com usuário/senha — ver seção 3 e
+   7 pros detalhes). Ainda faltam: (a) **redefinir senha de operador esquecida** — hoje não tem como
+   o admin resetar a senha de outro operador pelo app (só criar; `supabase.auth.signUp` não permite
+   isso do lado cliente sem expor a chave secreta) — precisaria de uma Supabase Edge Function com a
+   service role key, ainda não construída; (b) **multi-loja** — arquitetura continua de loja única
+   (ver decisão na seção 3 dessa mesma conversa/sessão).
 3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pelo usuário em algum
    momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
    código em nenhuma sessão. Vale considerar sugerir ao usuário que rotacione essa chave em
@@ -243,6 +257,36 @@ de novo.
     referência) — todos exigiriam tabelas novas ou mudanças de schema, então precisam ser decididos
     com o usuário antes (ver seção 1: decisões estruturais não se decide sozinho).
 
+**⏳ Implementado nesta sessão (login + permissões), ainda sem confirmação do usuário rodando com Supabase real** — validado no sandbox via `npm run build`, `npm run lint` e screenshots Playwright com Supabase Auth simulado (`page.route()` interceptando `/auth/v1/token` e `/rest/v1/operadores`, ver item 7 da seção 6 sobre por que não dá pra testar contra o Supabase de verdade daqui):
+
+- **Login com usuário e senha** (não e-mail — ver decisão na seção 3): tela nova (`LoginPage.tsx`),
+  usa Supabase Auth por baixo (e-mail interno `usuario@sakura.local`, nunca exibido). Sessão
+  persiste sozinha (o `supabase-js` cuida disso), não precisa logar de novo toda vez que abre o app.
+- **Tabela `operadores`** (migration `0007_operadores.sql`) guarda nome, usuário, se é admin, e quais
+  módulos cada um acessa (`permissoes`, um array com as chaves de `MODULOS`).
+- **Tela "Configurações"** (só aparece pra quem é admin): lista de operadores em cards (com badges
+  dos módulos liberados), botão "+ Novo operador" (usuário, nome, senha, admin ou checkboxes por
+  módulo) e "Editar"/"Inativar" por operador. Criar um operador novo usa um client Supabase **isolado**
+  (`persistSession: false`) só pra não trocar a sessão de quem está logado no momento — sem isso, o
+  `supabase.auth.signUp()` do operador novo derrubaria a sessão do admin que está cadastrando.
+- **Menu lateral filtrado por permissão**: só aparecem os módulos que o operador tem acesso (admin vê
+  tudo); operador sem nenhum módulo liberado vê um aviso em vez de menu vazio. Cada rota (`App.tsx`)
+  é protegida por um componente `PermissaoRoute`/`AdminRoute` que bloqueia navegação direta por URL
+  pra um módulo sem permissão (mostra aviso, não deixa passar).
+- **Achado corrigido durante os próprios testes desta sessão**: um operador sem permissão de "Painel
+  de Controle" caía numa tela de "sem permissão" logo depois de logar (porque `/` exigia a permissão
+  `painel`). Corrigido: `/` agora redireciona pro primeiro módulo que o operador realmente acessa.
+
+**Passos manuais únicos que o usuário (ou eu) precisa fazer no painel do Supabase antes de testar de
+verdade** (documentados também dentro da migration `0007_operadores.sql`):
+
+1. Rodar a migration `0007_operadores.sql` (SQL Editor do Supabase).
+2. **Desligar a confirmação por e-mail**: Authentication → Providers → Email → desmarcar "Confirm
+   email". Necessário porque os e-mails são internos/inventados (`usuario@sakura.local`) — não existe
+   caixa de entrada pra confirmar, então com a opção ligada ninguém consegue logar depois de criado.
+3. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
+   exemplo que está comentado no final da migration, colando o "User UID" gerado.
+
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
 Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
@@ -252,8 +296,12 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
    intermediário (Focus NFe, eNotas, PlugNotas ou similar) em vez de implementar comunicação direta
    com SEFAZ/prefeituras. **Ainda não escolhido qual provedor** — depende de qual cobre o município
    da loja para NFS-e. Isso é uma decisão que precisa ser apresentada ao usuário antes de codar.
-2. **Autenticação / login de usuário** — pré-requisito para resolver a dívida técnica do RLS aberto
-   (seção 6.1) e para multi-loja no futuro.
+2. ~~Autenticação / login de usuário~~ — **construído nesta sessão** (ver seção 7): login com
+   usuário/senha + permissões por módulo, checadas na interface. O que ficou de fora e ainda é
+   próximo passo possível: reforçar em RLS por categoria (trade-off aceito por ora, ver seção 6.1),
+   admin redefinir senha de operador esquecida (precisaria de Edge Function), e o **site externo de
+   assinatura** que cria a primeira conta de cada loja automaticamente (hoje isso é manual, pelo
+   painel do Supabase — ver seção 7) — combinado que fica pra quando pensarem na versão comercial.
 3. **Logo oficial** — pegar o arquivo `.svg` real do usuário como **anexo** (não colado no chat) e
    aplicar no lugar dos SVGs feitos à mão (ver seção 2).
 4. Refinamentos possíveis no Painel de Controle e demais módulos, conforme feedback do usuário.

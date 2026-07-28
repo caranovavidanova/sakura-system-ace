@@ -1,0 +1,301 @@
+# Sakura System — AutoCenter Edition — Estado do Projeto
+
+> Este arquivo existe para que qualquer sessão futura (eu, sem memória da conversa) consiga
+> entender o projeto e continuar exatamente de onde parou. Sempre que uma funcionalidade nova
+> for concluída e validada pelo usuário, **atualize este arquivo** (não deixe ele ficar desatualizado).
+
+## 1. Quem é o usuário e como trabalhar com ele
+
+- Sem experiência prévia em programação. **Explicar decisões técnicas em linguagem simples**, sem
+  assumir conhecimento de jargão.
+- Antes de decisões estruturais importantes (arquitetura, bibliotecas, modelagem de dados),
+  **apresentar opções + recomendação e esperar confirmação** — não decidir sozinho.
+- Construir em **etapas pequenas e testáveis**. Mostrar funcionando antes de avançar.
+- O usuário testa em uma máquina Windows local (terminal integrado do VS Code / PowerShell). Ele
+  copia e cola os comandos que eu forneço — eu não tenho acesso à máquina dele.
+- E-mail: caranovavidanova@gmail.com.
+
+## 2. O que é o projeto
+
+**Sakura System** é uma linha de sistemas de gestão empresarial por nicho. Esta é a primeira edição:
+**SSACE — Sakura System AutoCenter Edition**, para autocenters/borracharias. Referência de mercado:
+S3Auto (Comsis) — um ERP tradicional e funcional, mas com UX densa/datada. O diferencial do SSACE é
+UX simples e moderna, mantendo as funções essenciais de um ERP de autocenter.
+
+Depois do SSACE validado, a ideia é criar outras edições (ex: Supermarket Edition), reaproveitando a
+base arquitetural.
+
+### Identidade visual
+
+- Paleta: rosa `#FFC9F3`, roxo `#B38DAC`, cinza `#C7C7C7` (implementada em
+  `src/styles/globals.css` como `--color-sakura-*`, com variantes de contraste
+  `sakura-purple-dark` e `sakura-pink-soft` criadas para acessibilidade).
+- Estilo: painel visual e acolhedor, cards com indicadores tipo velocímetro/gauge, navegação
+  lateral por módulos, bastante espaçamento (oposto da densidade de ERP tradicional).
+- **Logo**: `public/sakura-icon.svg` (flor sozinha, usada como favicon/ícone da janela — continua
+  com a flor) e `public/sakura-logo.svg` (usado no menu lateral via `src/components/Logo.tsx`).
+  **A pedido do usuário, `sakura-logo.svg` NÃO tem mais a flor** — só o wordmark "Sakura System" /
+  "by Sakura Corp" em itálico serifado, com fonte maior aproveitando o espaço que a flor ocupava
+  (viewBox `0 0 620 170`, texto começando perto da margem esquerda). A flor só aparece no ícone da
+  janela/favicon (`sakura-icon.svg`), não mais no menu lateral. Ambos os arquivos foram desenhados
+  à mão em SVG (gradientes + `<text>` de verdade), **não** são a arte oficial do usuário.
+  - **Pendência**: o usuário tem um arquivo SVG "oficial" da logo (gerado por um traçador de
+    imagem, tipo VTracer) com a flor + texto desenhados como ~200 `<path>` vetoriais em vez de
+    `<text>`. Ele tentou colar esse arquivo direto no chat duas vezes; na primeira veio cortado
+    (arquivo grande demais pro limite de uma mensagem), na segunda veio completo mas **copiar à
+    mão path por path não é confiável nessa escala** — na tentativa dessa sessão, sumiram pedaços
+    de letras ("Sakura System" virou "Sal u a System"). **Não tente transcrever esse SVG via
+    chat de novo.** Peça pro usuário mandar como **arquivo anexado** (upload/drag-and-drop) em vez
+    de colar o código — só assim dá pra ler o arquivo com fidelidade total (via `Read` tool) sem
+    risco de erro de transcrição.
+
+## 3. Decisões técnicas já tomadas (não reabrir sem motivo forte)
+
+| Decisão | Escolha | Por quê |
+|---|---|---|
+| Tipo de app | Desktop (Windows) via Electron | Definido pelo usuário desde o início |
+| Frontend | React + Vite + TypeScript (não Next.js) | Perguntado ao usuário explicitamente — Next.js é para apps com servidor; Electron não precisa disso |
+| Empacotamento Electron | `vite-plugin-electron` + `vite-plugin-electron-renderer` | Um único `vite.config.ts` builda renderer + main + preload com hot reload |
+| Estilo | Tailwind CSS v4 (`@tailwindcss/vite`, config via `@theme` no CSS) | Rapidez para manter a paleta consistente |
+| Dados | Supabase (Postgres em nuvem) | Decisão do usuário — pensando em app mobile futuro, multi-loja, e emissão fiscal (que exige internet de qualquer forma) |
+| Roteamento | `react-router-dom` com `HashRouter` | Electron carrega arquivo local (`file://`); `HashRouter` evita problemas de rota que `BrowserRouter` teria |
+| Versionamento | SemVer + `CHANGELOG.md` | Pedido explícito do usuário — só "lançar" versão quando testado e funcionando |
+| Lint | ESLint 9 flat config (`eslint.config.js`) só com `rules-of-hooks` + `exhaustive-deps` | `eslint-plugin-react-hooks` v7 traz um conjunto de regras experimentais (derivadas do React Compiler) que reprovariam o padrão "fetch on mount" usado em todas as páginas; optamos por só as duas regras clássicas |
+
+## 4. Estrutura de pastas
+
+```
+amigao/                        (raiz do repositório GitHub: caranovavidanova/amigao)
+├── electron/main.ts            # processo principal (janela, autoUpdater, abre DevTools em modo dev)
+├── electron/preload.ts         # bridge (hoje só expõe versão do app)
+├── src/
+│   ├── main.tsx, App.tsx       # entrada React + rotas
+│   ├── components/             # Sidebar.tsx, Logo.tsx, Gauge.tsx (reutilizáveis)
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, errors.ts)
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, pecas, estoque, ordens-servico, caixa, relatorios, lucratividade
+│   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
+│   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, estoque.ts, os.ts, caixa.ts)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0006), todas idempotentes (seguro rodar de novo)
+├── eslint.config.js             # flat config do ESLint 9
+├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
+└── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
+```
+
+**Padrão de código estabelecido** (seguir em módulos novos):
+
+- Cada entidade tem: `types/<entidade>.ts` (interfaces + tipo `Novo<Entidade>`), `lib/<entidade>.ts`
+  (funções `listar`, `criar`, `excluir` usando o client `supabase`), `pages/<modulo>/<Modulo>Page.tsx`
+  (lista + estado de carregamento/erro) e `<Modulo>Form.tsx` (formulário controlado).
+- Erros do Supabase **não são `instanceof Error`** — sempre usar `mensagemDeErro()` de
+  `src/lib/errors.ts` para exibir a mensagem real (não o `instanceof Error ? ... : "erro genérico"`).
+- **Nunca usar `window.prompt()`** — Electron não suporta. `alert()` e `confirm()` funcionam bem.
+- Toda tabela nova precisa de RLS + policy (ver seção 6 sobre a dívida técnica de segurança).
+- Ao criar valores default a partir de variáveis de ambiente (`import.meta.env.VITE_*`), usar `||`
+  e não `??` para o fallback — o Vite injeta variáveis ausentes como **string vazia**, não
+  `undefined`, e `??` só substitui `null`/`undefined` (ver bug corrigido na seção 6).
+
+## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
+
+- **`clientes`**: id, nome, cpf_cnpj, telefone, email, cep, rua, numero, bairro, cidade, uf, criado_em
+- **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, km_atual, criado_em
+- **`pecas`**: id, codigo_interno, descricao, unidade, preco_custo, preco_venda, ncm, cfop_padrao,
+  cst_ou_csosn, aliquota_icms, ativo, criado_em
+- **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
+  (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
+- **`ordens_servico`**: id, cliente_id (FK), veiculo_id (FK, opcional), status
+  (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema, forma_pagamento,
+  data_abertura, data_fechamento
+- **`ordens_servico_itens`**: id, ordem_servico_id (FK), tipo (`peca`/`servico`), peca_id (FK opcional,
+  só para tipo peça), descricao, quantidade, preco_unitario, desconto
+- **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
+  faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao
+
+Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
+saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
+entrada em `caixa_movimentos` com o valor total da OS.
+
+## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
+
+1. **RLS totalmente aberto.** Todas as tabelas têm uma policy `for all using (true) with check
+   (true)` — ou seja, **qualquer pessoa com a chave pública (que vai dentro do app instalado) tem
+   acesso total de leitura/escrita**. Isso foi uma decisão consciente e temporária porque o sistema
+   ainda não tem login de usuário. **Antes de considerar o sistema pronto para uso real em produção,
+   isso precisa ser substituído** por policies que verificam autenticação (e futuramente
+   multi-loja/tenant). Não tratar isso como "só depois" indefinidamente.
+2. **Sem autenticação nenhuma.** Não há tela de login, não há conceito de usuário/permissão no
+   sistema. Qualquer pessoa que abrir o app tem acesso a tudo.
+3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pelo usuário em algum
+   momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
+   código em nenhuma sessão. Vale considerar sugerir ao usuário que rotacione essa chave em
+   Settings → API Keys do Supabase, se isso ainda não tiver sido feito. (Nesta sessão o usuário só
+   colou a chave `anon`, que é pública por design — sem problema.)
+4. **Sem testes automatizados** (nenhum framework de teste configurado ainda).
+5. **App nunca foi empacotado de verdade** (`npm run electron:build` / instalador `.exe`) — só
+   testado em modo dev (`npm run dev`). O ícone/instalador do Windows, ícone da aplicação,
+   assinatura de código, etc. ainda não foram configurados em `electron-builder` (não existe seção
+   `"build"` no `package.json`).
+6. **`electron-updater` está chamado no código** (`electron/main.ts`) mas não há nenhum servidor de
+   atualização/publish configurado (ex: GitHub Releases) — vai falhar silenciosamente ou não fazer
+   nada até isso ser configurado.
+7. **Ambiente de sandbox onde o Claude roda (nuvem) não consegue acessar `*.supabase.co`** — política
+   de rede bloqueia (confirmado, erro 403 do proxy da própria plataforma). Isso significa que testes
+   de ponta a ponta contra o Supabase real **só podem ser feitos pelo usuário, na máquina dele**. Do
+   lado do sandbox, a validação possível é: `tsc --noEmit`, `vite build`, `npm run lint`, e
+   screenshots via Playwright + `xvfb-run` (Electron real, headless) renderizando a UI — com dados
+   mockados via `page.route()` interceptando as chamadas REST do Supabase, ou com `.env` ausente
+   para ver os estados vazios/aviso.
+8. **Havia um bug real de tela em branco**: `src/lib/supabase.ts` usava `??` para dar fallback num
+   endereço de teste quando as variáveis de ambiente não estivessem definidas — mas um `.env`
+   copiado de `.env.example` define as variáveis como **string vazia**, não ausente, e `??` não
+   troca strings vazias. Resultado: `createClient("")` lançava `supabaseUrl is required` antes do
+   React desenhar qualquer coisa. **Corrigido** trocando para `||`. Se esse erro voltar a aparecer
+   em qualquer lugar do código, é o mesmo padrão de bug.
+9. **Vercel**: o repositório tem uma integração de deploy automático na Vercel conectada (deixada de
+   quando este repo era um site, antes da reescrita como app Electron). Isso faz o PR #2 (GitHub)
+   mostrar um check falhando que **não tem relação com o código** — um app desktop Electron não
+   roda hospedado numa plataforma de deploy web. Não dá pra desconectar isso pelo código; só pelo
+   painel da Vercel. Perguntei ao usuário se quer que eu oriente a remoção; ainda sem resposta.
+
+## 7. O que já está pronto e validado (pelo usuário, rodando de verdade)
+
+Todos os itens abaixo foram testados pelo usuário na máquina dele e confirmados funcionando:
+
+1. ✅ Cadastro de Clientes (+ veículo)
+2. ✅ Cadastro de Peças/Produtos (com campos fiscais NCM/CFOP/CST-CSOSN/ICMS)
+3. ✅ Estoque (entrada/saída, saldo calculado)
+4. ✅ Ordens de Serviço (cliente + veículo + itens de peça/serviço, baixa automática de estoque)
+5. ✅ Caixa Diário (manual + automático via faturamento de OS) — **reorganizado** nesta sessão:
+   agora mostra um card de "Lucro do dia", um resumo de totais por forma de recebimento (dinheiro,
+   cartão, PIX...) e a tabela principal ganhou colunas de Origem (OS ou lançamento manual), Cliente
+   e Lucro por lançamento, sem repetir informação — inspirado numa tela de um sistema concorrente
+   que o usuário mostrou (que tinha a informação certa, mas espalhada e repetitiva).
+6. ✅ Relatórios (comparativo diário/semanal/mensal)
+7. ✅ Lucratividade (margem por peça/serviço, período filtrável)
+8. ✅ Painel de Controle (gauges de faturamento e margem, fila de atendimento)
+
+**Isso fecha 100% do escopo da v1 definido pelo usuário no início do projeto.** A v1.0.0 ainda não
+foi formalmente "lançada" (tag/versão) — o usuário preferiu continuar em desenvolvimento antes de
+fechar a versão.
+
+**✅ Confirmado pelo usuário nesta sessão, rodando de verdade:**
+
+- **Conexão real com o Supabase funcionando** — Painel de Controle mostrando dados reais (não mais
+  o aviso "não configurado"), sem erros no console. Levou algumas idas e vindas por causa de erros
+  de digitação no `.env` (ver dica de suporte abaixo) — no fim funcionou com a URL
+  `https://rlgdjiowvnfzsedehyga.supabase.co` + chave anon/publishable.
+- Correção da tela em branco (item 8 da seção 6).
+- DevTools abre automaticamente em modo dev (`mainWindow.webContents.openDevTools()` quando há
+  `VITE_DEV_SERVER_URL`) — facilita o usuário mandar prints de erro daqui pra frente. **Foi essa
+  ferramenta que permitiu diagnosticar tanto o bug da tela branca quanto os erros de `.env` abaixo.**
+- `npm run lint` funcionando (estava completamente quebrado — faltava `eslint.config.js` e os
+  pacotes de lint do React nunca tinham sido instalados).
+- Reorganização do Caixa Diário (item 5 acima).
+- Logo do menu lateral sem a flor (só o wordmark, maior) — ver seção 2.
+
+**Dica de suporte para a próxima vez que o usuário mexer no `.env`:** ele erra na edição manual com
+uma certa frequência (não é falta de atenção, é só a curva de aprendizado normal de quem não
+programa). Dois erros já vistos: (1) editar o `.env` errado porque o VS Code estava com uma pasta
+"container" aberta e havia uma pasta `amigao` duplicada dentro dela — sempre confirme o caminho
+com `pwd`/o prompt do terminal antes de editar; (2) colar o valor por cima do nome da variável sem
+apagar o que já estava lá, duplicando o `VITE_SUPABASE_URL=VITE_SUPABASE_URL=...`. **A forma mais
+confiável de corrigir remotamente (sem depender do editor)** é pedir pra rodar no mesmo terminal
+que roda `npm run dev`:
+```powershell
+@"
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+"@ | Set-Content .env -Encoding utf8
+```
+e sempre confirmar com `Get-Content .env` antes de reiniciar o app — o Vite só lê o `.env` quando o
+servidor inicia, não recarrega sozinho, então depois de editar sempre precisa `Ctrl+C` + `npm run dev`
+de novo.
+- Migrations idempotentes (`drop policy if exists` antes de cada `create policy`).
+
+## 8. O que NÃO existe ainda (próximos passos possíveis)
+
+Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
+
+1. **Parte fiscal (prioridade alta)**: emissão de NFC-e (peças, padrão estadual/SEFAZ) e NFS-e
+   (serviço, padrão municipal — varia por cidade). Estratégia definida: integrar com um provedor
+   intermediário (Focus NFe, eNotas, PlugNotas ou similar) em vez de implementar comunicação direta
+   com SEFAZ/prefeituras. **Ainda não escolhido qual provedor** — depende de qual cobre o município
+   da loja para NFS-e. Isso é uma decisão que precisa ser apresentada ao usuário antes de codar.
+2. **Autenticação / login de usuário** — pré-requisito para resolver a dívida técnica do RLS aberto
+   (seção 6.1) e para multi-loja no futuro.
+3. **Logo oficial** — pegar o arquivo `.svg` real do usuário como **anexo** (não colado no chat) e
+   aplicar no lugar dos SVGs feitos à mão (ver seção 2).
+4. Refinamentos possíveis no Painel de Controle e demais módulos, conforme feedback do usuário.
+
+Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
+arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
+importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
+(ex: Supermarket Edition).
+
+## 9. Como rodar localmente (resumo)
+
+```bash
+npm install
+cp .env.example .env   # preencher com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave anon/publishable)
+npm run dev            # abre o app Electron com hot reload + DevTools
+```
+
+Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
+URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
+`supabase/migrations/*.sql` (0001 a 0006) — segundo a sessão anterior, já foram todas aplicadas e
+confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seguras de rodar de novo
+(idempotentes) caso precise reconectar ou usar outro projeto Supabase do zero.
+
+## 10. Estado do Git
+
+- Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —
+  foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`).
+- **`main` agora É o Sakura System** — nesta sessão, a branch `claude/sakura-autocenter-status-m6sio5`
+  (histórico completo do Sakura System + fix do `AGENTS.md` + este arquivo atualizado) foi mergeada
+  em `main` a pedido do usuário, especificamente para permitir clonar o projeto em outro computador
+  (ex: PC do trabalho) sem precisar trocar de branch — um `git clone` simples já traz a versão
+  certa. O PR [#2](https://github.com/caranovavidanova/amigao/pull/2) (`qjzqab` → `main`) foi
+  fechado por já estar contido nesse merge.
+- Branches antigas que **não** precisam mais ser usadas (mantidas só por histórico, seguro ignorar
+  ou apagar): `claude/sakura-system-autocenter-qjzqab`, `claude/sakura-system-autocenter-cyfuwh`,
+  `claude/software-visual-identity-cjr8f6` (essa mantinha a marca "Pneus Amigão", PR #1 fechado sem
+  merge).
+- **Sessões futuras**: pode trabalhar direto a partir de `main` — não é mais necessário conferir
+  divergência entre branches antes de começar.
+- `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
+
+## 12. Trabalhando de outro computador
+
+O código (tudo que está commitado e no GitHub) e o banco de dados (Supabase) já são 100% na nuvem —
+dá pra continuar em qualquer computador com internet. Dois passos manuais em cada computador novo,
+porque nunca ficam salvos no Git (por segurança):
+
+```bash
+git clone https://github.com/caranovavidanova/amigao.git
+cd amigao
+npm install
+cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehyga.supabase.co
+                        # e VITE_SUPABASE_ANON_KEY=<chave anon, em Settings -> API no Supabase>
+npm run dev
+```
+
+## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
+
+O usuário tinha (no Windows, em `Desktop`) uma pasta `amigao` (clone antigo do "Pneus Amigão",
+branch `main`, com `.git` próprio) contendo **dentro dela** uma segunda pasta também chamada
+`amigao` (clone separado, com o Sakura System de verdade). Isso causava confusão de qual `.env`
+editar (mesmo problema já registrado na dica de suporte da seção 7). **Totalmente resolvido nesta
+sessão** — não precisa repetir esse processo em sessões futuras:
+
+- A pasta interna (com o Sakura System) foi renomeada para `sakura-system-autocenter` e movida pra
+  `C:\Users\usuario\Desktop\sakura-system-autocenter` — **essa é a pasta certa a partir de agora**,
+  com `.env` configurado e funcionando (testado pelo usuário, Painel de Controle mostrando dados
+  reais).
+- A pasta antiga (clone do `main` desatualizado) foi renomeada para `amigao_ANTIGO_apagar` como
+  backup, confirmado que não tinha nenhuma alteração não salva (`git status` limpo, tudo já no
+  GitHub) e **já foi excluída pelo usuário**.
+- **Achado à parte, já corrigido**: o `.env.local` da pasta antiga tinha credenciais de um projeto
+  Supabase totalmente diferente (`nahbbhewpqmedzorhtgo`, prefixo `NEXT_PUBLIC_`, resquício do
+  Next.js antigo) e uma `GEMINI_API_KEY`. Nunca foi commitado (está no `.gitignore`), mas ficou
+  exposto no chat desta sessão — **o usuário já rotacionou essa chave do Gemini**, não precisa
+  avisar de novo.

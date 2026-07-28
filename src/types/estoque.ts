@@ -1,0 +1,15 @@
+export type TipoMovimento = "entrada" | "saida";
+
+export type MotivoMovimento = "compra" | "venda" | "ajuste" | "uso_em_os";
+
+export interface MovimentoEstoque {
+  id: string;
+  peca_id: string;
+  tipo: TipoMovimento;
+  quantidade: number;
+  motivo: MotivoMovimento;
+  referencia: string | null;
+  criado_em: string;
+}
+
+export type NovoMovimentoEstoque = Omit<MovimentoEstoque, "id" | "criado_em">;

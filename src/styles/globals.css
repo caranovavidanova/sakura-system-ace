@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta oficial Sakura System */
+  --color-sakura-pink: #ffc9f3;
+  --color-sakura-purple: #b38dac;
+  --color-sakura-gray: #c7c7c7;
+
+  /* Variações para garantir contraste de texto (WCAG AA) sobre fundo claro */
+  --color-sakura-purple-dark: #6e4d68;
+  --color-sakura-pink-soft: #fff0fb;
+  --color-sakura-bg: #fff7fc;
+
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-sakura-bg);
+  font-family: var(--font-sans);
+}

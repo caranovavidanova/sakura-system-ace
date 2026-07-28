@@ -72,7 +72,7 @@ export function FaturamentoCard({
   }
 
   return (
-    <div className="space-y-5 rounded-2xl border border-sakura-gray/30 bg-white p-6 shadow-sm">
+    <div className="space-y-5 sakura-card p-6 shadow-sm">
       <div>
         <h3 className="text-sm font-semibold text-sakura-purple-dark">
           Faturar OS de {ordem.cliente?.nome ?? "cliente"}

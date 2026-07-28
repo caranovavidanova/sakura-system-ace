@@ -5,8 +5,8 @@ import type { ModuloChave } from "@/types/operador";
 
 function AcessoNegado() {
   return (
-    <div className="rounded-2xl border border-sakura-gray/30 bg-white p-8 text-center">
-      <p className="text-sm text-sakura-gray">
+    <div className="sakura-card p-8 text-center">
+      <p className="text-sm text-sakura-purple-dark/70">
         Você não tem permissão para acessar este módulo. Fale com o administrador.
       </p>
     </div>

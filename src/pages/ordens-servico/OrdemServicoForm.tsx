@@ -146,7 +146,7 @@ export function OrdemServicoForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-2xl border border-sakura-gray/30 bg-white p-6 shadow-sm"
+      className="space-y-6 sakura-card p-6 shadow-sm"
     >
       {ordemExistente && (
         <div className="flex items-center justify-between border-b border-sakura-gray/20 pb-4">
@@ -346,7 +346,7 @@ export function OrdemServicoForm({
 
         <div className="space-y-4">
           {ordemExistente && (
-            <div className="space-y-3 rounded-2xl border border-sakura-gray/30 p-4">
+            <div className="space-y-3 sakura-card p-4">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-sakura-purple-dark/80">Status</span>
                 <select

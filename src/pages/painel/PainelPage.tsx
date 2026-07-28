@@ -154,19 +154,28 @@ export function PainelPage() {
             />
           </div>
 
+          <div className="flex justify-center">
+            <Link
+              to="/relatorios"
+              className="rounded-full bg-white/50 px-5 py-2 text-xs font-medium text-sakura-purple-dark hover:bg-white/70"
+            >
+              Ver relatórios completos →
+            </Link>
+          </div>
+
           <div className="grid grid-cols-[2fr_1fr] gap-4">
-            <section>
+            <section className="sakura-card p-4">
               <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
                 OS abertas
               </h2>
               {filaDeAtendimento.length === 0 ? (
-                <p className="text-sm text-sakura-gray">
+                <p className="text-sm text-sakura-purple-dark/60">
                   Nenhuma ordem de serviço em aberto no momento.
                 </p>
               ) : (
-                <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
+                <div className="overflow-hidden rounded-xl border border-white/50">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
+                    <thead className="bg-white/40 text-sakura-purple-dark">
                       <tr>
                         <th className="px-4 py-3 font-medium">Cliente</th>
                         <th className="px-4 py-3 font-medium">Veículo</th>
@@ -176,7 +185,7 @@ export function PainelPage() {
                     </thead>
                     <tbody>
                       {filaDeAtendimento.map((ordem) => (
-                        <tr key={ordem.id} className="border-t border-sakura-gray/20">
+                        <tr key={ordem.id} className="border-t border-white/40">
                           <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
                           <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
                           <td className="px-4 py-3">
@@ -211,16 +220,10 @@ function CartaoTendencia({
   cor: string;
 }) {
   return (
-    <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
-      <p className="text-xs text-sakura-gray">{titulo}</p>
+    <div className="sakura-card p-4">
+      <p className="text-xs text-sakura-purple-dark/60">{titulo}</p>
       <p className="mt-1 text-lg font-semibold text-sakura-purple-dark">{valor}</p>
       <Sparkline valores={valores} cor={cor} />
-      <Link
-        to="/relatorios"
-        className="text-xs font-medium text-sakura-purple hover:underline"
-      >
-        Ver mais →
-      </Link>
     </div>
   );
 }

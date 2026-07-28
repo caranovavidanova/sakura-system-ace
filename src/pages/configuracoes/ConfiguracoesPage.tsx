@@ -127,7 +127,7 @@ export function ConfiguracoesPage() {
           {operadores.map((op) => (
             <div
               key={op.id}
-              className="rounded-2xl border border-sakura-gray/30 bg-white p-5"
+              className="sakura-card p-5"
             >
               <div className="flex items-start justify-between">
                 <div>

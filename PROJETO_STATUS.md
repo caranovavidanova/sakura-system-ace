@@ -39,8 +39,15 @@ base arquitetural.
 - Paleta: rosa `#FFC9F3`, roxo `#B38DAC`, cinza `#C7C7C7` (implementada em
   `src/styles/globals.css` como `--color-sakura-*`, com variantes de contraste
   `sakura-purple-dark` e `sakura-pink-soft` criadas para acessibilidade).
-- Estilo: painel visual e acolhedor, cards com indicadores tipo velocímetro/gauge, navegação
-  lateral por módulos, bastante espaçamento (oposto da densidade de ERP tradicional).
+- Estilo: painel visual e acolhedor, navegação lateral por módulos, bastante espaçamento (oposto
+  da densidade de ERP tradicional). Os indicadores tipo velocímetro/gauge do rascunho inicial não
+  vingaram — foram trocados por cartões de tendência com sparkline (ver seção 7, redesenho do Início).
+- **Estilo "glassmorphism" (nesta sessão)**: o app inteiro passou a usar blocos arredondados e
+  translúcidos (`sakura-card` em `src/styles/globals.css`, com `backdrop-filter: blur`) flutuando
+  sobre um fundo rosa com brilho difuso (`sakura-shell-bg`) — a pedido do usuário, que mandou prints
+  de referência (cartões de vidro fosco tipo iOS/dashboard "bento grid"). O tom dos blocos é bem mais
+  branco/claro que o rosa saturado do fundo **de propósito** — pra se destacar por cor, não só pelo
+  efeito de blur. Ver seção 7 pro detalhe de onde foi aplicado.
 - **Logo**: `public/sakura-icon.svg` (flor sozinha, usada como favicon/ícone da janela — continua
   com a flor) e `public/sakura-logo.svg` (usado no menu lateral via `src/components/Logo.tsx`).
   **A pedido do usuário, `sakura-logo.svg` NÃO tem mais a flor** — só o wordmark "Sakura System" /
@@ -474,12 +481,47 @@ com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 
     garantia"** — por enquanto **placeholder** (mesmo padrão do NFe/NFS-e: mostram aviso de "ainda não
     disponível"), porque o texto/modelo da garantia ainda não foi definido.
 
+**⏳ Implementado e mergeado direto em `main` nesta sessão (redesenho visual "glassmorphism" do app
+inteiro), ainda sem confirmação do usuário rodando de verdade** — pedido do usuário, que mandou prints
+de referência (cartões de vidro fosco flutuando, estilo iOS/dashboard "bento grid") e screenshots do
+próprio app indicando quais partes deveriam virar "blocos". Validado no sandbox via `npm run build`,
+`npm run lint`, `tsc -b` e screenshots Playwright com dados simulados (sandbox não acessa
+`*.supabase.co`, ver item 7 da seção 6). Mudança é **só CSS/classes React, nenhuma migration**:
+
+- **Duas classes novas em `src/styles/globals.css`** (Tailwind v4 `@utility`, então funcionam como
+  qualquer classe utilitária): `sakura-shell-bg` (fundo rosa com brilho difuso, `background-attachment:
+  fixed`, aplicado no container raiz do app em `App.tsx`) e `sakura-card` (bloco arredondado —
+  `border-radius` grande, gradiente quase branco com um toque de roxo no canto, `backdrop-filter: blur`,
+  sombra suave). O tom do bloco é **bem mais claro** que o fundo rosa saturado de propósito — o usuário
+  pediu explicitamente que o bloco se destacasse do fundo **por cor**, não só pelo efeito de blur.
+- **`sakura-card` aplicado em todo o app** — substituiu o antigo padrão `rounded-2xl border
+  border-sakura-gray/30 bg-white` (e variantes) em praticamente todas as telas: Sidebar, os três
+  cartões de tendência do Início, a tabela "OS abertas", o `MiniCalendario`, e todos os cards/formulários/
+  tabelas de Clientes, Estoque, Serviços, Ordens de Serviço (form + `FechamentoTab`), Caixa, Relatórios,
+  Lucratividade e Configurações. A tela de Login **não foi mexida** — já tinha seu próprio estilo de
+  vidro fosco com fundo floral próprio, feito numa sessão anterior, e não fazia parte dos prints que o
+  usuário mandou.
+- **Sidebar** (`src/components/Sidebar.tsx`): virou ela mesma um bloco flutuante (`sakura-card`), com
+  espaço/gap em volta em vez de ficar colada nas bordas da janela (`App.tsx` ganhou `gap-4 p-4` no
+  container raiz). O item de menu **"Configurações" (texto) virou um ícone de engrenagem** ao lado do
+  nome do operador, no rodapé da barra lateral — só aparece pra quem é admin (mesma regra de antes,
+  só mudou de lugar/formato). O ícone é um SVG desenhado à mão (sem adicionar biblioteca de ícones
+  nova como dependência), inspirado no ícone "settings" do Feather Icons.
+- **"Ver mais" consolidado**: os três cartões de tendência do Início (Vendas/Custos/Lucros mês) tinham
+  cada um seu próprio link "Ver mais →", todos indo pro mesmo lugar (Relatórios) — virou **um único
+  botão** ("Ver relatórios completos →") centralizado abaixo dos três cartões, em vez de repetir o link
+  três vezes.
+- **Pendências que ficaram de fora de propósito** (nenhuma foi pedida pelo usuário, mas valem nota
+  pra próxima sessão): a cor dos **botões** (ex: "+ Novo cliente", que usa `bg-sakura-purple` sólido)
+  não foi ajustada — como é uma cor da mesma família do novo fundo rosa, o contraste ficou um pouco
+  mais fraco do que era sobre o fundo branco antigo; se o usuário achar os botões "sumindo" no fundo
+  novo, é candidato a ajuste futuro. A tela de Login também poderia ganhar o mesmo tom de `sakura-card`
+  se o usuário quiser unificar tudo, mas não foi pedido.
+
 ## 8.1 Pendência em aberto nesta sessão
 
-O usuário pediu pra arrumar o RLS aberto (item 1 da seção 6) logo em seguida às mudanças na tela de OS
-acima — ainda **não começado**. Como é uma decisão estrutural (muda como a permissão por módulo é
-reforçada: hoje só na interface, ver seção 6.1), a próxima sessão/continuação deve **apresentar opções
-+ recomendação e esperar confirmação** antes de mexer nas policies (ver seção 1), não decidir sozinho.
+Nenhuma no momento — a última pendência registrada aqui (RLS aberto, item 1 da seção 6) foi resolvida
+nesta mesma sessão (migration `0015_rls_exige_login.sql`, ver seção 6 e seção 7).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 

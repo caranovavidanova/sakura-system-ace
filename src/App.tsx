@@ -32,8 +32,8 @@ function PaginaInicial() {
   }
 
   return (
-    <div className="rounded-2xl border border-sakura-gray/30 bg-white p-8 text-center">
-      <p className="text-sm text-sakura-gray">
+    <div className="sakura-card p-8 text-center">
+      <p className="text-sm text-sakura-purple-dark/70">
         Nenhum módulo liberado para o seu usuário. Fale com o administrador.
       </p>
     </div>
@@ -45,8 +45,8 @@ export default function App() {
 
   if (carregando) {
     return (
-      <div className="flex h-screen items-center justify-center bg-sakura-bg">
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+      <div className="sakura-shell-bg flex h-screen items-center justify-center">
+        <p className="text-sm text-sakura-purple-dark/70">Carregando...</p>
       </div>
     );
   }
@@ -56,9 +56,9 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-sakura-bg">
+    <div className="sakura-shell-bg flex h-screen gap-4 overflow-hidden p-4">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 overflow-y-auto p-4">
         <Routes>
           <Route path="/" element={<PaginaInicial />} />
           <Route

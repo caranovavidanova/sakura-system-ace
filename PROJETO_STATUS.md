@@ -571,11 +571,10 @@ Se testar e aprovar, é só avisar que eu abro o PR pra mergear em `main`.
   usuário rodar essas mudanças com o Supabase dele — inclui duas migrations (0009 e 0010) que ainda
   precisam ser rodadas manualmente no Supabase, ver o tutorial na seção 9. Se aparecer algum
   problema ao testar, é código já em `main`, não numa branch separada.
-- **Branch `claude/new-session-mufqk9`** (módulo Serviços + redesenho da tela de Ordem de Serviço, ver
-  seção 7): pushada nesta sessão, **ainda sem PR aberto** — como não foi pedido pra mergear direto
-  (diferente das sessões anteriores), o trabalho ficou numa branch separada até o usuário testar e
-  decidir. Inclui duas migrations novas (0011 e 0012) que ainda precisam ser rodadas manualmente no
-  Supabase antes de testar — ver tutorial na seção 9.
+- PR [#10](https://github.com/caranovavidanova/amigao/pull/10) (`claude/new-session-mufqk9` → `main`):
+  módulo Serviços + redesenho da tela de Ordem de Serviço, ver seção 7. **Aberto nesta sessão, a
+  pedido do usuário, ainda não mergeado** — inclui duas migrations novas (0011 e 0012) que ainda
+  precisam ser rodadas manualmente no Supabase, ver tutorial na seção 9.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

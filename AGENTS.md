@@ -1,5 +1,5 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Sakura System — AutoCenter Edition
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+Stack: Electron + React + Vite + TypeScript (não é Next.js — não existe servidor). Ver `README.md`
+para como rodar o projeto e `PROJETO_STATUS.md` para o histórico completo de decisões, estrutura de
+pastas, modelagem de dados e pendências.

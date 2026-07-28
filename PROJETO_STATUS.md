@@ -252,21 +252,46 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`). `main`
   **ainda está na versão antiga** (Pneus Amigão, navy/dourado) — nenhum merge do Sakura System foi
   feito para `main` ainda.
-- **Três branches em jogo, cuidado para não trabalhar na desatualizada:**
-  - `claude/sakura-system-autocenter-qjzqab` — **a mais completa e atualizada** (esta sessão rodou
-    aqui). Tem: todo o histórico do Sakura System + logo/wordmark refinados + fix da tela branca +
-    fix do lint + DevTools automático + Caixa Diário reorganizado + migrations idempotentes. **PR
-    aberto**: [#2](https://github.com/caranovavidanova/amigao/pull/2) contra `main`.
+- **Branches em jogo, cuidado para não trabalhar na desatualizada:**
+  - `claude/sakura-system-autocenter-qjzqab` — **a mais completa e atualizada**. Tem: todo o
+    histórico do Sakura System + logo/wordmark refinados + fix da tela branca + fix do lint +
+    DevTools automático + Caixa Diário reorganizado + migrations idempotentes. **PR aberto**:
+    [#2](https://github.com/caranovavidanova/amigao/pull/2) contra `main`, ainda não mergeado.
+  - `claude/sakura-autocenter-status-m6sio5` — criada vazia (a partir de `main` desatualizada);
+    resetada nesta sessão para ficar idêntica à `qjzqab`, mais um commit corrigindo o `AGENTS.md`
+    (tinha um texto de outro projeto mandando ler docs do Next.js que não existem aqui — removido).
+    Sem PR aberto ainda.
   - `claude/sakura-system-autocenter-cyfuwh` — mesma base até `bde5db0`, mas só tem UM commit a
     mais que a `qjzqab` não tem: a criação deste `PROJETO_STATUS.md`. **Não tem** nenhum dos
-    commits desta sessão (logo, caixa, fixes). Sem PR aberto.
-  - `claude/software-visual-identity-cjr8f6` — tentativa **antiga e divergente**, de uma sessão sem
-    o contexto completo do projeto: só suaviza a paleta navy/dourado, **mantendo a marca "Pneus
-    Amigão"**. Isso contradiz a direção que o usuário já validou (Sakura System puro). Tem
-    [PR #1](https://github.com/caranovavidanova/amigao/pull/1) aberto contra `main`, ainda não
-    fechado. **Recomendação**: perguntar ao usuário se pode fechar esse PR/branch.
+    commits de logo/caixa/fixes. Sem PR aberto.
+  - `claude/software-visual-identity-cjr8f6` — tentativa antiga e divergente, mantendo a marca
+    "Pneus Amigão" (contradiz a direção já validada pelo usuário). PR
+    [#1](https://github.com/caranovavidanova/amigao/pull/1) **fechado sem merge** — já resolvido,
+    não precisa mais perguntar ao usuário sobre isso.
 - **Antes de abrir uma nova sessão nesse repo**: confira em qual branch as instruções da tarefa
   mandam trabalhar. Se for uma branch diferente de `qjzqab`, ela provavelmente está desatualizada —
   traga os commits que faltam (`git log branchA..branchB`) antes de continuar, ou avise o usuário
   da divergência antes de fazer trabalho que pode se perder.
 - `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
+
+## 11. Ambiente local do usuário (Windows) — pasta reorganizada nesta sessão
+
+O usuário tinha (no Windows, em `Desktop`) uma pasta `amigao` (clone antigo do "Pneus Amigão",
+branch `main`, com `.git` próprio) contendo **dentro dela** uma segunda pasta também chamada
+`amigao` (clone separado, com o Sakura System de verdade). Isso causava confusão de qual `.env`
+editar (mesmo problema já registrado na dica de suporte da seção 7). Resolvido nesta sessão:
+
+- A pasta interna (com o Sakura System) foi renomeada para `sakura-system-autocenter` e movida pra
+  fora, para `C:\Users\usuario\Desktop\sakura-system-autocenter` — **essa é a pasta certa a partir
+  de agora**, com `.env` já configurado e funcionando (testado pelo usuário, Painel de Controle
+  mostrando dados reais).
+- A pasta antiga (clone do `main` desatualizado) foi renomeada para `amigao_ANTIGO_apagar` como
+  backup antes de excluir — confirmado que não tinha nenhuma alteração não salva (`git status`
+  limpo, tudo já no GitHub) e o usuário já pode apagá-la quando quiser.
+- **Achado à parte**: o `.env.local` da pasta antiga tinha credenciais de um projeto Supabase
+  totalmente diferente (`nahbbhewpqmedzorhtgo`, prefixo `NEXT_PUBLIC_`, resquício do Next.js antigo)
+  e uma `GEMINI_API_KEY`. Nunca foi commitado (está no `.gitignore`), mas ficou exposto no chat desta
+  sessão — vale sugerir ao usuário rotacionar essa chave do Gemini se ainda estiver em uso em algum
+  lugar.
+- Se uma sessão futura não encontrar mais a pasta duplicada, é porque esse problema já foi resolvido
+  — não precisa repetir esse processo.

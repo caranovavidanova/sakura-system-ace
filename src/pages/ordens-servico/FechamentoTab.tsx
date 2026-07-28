@@ -36,7 +36,7 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
 
   return (
     <div className="space-y-6">
-      <section className="grid grid-cols-2 gap-4 rounded-2xl border border-sakura-gray/30 p-4 text-sm">
+      <section className="grid grid-cols-2 gap-4 sakura-card p-4 text-sm">
         <div>
           <p className="text-sakura-purple-dark/80">Cliente</p>
           <p className="font-medium text-sakura-purple-dark">{ordem.cliente?.nome ?? "—"}</p>
@@ -59,7 +59,7 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-sakura-gray/30 p-4">
+      <section className="sakura-card p-4">
         <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
           Peças e serviços
         </h3>
@@ -87,7 +87,7 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         </p>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-sakura-gray/30 p-4">
+      <section className="space-y-4 sakura-card p-4">
         <div className="space-y-2">
           <p className="text-xs font-medium text-sakura-purple-dark/60">Nota fiscal</p>
           <div className="flex gap-2">

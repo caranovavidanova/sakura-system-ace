@@ -90,19 +90,19 @@ export function RelatoriosPage() {
       )}
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Vendas hoje</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalHoje)}
           </p>
         </div>
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Vendas esta semana</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalSemana)}
           </p>
         </div>
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Vendas este mês</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalMes)}
@@ -121,7 +121,7 @@ export function RelatoriosPage() {
           <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
             Vendas por dia
           </h2>
-          <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
+          <div className="overflow-hidden sakura-card">
             <table className="w-full text-left text-sm">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>

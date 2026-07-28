@@ -65,7 +65,7 @@ export function MovimentoForm({ pecas, onSalvar, onCancelar }: MovimentoFormProp
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-sakura-gray/30 bg-white p-6 shadow-sm"
+      className="space-y-4 sakura-card p-6 shadow-sm"
     >
       {erro && (
         <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">

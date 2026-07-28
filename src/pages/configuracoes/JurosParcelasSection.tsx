@@ -45,7 +45,7 @@ export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSe
   }
 
   return (
-    <div className="rounded-2xl border border-sakura-gray/30 bg-white p-6">
+    <div className="sakura-card p-6">
       <h2 className="text-sm font-semibold text-sakura-purple-dark">
         Juros de parcelamento
       </h2>

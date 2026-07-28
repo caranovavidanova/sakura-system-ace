@@ -93,7 +93,7 @@ export function ClientesPage() {
           Nenhum cliente cadastrado ainda.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
+        <div className="overflow-hidden sakura-card">
           <table className="w-full text-left text-sm">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>

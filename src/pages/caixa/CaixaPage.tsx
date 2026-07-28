@@ -150,25 +150,25 @@ export function CaixaPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Entradas do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(entradas)}
           </p>
         </div>
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Saídas do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(saidas)}
           </p>
         </div>
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Saldo do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(entradas - saidas)}
           </p>
         </div>
-        <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+        <div className="sakura-card p-4">
           <p className="text-xs text-sakura-gray">Lucro do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalLucro)}
@@ -185,7 +185,7 @@ export function CaixaPage() {
             {porFormaPagamento.map(([forma, valor]) => (
               <div
                 key={forma}
-                className="rounded-xl border border-sakura-gray/30 bg-white px-4 py-3"
+                className="sakura-card px-4 py-3"
               >
                 <p className="text-xs text-sakura-gray">{forma}</p>
                 <p className="text-base font-semibold text-sakura-purple-dark">
@@ -202,7 +202,7 @@ export function CaixaPage() {
       ) : movimentosDoDia.length === 0 ? (
         <p className="text-sm text-sakura-gray">Nenhuma movimentação neste dia.</p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
+        <div className="overflow-hidden sakura-card">
           <table className="w-full text-left text-sm">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>

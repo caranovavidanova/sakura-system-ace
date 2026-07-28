@@ -46,13 +46,13 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
   ];
 
   return (
-    <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+    <div className="sakura-card p-4">
       <p className="mb-3 text-sm font-semibold text-sakura-purple-dark">
         {NOMES_MES[mes]}
       </p>
       <div className="grid grid-cols-7 gap-1 text-center text-xs">
         {DIAS_SEMANA.map((dia, i) => (
-          <div key={i} className="py-1 font-medium text-sakura-gray">
+          <div key={i} className="py-1 font-medium text-sakura-purple-dark/50">
             {dia}
           </div>
         ))}

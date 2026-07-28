@@ -19,3 +19,36 @@ body {
   background-color: var(--color-sakura-bg);
   font-family: var(--font-sans);
 }
+
+/* Fundo rosa "flutuante" do app inteiro — os blocos (sakura-card) boiam por
+   cima dele, então ele só aparece nos vãos entre os blocos. */
+@utility sakura-shell-bg {
+  background-color: #ffc9f3;
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.5), transparent 42%),
+    radial-gradient(circle at 88% 0%, rgba(179, 141, 172, 0.45), transparent 48%),
+    radial-gradient(circle at 50% 105%, rgba(255, 140, 224, 0.45), transparent 55%),
+    linear-gradient(160deg, #ffd9f6 0%, #ffb2ea 55%, #f38fdd 100%);
+  background-attachment: fixed;
+}
+
+/* Bloco arredondado, transparente e "flutuante" — usado em todo o app no
+   lugar do antigo "rounded-2xl border bg-white". Fica bem mais claro/branco
+   que o fundo rosa saturado, pra se destacar por cor mesmo, não só pelo
+   blur — um toque de roxo (sakura-purple) só no canto pra dar profundidade. */
+@utility sakura-card {
+  border-radius: 1.75rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.62) 55%,
+    rgba(179, 141, 172, 0.4) 100%
+  );
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow:
+    0 14px 34px -10px rgba(110, 77, 104, 0.4),
+    0 2px 8px -2px rgba(110, 77, 104, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}

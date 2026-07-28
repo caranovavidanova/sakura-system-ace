@@ -280,12 +280,27 @@ de novo.
 **Passos manuais únicos que o usuário (ou eu) precisa fazer no painel do Supabase antes de testar de
 verdade** (documentados também dentro da migration `0007_operadores.sql`):
 
-1. Rodar a migration `0007_operadores.sql` (SQL Editor do Supabase).
-2. **Desligar a confirmação por e-mail**: Authentication → Providers → Email → desmarcar "Confirm
-   email". Necessário porque os e-mails são internos/inventados (`usuario@sakura.local`) — não existe
-   caixa de entrada pra confirmar, então com a opção ligada ninguém consegue logar depois de criado.
+1. Rodar as migrations `0007_operadores.sql` e `0008_operadores_fix_rls_recursiva.sql` (SQL Editor
+   do Supabase, nessa ordem).
+2. **Desligar a confirmação por e-mail**: Authentication → Sign In / Providers → **duas opções
+   diferentes, as duas precisam estar do jeito certo**: "Enable email provider" **ligado** (senão dá
+   erro "Email logins are disabled") e "Confirm email" **desligado** (senão ninguém consegue entrar
+   depois de criado, porque os e-mails são inventados e não existe caixa de entrada pra confirmar).
 3. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
-   exemplo que está comentado no final da migration, colando o "User UID" gerado.
+   exemplo que está comentado no final da migration 0007, colando o "User UID" gerado.
+
+**🐛 Bug real encontrado e corrigido durante o teste desta sessão**: a policy de escrita de
+`operadores` (migration 0007) checava se quem estava logado era admin consultando a própria tabela
+`operadores` dentro da policy — isso faz o Postgres reavaliar a mesma policy dentro da subconsulta,
+entrando em loop (`infinite recursion detected in policy for relation "operadores"`, erro 500 em
+qualquer select/insert na tabela, inclusive o login não conseguia carregar o perfil do operador).
+**Corrigido** na migration `0008_operadores_fix_rls_recursiva.sql`: a verificação de admin agora
+passa por uma função `security definer` (`operador_atual_e_admin()`), que roda com privilégio do
+dono da função e não reaciona a mesma policy — padrão recomendado do Postgres/Supabase pra esse
+caso. **Se esse erro (`42P17`, "infinite recursion detected in policy") aparecer de novo em alguma
+tabela nova que tenha RLS consultando a própria tabela, é o mesmo padrão de bug** — sempre que uma
+policy precisar checar uma condição na mesma tabela que ela protege, usar uma função
+`security definer`, nunca uma subconsulta direta.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 

@@ -6,6 +6,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ## [Não lançado]
 
 ### Adicionado
+- Cadastro de Produto: campos de código de barras, marca, modelo, aplicação, C.E.S.T. e origem da mercadoria; margem % calcula o preço final automaticamente (e vice-versa); quantidade de estoque inicial no cadastro já gera o lançamento de entrada.
 - Início (antigo "Painel de Controle"): cartões de tendência do mês (Vendas, Custos, Lucros) com mini-gráfico, seção "OS abertas" e um calendário do mês com feriados nacionais e aniversário de cliente.
 - Campo de data de nascimento no cadastro de cliente, usado para marcar aniversário no calendário do Início.
 - Tela de Login redesenhada com efeito de vidro fosco sobre um fundo floral.

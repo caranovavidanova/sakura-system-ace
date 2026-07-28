@@ -106,8 +106,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 - **`clientes`**: id, nome, cpf_cnpj, telefone, email, cep, rua, numero, bairro, cidade, uf,
   data_nascimento (migration 0009 — usada pro calendário do Início marcar aniversário do mês), criado_em
 - **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, km_atual, criado_em
-- **`pecas`**: id, codigo_interno, descricao, unidade, preco_custo, preco_venda, ncm, cfop_padrao,
-  cst_ou_csosn, aliquota_icms, ativo, criado_em
+- **`pecas`**: id, codigo_interno (exibido como "Referência" na tela), codigo_barras, descricao,
+  marca, modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
+  cst_ou_csosn, aliquota_icms, ativo, criado_em (campos codigo_barras/marca/modelo/aplicacao/cest/origem
+  são da migration 0010). **Margem % não é salva no banco** — é só calculada na tela a partir de
+  `preco_custo`/`preco_venda`, pra não duplicar um dado que já dá pra derivar dos outros dois.
 - **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
   (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
 - **`ordens_servico`**: id, cliente_id (FK), veiculo_id (FK, opcional), status
@@ -346,6 +349,22 @@ Playwright com dados simulados via `page.route()` interceptando as chamadas REST
   `<ellipse>`/`<circle>` das pétalas, não é a foto real). **Pendência**: se o usuário mandar a foto
   de verdade como anexo/drag-and-drop (não colada), é só trocar a `background-image` do
   `LoginPage.tsx` pra apontar pro arquivo real dentro de `public/`.
+- **Cadastro de Produto (aba Estoque → Produtos) ampliado**, a pedido do usuário depois de mandar
+  um print do cadastro de peça de um sistema de referência (S3Auto/Comsis): novos campos **Código
+  de barras, Marca, Modelo, Aplicação, C.E.S.T. e Origem da mercadoria** (migration
+  `0010_pecas_campos_cadastro_completo.sql`); "Código interno" passou a ser exibido como
+  **"Referência"** (mesmo campo, só o rótulo mudou). Viraram **obrigatórios** no formulário (mas
+  não em nível de banco, mesmo padrão dos campos fiscais que já existiam): Descrição, NCM, C.E.S.T,
+  CFOP, Origem, CST/CSOSN e Unidade — `CST` e `CSOSN` continuam sendo **um campo só** (decisão
+  explícita do usuário nesta sessão: na prática só um se aplica dependendo do regime tributário da
+  loja). **Margem % com cálculo nos dois sentidos**: preencher a margem calcula automaticamente o
+  Preço final (markup sobre o custo — decisão explícita do usuário: preço = custo × (1 +
+  margem/100)); editar o Preço final direto também funciona e recalcula a margem exibida pra manter
+  os dois campos coerentes. A margem em si **não é salva no banco** (é derivada de
+  `preco_custo`/`preco_venda` só na tela). Um novo campo **"Qtde. estoque inicial"** no cadastro
+  cria automaticamente um lançamento de entrada em `estoque_movimentos` (motivo `ajuste`) junto com
+  o produto, decisão explícita do usuário pra não precisar ir na aba Movimentações lançar o estoque
+  inicial manualmente depois.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 

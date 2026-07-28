@@ -1,3 +1,4 @@
+import type { Operador } from "@/types/operador";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import type { NovoItemOS, TipoItemOS } from "@/types/os";
@@ -6,13 +7,21 @@ interface ItemOSRowProps {
   item: NovoItemOS;
   pecas: Peca[];
   servicos: Servico[];
+  operadores: Operador[];
   onChange: (item: NovoItemOS) => void;
   onRemover: () => void;
 }
 
 const SERVICO_AVULSO = "avulso";
 
-export function ItemOSRow({ item, pecas, servicos, onChange, onRemover }: ItemOSRowProps) {
+export function ItemOSRow({
+  item,
+  pecas,
+  servicos,
+  operadores,
+  onChange,
+  onRemover,
+}: ItemOSRowProps) {
   function handleTipoChange(tipo: TipoItemOS) {
     onChange({
       ...item,
@@ -144,6 +153,22 @@ export function ItemOSRow({ item, pecas, servicos, onChange, onRemover }: ItemOS
             onChange={(e) => onChange({ ...item, desconto: Number(e.target.value) })}
             className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
           />
+        </label>
+
+        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/70">
+          Técnico
+          <select
+            value={item.tecnico_id ?? ""}
+            onChange={(e) => onChange({ ...item, tecnico_id: e.target.value || null })}
+            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
+          >
+            <option value="">Sem técnico definido</option>
+            {operadores.map((operador) => (
+              <option key={operador.id} value={operador.id}>
+                {operador.nome}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
     </div>

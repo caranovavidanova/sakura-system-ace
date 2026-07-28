@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operadores";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { JurosParcela } from "@/types/configuracao";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
+import { JurosParcelasSection } from "./JurosParcelasSection";
 import { OperadorForm } from "./OperadorForm";
 
 export function ConfiguracoesPage() {
   const { operador: operadorLogado } = useAuth();
   const [operadores, setOperadores] = useState<Operador[]>([]);
+  const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
@@ -22,7 +26,12 @@ export function ConfiguracoesPage() {
     setCarregando(true);
     setErro(null);
     try {
-      setOperadores(await listarOperadores());
+      const [operadoresCarregados, jurosCarregados] = await Promise.all([
+        listarOperadores(),
+        listarJurosParcelas(),
+      ]);
+      setOperadores(operadoresCarregados);
+      setJurosParcelas(jurosCarregados);
     } catch (err) {
       console.error("Erro ao carregar operadores:", err);
       setErro(mensagemDeErro(err));
@@ -101,6 +110,10 @@ export function ConfiguracoesPage() {
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           {erro}
         </p>
+      )}
+
+      {!carregando && (
+        <JurosParcelasSection jurosParcelas={jurosParcelas} onSalvo={carregar} />
       )}
 
       {carregando ? (

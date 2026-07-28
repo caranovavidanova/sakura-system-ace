@@ -8,13 +8,15 @@ export interface ItemOS {
   tipo: TipoItemOS;
   peca_id: string | null;
   servico_id: string | null;
+  tecnico_id: string | null;
   descricao: string;
   quantidade: number;
   preco_unitario: number;
   desconto: number;
+  tecnico?: { nome: string } | null;
 }
 
-export type NovoItemOS = Omit<ItemOS, "id" | "ordem_servico_id">;
+export type NovoItemOS = Omit<ItemOS, "id" | "ordem_servico_id" | "tecnico">;
 
 export interface OrdemServico {
   id: string;
@@ -24,13 +26,11 @@ export interface OrdemServico {
   km_entrada: number | null;
   descricao_problema: string | null;
   forma_pagamento: string | null;
+  parcelas: number;
   data_abertura: string;
   data_fechamento: string | null;
   previsao_entrega: string | null;
   data_retorno: string | null;
-  checklist_direcao_hidraulica: boolean;
-  checklist_ar_condicionado: boolean;
-  checklist_direcao_eletrica: boolean;
   vendedor_id: string | null;
   criado_por_id: string | null;
   atualizado_por_id: string | null;
@@ -49,9 +49,6 @@ export interface NovaOrdemServico {
   descricao_problema: string | null;
   previsao_entrega: string | null;
   data_retorno: string | null;
-  checklist_direcao_hidraulica: boolean;
-  checklist_ar_condicionado: boolean;
-  checklist_direcao_eletrica: boolean;
   vendedor_id: string | null;
 }
 
@@ -64,9 +61,6 @@ export type PatchOrdemServico = Partial<
     | "descricao_problema"
     | "previsao_entrega"
     | "data_retorno"
-    | "checklist_direcao_hidraulica"
-    | "checklist_ar_condicionado"
-    | "checklist_direcao_eletrica"
     | "vendedor_id"
     | "status"
   >

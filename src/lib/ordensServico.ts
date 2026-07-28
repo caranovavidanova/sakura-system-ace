@@ -6,14 +6,13 @@ import type {
   OrdemServico,
   PatchOrdemServico,
 } from "@/types/os";
-import { totalOrdem } from "@/types/os";
 
 const SELECT_ORDEM =
   "*, cliente:clientes(nome), veiculo:veiculos(placa), " +
   "vendedor:operadores!ordens_servico_vendedor_id_fkey(nome), " +
   "criado_por:operadores!ordens_servico_criado_por_id_fkey(nome), " +
   "atualizado_por:operadores!ordens_servico_atualizado_por_id_fkey(nome), " +
-  "itens:ordens_servico_itens(*)";
+  "itens:ordens_servico_itens(*, tecnico:operadores(nome))";
 
 export async function listarOrdens(): Promise<OrdemServico[]> {
   const { data, error } = await supabase
@@ -100,24 +99,26 @@ export async function adicionarItensOrdem(
 export async function faturarOrdem(
   ordem: OrdemServico,
   formaPagamento: string,
+  parcelas: number,
+  valorCobrado: number,
 ): Promise<void> {
   const { error: erroOrdem } = await supabase
     .from("ordens_servico")
     .update({
       status: "faturada",
       forma_pagamento: formaPagamento,
+      parcelas,
       data_fechamento: new Date().toISOString(),
     })
     .eq("id", ordem.id);
 
   if (erroOrdem) throw erroOrdem;
 
-  const total = totalOrdem(ordem.itens ?? []);
   await criarMovimentoCaixa({
     ordem_servico_id: ordem.id,
     tipo: "entrada",
     forma_pagamento: formaPagamento,
-    valor: total,
+    valor: valorCobrado,
     descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
   });
 }

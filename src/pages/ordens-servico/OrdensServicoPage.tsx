@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarClientes } from "@/lib/clientes";
 import { listarOperadores } from "@/lib/operadores";
@@ -14,6 +15,7 @@ import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Cliente } from "@/types/cliente";
+import type { JurosParcela } from "@/types/configuracao";
 import type { Operador } from "@/types/operador";
 import type {
   NovaOrdemServico,
@@ -24,6 +26,7 @@ import type {
 import { STATUS_LABEL, totalOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
+import { FaturamentoCard } from "./FaturamentoCard";
 import { OrdemServicoForm } from "./OrdemServicoForm";
 
 export function OrdensServicoPage() {
@@ -33,13 +36,12 @@ export function OrdensServicoPage() {
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
+  const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [ordemEmEdicao, setOrdemEmEdicao] = useState<OrdemServico | null>(null);
   const [ordemFaturando, setOrdemFaturando] = useState<OrdemServico | null>(null);
-  const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [faturando, setFaturando] = useState(false);
 
   async function carregar() {
     if (!isSupabaseConfigured) {
@@ -49,19 +51,27 @@ export function OrdensServicoPage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [ordensCarregadas, clientesCarregados, pecasCarregadas, servicosCarregados, operadoresCarregados] =
-        await Promise.all([
-          listarOrdens(),
-          listarClientes(),
-          listarPecas(),
-          listarServicos(),
-          listarOperadores(),
-        ]);
+      const [
+        ordensCarregadas,
+        clientesCarregados,
+        pecasCarregadas,
+        servicosCarregados,
+        operadoresCarregados,
+        jurosCarregados,
+      ] = await Promise.all([
+        listarOrdens(),
+        listarClientes(),
+        listarPecas(),
+        listarServicos(),
+        listarOperadores(),
+        listarJurosParcelas(),
+      ]);
       setOrdens(ordensCarregadas);
       setClientes(clientesCarregados);
       setPecas(pecasCarregadas);
       setServicos(servicosCarregados);
       setOperadores(operadoresCarregados);
+      setJurosParcelas(jurosCarregados);
     } catch (err) {
       console.error("Erro ao carregar ordens de serviço:", err);
       setErro(mensagemDeErro(err));
@@ -95,19 +105,15 @@ export function OrdensServicoPage() {
     await carregar();
   }
 
-  async function confirmarFaturamento() {
+  async function confirmarFaturamento(
+    formaPagamento: string,
+    parcelas: number,
+    valorCobrado: number,
+  ) {
     if (!ordemFaturando) return;
-    setFaturando(true);
-    try {
-      await faturarOrdem(ordemFaturando, formaPagamento);
-      setOrdemFaturando(null);
-      await carregar();
-    } catch (err) {
-      console.error("Erro ao faturar ordem de serviço:", err);
-      setErro(mensagemDeErro(err));
-    } finally {
-      setFaturando(false);
-    }
+    await faturarOrdem(ordemFaturando, formaPagamento, parcelas, valorCobrado);
+    setOrdemFaturando(null);
+    await carregar();
   }
 
   return (
@@ -173,45 +179,12 @@ export function OrdensServicoPage() {
       )}
 
       {ordemFaturando && (
-        <div className="space-y-4 rounded-2xl border border-sakura-gray/30 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-sakura-purple-dark">
-            Faturar OS de {ordemFaturando.cliente?.nome ?? "cliente"} — total{" "}
-            {totalOrdem(ordemFaturando.itens ?? []).toLocaleString("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })}
-          </h3>
-          <label className="flex max-w-xs flex-col gap-1 text-sm">
-            <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
-            <select
-              value={formaPagamento}
-              onChange={(e) => setFormaPagamento(e.target.value)}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-            >
-              <option value="dinheiro">Dinheiro</option>
-              <option value="pix">Pix</option>
-              <option value="cartao_debito">Cartão de débito</option>
-              <option value="cartao_credito">Cartão de crédito</option>
-            </select>
-          </label>
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setOrdemFaturando(null)}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={confirmarFaturamento}
-              disabled={faturando}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {faturando ? "Faturando..." : "Confirmar faturamento"}
-            </button>
-          </div>
-        </div>
+        <FaturamentoCard
+          ordem={ordemFaturando}
+          jurosParcelas={jurosParcelas}
+          onConfirmar={confirmarFaturamento}
+          onCancelar={() => setOrdemFaturando(null)}
+        />
       )}
 
       {erro && (
@@ -267,7 +240,6 @@ export function OrdensServicoPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setOrdemFaturando(ordem);
-                          setFormaPagamento("pix");
                         }}
                         className="text-xs font-medium text-sakura-purple hover:underline"
                       >

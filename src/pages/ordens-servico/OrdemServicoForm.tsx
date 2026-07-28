@@ -13,7 +13,6 @@ import { STATUS_LABEL, totalOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { ItemOSRow } from "./ItemOSRow";
-import { SimulacaoParcelas } from "./SimulacaoParcelas";
 
 interface OrdemServicoFormProps {
   clientes: Cliente[];
@@ -36,6 +35,7 @@ function novoItemVazio(): NovoItemOS {
     tipo: "peca",
     peca_id: null,
     servico_id: null,
+    tecnico_id: null,
     descricao: "",
     quantidade: 1,
     preco_unitario: 0,
@@ -90,15 +90,6 @@ export function OrdemServicoForm({
   const [dataRetorno, setDataRetorno] = useState(
     paraInputDatetime(ordemExistente?.data_retorno),
   );
-  const [checklistDirecaoHidraulica, setChecklistDirecaoHidraulica] = useState(
-    ordemExistente?.checklist_direcao_hidraulica ?? false,
-  );
-  const [checklistArCondicionado, setChecklistArCondicionado] = useState(
-    ordemExistente?.checklist_ar_condicionado ?? false,
-  );
-  const [checklistDirecaoEletrica, setChecklistDirecaoEletrica] = useState(
-    ordemExistente?.checklist_direcao_eletrica ?? false,
-  );
   const [vendedorId, setVendedorId] = useState(
     ordemExistente?.vendedor_id ?? operadorAtualId,
   );
@@ -143,9 +134,6 @@ export function OrdemServicoForm({
       descricao_problema: descricaoProblema.trim() || null,
       previsao_entrega: paraIso(previsaoEntrega),
       data_retorno: paraIso(dataRetorno),
-      checklist_direcao_hidraulica: checklistDirecaoHidraulica,
-      checklist_ar_condicionado: checklistArCondicionado,
-      checklist_direcao_eletrica: checklistDirecaoEletrica,
       vendedor_id: vendedorId || null,
     };
 
@@ -272,7 +260,7 @@ export function OrdemServicoForm({
             </label>
 
             <label className="col-span-2 flex flex-col gap-1 text-sm">
-              <span className="text-sakura-purple-dark/80">Problema relatado</span>
+              <span className="text-sakura-purple-dark/80">Observação</span>
               <textarea
                 value={descricaoProblema}
                 onChange={(e) => setDescricaoProblema(e.target.value)}
@@ -280,41 +268,6 @@ export function OrdemServicoForm({
                 className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
               />
             </label>
-          </section>
-
-          <section>
-            <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-              Checklist do veículo
-            </h3>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
-                <input
-                  type="checkbox"
-                  checked={checklistDirecaoHidraulica}
-                  onChange={(e) => setChecklistDirecaoHidraulica(e.target.checked)}
-                  className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
-                />
-                Direção hidráulica
-              </label>
-              <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
-                <input
-                  type="checkbox"
-                  checked={checklistArCondicionado}
-                  onChange={(e) => setChecklistArCondicionado(e.target.checked)}
-                  className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
-                />
-                Ar condicionado
-              </label>
-              <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
-                <input
-                  type="checkbox"
-                  checked={checklistDirecaoEletrica}
-                  onChange={(e) => setChecklistDirecaoEletrica(e.target.checked)}
-                  className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
-                />
-                Direção elétrica
-              </label>
-            </div>
           </section>
 
           <section>
@@ -343,7 +296,7 @@ export function OrdemServicoForm({
                   >
                     <span>
                       {item.tipo === "peca" ? "Peça" : "Serviço"} — {item.descricao} (
-                      {item.quantidade}x)
+                      {item.quantidade}x){item.tecnico?.nome ? ` · técnico: ${item.tecnico.nome}` : ""}
                     </span>
                     <span>
                       {(item.quantidade * item.preco_unitario - item.desconto).toLocaleString(
@@ -363,6 +316,7 @@ export function OrdemServicoForm({
                   item={item}
                   pecas={pecas}
                   servicos={servicos}
+                  operadores={operadores}
                   onChange={(novoItem) => atualizarItem(index, novoItem)}
                   onRemover={() => removerItem(index)}
                 />
@@ -446,8 +400,6 @@ export function OrdemServicoForm({
               </div>
             </div>
           )}
-
-          <SimulacaoParcelas total={totalGeral} />
 
           <div className="space-y-2">
             <p className="text-xs font-medium text-sakura-purple-dark/60">

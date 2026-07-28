@@ -9,11 +9,13 @@
 alter table clientes enable row level security;
 alter table veiculos enable row level security;
 
+drop policy if exists "clientes_acesso_temporario" on clientes;
 create policy "clientes_acesso_temporario" on clientes
   for all
   using (true)
   with check (true);
 
+drop policy if exists "veiculos_acesso_temporario" on veiculos;
 create policy "veiculos_acesso_temporario" on veiculos
   for all
   using (true)

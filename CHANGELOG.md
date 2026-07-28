@@ -24,6 +24,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.
 - `npm run lint` estava quebrado (faltava o arquivo de configuração do ESLint e os plugins de React); adicionado `eslint.config.js` com as regras básicas de hooks do React.
 - Tela em branco ao rodar `npm run dev` com o `.env` copiado do exemplo: as variáveis do Supabase ficavam como texto vazio (não "ausentes"), e o app tentava conectar com um endereço vazio e travava antes de desenhar a tela.
+- Migrations do Supabase (`supabase/migrations/*.sql`) agora podem ser rodadas de novo com segurança: as `create policy` passaram a ter um `drop policy if exists` antes, então rodar tudo de novo não dá mais erro de "política já existe".
 
 ### Segurança
 - Adicionadas policies temporárias de RLS liberando acesso via chave pública, até a autenticação de usuário ser implementada.

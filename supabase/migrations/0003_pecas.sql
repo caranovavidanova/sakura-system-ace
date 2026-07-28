@@ -20,6 +20,7 @@ create table if not exists pecas (
 -- pública até a autenticação de usuário ser implementada.
 alter table pecas enable row level security;
 
+drop policy if exists "pecas_acesso_temporario" on pecas;
 create policy "pecas_acesso_temporario" on pecas
   for all
   using (true)

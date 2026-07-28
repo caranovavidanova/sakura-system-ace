@@ -17,6 +17,7 @@ create index if not exists estoque_movimentos_peca_id_idx on estoque_movimentos 
 -- chave pública até a autenticação de usuário ser implementada.
 alter table estoque_movimentos enable row level security;
 
+drop policy if exists "estoque_movimentos_acesso_temporario" on estoque_movimentos;
 create policy "estoque_movimentos_acesso_temporario" on estoque_movimentos
   for all
   using (true)

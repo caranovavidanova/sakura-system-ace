@@ -35,11 +35,13 @@ create index if not exists ordens_servico_itens_ordem_id_idx
 alter table ordens_servico enable row level security;
 alter table ordens_servico_itens enable row level security;
 
+drop policy if exists "ordens_servico_acesso_temporario" on ordens_servico;
 create policy "ordens_servico_acesso_temporario" on ordens_servico
   for all
   using (true)
   with check (true);
 
+drop policy if exists "ordens_servico_itens_acesso_temporario" on ordens_servico_itens;
 create policy "ordens_servico_itens_acesso_temporario" on ordens_servico_itens
   for all
   using (true)

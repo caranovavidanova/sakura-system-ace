@@ -16,6 +16,7 @@ create table if not exists caixa_movimentos (
 -- chave pública até a autenticação de usuário ser implementada.
 alter table caixa_movimentos enable row level security;
 
+drop policy if exists "caixa_movimentos_acesso_temporario" on caixa_movimentos;
 create policy "caixa_movimentos_acesso_temporario" on caixa_movimentos
   for all
   using (true)

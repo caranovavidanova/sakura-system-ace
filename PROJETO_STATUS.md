@@ -313,7 +313,7 @@ novo):
 3. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
    exemplo que está comentado no final da migration 0007, colando o "User UID" gerado.
 
-**⏳ Implementado nesta sessão (branch `claude/sakura-autocenter-status-4pek1l`), ainda sem
+**⏳ Implementado e mergeado em `main` nesta sessão (PR [#8](https://github.com/caranovavidanova/amigao/pull/8)), ainda sem
 confirmação do usuário rodando com Supabase real** — o usuário mandou um rascunho desenhado à mão
 em cima de uma screenshot do "Painel de Controle" pedindo esse redesenho, e duas imagens de
 referência de estilo (dashboard escuro "Helios Investments" e um card de login em vidro fosco sobre
@@ -416,9 +416,47 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0006) — segundo a sessão anterior, já foram todas aplicadas e
-confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seguras de rodar de novo
-(idempotentes) caso precise reconectar ou usar outro projeto Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0010) — as de 0001 a 0008 já foram confirmadas funcionando pelo
+usuário nesse projeto. **As migrations 0009 (`data_nascimento` em clientes) e 0010 (campos novos em
+pecas) ainda não foram rodadas no Supabase de verdade** — ver o tutorial abaixo. Todas são seguras
+de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto Supabase do zero.
+
+### Tutorial: pegar a versão nova (PR #8, já mergeado em `main`) e rodar
+
+O PR do redesenho do Início/Login e do cadastro de produto completo já foi mergeado em `main` nesta
+sessão, **sem o usuário ter testado ainda com o Supabase de verdade** (autorização explícita do
+usuário pra mergear direto). Pra rodar essa versão nova na sua máquina Windows:
+
+1. Feche o app Sakura System se ele estiver aberto (`Ctrl+C` no terminal onde rodou `npm run dev`,
+   ou feche a janela).
+2. No terminal (PowerShell, dentro da pasta `sakura-system-autocenter`), confirme que está em
+   `main` e traga o que foi mergeado:
+   ```powershell
+   git checkout main
+   git pull origin main
+   ```
+   Se aparecer erro por causa de alguma mudança local não salva, avise antes de continuar — não
+   force nada.
+3. **Rode as duas migrations novas no Supabase** (site do Supabase → seu projeto → SQL Editor →
+   "New query"), **nessa ordem**:
+   - Abra `supabase/migrations/0009_clientes_data_nascimento.sql` no VS Code, copie todo o
+     conteúdo, cole no SQL Editor e clique em "Run".
+   - Repita o mesmo com `supabase/migrations/0010_pecas_campos_cadastro_completo.sql`.
+   - As duas só adicionam colunas novas (`alter table ... add column if not exists`) — não apagam
+     nem alteram nada que já existe, e são seguras de rodar de novo se der algum problema.
+4. Instale dependências (caso tenha mudado algo) e abra o app:
+   ```powershell
+   npm install
+   npm run dev
+   ```
+5. O que testar: o menu lateral deve mostrar **"Início"** (não mais "Painel de Controle") com os
+   três cartões de Vendas/Custos/Lucros do mês e o calendário; a tela de Login deve aparecer com o
+   fundo floral e o cartão em vidro fosco; e em **Estoque → Produtos → "+ Novo produto"** o
+   formulário deve vir com os campos novos (Código de barras, Marca, Modelo, Aplicação, C.E.S.T,
+   Origem) e a Margem % calculando o Preço final sozinha.
+
+Se der algum erro, me manda o print do DevTools (já abre sozinho em modo dev) que eu ajudo a
+resolver.
 
 ## 10. Estado do Git
 
@@ -448,9 +486,12 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   filtrada, confirmar que reabrir o app pede login de novo) e pedir explicitamente pra abrir e
   mergear o PR.
 - PR [#8](https://github.com/caranovavidanova/amigao/pull/8) (`claude/sakura-autocenter-status-4pek1l`
-  → `main`): redesenho do Início (cartões de tendência + calendário) e do Login (vidro fosco + fundo
-  floral), ver seção 7. Aberto a pedido do usuário nesta sessão — ainda não mergeado, usuário ainda
-  não rodou essas mudanças com o Supabase dele.
+  → `main`): redesenho do Início (cartões de tendência + calendário), do Login (vidro fosco + fundo
+  floral) e cadastro de produto completo (campos novos + margem automática), ver seção 7. **Mergeado
+  em `main` nesta sessão, a pedido explícito do usuário** ("faz tudinho na main"), *antes* de o
+  usuário rodar essas mudanças com o Supabase dele — inclui duas migrations (0009 e 0010) que ainda
+  precisam ser rodadas manualmente no Supabase, ver o tutorial na seção 9. Se aparecer algum
+  problema ao testar, é código já em `main`, não numa branch separada.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

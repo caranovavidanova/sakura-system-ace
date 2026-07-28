@@ -12,7 +12,10 @@ import type {
 import { STATUS_LABEL, totalOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
+import { FechamentoTab } from "./FechamentoTab";
 import { ItemOSRow } from "./ItemOSRow";
+
+const STATUS_COM_FECHAMENTO: StatusOS[] = ["concluida", "faturada"];
 
 interface OrdemServicoFormProps {
   clientes: Cliente[];
@@ -41,17 +44,6 @@ function novoItemVazio(): NovoItemOS {
     preco_unitario: 0,
     desconto: 0,
   };
-}
-
-function paraInputDatetime(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function paraIso(valor: string): string | null {
-  return valor ? new Date(valor).toISOString() : null;
 }
 
 function formatarData(iso: string | null | undefined): string {
@@ -84,12 +76,6 @@ export function OrdemServicoForm({
   const [descricaoProblema, setDescricaoProblema] = useState(
     ordemExistente?.descricao_problema ?? "",
   );
-  const [previsaoEntrega, setPrevisaoEntrega] = useState(
-    paraInputDatetime(ordemExistente?.previsao_entrega),
-  );
-  const [dataRetorno, setDataRetorno] = useState(
-    paraInputDatetime(ordemExistente?.data_retorno),
-  );
   const [vendedorId, setVendedorId] = useState(
     ordemExistente?.vendedor_id ?? operadorAtualId,
   );
@@ -99,6 +85,9 @@ export function OrdemServicoForm({
   );
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const temFechamento =
+    !!ordemExistente && STATUS_COM_FECHAMENTO.includes(ordemExistente.status);
+  const [aba, setAba] = useState<"detalhes" | "fechamento">("detalhes");
 
   const clienteSelecionado = clientes.find((c) => c.id === clienteId);
   const veiculosDoCliente = clienteSelecionado?.veiculos ?? [];
@@ -132,8 +121,6 @@ export function OrdemServicoForm({
       veiculo_id: veiculoId || null,
       km_entrada: kmEntrada ? Number(kmEntrada) : null,
       descricao_problema: descricaoProblema.trim() || null,
-      previsao_entrega: paraIso(previsaoEntrega),
-      data_retorno: paraIso(dataRetorno),
       vendedor_id: vendedorId || null,
     };
 
@@ -154,14 +141,6 @@ export function OrdemServicoForm({
     } finally {
       setSalvando(false);
     }
-  }
-
-  function emitirPlaceholderFiscal(tipo: "NFe" | "NFS-e") {
-    alert(
-      `Emissão de ${tipo} ainda não está disponível — falta escolher o provedor fiscal ` +
-        "(Focus NFe, eNotas, PlugNotas ou similar) e, no caso da NFS-e, confirmar o " +
-        "município da loja. Assim que essa decisão for tomada, este botão passa a emitir de verdade.",
-    );
   }
 
   return (
@@ -193,6 +172,36 @@ export function OrdemServicoForm({
         </p>
       )}
 
+      {temFechamento && (
+        <div className="flex gap-2 border-b border-sakura-gray/20">
+          <button
+            type="button"
+            onClick={() => setAba("detalhes")}
+            className={`px-4 py-2 text-sm font-medium ${
+              aba === "detalhes"
+                ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
+                : "text-sakura-purple-dark/50 hover:text-sakura-purple-dark"
+            }`}
+          >
+            Detalhes
+          </button>
+          <button
+            type="button"
+            onClick={() => setAba("fechamento")}
+            className={`px-4 py-2 text-sm font-medium ${
+              aba === "fechamento"
+                ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
+                : "text-sakura-purple-dark/50 hover:text-sakura-purple-dark"
+            }`}
+          >
+            Fechamento
+          </button>
+        </div>
+      )}
+
+      {aba === "fechamento" && ordemExistente && <FechamentoTab ordem={ordemExistente} />}
+
+      {aba === "detalhes" && (
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-6">
           <section className="grid grid-cols-2 gap-4">
@@ -336,34 +345,6 @@ export function OrdemServicoForm({
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-3 rounded-2xl border border-sakura-gray/30 p-4">
-            <h3 className="text-sm font-semibold text-sakura-purple-dark">Prazos</h3>
-            <div className="flex flex-col gap-1 text-sm">
-              <span className="text-sakura-purple-dark/80">Entrada</span>
-              <span className="text-sakura-purple-dark">
-                {ordemExistente ? formatarData(ordemExistente.data_abertura) : "Definida ao salvar"}
-              </span>
-            </div>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-sakura-purple-dark/80">Previsão de entrega</span>
-              <input
-                type="datetime-local"
-                value={previsaoEntrega}
-                onChange={(e) => setPrevisaoEntrega(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-sakura-purple-dark/80">Agendar retorno</span>
-              <input
-                type="datetime-local"
-                value={dataRetorno}
-                onChange={(e) => setDataRetorno(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
-              />
-            </label>
-          </div>
-
           {ordemExistente && (
             <div className="space-y-3 rounded-2xl border border-sakura-gray/30 p-4">
               <label className="flex flex-col gap-1 text-sm">
@@ -400,30 +381,9 @@ export function OrdemServicoForm({
               </div>
             </div>
           )}
-
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-sakura-purple-dark/60">
-              Nota fiscal
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => emitirPlaceholderFiscal("NFe")}
-                className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
-              >
-                Emitir NFe
-              </button>
-              <button
-                type="button"
-                onClick={() => emitirPlaceholderFiscal("NFS-e")}
-                className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
-              >
-                Emitir NFS-e
-              </button>
-            </div>
-          </div>
         </div>
       </div>
+      )}
 
       <div className="flex justify-end gap-3 border-t border-sakura-gray/20 pt-4">
         <button
@@ -433,17 +393,19 @@ export function OrdemServicoForm({
         >
           Cancelar
         </button>
-        <button
-          type="submit"
-          disabled={salvando}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {salvando
-            ? "Salvando..."
-            : ordemExistente
-              ? "Salvar alterações"
-              : "Abrir ordem de serviço"}
-        </button>
+        {aba === "detalhes" && (
+          <button
+            type="submit"
+            disabled={salvando}
+            className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {salvando
+              ? "Salvando..."
+              : ordemExistente
+                ? "Salvar alterações"
+                : "Abrir ordem de serviço"}
+          </button>
+        )}
       </div>
     </form>
   );

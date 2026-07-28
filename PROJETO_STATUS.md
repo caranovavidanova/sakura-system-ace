@@ -426,12 +426,10 @@ OS reorganizada nesse estilo mais denso/tudo-em-uma-tela, porém com a cara do S
   - **Botões "Emitir NFe"/"Emitir NFS-e"**: placeholder (mostram aviso que falta escolher o provedor
     fiscal — pendência do item 1 da seção 8) — não emitem nada de verdade ainda.
 
-**⏳ Implementado e mergeado direto em `main` nesta sessão (ajustes na tela de OS depois do usuário
-testar a versão acima), ainda sem confirmação do usuário rodando com Supabase real** — mergeado
+**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (migration 0013)** — mergeado
 **direto em `main`** por decisão de fluxo desta sessão (ver seção 3: sem deixar PR aberto enquanto não
-existir uma v1.0 publicada). Migration 0013 ainda **não** foi rodada no Supabase do usuário — ver
-tutorial na seção 9. Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots
-Playwright com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+existir uma v1.0 publicada). Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e
+screenshots Playwright com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
 
 - **Checklist do veículo removido** — não vingou, tirado da tela e do banco (migration 0013 derruba as
   3 colunas que a 0012 tinha criado).
@@ -452,6 +450,33 @@ Playwright com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 
   12x, 1x é sempre à vista sem juros) — decisão explícita do usuário nesta sessão (perguntei se seria
   uma taxa mensal única ou uma taxa por quantidade de parcelas; ele escolheu a segunda, mais fiel ao
   que maquininha de cartão costuma oferecer).
+
+**⏳ Implementado e mergeado direto em `main` nesta sessão (ajustes na tela de OS pedidos pelo usuário
+em cima de um print da tela), ainda sem confirmação do usuário rodando com Supabase real** — Validado
+no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots Playwright com dados simulados
+(sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **Card "Prazos" removido** (não vingou) — os campos `previsao_entrega`/`data_retorno` foram tirados
+  da tela **e do banco** (migration 0014, `drop column`) a pedido explícito do usuário ("remova os
+  campos completamente").
+- **Botões "Emitir NFe"/"Emitir NFS-e" saíram do formulário principal da OS** e foram pra uma aba nova,
+  **"Fechamento"** (`FechamentoTab.tsx`), que só aparece quando a OS abre já com status **Concluída ou
+  Faturada** (`STATUS_COM_FECHAMENTO` em `OrdemServicoForm.tsx`) — decisão desta sessão diante de duas
+  opções apresentadas ao usuário (ele não respondeu explicitamente, então segui com a mais permissiva:
+  aparece assim que o serviço termina, não só depois de faturar; fácil de restringir só pra "Faturada"
+  depois se ele preferir). A aba "Detalhes" (formulário de sempre) só aparece ao lado dela quando a OS
+  já tem fechamento disponível — OS aberta/em andamento continua com uma tela só, sem abas.
+  - A aba de Fechamento mostra um resumo (cliente, veículo, datas de abertura/fechamento, itens e
+    total) + os botões de nota fiscal + dois botões novos, **"Imprimir garantia"** e **"Baixar
+    garantia"** — por enquanto **placeholder** (mesmo padrão do NFe/NFS-e: mostram aviso de "ainda não
+    disponível"), porque o texto/modelo da garantia ainda não foi definido.
+
+## 8.1 Pendência em aberto nesta sessão
+
+O usuário pediu pra arrumar o RLS aberto (item 1 da seção 6) logo em seguida às mudanças na tela de OS
+acima — ainda **não começado**. Como é uma decisão estrutural (muda como a permissão por módulo é
+reforçada: hoje só na interface, ver seção 6.1), a próxima sessão/continuação deve **apresentar opções
++ recomendação e esperar confirmação** antes de mexer nas policies (ver seção 1), não decidir sozinho.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -505,23 +530,22 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0013) — as de 0001 a 0012 já foram confirmadas funcionando pelo
-usuário nesse projeto (a 0011/0012 confirmadas nesta sessão). **A migration 0013 ainda não foi rodada
-no Supabase de verdade** (remove o checklist do veículo, adiciona técnico por item/parcelas/config de
-juros — ver seção 7) — ver tutorial abaixo. Todas são seguras de rodar de novo (idempotentes) caso
-precise reconectar ou usar outro projeto Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0014) — as de 0001 a 0013 já foram confirmadas funcionando pelo
+usuário nesse projeto. **A migration 0014 ainda não foi rodada no Supabase de verdade** (remove as
+colunas `previsao_entrega`/`data_retorno` de `ordens_servico` — ver seção 7) — ver tutorial abaixo.
+Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto
+Supabase do zero.
 
-*(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8 — múltiplos veículos, login,
-redesenho do Início/Login, cadastro de produto completo — foi removido daqui porque já está tudo
-confirmado funcionando pelo usuário, ver seção 7. Só o tutorial da versão mais recente fica abaixo;
-sessões passadas ficam registradas na seção 10.)*
+*(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10 — múltiplos veículos, login,
+redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migration 0013 —
+foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7. Só o tutorial
+da versão mais recente fica abaixo; sessões passadas ficam registradas na seção 10.)*
 
-### Tutorial: pegar a versão nova (migration 0013, já mergeada direto em `main`) e rodar
+### Tutorial: pegar a versão nova (migration 0014, já mergeada direto em `main`) e rodar
 
-A partir desta sessão, o fluxo mudou (ver decisão na seção 3): enquanto não existir uma v1.0
-publicada, as mudanças já vão **direto pra `main`**, sem PR esperando aprovação manual. Pra rodar essa
-versão nova (checklist do veículo removido, técnico por item, tela de faturamento com parcelas
-calculadas, config de juros em Configurações — ver seção 7):
+Pra rodar essa versão nova (card "Prazos" removido da tela de OS, botões de nota fiscal movidos pra
+uma aba "Fechamento" que só aparece quando a OS está Concluída/Faturada, botões de garantia — ver
+seção 7):
 
 1. Feche o app se estiver aberto.
 2. No terminal, dentro da pasta `sakura-system-autocenter`:
@@ -529,20 +553,16 @@ calculadas, config de juros em Configurações — ver seção 7):
    git checkout main
    git pull origin main
    ```
-3. **Rode a migration nova no Supabase**: abra `supabase/migrations/0013_os_tecnico_parcelas_juros.sql`
+3. **Rode a migration nova no Supabase**: abra `supabase/migrations/0014_os_remove_prazos.sql`
    no VS Code, copie todo o conteúdo, cole numa "New query" no SQL Editor do Supabase e clique em
    "Run".
 4. `npm install && npm run dev`.
 5. O que testar:
-   - Abrir uma OS (nova ou existente) não deve mais mostrar "Checklist do veículo" nem "Simulação de
-     parcelas"; o campo que era "Problema relatado" agora chama "Observação"; cada peça/serviço
-     lançado tem um seletor de **Técnico**.
-   - Em **Configurações**, deve aparecer uma seção **"Juros de parcelamento"** com campos de 2x a 12x
-     — preencha alguns % e clique "Salvar juros".
-   - Em **Ordens de Serviço**, clique "Faturar" numa OS: escolha "Cartão de crédito" e alguma
-     quantidade de parcelas — deve aparecer uma tabela com vencimento e valor de cada parcela,
-     calculada a partir do % que você configurou. Confirme o faturamento e confira no **Caixa Diário**
-     se o valor lançado já veio com o juro somado.
+   - Abrir qualquer OS não deve mais mostrar o card "Prazos" (Previsão de entrega / Agendar retorno).
+   - Numa OS **aberta ou em andamento**, a tela continua como sempre, sem abas.
+   - Numa OS **Concluída ou Faturada**, deve aparecer uma aba **"Fechamento"** ao lado de "Detalhes" —
+     clique nela e confira o resumo da OS + os botões "Emitir NFe"/"Emitir NFS-e"/"Imprimir
+     garantia"/"Baixar garantia" (todos ainda avisam "não disponível" ao clicar, é esperado).
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
@@ -589,6 +609,11 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
   parcelas calculadas, config de juros — migration 0013, ver seção 7) foi **mergeado direto em `main`
   nesta mesma sessão**, sem passar por PR. Se precisar achar esse commit específico depois, procurar
   por "técnico" ou "parcelas" no `git log` de `main`.
+- **Sessão seguinte** (card "Prazos" removido, nota fiscal + garantia movidos pra aba "Fechamento",
+  migration 0014 — ver seção 7): desenvolvida na branch `claude/caranovavidanova-amigao-kad1fu` (esta
+  sessão roda num ambiente onde o próprio orquestrador exige um branch nomeado antes do merge, em vez
+  de commitar direto em `main` como as sessões anteriores) e mergeada em `main` via PR ainda dentro
+  desta mesma sessão, seguindo a mesma decisão da seção 3 de não deixar PR esperando aprovação manual.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

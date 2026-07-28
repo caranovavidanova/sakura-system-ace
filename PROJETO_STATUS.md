@@ -72,8 +72,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── main.tsx, App.tsx       # entrada React + rotas
 │   ├── components/             # Sidebar.tsx, Logo.tsx, Gauge.tsx (reutilizáveis)
 │   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, errors.ts)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, pecas, estoque, ordens-servico, caixa, relatorios, lucratividade
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, ordens-servico, caixa, relatorios, lucratividade
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
+│   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
+│   │       EstoquePage.tsx tem abas "Produtos" (ProdutosSection.tsx + PecaForm.tsx) e
+│   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, estoque.ts, os.ts, caixa.ts)
 ├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0006), todas idempotentes (seguro rodar de novo)
@@ -212,6 +215,34 @@ servidor inicia, não recarrega sozinho, então depois de editar sempre precisa 
 de novo.
 - Migrations idempotentes (`drop policy if exists` antes de cada `create policy`).
 
+**⏳ Implementado e mergeado em `main` nesta sessão (PR [#4](https://github.com/caranovavidanova/amigao/pull/4)), ainda sem confirmação do usuário rodando com Supabase real** — validado no sandbox via `npm run build`, `npm run lint` e screenshots Playwright com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **Múltiplos veículos por cliente**: `ClienteForm.tsx` agora tem uma lista de veículos (não mais
+  um único), com botão "+ Adicionar veículo" e "Remover" por item. Só salva os que tiverem placa.
+- **Correção de bug de rolagem**: o container raiz (`App.tsx`) não tinha altura travada na tela
+  (`min-h-screen` sem `overflow-hidden`), então a página inteira rolava junto — inclusive o menu
+  lateral e a logo, que sumiam da tela ao rolar um formulário grande. Corrigido travando a altura
+  em `h-screen overflow-hidden` no container e deixando só o `<main>` rolar
+  (`overflow-y-auto`); a `<Sidebar>` ficou `h-full shrink-0`. Se esse tipo de bug voltar em algum
+  lugar novo do app (nova tela cheia, modal etc.), é o mesmo padrão: cheque se o elemento que
+  deveria ficar fixo está dentro de um container sem altura travada.
+- **"Estoque" virou uma categoria única**, absorvendo o que antes era o módulo separado "Peças" — a
+  pedido do usuário, inspirado nos menus de um sistema de referência (S3Auto/Comsis) que ele usa
+  na borracharia da família. O menu lateral só tem "Estoque"; dentro, duas abas:
+  - **Produtos** (era a página "Peças"): cadastro de peças/produtos, agora com coluna de **estoque
+    atual** (saldo calculado a partir de `estoque_movimentos`) e coluna de **Status** (Ativo/Inativo,
+    com botão Inativar/Reativar — usa o campo `ativo` que já existia na tabela `pecas` desde o
+    início, só não tinha UI pra ele ainda).
+  - **Movimentações** (era a página "Estoque"): registrar entrada/saída + histórico, agora com um
+    filtro "Produto" no histórico (mostra todas ou só as movimentações de um produto específico).
+  - Do menu de referência (prints que o usuário mandou), **cherry-picked** só o que cabia sem mudar
+    o modelo de dados. **Não implementado ainda** (fica pra próxima decisão, ver seção 8): Cadastro
+    de Depósito (múltiplos locais de estoque), Entrada via NFe (importação de XML), Pedido de
+    Compra / Cotações de fornecedor, Peças em Garantia, atualização de preço em massa por grupo,
+    conceito de "grupo/categoria de produto" (o "Transferir produtos de categoria" do menu de
+    referência) — todos exigiriam tabelas novas ou mudanças de schema, então precisam ser decididos
+    com o usuário antes (ver seção 1: decisões estruturais não se decide sozinho).
+
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
 Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
@@ -226,6 +257,22 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
 3. **Logo oficial** — pegar o arquivo `.svg` real do usuário como **anexo** (não colado no chat) e
    aplicar no lugar dos SVGs feitos à mão (ver seção 2).
 4. Refinamentos possíveis no Painel de Controle e demais módulos, conforme feedback do usuário.
+5. **Itens do menu de estoque do sistema de referência (S3Auto/Comsis) ainda não avaliados/decididos**
+   — usuário mandou prints do menu "Estoque" e "Relações" de um sistema básico que a família usa na
+   borracharia; a categoria em si já foi absorvida (ver seção 7), mas os itens abaixo exigem
+   modelagem de dados nova e **precisam de decisão do usuário antes de codar** (apresentar opções +
+   recomendação, não decidir sozinho — ver seção 1):
+   - Pedido de Compra / Cotações de Peças por fornecedor (implica cadastro de Fornecedor)
+   - Entrada de Produtos via NFe (importação de XML de nota fiscal do fornecedor)
+   - Cadastro de Depósito (múltiplos locais físicos de estoque)
+   - Peças em Garantia (rastreamento de garantia por peça/fornecedor)
+   - Contagem/Inventário físico (conciliação entre estoque contado e sistema)
+   - Grupo/Categoria de produto (permitiria "atualizar preço por grupo", "zerar estoque por grupo",
+     relatórios por categoria — hoje `pecas` não tem esse campo)
+   - Relatórios adicionais do menu "Relações": estoque físico-financeiro, produtos não
+     vendidos/comprados, estoque positivo/negativo/zerado — a maioria dá pra derivar dos dados que já
+     existem (`pecas` + `estoque_movimentos`), sem mudança de schema, então são candidatos mais
+     simples de priorizar primeiro dentro desta lista.
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -263,6 +310,11 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
 - **Sessões futuras**: pode trabalhar direto a partir de `main` — não é mais necessário conferir
   divergência entre branches antes de começar.
 - `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
+- PR [#4](https://github.com/caranovavidanova/amigao/pull/4) (múltiplos veículos + fix de rolagem +
+  Estoque como categoria única, ver seção 7) foi mergeado em `main` nesta sessão, a pedido explícito
+  do usuário ("pode deixar pra por na main quando terminar a categoria do estoque") — autorização
+  dada *antes* de o usuário rodar essas mudanças na máquina dele. Ele ainda não confirmou rodando de
+  verdade; se aparecer algum problema ao testar, é código já em `main`, não numa branch separada.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

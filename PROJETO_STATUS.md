@@ -81,6 +81,8 @@ base arquitetural.
 | Permissões por módulo | Checadas **na interface do app**, não reforçadas em RLS por categoria | Decisão explícita do usuário nesta sessão — mais rápido de construir, resolve o problema real (organizar telas por operador); ver seção 6 pro trade-off de segurança |
 | RLS das tabelas de negócio | Exige **login** (`auth.uid() is not null`), mas não reforça permissão por módulo | Usuário escolheu entre 3 opções apresentadas (só login / login + por módulo / deixar como estava) — ver item 1 da seção 6. Fecha o buraco de acesso sem login; reforço por módulo fica pra depois se o risco mudar |
 | Fluxo de Git **enquanto não existir uma v1.0 oficial publicada** | Sempre mergear as mudanças **direto em `main`** ao final de cada tarefa (não deixar PR aberto esperando aprovação manual) | Pedido explícito do usuário ("sempre já inclui tudo na main... já que não tem uma versão oficial publicada ainda"). Ainda assim abrir PR faz parte do processo — só que ele já é mergeado pela própria sessão em vez de ficar esperando. **Sempre informar no chat, em português simples, os comandos exatos e onde rodar cada um** (terminal do Windows vs. SQL Editor do Supabase) depois do merge. Revisitar essa decisão quando existir uma v1.0 publicada de verdade. |
+| Ir pra produção sem emissão fiscal pronta | Usuária pode instalar e usar o sistema na borracharia **agora** (cadastro, OS, estoque, caixa) e continuar emitindo nota fiscal por fora até a emissão automática ficar pronta | Escolhida entre 2 opções apresentadas nesta sessão — desbloqueia o uso real na loja sem esperar o projeto de integração fiscal (grande, depende de escolher provedor + certificado digital) |
+| Empacotamento do instalador Windows | Instalador simples (NSIS) + **atualização automática via GitHub Releases** (`electron-builder` + `electron-updater`, já preparados nesta sessão) | Escolhida entre 2 opções apresentadas nesta sessão — evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
 
 ## 4. Estrutura de pastas
 
@@ -105,6 +107,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts) + configuracao.ts (JurosParcela)
 ├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0015), todas idempotentes (seguro rodar de novo)
+├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
+├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
 ├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
 └── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
@@ -198,13 +202,19 @@ entrada em `caixa_movimentos` com o valor total da OS.
    Settings → API Keys do Supabase, se isso ainda não tiver sido feito. (Nesta sessão o usuário só
    colou a chave `anon`, que é pública por design — sem problema.)
 4. **Sem testes automatizados** (nenhum framework de teste configurado ainda).
-5. **App nunca foi empacotado de verdade** (`npm run electron:build` / instalador `.exe`) — só
-   testado em modo dev (`npm run dev`). O ícone/instalador do Windows, ícone da aplicação,
-   assinatura de código, etc. ainda não foram configurados em `electron-builder` (não existe seção
-   `"build"` no `package.json`).
-6. **`electron-updater` está chamado no código** (`electron/main.ts`) mas não há nenhum servidor de
-   atualização/publish configurado (ex: GitHub Releases) — vai falhar silenciosamente ou não fazer
-   nada até isso ser configurado.
+5. ~~App nunca foi empacotado de verdade~~ — **configurado nesta sessão** (ver seção 7): `package.json`
+   ganhou a seção `"build"` (ícone, `appId`, instalador NSIS) e um workflow do GitHub Actions
+   (`.github/workflows/release.yml`) builda e publica o instalador automaticamente quando uma tag
+   `v*` é enviada. **Ainda falta**: assinatura de código (o Windows/SmartScreen vai avisar "editor
+   desconhecido" no instalador — normal pra quem não tem um certificado de assinatura pago; não
+   impede a instalação, só exige clicar em "Mais informações → Executar assim mesmo"). Rotacionar essa
+   decisão se algum dia quiserem distribuir pra muitas lojas de terceiros (aí vale considerar comprar
+   um certificado de assinatura de código).
+6. ~~`electron-updater` sem servidor de atualização configurado~~ — **resolvido nesta sessão**: o
+   `publish` do `electron-builder` aponta pro GitHub Releases deste repositório, então toda vez que uma
+   tag nova é publicada (ver tutorial na seção 9), os apps já instalados nas lojas baixam e aplicam a
+   atualização sozinhos (`autoUpdater.checkForUpdatesAndNotify()`, já chamado em `electron/main.ts`
+   desde antes, agora com um feed de verdade pra consultar).
 7. **Ambiente de sandbox onde o Claude roda (nuvem) não consegue acessar `*.supabase.co`** — política
    de rede bloqueia (confirmado, erro 403 do proxy da própria plataforma). Isso significa que testes
    de ponta a ponta contra o Supabase real **só podem ser feitos pelo usuário, na máquina dele**. Do
@@ -518,22 +528,60 @@ próprio app indicando quais partes deveriam virar "blocos". Validado no sandbox
   novo, é candidato a ajuste futuro. A tela de Login também poderia ganhar o mesmo tom de `sakura-card`
   se o usuário quiser unificar tudo, mas não foi pedido.
 
+**✅ Decidido nesta sessão: a usuária pode começar a usar o sistema na borracharia AGORA**, mesmo sem
+a emissão automática de nota fiscal pronta — ela continua emitindo nota por fora (do jeito que já faz
+hoje) até essa parte ficar pronta. Isso desbloqueou dois passos que só faziam sentido com essa decisão
+tomada:
+
+- **Ordem do menu lateral ajustada**: "Ordens de Serviço" subiu pra logo depois de "Clientes" (era
+  depois de "Estoque"/"Serviços") — reflete melhor o fluxo real de atendimento (cliente chega → abre
+  OS), em vez de ordem alfabética/técnica. Mudança de uma linha em `MODULOS`
+  (`src/types/operador.ts`) — fácil de reordenar de novo se o usuário não gostar, ele disse que "dá
+  pra decidir uma ordem depois".
+- **Empacotamento e atualização automática configurados** (ver seção 6, itens 5 e 6, e tutorial na
+  seção 9): `package.json` ganhou a seção `"build"` do `electron-builder` (ícone gerado a partir de
+  `public/sakura-icon.svg`, instalador NSIS do Windows) e `.github/workflows/release.yml` builda e
+  publica automaticamente no GitHub Releases quando uma tag `v*` é enviada — os apps instalados nas
+  lojas se atualizam sozinhos depois (`electron-updater`, que já estava chamado no código mas sem
+  destino configurado). **Ainda falta o usuário fazer os dois passos únicos no site do GitHub**
+  (secrets do repositório + permissão de escrita das Actions) **e publicar a primeira tag** pra gerar
+  o primeiro instalador de verdade — tutorial completo na seção 9. Não dá pra testar esse fluxo
+  completo no sandbox (build de instalador Windows precisa rodar num runner Windows de verdade, que é
+  exatamente o que o GitHub Actions fornece) — só validei que `package.json`/`release.yml` estão com
+  sintaxe correta e que `npm run build`/`lint`/`tsc -b` continuam passando.
+
 ## 8.1 Pendência em aberto nesta sessão
 
-Nenhuma no momento — a última pendência registrada aqui (RLS aberto, item 1 da seção 6) foi resolvida
-nesta mesma sessão (migration `0015_rls_exige_login.sql`, ver seção 6 e seção 7).
+**Preciso de 3 respostas da usuária antes de avançar na parte fiscal e na garantia** (decisões
+estruturais, ver seção 1 — não decidir sozinho):
+
+1. **Cidade/UF da borracharia** — a NFS-e é municipal, cada prefeitura tem regras próprias, e a
+   cobertura varia por provedor (Focus NFe, eNotas, PlugNotas etc.). Preciso saber a cidade antes de
+   pesquisar/recomendar um provedor.
+2. **A loja já tem certificado digital (A1) no CNPJ?** — é pré-requisito pra emitir nota fiscal por
+   qualquer provedor, independente de qual for escolhido. Se não tiver, isso entra na lista de passos
+   antes da emissão funcionar de verdade.
+3. **Escopo do "modelo de garantia editável entre lojas"** — a arquitetura hoje é de loja única (ver
+   seção 3), então minha suposição é que ela quer um **texto configurável** (editável em
+   Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não necessariamente suporte a
+   várias lojas ao mesmo tempo no mesmo banco (isso seria multi-loja de verdade, decisão maior, já
+   listada como futura na seção 8). Confirmar esse entendimento antes de modelar a tabela nova.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
 Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
 
-1. **Parte fiscal (prioridade alta)**: emissão de NFC-e (peças, padrão estadual/SEFAZ) e NFS-e
-   (serviço, padrão municipal — varia por cidade). Estratégia definida: integrar com um provedor
-   intermediário (Focus NFe, eNotas, PlugNotas ou similar) em vez de implementar comunicação direta
-   com SEFAZ/prefeituras. **Ainda não escolhido qual provedor** — depende de qual cobre o município
-   da loja para NFS-e. Isso é uma decisão que precisa ser apresentada ao usuário antes de codar.
-   A tela de Ordem de Serviço já tem os botões "Emitir NFe"/"Emitir NFS-e" (ver seção 7), mas por
-   enquanto são só placeholder — passam a emitir de verdade quando essa decisão for tomada.
+1. **Parte fiscal (prioridade alta, NÃO bloqueia o uso na loja — ver decisão na seção 7)**: emissão
+   de NFC-e (peças, padrão estadual/SEFAZ) e NFS-e (serviço, padrão municipal — varia por cidade).
+   Estratégia definida: integrar com um provedor intermediário (Focus NFe, eNotas, PlugNotas ou
+   similar) em vez de implementar comunicação direta com SEFAZ/prefeituras. **Ainda não escolhido
+   qual provedor** — depende da cidade/UF da loja (NFS-e) e se já existe certificado digital A1 pro
+   CNPJ — perguntas em aberto na seção 8.1. Isso é uma decisão que precisa ser apresentada ao usuário
+   antes de codar. A tela de Ordem de Serviço já tem os botões "Emitir NFe"/"Emitir NFS-e" (ver seção
+   7), mas por enquanto são só placeholder — passam a emitir de verdade quando essa decisão for
+   tomada. Também falta modelar os **dados fiscais da própria loja** (CNPJ, razão social, IE, IM,
+   regime tributário, endereço) — hoje não existe nenhuma tabela/tela pra isso, é pré-requisito pra
+   emitir qualquer nota.
 2. ~~Autenticação / login de usuário~~ — **construído nesta sessão** (ver seção 7): login com
    usuário/senha + permissões por módulo, checadas na interface. O que ficou de fora e ainda é
    próximo passo possível: reforçar em RLS por categoria (trade-off aceito por ora, ver seção 6.1),
@@ -603,6 +651,38 @@ Sessões passadas ficam registradas na seção 10.)*
    estar logado. Não deve aparecer nenhum erro novo nas telas que você já usa.
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+
+### Tutorial: gerar o instalador Windows e publicar uma versão (pra usar na borracharia)
+
+Configurado nesta sessão: builda automaticamente no GitHub (não precisa instalar nada extra no seu
+PC) e publica o instalador `.exe` pronto pra baixar — os apps já instalados em cada loja se atualizam
+sozinhos quando sai uma versão nova.
+
+**Passo único (só na primeira vez, configuração do repositório no site do GitHub):**
+
+1. Em `github.com/caranovavidanova/amigao` → **Settings** → **Secrets and variables** → **Actions** →
+   botão **"New repository secret"** — criar duas:
+   - Nome `VITE_SUPABASE_URL`, valor `https://rlgdjiowvnfzsedehyga.supabase.co`
+   - Nome `VITE_SUPABASE_ANON_KEY`, valor a chave anon/publishable do Supabase (a mesma do seu `.env`)
+2. Ainda em **Settings** → **Actions** → **General** → seção **"Workflow permissions"** → marcar
+   **"Read and write permissions"** → **Save**.
+
+**Toda vez que quiser publicar uma versão nova** (inclusive a primeira, pra já ter um instalador pra
+levar pro PC da borracharia):
+
+```powershell
+git checkout main
+git pull origin main
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+(troque `v0.1.0` por um número maior a cada vez, ex: `v0.1.1`, `v0.2.0`.) Isso dispara o build
+automaticamente no GitHub — demora uns 5 a 10 minutos. Quando terminar, o instalador aparece em
+`github.com/caranovavidanova/amigao/releases` — baixe o arquivo `.exe` de lá e rode no PC da
+borracharia (o Windows/SmartScreen deve avisar "editor desconhecido"; é normal sem certificado de
+assinatura pago — clique em "Mais informações" → "Executar assim mesmo"). Da próxima vez que você
+publicar uma tag nova, esse mesmo PC vai se atualizar sozinho, sem precisar reinstalar.
 
 ## 10. Estado do Git
 

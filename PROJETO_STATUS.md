@@ -385,6 +385,11 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   do usuário ("pode deixar pra por na main quando terminar a categoria do estoque") — autorização
   dada *antes* de o usuário rodar essas mudanças na máquina dele. Ele ainda não confirmou rodando de
   verdade; se aparecer algum problema ao testar, é código já em `main`, não numa branch separada.
+- PR [#6](https://github.com/caranovavidanova/amigao/pull/6) (login com usuário/senha + permissões
+  por operador, ver seção 7) foi mergeado em `main` nesta sessão, **depois** de o usuário testar de
+  verdade com o Supabase dele (criar admin, logar, cadastrar operador limitado, conferir sidebar
+  filtrada, confirmar que reabrir o app pede login de novo) e pedir explicitamente pra abrir e
+  mergear o PR.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

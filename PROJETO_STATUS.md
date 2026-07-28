@@ -72,6 +72,7 @@ base arquitetural.
 | Lint | ESLint 9 flat config (`eslint.config.js`) só com `rules-of-hooks` + `exhaustive-deps` | `eslint-plugin-react-hooks` v7 traz um conjunto de regras experimentais (derivadas do React Compiler) que reprovariam o padrão "fetch on mount" usado em todas as páginas; optamos por só as duas regras clássicas |
 | Autenticação | Supabase Auth (e-mail/senha), mas o operador só digita **usuário** — o app monta `usuario@sakura.local` por baixo dos panos | Pedido explícito do usuário (login rápido, sem digitar e-mail). Ver seção 6 pra detalhes/limitações |
 | Permissões por módulo | Checadas **na interface do app**, não reforçadas em RLS por categoria | Decisão explícita do usuário nesta sessão — mais rápido de construir, resolve o problema real (organizar telas por operador); ver seção 6 pro trade-off de segurança |
+| RLS das tabelas de negócio | Exige **login** (`auth.uid() is not null`), mas não reforça permissão por módulo | Usuário escolheu entre 3 opções apresentadas (só login / login + por módulo / deixar como estava) — ver item 1 da seção 6. Fecha o buraco de acesso sem login; reforço por módulo fica pra depois se o risco mudar |
 | Fluxo de Git **enquanto não existir uma v1.0 oficial publicada** | Sempre mergear as mudanças **direto em `main`** ao final de cada tarefa (não deixar PR aberto esperando aprovação manual) | Pedido explícito do usuário ("sempre já inclui tudo na main... já que não tem uma versão oficial publicada ainda"). Ainda assim abrir PR faz parte do processo — só que ele já é mergeado pela própria sessão em vez de ficar esperando. **Sempre informar no chat, em português simples, os comandos exatos e onde rodar cada um** (terminal do Windows vs. SQL Editor do Supabase) depois do merge. Revisitar essa decisão quando existir uma v1.0 publicada de verdade. |
 
 ## 4. Estrutura de pastas
@@ -96,7 +97,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │       pages/configuracoes/ ganhou JurosParcelasSection.tsx (config de juros por parcela)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0013), todas idempotentes (seguro rodar de novo)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0015), todas idempotentes (seguro rodar de novo)
 ├── eslint.config.js             # flat config do ESLint 9
 ├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
 └── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
@@ -167,15 +168,17 @@ entrada em `caixa_movimentos` com o valor total da OS.
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
-1. **RLS ainda aberto nas tabelas de negócio** (clientes, veículos, peças, estoque, OS, caixa — todas
-   com `for all using (true) with check (true)`). Isso **não mudou** com a chegada do login: foi uma
-   decisão explícita desta sessão (ver seção 3) manter a permissão só na interface, não em RLS por
-   categoria, por ser mais rápido de construir e resolver o problema real do usuário (organizar o que
-   cada operador vê). Consequência real: **qualquer pessoa com a chave `anon`** (que vai dentro do
-   app instalado) ainda consegue ler/escrever essas tabelas direto pela API do Supabase, sem passar
-   pela tela de login — a autenticação hoje protege a experiência dentro do app, não o banco em si.
-   A única tabela com RLS de verdade é `operadores` (ver item 2). Se em algum momento o risco mudar
-   (ex: sistema for vendido pra terceiros, não só famílias de confiança), vale revisitar essa decisão.
+1. ~~RLS aberto nas tabelas de negócio~~ — **corrigido nesta sessão** (migration `0015_rls_exige_login.sql`):
+   todas as tabelas de negócio (clientes, veículos, peças, estoque, serviços, OS, caixa, juros de
+   parcelamento) agora exigem uma sessão autenticada (`auth.uid() is not null`) pra ler ou escrever —
+   sem estar logado, nem com a chave `anon` dá mais pra acessar os dados direto pela API. **Permissão
+   por módulo continua checada só na interface** (não no banco) — decisão explícita do usuário nesta
+   sessão, ao escolher entre três opções apresentadas: (a) só exigir login [escolhida], (b) exigir
+   login + reforçar por módulo no banco também, (c) deixar como estava. A opção (b) ficou pra uma
+   etapa futura se o risco mudar (ex: sistema vendido pra terceiros, não só famílias de confiança) —
+   um operador logado com permissão só de "Caixa", por exemplo, hoje ainda consegue chamar a API do
+   Supabase direto pra mexer em "Clientes" se tentar de propósito; o que já não é mais possível é
+   fazer isso **sem estar logado**.
 2. **Autenticação implementada nesta sessão** (Supabase Auth, login com usuário/senha — ver seção 3 e
    7 pros detalhes). Ainda faltam: (a) **redefinir senha de operador esquecida** — hoje não tem como
    o admin resetar a senha de outro operador pelo app (só criar; `supabase.auth.signUp` não permite
@@ -530,15 +533,34 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0014) — todas já confirmadas funcionando pelo usuário nesse
-projeto. Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro
-projeto Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0015) — as de 0001 a 0014 já foram confirmadas funcionando pelo
+usuário nesse projeto. **A migration 0015 ainda não foi rodada no Supabase de verdade** (fecha o
+acesso sem login nas tabelas de negócio — ver item 1 da seção 6) — ver tutorial abaixo. Todas são
+seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto Supabase do
+zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
 redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
 0013/0014 — foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7.
-Sessões passadas ficam registradas na seção 10; o tutorial volta a aparecer aqui quando houver uma
-versão nova ainda não confirmada.)*
+Sessões passadas ficam registradas na seção 10.)*
+
+### Tutorial: pegar a versão nova (migration 0015, fecha acesso sem login) e rodar
+
+1. Feche o app se estiver aberto.
+2. No terminal, dentro da pasta `sakura-system-autocenter`:
+   ```powershell
+   git checkout main
+   git pull origin main
+   ```
+3. **Rode a migration nova no Supabase**: abra `supabase/migrations/0015_rls_exige_login.sql`
+   no VS Code, copie todo o conteúdo, cole numa "New query" no SQL Editor do Supabase e clique em
+   "Run".
+4. `npm install && npm run dev`.
+5. O que testar: tudo deve continuar funcionando **normalmente enquanto você estiver logado**
+   (Clientes, Estoque, OS, Caixa etc.) — essa migration só bloqueia quem tenta acessar os dados **sem**
+   estar logado. Não deve aparecer nenhum erro novo nas telas que você já usa.
+
+Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
 ## 10. Estado do Git
 

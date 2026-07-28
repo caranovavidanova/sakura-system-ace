@@ -1,81 +1,62 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { atualizarStatusPeca, criarPeca, excluirPeca } from "@/lib/pecas";
 import { mensagemDeErro } from "@/lib/errors";
-import { criarPeca, excluirPeca, listarPecas } from "@/lib/pecas";
-import { isSupabaseConfigured } from "@/lib/supabase";
 import type { NovaPeca, Peca } from "@/types/peca";
 import { PecaForm } from "./PecaForm";
+
+interface ProdutosSectionProps {
+  pecas: Peca[];
+  saldos: Map<string, number>;
+  onRecarregar: () => Promise<void>;
+}
 
 function formatarPreco(valor: number | null): string {
   if (valor === null) return "—";
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export function PecasPage() {
-  const [pecas, setPecas] = useState<Peca[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+export function ProdutosSection({ pecas, saldos, onRecarregar }: ProdutosSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-
-  async function carregar() {
-    if (!isSupabaseConfigured) {
-      setCarregando(false);
-      return;
-    }
-    setCarregando(true);
-    setErro(null);
-    try {
-      setPecas(await listarPecas());
-    } catch (err) {
-      console.error("Erro ao carregar peças:", err);
-      setErro(mensagemDeErro(err));
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-  useEffect(() => {
-    carregar();
-  }, []);
+  const [erro, setErro] = useState<string | null>(null);
 
   async function handleSalvar(peca: NovaPeca) {
     await criarPeca(peca);
     setMostrarFormulario(false);
-    await carregar();
+    await onRecarregar();
   }
 
   async function handleExcluir(id: string) {
-    if (!confirm("Excluir esta peça?")) return;
-    await excluirPeca(id);
-    await carregar();
+    if (!confirm("Excluir este produto?")) return;
+    try {
+      await excluirPeca(id);
+      await onRecarregar();
+    } catch (err) {
+      console.error("Erro ao excluir produto:", err);
+      setErro(mensagemDeErro(err));
+    }
+  }
+
+  async function handleAlternarStatus(peca: Peca) {
+    try {
+      await atualizarStatusPeca(peca.id, !peca.ativo);
+      await onRecarregar();
+    } catch (err) {
+      console.error("Erro ao atualizar status do produto:", err);
+      setErro(mensagemDeErro(err));
+    }
   }
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-            Peças
-          </h1>
-          <p className="text-sm text-sakura-gray">
-            Cadastro de peças e produtos, com dados fiscais
-          </p>
-        </div>
-        {!mostrarFormulario && (
+      {!mostrarFormulario && (
+        <div className="flex justify-end">
           <button
             onClick={() => setMostrarFormulario(true)}
             className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
           >
-            + Nova peça
+            + Novo produto
           </button>
-        )}
-      </header>
-
-      {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          O Supabase ainda não está configurado. Defina{" "}
-          <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
-          no arquivo <code>.env</code> para começar a salvar peças de verdade.
-        </p>
+        </div>
       )}
 
       {mostrarFormulario && (
@@ -91,11 +72,9 @@ export function PecasPage() {
         </p>
       )}
 
-      {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
-      ) : pecas.length === 0 ? (
+      {pecas.length === 0 ? (
         <p className="text-sm text-sakura-gray">
-          Nenhuma peça cadastrada ainda.
+          Nenhum produto cadastrado ainda.
         </p>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
@@ -107,7 +86,8 @@ export function PecasPage() {
                 <th className="px-4 py-3 font-medium">Unidade</th>
                 <th className="px-4 py-3 font-medium">Preço custo</th>
                 <th className="px-4 py-3 font-medium">Preço venda</th>
-                <th className="px-4 py-3 font-medium">NCM</th>
+                <th className="px-4 py-3 font-medium">Estoque atual</th>
+                <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -119,14 +99,33 @@ export function PecasPage() {
                   <td className="px-4 py-3">{peca.unidade || "—"}</td>
                   <td className="px-4 py-3">{formatarPreco(peca.preco_custo)}</td>
                   <td className="px-4 py-3">{formatarPreco(peca.preco_venda)}</td>
-                  <td className="px-4 py-3">{peca.ncm || "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleExcluir(peca.id)}
-                      className="text-xs font-medium text-red-600 hover:underline"
+                  <td className="px-4 py-3 font-medium">{saldos.get(peca.id) ?? 0}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        peca.ativo
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-sakura-gray/20 text-sakura-gray"
+                      }`}
                     >
-                      Excluir
-                    </button>
+                      {peca.ativo ? "Ativo" : "Inativo"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleAlternarStatus(peca)}
+                        className="text-xs font-medium text-sakura-purple hover:underline"
+                      >
+                        {peca.ativo ? "Inativar" : "Reativar"}
+                      </button>
+                      <button
+                        onClick={() => handleExcluir(peca.id)}
+                        className="text-xs font-medium text-red-600 hover:underline"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

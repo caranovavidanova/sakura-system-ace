@@ -221,7 +221,11 @@ entrada em `caixa_movimentos` com o valor total da OS.
    lado do sandbox, a validação possível é: `tsc --noEmit`, `vite build`, `npm run lint`, e
    screenshots via Playwright + `xvfb-run` (Electron real, headless) renderizando a UI — com dados
    mockados via `page.route()` interceptando as chamadas REST do Supabase, ou com `.env` ausente
-   para ver os estados vazios/aviso.
+   para ver os estados vazios/aviso. **Pra bugs de caminho de asset (imagens, ícones)**, testar servindo
+   o `dist/` por HTTP (`python3 -m http.server`) não é suficiente — mascara problemas de caminho
+   absoluto que só aparecem de verdade com `file://` (ver item 10 abaixo). Preferir sempre validar
+   com o Electron real via `playwright._electron.launch({ executablePath:
+   "node_modules/.bin/electron", args: ["dist-electron/main.js"] })` sob `xvfb-run -a`.
 8. **Havia um bug real de tela em branco**: `src/lib/supabase.ts` usava `??` para dar fallback num
    endereço de teste quando as variáveis de ambiente não estivessem definidas — mas um `.env`
    copiado de `.env.example` define as variáveis como **string vazia**, não ausente, e `??` não
@@ -233,6 +237,19 @@ entrada em `caixa_movimentos` com o valor total da OS.
    mostrar um check falhando que **não tem relação com o código** — um app desktop Electron não
    roda hospedado numa plataforma de deploy web. Não dá pra desconectar isso pelo código; só pelo
    painel da Vercel. Perguntei ao usuário se quer que eu oriente a remoção; ainda sem resposta.
+10. **Havia um bug real de logo/imagens quebradas só no instalador de verdade** (não aparecia no
+    `npm run dev`): imagens referenciadas com caminho absoluto (`/sakura-logo.svg`,
+    `/sakura-login-bg.svg`) funcionam em modo dev porque o Vite serve tudo a partir de `/`, mas
+    quebram no app empacotado porque o Electron carrega o `index.html` via `file://`, onde um caminho
+    começando com `/` tenta ler a partir da **raiz do disco**, não da pasta do app. Só foi descoberto
+    testando o instalador de verdade (v0.1.0) — o sandbox não tinha pego, porque os testes anteriores
+    rodavam com um servidor HTTP local, que mascara esse problema. **Corrigido**: `vite.config.ts`
+    ganhou `base: "./"` (caminhos relativos no build) e as referências em `Logo.tsx`/`LoginPage.tsx`
+    passaram a usar `import.meta.env.BASE_URL` em vez do caminho absoluto direto. Validado rodando o
+    Electron de verdade (não só o navegador) via `xvfb-run` + `playwright._electron`. **Se aparecer
+    imagem quebrada só no instalador (nunca no `npm run dev`), é esse mesmo padrão de bug** — procurar
+    por `src="/` ou `url(/` direto no código (fora de `import`/`public/`) em vez de
+    `import.meta.env.BASE_URL`.
 
 ## 7. O que já está pronto e validado (pelo usuário, rodando de verdade)
 

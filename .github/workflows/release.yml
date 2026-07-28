@@ -1,0 +1,31 @@
+name: Release
+
+# Dispara quando uma tag de versão (ex: v0.1.0) é enviada ao GitHub. Builda o
+# instalador Windows e publica como GitHub Release — o app instalado nas lojas
+# (via electron-updater) detecta a release nova sozinho e se atualiza.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: Build e publica o instalador Windows
+        run: npm run electron:build -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}

@@ -264,21 +264,6 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   divergência entre branches antes de começar.
 - `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
 
-## 12. Trabalhando de outro computador
-
-O código (tudo que está commitado e no GitHub) e o banco de dados (Supabase) já são 100% na nuvem —
-dá pra continuar em qualquer computador com internet. Dois passos manuais em cada computador novo,
-porque nunca ficam salvos no Git (por segurança):
-
-```bash
-git clone https://github.com/caranovavidanova/amigao.git
-cd amigao
-npm install
-cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehyga.supabase.co
-                        # e VITE_SUPABASE_ANON_KEY=<chave anon, em Settings -> API no Supabase>
-npm run dev
-```
-
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 
 O usuário tinha (no Windows, em `Desktop`) uma pasta `amigao` (clone antigo do "Pneus Amigão",
@@ -299,3 +284,18 @@ sessão** — não precisa repetir esse processo em sessões futuras:
   Next.js antigo) e uma `GEMINI_API_KEY`. Nunca foi commitado (está no `.gitignore`), mas ficou
   exposto no chat desta sessão — **o usuário já rotacionou essa chave do Gemini**, não precisa
   avisar de novo.
+
+## 12. Trabalhando de outro computador
+
+O código (tudo que está commitado e no GitHub) e o banco de dados (Supabase) já são 100% na nuvem —
+dá pra continuar em qualquer computador com internet. Dois passos manuais em cada computador novo,
+porque nunca ficam salvos no Git (por segurança):
+
+```bash
+git clone https://github.com/caranovavidanova/amigao.git
+cd amigao
+npm install
+cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehyga.supabase.co
+                        # e VITE_SUPABASE_ANON_KEY=<chave anon, em Settings -> API no Supabase>
+npm run dev
+```

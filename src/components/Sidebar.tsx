@@ -10,7 +10,6 @@ interface ModuloLink {
 const modulos: ModuloLink[] = [
   { label: "Painel de Controle", path: "/", disponivel: true },
   { label: "Clientes", path: "/clientes", disponivel: true },
-  { label: "Peças", path: "/pecas", disponivel: true },
   { label: "Estoque", path: "/estoque", disponivel: true },
   { label: "Ordens de Serviço", path: "/ordens-servico", disponivel: true },
   { label: "Caixa Diário", path: "/caixa", disponivel: true },

@@ -2,7 +2,6 @@ import { Route, Routes } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { PainelPage } from "./pages/painel/PainelPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
-import { PecasPage } from "./pages/pecas/PecasPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
 import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
@@ -17,7 +16,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<PainelPage />} />
           <Route path="/clientes" element={<ClientesPage />} />
-          <Route path="/pecas" element={<PecasPage />} />
           <Route path="/estoque" element={<EstoquePage />} />
           <Route path="/ordens-servico" element={<OrdensServicoPage />} />
           <Route path="/caixa" element={<CaixaPage />} />

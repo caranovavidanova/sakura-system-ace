@@ -26,3 +26,8 @@ export async function excluirPeca(id: string): Promise<void> {
   const { error } = await supabase.from("pecas").delete().eq("id", id);
   if (error) throw error;
 }
+
+export async function atualizarStatusPeca(id: string, ativo: boolean): Promise<void> {
+  const { error } = await supabase.from("pecas").update({ ativo }).eq("id", id);
+  if (error) throw error;
+}

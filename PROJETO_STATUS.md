@@ -274,24 +274,23 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   da divergência antes de fazer trabalho que pode se perder.
 - `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
 
-## 11. Ambiente local do usuário (Windows) — pasta reorganizada nesta sessão
+## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 
 O usuário tinha (no Windows, em `Desktop`) uma pasta `amigao` (clone antigo do "Pneus Amigão",
 branch `main`, com `.git` próprio) contendo **dentro dela** uma segunda pasta também chamada
 `amigao` (clone separado, com o Sakura System de verdade). Isso causava confusão de qual `.env`
-editar (mesmo problema já registrado na dica de suporte da seção 7). Resolvido nesta sessão:
+editar (mesmo problema já registrado na dica de suporte da seção 7). **Totalmente resolvido nesta
+sessão** — não precisa repetir esse processo em sessões futuras:
 
 - A pasta interna (com o Sakura System) foi renomeada para `sakura-system-autocenter` e movida pra
-  fora, para `C:\Users\usuario\Desktop\sakura-system-autocenter` — **essa é a pasta certa a partir
-  de agora**, com `.env` já configurado e funcionando (testado pelo usuário, Painel de Controle
-  mostrando dados reais).
+  `C:\Users\usuario\Desktop\sakura-system-autocenter` — **essa é a pasta certa a partir de agora**,
+  com `.env` configurado e funcionando (testado pelo usuário, Painel de Controle mostrando dados
+  reais).
 - A pasta antiga (clone do `main` desatualizado) foi renomeada para `amigao_ANTIGO_apagar` como
-  backup antes de excluir — confirmado que não tinha nenhuma alteração não salva (`git status`
-  limpo, tudo já no GitHub) e o usuário já pode apagá-la quando quiser.
-- **Achado à parte**: o `.env.local` da pasta antiga tinha credenciais de um projeto Supabase
-  totalmente diferente (`nahbbhewpqmedzorhtgo`, prefixo `NEXT_PUBLIC_`, resquício do Next.js antigo)
-  e uma `GEMINI_API_KEY`. Nunca foi commitado (está no `.gitignore`), mas ficou exposto no chat desta
-  sessão — vale sugerir ao usuário rotacionar essa chave do Gemini se ainda estiver em uso em algum
-  lugar.
-- Se uma sessão futura não encontrar mais a pasta duplicada, é porque esse problema já foi resolvido
-  — não precisa repetir esse processo.
+  backup, confirmado que não tinha nenhuma alteração não salva (`git status` limpo, tudo já no
+  GitHub) e **já foi excluída pelo usuário**.
+- **Achado à parte, já corrigido**: o `.env.local` da pasta antiga tinha credenciais de um projeto
+  Supabase totalmente diferente (`nahbbhewpqmedzorhtgo`, prefixo `NEXT_PUBLIC_`, resquício do
+  Next.js antigo) e uma `GEMINI_API_KEY`. Nunca foi commitado (está no `.gitignore`), mas ficou
+  exposto no chat desta sessão — **o usuário já rotacionou essa chave do Gemini**, não precisa
+  avisar de novo.

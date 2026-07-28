@@ -1,1 +1,2 @@
 @AGENTS.md
+@PROJETO_STATUS.md

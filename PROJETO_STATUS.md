@@ -18,6 +18,11 @@
   longo da conversa), **documentar aqui no PROJETO_STATUS.md** — não só nas decisões técnicas da
   seção 3, mas qualquer coisa sobre *como* o usuário quer que eu trabalhe. Sessões futuras não têm
   memória da conversa, só deste arquivo.
+- **Este arquivo carrega sozinho em toda sessão nova** — `CLAUDE.md` importa `AGENTS.md` e
+  `PROJETO_STATUS.md` (`@AGENTS.md` / `@PROJETO_STATUS.md`), então não é preciso o usuário colar ou
+  anexar este arquivo de novo pra eu ter esse contexto. Basta abrir uma sessão nova apontando pro
+  repositório `caranovavidanova/amigao` (ex: Claude Code on the web, `claude` no terminal dentro da
+  pasta do projeto, etc).
 
 ## 2. O que é o projeto
 
@@ -109,6 +114,13 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 - Ao criar valores default a partir de variáveis de ambiente (`import.meta.env.VITE_*`), usar `||`
   e não `??` para o fallback — o Vite injeta variáveis ausentes como **string vazia**, não
   `undefined`, e `??` só substitui `null`/`undefined` (ver bug corrigido na seção 6).
+
+**Skill `/gerar-modulo`** (`.claude/skills/gerar-modulo/SKILL.md`, criada nesta sessão): automatiza a
+criação de um módulo novo inteiro (migration + types + lib + página + form + registro em `MODULOS`/
+`App.tsx`) seguindo esse padrão de código. Uso: digitar `/gerar-modulo <Nome do módulo>` (ex:
+`/gerar-modulo Fornecedores`). Ela pergunta os campos da entidade antes de codar se o usuário não
+detalhar. Preferir essa skill a fazer o andaime manualmente sempre que o pedido for "módulo/cadastro
+novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
@@ -499,42 +511,10 @@ no Supabase de verdade** (remove o checklist do veículo, adiciona técnico por 
 juros — ver seção 7) — ver tutorial abaixo. Todas são seguras de rodar de novo (idempotentes) caso
 precise reconectar ou usar outro projeto Supabase do zero.
 
-### Tutorial: pegar a versão nova (PR #8, já mergeado em `main`) e rodar
-
-O PR do redesenho do Início/Login e do cadastro de produto completo já foi mergeado em `main` nesta
-sessão, **sem o usuário ter testado ainda com o Supabase de verdade** (autorização explícita do
-usuário pra mergear direto). Pra rodar essa versão nova na sua máquina Windows:
-
-1. Feche o app Sakura System se ele estiver aberto (`Ctrl+C` no terminal onde rodou `npm run dev`,
-   ou feche a janela).
-2. No terminal (PowerShell, dentro da pasta `sakura-system-autocenter`), confirme que está em
-   `main` e traga o que foi mergeado:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-   Se aparecer erro por causa de alguma mudança local não salva, avise antes de continuar — não
-   force nada.
-3. **Rode as duas migrations novas no Supabase** (site do Supabase → seu projeto → SQL Editor →
-   "New query"), **nessa ordem**:
-   - Abra `supabase/migrations/0009_clientes_data_nascimento.sql` no VS Code, copie todo o
-     conteúdo, cole no SQL Editor e clique em "Run".
-   - Repita o mesmo com `supabase/migrations/0010_pecas_campos_cadastro_completo.sql`.
-   - As duas só adicionam colunas novas (`alter table ... add column if not exists`) — não apagam
-     nem alteram nada que já existe, e são seguras de rodar de novo se der algum problema.
-4. Instale dependências (caso tenha mudado algo) e abra o app:
-   ```powershell
-   npm install
-   npm run dev
-   ```
-5. O que testar: o menu lateral deve mostrar **"Início"** (não mais "Painel de Controle") com os
-   três cartões de Vendas/Custos/Lucros do mês e o calendário; a tela de Login deve aparecer com o
-   fundo floral e o cartão em vidro fosco; e em **Estoque → Produtos → "+ Novo produto"** o
-   formulário deve vir com os campos novos (Código de barras, Marca, Modelo, Aplicação, C.E.S.T,
-   Origem) e a Margem % calculando o Preço final sozinha.
-
-Se der algum erro, me manda o print do DevTools (já abre sozinho em modo dev) que eu ajudo a
-resolver.
+*(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8 — múltiplos veículos, login,
+redesenho do Início/Login, cadastro de produto completo — foi removido daqui porque já está tudo
+confirmado funcionando pelo usuário, ver seção 7. Só o tutorial da versão mais recente fica abaixo;
+sessões passadas ficam registradas na seção 10.)*
 
 ### Tutorial: pegar a versão nova (migration 0013, já mergeada direto em `main`) e rodar
 

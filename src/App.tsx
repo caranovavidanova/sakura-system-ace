@@ -11,7 +11,7 @@ import { LucratividadePage } from "./pages/lucratividade/LucratividadePage";
 
 export default function App() {
   return (
-    <div className="flex min-h-screen bg-sakura-bg">
+    <div className="flex h-screen overflow-hidden bg-sakura-bg">
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-8">
         <Routes>

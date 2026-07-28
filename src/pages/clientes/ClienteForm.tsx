@@ -31,17 +31,31 @@ const veiculoVazio: NovoVeiculo = {
 
 export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
   const [cliente, setCliente] = useState<NovoCliente>(clienteVazio);
-  const [veiculo, setVeiculo] = useState<NovoVeiculo>(veiculoVazio);
+  const [veiculos, setVeiculos] = useState<NovoVeiculo[]>([veiculoVazio]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  function atualizarVeiculo(index: number, patch: Partial<NovoVeiculo>) {
+    setVeiculos((atual) =>
+      atual.map((v, i) => (i === index ? { ...v, ...patch } : v)),
+    );
+  }
+
+  function adicionarVeiculo() {
+    setVeiculos((atual) => [...atual, { ...veiculoVazio }]);
+  }
+
+  function removerVeiculo(index: number) {
+    setVeiculos((atual) => atual.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
     setSalvando(true);
     try {
-      const veiculos = veiculo.placa.trim() ? [veiculo] : [];
-      await onSalvar(cliente, veiculos);
+      const veiculosPreenchidos = veiculos.filter((v) => v.placa.trim());
+      await onSalvar(cliente, veiculosPreenchidos);
     } catch (err) {
       console.error("Erro ao salvar cliente:", err);
       setErro(mensagemDeErro(err));
@@ -129,44 +143,79 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
       </section>
 
       <section>
-        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-          Veículo (opcional)
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          <Campo
-            label="Placa"
-            value={veiculo.placa}
-            onChange={(v) => setVeiculo({ ...veiculo, placa: v.toUpperCase() })}
-          />
-          <Campo
-            label="Marca"
-            value={veiculo.marca ?? ""}
-            onChange={(v) => setVeiculo({ ...veiculo, marca: v })}
-          />
-          <Campo
-            label="Modelo"
-            value={veiculo.modelo ?? ""}
-            onChange={(v) => setVeiculo({ ...veiculo, modelo: v })}
-          />
-          <Campo
-            label="Ano"
-            value={veiculo.ano?.toString() ?? ""}
-            onChange={(v) =>
-              setVeiculo({ ...veiculo, ano: v ? Number(v) : null })
-            }
-          />
-          <Campo
-            label="Cor"
-            value={veiculo.cor ?? ""}
-            onChange={(v) => setVeiculo({ ...veiculo, cor: v })}
-          />
-          <Campo
-            label="KM atual"
-            value={veiculo.km_atual?.toString() ?? ""}
-            onChange={(v) =>
-              setVeiculo({ ...veiculo, km_atual: v ? Number(v) : null })
-            }
-          />
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-sakura-purple-dark">
+            Veículos (opcional)
+          </h3>
+          <button
+            type="button"
+            onClick={adicionarVeiculo}
+            className="text-xs font-medium text-sakura-purple hover:underline"
+          >
+            + Adicionar veículo
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {veiculos.map((veiculo, index) => (
+            <div
+              key={index}
+              className="relative rounded-xl border border-sakura-gray/30 p-4"
+            >
+              {veiculos.length > 1 && (
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-medium text-sakura-gray">
+                    Veículo {index + 1}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => removerVeiculo(index)}
+                    className="text-xs font-medium text-red-600 hover:underline"
+                  >
+                    Remover
+                  </button>
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-4">
+                <Campo
+                  label="Placa"
+                  value={veiculo.placa}
+                  onChange={(v) =>
+                    atualizarVeiculo(index, { placa: v.toUpperCase() })
+                  }
+                />
+                <Campo
+                  label="Marca"
+                  value={veiculo.marca ?? ""}
+                  onChange={(v) => atualizarVeiculo(index, { marca: v })}
+                />
+                <Campo
+                  label="Modelo"
+                  value={veiculo.modelo ?? ""}
+                  onChange={(v) => atualizarVeiculo(index, { modelo: v })}
+                />
+                <Campo
+                  label="Ano"
+                  value={veiculo.ano?.toString() ?? ""}
+                  onChange={(v) =>
+                    atualizarVeiculo(index, { ano: v ? Number(v) : null })
+                  }
+                />
+                <Campo
+                  label="Cor"
+                  value={veiculo.cor ?? ""}
+                  onChange={(v) => atualizarVeiculo(index, { cor: v })}
+                />
+                <Campo
+                  label="KM atual"
+                  value={veiculo.km_atual?.toString() ?? ""}
+                  onChange={(v) =>
+                    atualizarVeiculo(index, { km_atual: v ? Number(v) : null })
+                  }
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

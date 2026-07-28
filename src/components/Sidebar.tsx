@@ -20,7 +20,7 @@ const modulos: ModuloLink[] = [
 
 export function Sidebar() {
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-sakura-gray/40 bg-white">
+    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-sakura-gray/40 bg-white">
       <div className="px-6 py-6">
         <Logo />
         <p className="mt-1 text-xs text-sakura-gray">AutoCenter Edition</p>

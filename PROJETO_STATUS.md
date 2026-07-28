@@ -73,8 +73,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, Gauge.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts)
+│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts) + feriados.ts (feriados nacionais, com Páscoa calculada)
 │   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, ordens-servico, caixa, relatorios, lucratividade, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
@@ -82,7 +82,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, estoque.ts, os.ts, caixa.ts, operador.ts)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0007), todas idempotentes (seguro rodar de novo)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0009), todas idempotentes (seguro rodar de novo)
 ├── eslint.config.js             # flat config do ESLint 9
 ├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
 └── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
@@ -103,7 +103,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-- **`clientes`**: id, nome, cpf_cnpj, telefone, email, cep, rua, numero, bairro, cidade, uf, criado_em
+- **`clientes`**: id, nome, cpf_cnpj, telefone, email, cep, rua, numero, bairro, cidade, uf,
+  data_nascimento (migration 0009 — usada pro calendário do Início marcar aniversário do mês), criado_em
 - **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, km_atual, criado_em
 - **`pecas`**: id, codigo_interno, descricao, unidade, preco_custo, preco_venda, ncm, cfop_padrao,
   cst_ou_csosn, aliquota_icms, ativo, criado_em
@@ -309,6 +310,43 @@ novo):
 3. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
    exemplo que está comentado no final da migration 0007, colando o "User UID" gerado.
 
+**⏳ Implementado nesta sessão (branch `claude/sakura-autocenter-status-4pek1l`), ainda sem
+confirmação do usuário rodando com Supabase real** — o usuário mandou um rascunho desenhado à mão
+em cima de uma screenshot do "Painel de Controle" pedindo esse redesenho, e duas imagens de
+referência de estilo (dashboard escuro "Helios Investments" e um card de login em vidro fosco sobre
+foto de paisagem). Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots
+Playwright com dados simulados via `page.route()` interceptando as chamadas REST/Auth do Supabase
+(sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **"Painel de Controle" virou "Início"** — só o texto exibido (label em `MODULOS`, título da
+  página); a chave interna de permissão continua `painel`, então operadores já cadastrados não
+  precisam ser reconfigurados.
+- **Página Início redesenhada**: os dois gauges (velocímetro) deram lugar a três cartões de
+  tendência do mês — **Vendas mês**, **Custos mês** e **Lucros mês** — cada um com um mini-gráfico
+  de linha (`components/Sparkline.tsx`, SVG puro, sem biblioteca de gráficos) somando os lançamentos
+  de `caixa_movimentos` por dia (entradas = vendas, saídas = custos — decisão explícita do usuário
+  nesta sessão de manter simples, sem tentar separar custo de peça vendida) e um link "Ver mais"
+  pra Relatórios. A antiga "Fila de atendimento" virou a seção **"OS abertas"** (mesma tabela,
+  só renomeada). O componente `Gauge.tsx` foi removido por ter ficado sem nenhum uso.
+- **Calendário do mês no Início** (`components/MiniCalendario.tsx`): mostra o mês atual com
+  marcação de **feriados nacionais** (`lib/feriados.ts` — datas fixas + as três móveis calculadas a
+  partir do domingo de Páscoa via algoritmo de Meeus/Jones/Butcher: Carnaval, Sexta-feira Santa,
+  Corpus Christi; conferido manualmente pros feriados de 2026) e de **aniversário de cliente no
+  mês** (compara mês/dia de `clientes.data_nascimento` com o mês corrente, ignora o ano). Isso
+  exigiu um campo novo: `data_nascimento` (date, opcional) em `clientes` — migration
+  `0009_clientes_data_nascimento.sql` — e um campo de data no `ClienteForm.tsx`.
+- **Tela de Login redesenhada**: cartão em vidro fosco (`backdrop-blur`, fundo semitransparente,
+  cantos bem arredondados) sobre uma imagem de fundo floral, no estilo do card de login de
+  referência que o usuário mandou. **A foto de flor de cerejeira que o usuário queria usar de fundo
+  veio colada direto no chat (não como arquivo anexado)** — pelo mesmo motivo já documentado na
+  seção 2 sobre a logo oficial (risco real de não reproduzir o arquivo original com fidelidade a
+  partir do que é só colado/renderizado na conversa), não dava pra salvar essa foto como um asset
+  de verdade. O usuário topou, como alternativa, um fundo recriado à mão: `public/sakura-login-bg.svg`
+  (ilustração vetorial de galho de sakura com flores, gerada por script Python embutindo os
+  `<ellipse>`/`<circle>` das pétalas, não é a foto real). **Pendência**: se o usuário mandar a foto
+  de verdade como anexo/drag-and-drop (não colada), é só trocar a `background-image` do
+  `LoginPage.tsx` pra apontar pro arquivo real dentro de `public/`.
+
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
 Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
@@ -390,6 +428,10 @@ confirmadas funcionando pelo usuário nesse projeto. Mesmo assim, agora são seg
   verdade com o Supabase dele (criar admin, logar, cadastrar operador limitado, conferir sidebar
   filtrada, confirmar que reabrir o app pede login de novo) e pedir explicitamente pra abrir e
   mergear o PR.
+- **Branch `claude/sakura-autocenter-status-4pek1l`**: contém o redesenho do Início (cartões de
+  tendência + calendário) e do Login (vidro fosco + fundo floral), ver seção 7. Só commitada e
+  enviada pro GitHub nesta sessão — **nenhum PR foi aberto** (só se abre PR a pedido explícito) e o
+  usuário ainda não rodou essas mudanças com o Supabase dele.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

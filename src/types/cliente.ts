@@ -22,6 +22,7 @@ export interface Cliente {
   bairro: string | null;
   cidade: string | null;
   uf: string | null;
+  data_nascimento: string | null;
   criado_em: string;
   veiculos?: Veiculo[];
 }

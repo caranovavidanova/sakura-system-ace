@@ -1,5 +1,5 @@
 export const MODULOS = [
-  { chave: "painel", label: "Painel de Controle", rota: "/" },
+  { chave: "painel", label: "Início", rota: "/" },
   { chave: "clientes", label: "Clientes", rota: "/clientes" },
   { chave: "estoque", label: "Estoque", rota: "/estoque" },
   { chave: "ordens_servico", label: "Ordens de Serviço", rota: "/ordens-servico" },

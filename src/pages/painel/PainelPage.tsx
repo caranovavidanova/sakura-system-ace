@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Gauge } from "@/components/Gauge";
+import { Link } from "react-router-dom";
+import { MiniCalendario } from "@/components/MiniCalendario";
+import { Sparkline } from "@/components/Sparkline";
+import { feriadosNacionais } from "@/lib/feriados";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarMovimentosCaixa } from "@/lib/caixa";
+import { listarClientes } from "@/lib/clientes";
 import { listarOrdens } from "@/lib/ordensServico";
-import { listarPecas } from "@/lib/pecas";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { Cliente } from "@/types/cliente";
 import type { MovimentoCaixa } from "@/types/caixa";
 import type { OrdemServico } from "@/types/os";
-import type { Peca } from "@/types/peca";
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -23,7 +26,7 @@ const statusLabel: Record<string, string> = {
 export function PainelPage() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
-  const [pecas, setPecas] = useState<Peca[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -34,14 +37,11 @@ export function PainelPage() {
         return;
       }
       try {
-        const [movimentosCarregados, ordensCarregadas, pecasCarregadas] = await Promise.all([
-          listarMovimentosCaixa(),
-          listarOrdens(),
-          listarPecas(),
-        ]);
+        const [movimentosCarregados, ordensCarregadas, clientesCarregados] =
+          await Promise.all([listarMovimentosCaixa(), listarOrdens(), listarClientes()]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
-        setPecas(pecasCarregadas);
+        setClientes(clientesCarregados);
       } catch (err) {
         console.error("Erro ao carregar painel:", err);
         setErro(mensagemDeErro(err));
@@ -52,65 +52,68 @@ export function PainelPage() {
     carregar();
   }, []);
 
-  const custoPorPeca = useMemo(() => {
-    const mapa = new Map<string, number>();
-    for (const peca of pecas) mapa.set(peca.id, peca.preco_custo ?? 0);
-    return mapa;
-  }, [pecas]);
-
   const hoje = new Date();
-  const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const inicioMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+  const ano = hoje.getFullYear();
+  const mes = hoje.getMonth();
+  const inicioMesAtual = new Date(ano, mes, 1);
+  const diaDeHoje = hoje.getDate();
 
-  const faturamentoMesAtual = movimentos
-    .filter((m) => m.tipo === "entrada" && new Date(m.data) >= inicioMesAtual)
-    .reduce((total, m) => total + m.valor, 0);
+  const { vendasPorDia, custosPorDia, vendasMes, custosMes } = useMemo(() => {
+    const vendas = Array(diaDeHoje).fill(0);
+    const custos = Array(diaDeHoje).fill(0);
 
-  const faturamentoMesAnterior = movimentos
-    .filter(
-      (m) =>
-        m.tipo === "entrada" &&
-        new Date(m.data) >= inicioMesAnterior &&
-        new Date(m.data) < inicioMesAtual,
-    )
-    .reduce((total, m) => total + m.valor, 0);
-
-  const percentualFaturamento =
-    faturamentoMesAnterior > 0
-      ? (faturamentoMesAtual / faturamentoMesAnterior) * 100
-      : faturamentoMesAtual > 0
-        ? 100
-        : 0;
-
-  const { receitaMes, custoMes } = useMemo(() => {
-    let receita = 0;
-    let custo = 0;
-    for (const ordem of ordens) {
-      if (new Date(ordem.data_abertura) < inicioMesAtual) continue;
-      for (const item of ordem.itens ?? []) {
-        const receitaItem = item.quantidade * item.preco_unitario - item.desconto;
-        const custoUnitario = item.tipo === "peca" ? custoPorPeca.get(item.peca_id ?? "") ?? 0 : 0;
-        receita += receitaItem;
-        custo += item.quantidade * custoUnitario;
-      }
+    for (const movimento of movimentos) {
+      const dataMovimento = new Date(movimento.data);
+      if (dataMovimento < inicioMesAtual) continue;
+      const dia = dataMovimento.getDate();
+      if (dia > diaDeHoje) continue;
+      const alvo = movimento.tipo === "entrada" ? vendas : custos;
+      alvo[dia - 1] += movimento.valor;
     }
-    return { receitaMes: receita, custoMes: custo };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ordens, custoPorPeca]);
 
-  const margemMes = receitaMes - custoMes;
-  const percentualMargem = receitaMes > 0 ? (margemMes / receitaMes) * 100 : 0;
+    return {
+      vendasPorDia: vendas,
+      custosPorDia: custos,
+      vendasMes: vendas.reduce((total, v) => total + v, 0),
+      custosMes: custos.reduce((total, v) => total + v, 0),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movimentos, diaDeHoje]);
+
+  const lucrosPorDia = vendasPorDia.map((v, i) => v - custosPorDia[i]);
+  const lucrosMes = vendasMes - custosMes;
 
   const filaDeAtendimento = ordens
     .filter((o) => o.status === "aberta" || o.status === "em_andamento")
     .sort((a, b) => (a.data_abertura < b.data_abertura ? -1 : 1));
 
+  const eventosDoMes = useMemo(() => {
+    const feriados = feriadosNacionais(ano)
+      .map((f) => {
+        const [, mesFeriado, diaFeriado] = f.data.split("-").map(Number);
+        return mesFeriado - 1 === mes
+          ? { dia: diaFeriado, tipo: "feriado" as const, nome: f.nome }
+          : null;
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
+
+    const aniversarios = clientes
+      .filter((c) => c.data_nascimento)
+      .map((c) => {
+        const [, mesNascimento, diaNascimento] = c.data_nascimento!.split("-").map(Number);
+        return mesNascimento - 1 === mes
+          ? { dia: diaNascimento, tipo: "aniversario" as const, nome: `Aniversário de ${c.nome}` }
+          : null;
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
+
+    return [...feriados, ...aniversarios];
+  }, [ano, mes, clientes]);
+
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-          Painel de Controle
-        </h1>
+        <h1 className="text-2xl font-semibold text-sakura-purple-dark">Início</h1>
         <p className="text-sm text-sakura-gray">Visão geral da loja, em tempo real</p>
       </header>
 
@@ -130,66 +133,94 @@ export function PainelPage() {
         <p className="text-sm text-sakura-gray">Carregando...</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <Gauge
-              titulo="Faturamento deste mês vs. mês anterior"
-              percentual={percentualFaturamento}
-              valorPrincipal={formatarMoeda(faturamentoMesAtual)}
-              legenda={
-                faturamentoMesAnterior > 0
-                  ? `Mês anterior: ${formatarMoeda(faturamentoMesAnterior)}`
-                  : "Sem histórico do mês anterior ainda"
-              }
+          <div className="grid grid-cols-3 gap-4">
+            <CartaoTendencia
+              titulo="Vendas mês"
+              valor={formatarMoeda(vendasMes)}
+              valores={vendasPorDia}
+              cor="#B38DAC"
             />
-            <Gauge
-              titulo="Margem bruta deste mês"
-              percentual={percentualMargem}
-              valorPrincipal={formatarMoeda(margemMes)}
-              legenda={
-                receitaMes > 0
-                  ? `Sobre receita de ${formatarMoeda(receitaMes)}`
-                  : "Nenhuma venda neste mês ainda"
-              }
+            <CartaoTendencia
+              titulo="Custos mês"
+              valor={formatarMoeda(custosMes)}
+              valores={custosPorDia}
+              cor="#C7C7C7"
+            />
+            <CartaoTendencia
+              titulo="Lucros mês"
+              valor={formatarMoeda(lucrosMes)}
+              valores={lucrosPorDia}
+              cor="#6E4D68"
             />
           </div>
 
-          <section>
-            <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-              Fila de atendimento
-            </h2>
-            {filaDeAtendimento.length === 0 ? (
-              <p className="text-sm text-sakura-gray">
-                Nenhuma ordem de serviço em aberto no momento.
-              </p>
-            ) : (
-              <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Cliente</th>
-                      <th className="px-4 py-3 font-medium">Veículo</th>
-                      <th className="px-4 py-3 font-medium">Aberta em</th>
-                      <th className="px-4 py-3 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filaDeAtendimento.map((ordem) => (
-                      <tr key={ordem.id} className="border-t border-sakura-gray/20">
-                        <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
-                        <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
-                        <td className="px-4 py-3">
-                          {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
-                        </td>
-                        <td className="px-4 py-3">{statusLabel[ordem.status]}</td>
+          <div className="grid grid-cols-[2fr_1fr] gap-4">
+            <section>
+              <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+                OS abertas
+              </h2>
+              {filaDeAtendimento.length === 0 ? (
+                <p className="text-sm text-sakura-gray">
+                  Nenhuma ordem de serviço em aberto no momento.
+                </p>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-sakura-gray/30 bg-white">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Cliente</th>
+                        <th className="px-4 py-3 font-medium">Veículo</th>
+                        <th className="px-4 py-3 font-medium">Aberta em</th>
+                        <th className="px-4 py-3 font-medium">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+                    </thead>
+                    <tbody>
+                      {filaDeAtendimento.map((ordem) => (
+                        <tr key={ordem.id} className="border-t border-sakura-gray/20">
+                          <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
+                          <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
+                          <td className="px-4 py-3">
+                            {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
+                          </td>
+                          <td className="px-4 py-3">{statusLabel[ordem.status]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <MiniCalendario ano={ano} mes={mes} eventos={eventosDoMes} />
+          </div>
         </>
       )}
+    </div>
+  );
+}
+
+function CartaoTendencia({
+  titulo,
+  valor,
+  valores,
+  cor,
+}: {
+  titulo: string;
+  valor: string;
+  valores: number[];
+  cor: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-sakura-gray/30 bg-white p-4">
+      <p className="text-xs text-sakura-gray">{titulo}</p>
+      <p className="mt-1 text-lg font-semibold text-sakura-purple-dark">{valor}</p>
+      <Sparkline valores={valores} cor={cor} />
+      <Link
+        to="/relatorios"
+        className="text-xs font-medium text-sakura-purple hover:underline"
+      >
+        Ver mais →
+      </Link>
     </div>
   );
 }

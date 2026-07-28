@@ -13,7 +13,7 @@ import { PainelPage } from "./pages/painel/PainelPage";
 import { RelatoriosPage } from "./pages/relatorios/RelatoriosPage";
 import { MODULOS, temPermissao } from "./types/operador";
 
-// Se o operador não tiver permissão pro Painel de Controle (o "/" padrão),
+// Se o operador não tiver permissão pro Início (o "/" padrão),
 // manda ele direto pro primeiro módulo que ele acessa, em vez de cair numa
 // tela de "sem permissão" logo depois de fazer login.
 function PaginaInicial() {

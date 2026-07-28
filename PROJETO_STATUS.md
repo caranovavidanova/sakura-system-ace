@@ -257,11 +257,14 @@ de novo.
     referência) — todos exigiriam tabelas novas ou mudanças de schema, então precisam ser decididos
     com o usuário antes (ver seção 1: decisões estruturais não se decide sozinho).
 
-**⏳ Implementado nesta sessão (login + permissões), ainda sem confirmação do usuário rodando com Supabase real** — validado no sandbox via `npm run build`, `npm run lint` e screenshots Playwright com Supabase Auth simulado (`page.route()` interceptando `/auth/v1/token` e `/rest/v1/operadores`, ver item 7 da seção 6 sobre por que não dá pra testar contra o Supabase de verdade daqui):
+**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (login + permissões):**
 
 - **Login com usuário e senha** (não e-mail — ver decisão na seção 3): tela nova (`LoginPage.tsx`),
-  usa Supabase Auth por baixo (e-mail interno `usuario@sakura.local`, nunca exibido). Sessão
-  persiste sozinha (o `supabase-js` cuida disso), não precisa logar de novo toda vez que abre o app.
+  usa Supabase Auth por baixo (e-mail interno `usuario@sakura.local`, nunca exibido).
+  **Sessão NÃO persiste entre aberturas do app** (`persistSession: false` em `src/lib/supabase.ts`)
+  — a pedido explícito do usuário: o programa fica aberto o dia todo, então cada abertura deve pedir
+  login de novo (diferente do padrão comum de "lembrar login"). Continua logado normalmente enquanto
+  o app está aberto e em uso; só some ao fechar/reabrir ou clicar em "Sair".
 - **Tabela `operadores`** (migration `0007_operadores.sql`) guarda nome, usuário, se é admin, e quais
   módulos cada um acessa (`permissoes`, um array com as chaves de `MODULOS`).
 - **Tela "Configurações"** (só aparece pra quem é admin): lista de operadores em cards (com badges
@@ -272,13 +275,30 @@ de novo.
 - **Menu lateral filtrado por permissão**: só aparecem os módulos que o operador tem acesso (admin vê
   tudo); operador sem nenhum módulo liberado vê um aviso em vez de menu vazio. Cada rota (`App.tsx`)
   é protegida por um componente `PermissaoRoute`/`AdminRoute` que bloqueia navegação direta por URL
-  pra um módulo sem permissão (mostra aviso, não deixa passar).
-- **Achado corrigido durante os próprios testes desta sessão**: um operador sem permissão de "Painel
-  de Controle" caía numa tela de "sem permissão" logo depois de logar (porque `/` exigia a permissão
-  `painel`). Corrigido: `/` agora redireciona pro primeiro módulo que o operador realmente acessa.
+  pra um módulo sem permissão (mostra aviso, não deixa passar). Testado com um operador de permissão
+  limitada (só Clientes + Caixa): menu e rotas batem certinho com o que foi liberado.
+- **Achado e corrigido durante os próprios testes desta sessão**: um operador sem permissão de
+  "Painel de Controle" caía numa tela de "sem permissão" logo depois de logar (porque `/` exigia a
+  permissão `painel`). Corrigido: `/` agora redireciona pro primeiro módulo que o operador realmente
+  acessa.
 
-**Passos manuais únicos que o usuário (ou eu) precisa fazer no painel do Supabase antes de testar de
-verdade** (documentados também dentro da migration `0007_operadores.sql`):
+**🐛 Bug real encontrado e corrigido testando com o Supabase de verdade do usuário**: a policy de
+escrita de `operadores` (migration 0007) checava se quem estava logado era admin consultando a
+própria tabela `operadores` dentro da policy — isso faz o Postgres reavaliar a mesma policy dentro
+da subconsulta, entrando em loop (`infinite recursion detected in policy for relation "operadores"`,
+erro 500 em qualquer select/insert na tabela — foi isso que fez o login "funcionar" mas o app não
+carregar as permissões, mostrando "nenhum módulo liberado" mesmo com o operador cadastrado certo).
+**Corrigido** na migration `0008_operadores_fix_rls_recursiva.sql`: a verificação de admin agora
+passa por uma função `security definer` (`operador_atual_e_admin()`), que roda com privilégio do
+dono da função e não reaciona a mesma policy — padrão recomendado do Postgres/Supabase pra esse
+caso. **Se esse erro (`42P17`, "infinite recursion detected in policy") aparecer de novo em alguma
+tabela nova que tenha RLS consultando a própria tabela, é o mesmo padrão de bug** — sempre que uma
+policy precisar checar uma condição na mesma tabela que ela protege, usar uma função
+`security definer`, nunca uma subconsulta direta.
+
+**Passos manuais únicos no painel do Supabase pra ligar o login** (documentados também dentro da
+migration `0007_operadores.sql` — útil de repetir quando conectarem outra loja num projeto Supabase
+novo):
 
 1. Rodar as migrations `0007_operadores.sql` e `0008_operadores_fix_rls_recursiva.sql` (SQL Editor
    do Supabase, nessa ordem).
@@ -288,19 +308,6 @@ verdade** (documentados também dentro da migration `0007_operadores.sql`):
    depois de criado, porque os e-mails são inventados e não existe caixa de entrada pra confirmar).
 3. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
    exemplo que está comentado no final da migration 0007, colando o "User UID" gerado.
-
-**🐛 Bug real encontrado e corrigido durante o teste desta sessão**: a policy de escrita de
-`operadores` (migration 0007) checava se quem estava logado era admin consultando a própria tabela
-`operadores` dentro da policy — isso faz o Postgres reavaliar a mesma policy dentro da subconsulta,
-entrando em loop (`infinite recursion detected in policy for relation "operadores"`, erro 500 em
-qualquer select/insert na tabela, inclusive o login não conseguia carregar o perfil do operador).
-**Corrigido** na migration `0008_operadores_fix_rls_recursiva.sql`: a verificação de admin agora
-passa por uma função `security definer` (`operador_atual_e_admin()`), que roda com privilégio do
-dono da função e não reaciona a mesma policy — padrão recomendado do Postgres/Supabase pra esse
-caso. **Se esse erro (`42P17`, "infinite recursion detected in policy") aparecer de novo em alguma
-tabela nova que tenha RLS consultando a própria tabela, é o mesmo padrão de bug** — sempre que uma
-policy precisar checar uma condição na mesma tabela que ela protege, usar uma função
-`security definer`, nunca uma subconsulta direta.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 

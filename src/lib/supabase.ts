@@ -16,4 +16,10 @@ if (!isSupabaseConfigured) {
 export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder-anon-key",
+  {
+    // Sem persistir sessão: cada vez que o app abre, pede login de novo — a
+    // pedido do usuário, já que o programa costuma ficar aberto o dia
+    // inteiro (não é algo que se fecha e reabre com frequência).
+    auth: { persistSession: false },
+  },
 );

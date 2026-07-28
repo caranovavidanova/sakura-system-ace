@@ -74,15 +74,17 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
 │   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts) + feriados.ts (feriados nacionais, com Páscoa calculada)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, ordens-servico, caixa, relatorios, lucratividade, login, configuracoes
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts) + feriados.ts (feriados nacionais, com Páscoa calculada)
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, caixa, relatorios, lucratividade, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
 │   │       EstoquePage.tsx tem abas "Produtos" (ProdutosSection.tsx + PecaForm.tsx) e
-│   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx)
+│   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx). pages/servicos/ é o
+│   │       catálogo de serviços (só lista + form, sem abas). pages/ordens-servico/ ganhou
+│   │       SimulacaoParcelas.tsx (calculadora visual de parcelas, ver seção 7)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, estoque.ts, os.ts, caixa.ts, operador.ts)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0009), todas idempotentes (seguro rodar de novo)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0012), todas idempotentes (seguro rodar de novo)
 ├── eslint.config.js             # flat config do ESLint 9
 ├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
 └── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
@@ -111,19 +113,26 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
   cst_ou_csosn, aliquota_icms, ativo, criado_em (campos codigo_barras/marca/modelo/aplicacao/cest/origem
   são da migration 0010). **Margem % não é salva no banco** — é só calculada na tela a partir de
   `preco_custo`/`preco_venda`, pra não duplicar um dado que já dá pra derivar dos outros dois.
+- **`servicos`** (migration 0011 — catálogo de serviços, análogo a `pecas` mas sem estoque): id,
+  codigo_interno (opcional), descricao, preco_padrao, ativo, criado_em
 - **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
   (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
 - **`ordens_servico`**: id, cliente_id (FK), veiculo_id (FK, opcional), status
   (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema, forma_pagamento,
-  data_abertura, data_fechamento
+  data_abertura, data_fechamento. Campos novos da migration 0012 (redesenho da tela, ver seção 7):
+  previsao_entrega, data_retorno (timestamptz, opcionais — "Prazos" na tela), checklist_direcao_hidraulica/
+  checklist_ar_condicionado/checklist_direcao_eletrica (bool, checklist simples **por OS**, não é um
+  atributo permanente do veículo), vendedor_id/criado_por_id/atualizado_por_id (FK operadores — autoria)
 - **`ordens_servico_itens`**: id, ordem_servico_id (FK), tipo (`peca`/`servico`), peca_id (FK opcional,
-  só para tipo peça), descricao, quantidade, preco_unitario, desconto
+  só para tipo peça), servico_id (FK opcional, só para tipo serviço — migration 0012; item de serviço
+  pode ficar sem servico_id quando for "avulso", digitado na hora em vez de vir do catálogo), descricao,
+  quantidade, preco_unitario, desconto
 - **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
   faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
   permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
-  estoque, ordens_servico, caixa, relatorios, lucratividade), ativo, criado_em. Única tabela com RLS
-  de verdade (baseada em login) — ver seção 6.
+  estoque, servicos, ordens_servico, caixa, relatorios, lucratividade), ativo, criado_em. Única tabela
+  com RLS de verdade (baseada em login) — ver seção 6.
 
 Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -366,6 +375,48 @@ Playwright com dados simulados via `page.route()` interceptando as chamadas REST
   o produto, decisão explícita do usuário pra não precisar ir na aba Movimentações lançar o estoque
   inicial manualmente depois.
 
+**⏳ Implementado e pushado nesta sessão na branch `claude/new-session-mufqk9`, ainda sem PR aberto
+nem confirmação do usuário rodando com Supabase real** — o usuário mandou um print da tela de OS de
+um sistema de referência (S3Auto/Comsis) pedindo (1) um catálogo de Serviços e (2) a tela de OS
+reorganizada nesse estilo mais denso/tudo-em-uma-tela, porém com a cara do Sakura System. Antes de
+codar, apresentei duas perguntas de escopo (onde ficaria o cadastro de Serviços; quanto da referência
+replicar) — o usuário escolheu módulo próprio pra Serviços e replicar tudo, incluindo os recursos que
+o sistema ainda não tinha. Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e
+screenshots Playwright com dados simulados via `page.route()` (sandbox não acessa `*.supabase.co`,
+ver item 7 da seção 6):
+
+- **Módulo "Serviços" novo** (`servicos` — migration 0011): catálogo de serviços com descrição, código
+  opcional e preço padrão — mesmo padrão de tela de Produtos, só que sem estoque/campos fiscais.
+  Ganhou permissão própria (`servicos` em `MODULOS`) e item no menu lateral, entre Estoque e Ordens
+  de Serviço.
+- **Item de OS tipo "serviço" agora escolhe do catálogo** (`ItemOSRow.tsx`) — autopreenche descrição e
+  preço, igual peça já fazia. Mantido um "Serviço avulso (digitar abaixo)" pra não perder a
+  flexibilidade de lançar algo que não está cadastrado.
+- **Tela de Ordem de Serviço redesenhada** (`OrdemServicoForm.tsx`) em duas colunas, estilo Sakura:
+  cliente/veículo/vendedor/problema relatado + checklist do veículo + peças e serviços à esquerda;
+  prazos, status, simulação de parcelas e nota fiscal à direita. O mesmo componente agora serve tanto
+  pra abrir uma OS nova quanto pra abrir uma já existente (clicando na linha da tabela) — antes só
+  dava pra criar e faturar, não tinha como reabrir/editar uma OS.
+  - **Campos novos** (migration 0012): previsão de entrega e agendar retorno (datas), checklist
+    simples de direção hidráulica/ar condicionado/direção elétrica (**por OS**, não é um atributo
+    permanente salvo no veículo — simplificação deliberada pra não mexer no módulo Clientes), vendedor
+    responsável, e autoria (criado por / alterado por, preenchidos automaticamente com o operador
+    logado — mostrados só em modo edição).
+  - **Simplificação deliberada**: editar uma OS existente só permite alterar os campos do cabeçalho e
+    **acrescentar** itens novos — não dá pra editar ou remover um item já lançado. Fazer isso direito
+    exigiria desfazer a baixa de estoque que o item já gerou, o que fica pra uma etapa própria.
+  - **"Visualizado por" da referência não foi implementado** — exigiria rastrear presença em tempo
+    real (quem está com a tela aberta agora), fora de proporção pro que foi pedido; só "criado por" e
+    "alterado por" (que já existiam como necessidade real) foram feitos.
+  - **Simulação de parcelas** (`SimulacaoParcelas.tsx`): calculadora visual (Tabela Price, taxa de
+    juros a.m. editável pelo usuário, padrão 2,5%) — só informativa, não gera cobrança nem
+    parcelamento real, não é salva no banco.
+  - **Botões "Emitir NFe" / "Emitir NFS-e"**: por enquanto são placeholder (mostram um aviso
+    explicando que falta escolher o provedor fiscal — mesma pendência já registrada no item 1 da
+    seção 8) — não emitem nada de verdade ainda.
+- **Migrations 0011 e 0012 ainda não foram rodadas no Supabase real do usuário** — ver tutorial
+  atualizado na seção 9.
+
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
 Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
@@ -375,6 +426,8 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
    intermediário (Focus NFe, eNotas, PlugNotas ou similar) em vez de implementar comunicação direta
    com SEFAZ/prefeituras. **Ainda não escolhido qual provedor** — depende de qual cobre o município
    da loja para NFS-e. Isso é uma decisão que precisa ser apresentada ao usuário antes de codar.
+   A tela de Ordem de Serviço já tem os botões "Emitir NFe"/"Emitir NFS-e" (ver seção 7), mas por
+   enquanto são só placeholder — passam a emitir de verdade quando essa decisão for tomada.
 2. ~~Autenticação / login de usuário~~ — **construído nesta sessão** (ver seção 7): login com
    usuário/senha + permissões por módulo, checadas na interface. O que ficou de fora e ainda é
    próximo passo possível: reforçar em RLS por categoria (trade-off aceito por ora, ver seção 6.1),
@@ -416,10 +469,12 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0010) — as de 0001 a 0008 já foram confirmadas funcionando pelo
-usuário nesse projeto. **As migrations 0009 (`data_nascimento` em clientes) e 0010 (campos novos em
-pecas) ainda não foram rodadas no Supabase de verdade** — ver o tutorial abaixo. Todas são seguras
-de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0012) — as de 0001 a 0008 já foram confirmadas funcionando pelo
+usuário nesse projeto. **As migrations 0009 a 0012 ainda não foram rodadas no Supabase de verdade**
+(0009: `data_nascimento` em clientes; 0010: campos novos em pecas; 0011: tabela `servicos`; 0012:
+campos novos em `ordens_servico`/`ordens_servico_itens`, ver seção 7) — ver os tutoriais abaixo.
+Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto
+Supabase do zero.
 
 ### Tutorial: pegar a versão nova (PR #8, já mergeado em `main`) e rodar
 
@@ -458,6 +513,30 @@ usuário pra mergear direto). Pra rodar essa versão nova na sua máquina Window
 Se der algum erro, me manda o print do DevTools (já abre sozinho em modo dev) que eu ajudo a
 resolver.
 
+### Tutorial: pegar a versão nova (branch `claude/new-session-mufqk9`, ainda NÃO mergeada em `main`) e rodar
+
+Diferente das sessões anteriores, desta vez o trabalho **ficou numa branch separada** (não foi pedido
+pra mergear direto em `main`) — módulo de Serviços e redesenho da tela de Ordem de Serviço (ver seção
+7). Pra testar antes de decidir se mergeia:
+
+1. Feche o app se estiver aberto.
+2. No terminal, dentro da pasta `sakura-system-autocenter`:
+   ```powershell
+   git fetch origin
+   git checkout claude/new-session-mufqk9
+   ```
+3. **Rode as migrations novas no Supabase**, nessa ordem: `0011_servicos.sql` e depois
+   `0012_ordens_servico_campos_avancados.sql` (mesmo processo do passo 3 do tutorial anterior — copiar
+   o conteúdo do arquivo e rodar no SQL Editor do Supabase).
+4. `npm install && npm run dev`.
+5. O que testar: item **"Serviços"** novo no menu lateral (cadastrar um serviço com preço); em
+   **Ordens de Serviço**, abrir uma OS nova deve mostrar a tela reorganizada (cliente/veículo,
+   checklist do veículo, prazos, simulação de parcelas); e clicar numa linha da tabela de OS já
+   existente deve abrir a mesma tela em modo edição, com os dados preenchidos e um botão "Salvar
+   alterações" no lugar de "Abrir ordem de serviço".
+
+Se testar e aprovar, é só avisar que eu abro o PR pra mergear em `main`.
+
 ## 10. Estado do Git
 
 - Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —
@@ -492,6 +571,10 @@ resolver.
   usuário rodar essas mudanças com o Supabase dele — inclui duas migrations (0009 e 0010) que ainda
   precisam ser rodadas manualmente no Supabase, ver o tutorial na seção 9. Se aparecer algum
   problema ao testar, é código já em `main`, não numa branch separada.
+- PR [#10](https://github.com/caranovavidanova/amigao/pull/10) (`claude/new-session-mufqk9` → `main`):
+  módulo Serviços + redesenho da tela de Ordem de Serviço, ver seção 7. **Aberto nesta sessão, a
+  pedido do usuário, ainda não mergeado** — inclui duas migrations novas (0011 e 0012) que ainda
+  precisam ser rodadas manualmente no Supabase, ver tutorial na seção 9.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

@@ -1,19 +1,24 @@
 import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 import type { NovoItemOS, TipoItemOS } from "@/types/os";
 
 interface ItemOSRowProps {
   item: NovoItemOS;
   pecas: Peca[];
+  servicos: Servico[];
   onChange: (item: NovoItemOS) => void;
   onRemover: () => void;
 }
 
-export function ItemOSRow({ item, pecas, onChange, onRemover }: ItemOSRowProps) {
+const SERVICO_AVULSO = "avulso";
+
+export function ItemOSRow({ item, pecas, servicos, onChange, onRemover }: ItemOSRowProps) {
   function handleTipoChange(tipo: TipoItemOS) {
     onChange({
       ...item,
       tipo,
       peca_id: null,
+      servico_id: null,
       descricao: "",
       preco_unitario: 0,
     });
@@ -28,6 +33,22 @@ export function ItemOSRow({ item, pecas, onChange, onRemover }: ItemOSRowProps) 
       preco_unitario: peca?.preco_venda ?? 0,
     });
   }
+
+  function handleServicoChange(valor: string) {
+    if (valor === SERVICO_AVULSO) {
+      onChange({ ...item, servico_id: null, descricao: "", preco_unitario: 0 });
+      return;
+    }
+    const servico = servicos.find((s) => s.id === valor);
+    onChange({
+      ...item,
+      servico_id: valor,
+      descricao: servico?.descricao ?? "",
+      preco_unitario: servico?.preco_padrao ?? 0,
+    });
+  }
+
+  const servicoEhAvulso = item.tipo === "servico" && !item.servico_id;
 
   return (
     <div className="space-y-2 rounded-lg border border-sakura-gray/30 p-3">
@@ -55,13 +76,18 @@ export function ItemOSRow({ item, pecas, onChange, onRemover }: ItemOSRowProps) 
             ))}
           </select>
         ) : (
-          <input
-            type="text"
-            placeholder="Descrição do serviço"
-            value={item.descricao}
-            onChange={(e) => onChange({ ...item, descricao: e.target.value })}
+          <select
+            value={item.servico_id ?? SERVICO_AVULSO}
+            onChange={(e) => handleServicoChange(e.target.value)}
             className="flex-1 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
-          />
+          >
+            <option value={SERVICO_AVULSO}>Serviço avulso (digitar abaixo)</option>
+            {servicos.map((servico) => (
+              <option key={servico.id} value={servico.id}>
+                {servico.descricao}
+              </option>
+            ))}
+          </select>
         )}
 
         <button
@@ -72,6 +98,16 @@ export function ItemOSRow({ item, pecas, onChange, onRemover }: ItemOSRowProps) 
           Remover
         </button>
       </div>
+
+      {servicoEhAvulso && (
+        <input
+          type="text"
+          placeholder="Descrição do serviço"
+          value={item.descricao}
+          onChange={(e) => onChange({ ...item, descricao: e.target.value })}
+          className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
+        />
+      )}
 
       <div className="flex gap-2">
         <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/70">

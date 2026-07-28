@@ -6,6 +6,10 @@ import renderer from "vite-plugin-electron-renderer";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
+  // Caminhos relativos — o Electron abre o app em produção via "file://",
+  // e caminhos absolutos (começando com "/") não resolvem nesse protocolo
+  // (tentam ler a partir da raiz do disco, não da pasta do app).
+  base: "./",
   plugins: [
     react(),
     tailwindcss(),

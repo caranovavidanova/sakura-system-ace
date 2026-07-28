@@ -5,7 +5,7 @@ interface LogoProps {
 export function Logo({ className = "" }: LogoProps) {
   return (
     <img
-      src="/sakura-logo.svg"
+      src={`${import.meta.env.BASE_URL}sakura-logo.svg`}
       alt="Sakura System — by Sakura Corp"
       className={`h-auto w-full max-w-56 ${className}`}
     />

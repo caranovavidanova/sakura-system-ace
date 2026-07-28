@@ -28,7 +28,7 @@ export function LoginPage() {
   return (
     <div
       className="flex h-screen items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "url(/sakura-login-bg.svg)" }}
+      style={{ backgroundImage: `url(${import.meta.env.BASE_URL}sakura-login-bg.svg)` }}
     >
       <div className="w-full max-w-sm rounded-3xl border border-white/40 bg-white/30 p-8 shadow-xl backdrop-blur-xl">
         <div className="mb-6 flex justify-center">

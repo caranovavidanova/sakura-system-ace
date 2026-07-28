@@ -684,6 +684,14 @@ borracharia (o Windows/SmartScreen deve avisar "editor desconhecido"; é normal 
 assinatura pago — clique em "Mais informações" → "Executar assim mesmo"). Da próxima vez que você
 publicar uma tag nova, esse mesmo PC vai se atualizar sozinho, sem precisar reinstalar.
 
+**🐛 Achado e corrigido testando a v0.1.0 de verdade nesta sessão**: por padrão o `electron-builder`
+publica a release do GitHub como **rascunho (Draft)** — ela builda certinho, mas fica invisível/
+indisponível até alguém clicar manualmente em "Publish release" no site do GitHub. Isso quebraria a
+atualização automática (o `electron-updater` só enxerga releases publicadas, não rascunhos).
+**Corrigido** adicionando `"releaseType": "release"` na configuração `publish` do `package.json` — a
+partir da tag seguinte (a v0.1.0 precisou ser publicada manualmente essa vez só), as próximas já saem
+publicadas direto, sem esse passo manual.
+
 ## 10. Estado do Git
 
 - Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —

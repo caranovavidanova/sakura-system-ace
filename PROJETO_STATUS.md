@@ -250,6 +250,26 @@ entrada em `caixa_movimentos` com o valor total da OS.
     imagem quebrada só no instalador (nunca no `npm run dev`), é esse mesmo padrão de bug** — procurar
     por `src="/` ou `url(/` direto no código (fora de `import`/`public/`) em vez de
     `import.meta.env.BASE_URL`.
+11. **Havia um bug real de campos de formulário "sem digitar"**: nenhum lugar do código declarava
+    `color-scheme`, então o Chromium/Electron usava o tema do **Windows** (claro/escuro) pra decidir a
+    cor padrão do texto dentro de `<input>`/`<select>`/`<textarea>` — com o Windows em modo escuro, o
+    texto digitado saía **branco sobre fundo claro** (invisível, mas era digitado normalmente; parecia
+    que o campo não aceitava nada). Só foi descoberto testando no instalador de verdade da v0.1.1 — o
+    sandbox roda em modo claro, não reproduzia. **Corrigido**: `globals.css` ganhou `color-scheme:
+    light` no `:root` (impede o navegador de re-temizar os campos pro escuro) e uma regra `color`
+    explícita pra `input`/`select`/`textarea`, como reforço. Validado simulando `colorScheme: 'dark'`
+    no Playwright. **Se algum campo "não aceitar digitação" de novo, é provável que seja o mesmo
+    padrão** (texto sendo digitado mas invisível) — confirmar selecionando o texto do campo com o
+    mouse antes de investigar outra coisa.
+12. **Bug real de "Excluir" sem efeito visível em Clientes**: `handleExcluir` em `ClientesPage.tsx`
+    chamava `excluirCliente()` sem `try/catch` — quando a exclusão falhava (ex: cliente com Ordem de
+    Serviço vinculada, que a migration 0005 bloqueia com `on delete restrict` de propósito, pra não
+    perder histórico), o erro não aparecia em lugar nenhum, dando a impressão de que o botão não fazia
+    nada. `ProdutosSection.tsx` e `ServicosPage.tsx` já tratavam isso certinho — só Clientes tinha
+    ficado pra trás. **Corrigido**: adicionado `try/catch` com `setErro()`, igual ao padrão das outras
+    duas telas, mais uma mensagem amigável específica pro caso de OS vinculada (em vez do erro cru do
+    Postgres). **Se um botão de "Excluir"/ação parecer não fazer nada em alguma tela nova, confirmar
+    que a função tem `try/catch` chamando `setErro(mensagemDeErro(err))` — é fácil esquecer.**
 
 ## 7. O que já está pronto e validado (pelo usuário, rodando de verdade)
 

@@ -15,9 +15,23 @@
     "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
+:root {
+  /* Sem isso, o Chromium/Electron usa o modo escuro do Windows (quando
+     ativado) pra escolher a cor padrão do texto dentro de campos de
+     formulário — o app é sempre "claro", então o texto digitado ficava
+     branco sobre fundo claro (invisível, mas era digitado normalmente). */
+  color-scheme: light;
+}
+
 body {
   background-color: var(--color-sakura-bg);
   font-family: var(--font-sans);
+}
+
+input,
+select,
+textarea {
+  color: var(--color-sakura-purple-dark);
 }
 
 /* Fundo rosa "flutuante" do app inteiro — os blocos (sakura-card) boiam por

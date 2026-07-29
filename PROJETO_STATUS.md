@@ -13,6 +13,9 @@
 - Construir em **etapas pequenas e testáveis**. Mostrar funcionando antes de avançar.
 - O usuário testa em uma máquina Windows local (terminal integrado do VS Code / PowerShell). Ele
   copia e cola os comandos que eu forneço — eu não tenho acesso à máquina dele.
+- **Instalador Windows**: a usuária baixa e instala primeiro na **própria máquina dela** (não a da
+  borracharia) pra testar antes de levar pra loja de verdade — bom lembrar disso ao dar instruções
+  de instalação/teste, não assumir que ela já está testando no ambiente de produção.
 - E-mail: caranovavidanova@gmail.com.
 - **Sempre que eu aprender uma preferência de trabalho nova** (pedida explicitamente ou percebida ao
   longo da conversa), **documentar aqui no PROJETO_STATUS.md** — não só nas decisões técnicas da
@@ -54,16 +57,40 @@ base arquitetural.
   "by Sakura Corp" em itálico serifado, com fonte maior aproveitando o espaço que a flor ocupava
   (viewBox `0 0 620 170`, texto começando perto da margem esquerda). A flor só aparece no ícone da
   janela/favicon (`sakura-icon.svg`), não mais no menu lateral. Ambos os arquivos foram desenhados
-  à mão em SVG (gradientes + `<text>` de verdade), **não** são a arte oficial do usuário.
+  à mão em SVG (gradientes + `<text>`/`<path>` de verdade), **não** são a arte oficial do usuário.
+  - **`sakura-icon.svg` redesenhado nesta sessão** (mergeado via PR
+    [#35](https://github.com/caranovavidanova/amigao/pull/35), aprovado pela usuária — "isso,
+    gostei"): a flor antiga tinha pétalas estreitas/pontudas; a nova tem **5 pétalas arredondadas +
+    estames marrons ao centro** (`radialGradient` + `<path>` com `Q`/`C` bezier, sem biblioteca de
+    ícones), inspirada numa foto de aquarela de flor de cerejeira que a usuária mandou como
+    referência (ver pendência de upload abaixo — a foto em si não deu pra usar direto, só de
+    referência visual). `build/icon.png` (ícone do instalador Windows, usado pelo
+    `electron-builder`) foi regenerado a partir do SVG novo, 1024×1024 com fundo transparente, via
+    Playwright/Chromium (sem ferramenta de conversão SVG→PNG instalada no sandbox — `rsvg-convert`/
+    `inkscape`/`cairosvg` não disponíveis; renderizar a página com o `<img>` do SVG e printar a tela
+    do Chromium funcionou bem como alternativa).
   - **Pendência**: o usuário tem um arquivo SVG "oficial" da logo (gerado por um traçador de
     imagem, tipo VTracer) com a flor + texto desenhados como ~200 `<path>` vetoriais em vez de
     `<text>`. Ele tentou colar esse arquivo direto no chat duas vezes; na primeira veio cortado
     (arquivo grande demais pro limite de uma mensagem), na segunda veio completo mas **copiar à
-    mão path por path não é confiável nessa escala** — na tentativa dessa sessão, sumiram pedaços
-    de letras ("Sakura System" virou "Sal u a System"). **Não tente transcrever esse SVG via
-    chat de novo.** Peça pro usuário mandar como **arquivo anexado** (upload/drag-and-drop) em vez
-    de colar o código — só assim dá pra ler o arquivo com fidelidade total (via `Read` tool) sem
-    risco de erro de transcrição.
+    mão path por path não é confiável nessa escala** — numa tentativa antiga, sumiram pedaços de
+    letras ("Sakura System" virou "Sal u a System"). **Não tente transcrever esse SVG via chat de
+    novo.**
+  - **Atualização desta sessão sobre o problema de anexo**: a orientação de sempre pedir "arquivo
+    anexado (upload/drag-and-drop) em vez de colar" **não é garantia de que vai funcionar** — a
+    usuária mandou duas fotos de flor (uma lótus, depois uma aquarela de sakura) explicitamente
+    pelo botão "+" de anexar (não colou), e **nenhuma das duas chegou como arquivo acessível**
+    (`/root/.claude/uploads/<session>/` não recebeu nada, mesmo checando repetidas vezes depois de
+    cada tentativa) — só a imagem renderizada na conversa, sem arquivo de verdade por trás. Do lado
+    dela, o envio **pareceu funcionar normalmente, sem nenhum erro visível**. Isso é diferente do
+    que aconteceu nesta mesma sessão com as 3 fotos do formulário de funcionário (ver seção 7), que
+    vieram certinho como arquivo pelo mesmo tipo de anexo — então não é 100% do tempo que falha, mas
+    também não é raro. **Se isso acontecer nas próximas sessões**: confirmar com `find
+    /root/.claude/uploads -type f` (ou o path equivalente do ambiente) se o arquivo realmente
+    chegou antes de tentar processá-lo; se não chegou, a saída que funcionou bem desta vez foi
+    **recriar a imagem à mão em SVG** a partir do que dá pra ver na conversa (mesma tática já usada
+    pro fundo da tela de Login), mostrando um preview renderizado (Playwright + Chromium, screenshot
+    de um HTML com o SVG embutido) antes de aplicar de vez.
 
 ## 3. Decisões técnicas já tomadas (não reabrir sem motivo forte)
 
@@ -838,6 +865,36 @@ nessa mesma tabela/bucket em vez de depender do upload manual. Validado via `npx
 (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6), incluindo lista agrupada por mês, aba
 vazia e o formulário de envio com o seletor de OS carregado.
 
+**✅ Confirmado pelo usuária nesta sessão (ícone da flor redesenhado)** — PR
+[#35](https://github.com/caranovavidanova/amigao/pull/35), mergeado depois de aprovação explícita
+("isso, gostei"). Ver detalhe técnico completo na seção 2. Resumo: `public/sakura-icon.svg`
+(favicon/ícone da janela) trocou o desenho de pétalas estreitas por uma flor de 5 pétalas
+arredondadas + estames, inspirada numa referência que a usuária mandou; `build/icon.png`
+(ícone do instalador) regenerado a partir do SVG novo. Duas fotos de referência que ela tentou
+mandar (uma flor de lótus, depois uma aquarela de sakura) não chegaram como arquivo utilizável
+neste ambiente apesar de enviadas como anexo de verdade (não coladas) — documentado como
+atualização da pendência de upload na seção 2, útil pra sessões futuras que esbarrarem no mesmo
+problema.
+
+**⏳ Versão 0.1.3 fechada nesta sessão (PR [#36](https://github.com/caranovavidanova/amigao/pull/36)),
+tag ainda não publicada** — a pedido explícito da usuária ("lança e pa", depois "a 0.1.3" quando
+perguntei o número). `package.json`/`package-lock.json` subiram de `0.1.2` (nunca chegou a ser
+publicado como release de verdade) pra `0.1.3`, e `CHANGELOG.md` teve a seção `[Não lançado]`
+fechada como `[0.1.3] - 2026-07-29`, consolidando tudo que entrou desde a v0.1.1: Funcionários (RH
+completo), Entradas/Saídas do Caixa, tipo de pessoa no cadastro de Cliente, Notas Fiscais, ícone da
+flor novo, botão voltar com casinha — mais a correção de duas linhas do changelog que não refletiam
+mais a realidade (uma citava uma "logo oficial" que nunca foi aplicada de fato; outra descrevia a
+RLS temporária, já substituída por login obrigatório desde a migration 0015). **Cuidado registrado
+pra próximas sessões**: ao trocar a versão no `package-lock.json` com `Edit`/`replace_all`, o texto
+`"version": "0.1.2"` também aparece em pacotes de terceiros do lockfile por coincidência
+(`compare-version`, `universalify`, que **são** a versão `0.1.2` de verdade — não relacionados ao
+projeto) — o `replace_all` trocou esses também da primeira vez, o que corrompe o lockfile
+(quebraria `npm ci`/instalação limpa). Corrigido revertendo essas duas entradas manualmente e
+validando com `npm install` (sem alterar o lockfile) antes de commitar. **Sempre conferir com
+`grep -n '"version": "X.Y.Z"'` quantas ocorrências existem e o contexto de cada uma antes de usar
+`replace_all` num lockfile.** Falta só a usuária publicar a tag (ver seção 9 e comandos no fim da
+seção 10) — o sandbox não tem permissão de `git push` de tags/direto em `main`.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -856,14 +913,15 @@ pela usuária nesta sessão**:
    nesta mesma sessão** (ver seção 7, PR #27) — os botões "Imprimir garantia"/"Baixar garantia" na
    aba Fechamento da OS não são mais placeholder.
 
-**Instalador Windows**: a usuária pediu pra publicar a v0.1.2 nesta sessão (não ficou mais pendente).
-`package.json` já foi atualizado pra `"version": "0.1.2"` e mergeado em `main` — falta só ela rodar
-`git tag v0.1.2 && git push origin v0.1.2` (ver tutorial na seção 9) pra disparar o build no GitHub
-Actions. Essa versão inclui: correções da v0.1.1 (texto invisível em modo escuro, exclusão de cliente
-silenciosa), botão "voltar", e Categorias/Relatórios de estoque/Garantias/Contagem (PR #22) + a
-correção da migration 0015 (PR #24).
+**Instalador Windows**: ver seção 10 pro status atual (`package.json` em `0.1.3`, `CHANGELOG.md`
+fechado, tag ainda não publicada — falta só a usuária rodar os comandos de tag/push).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
+
+**Prioridade da próxima sessão ainda em aberto** — perguntei explicitamente no fim desta sessão e a
+usuária respondeu "ainda não sei, decido na hora". Não presumir qual item abaixo vem primeiro;
+perguntar no início da próxima sessão (as opções que apresentei foram: testar tudo que ainda não
+foi validado com Supabase real, avançar na parte fiscal, ou fechar a logo oficial).
 
 Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
 
@@ -1191,20 +1249,26 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
 - PR [#33](https://github.com/caranovavidanova/amigao/pull/33): módulo Notas Fiscais, arquivos XML
   de NFe/NFS-e organizados por mês (migration 0023, primeiro uso de Supabase Storage no projeto) —
   ver seção 7.
+- PR [#34](https://github.com/caranovavidanova/amigao/pull/34): documentação — atualiza o
+  `PROJETO_STATUS.md` com os PRs #32 e #33.
+- PR [#35](https://github.com/caranovavidanova/amigao/pull/35): ícone da flor (favicon + ícone do
+  instalador) redesenhado — ver seção 2 e seção 7.
+- PR [#36](https://github.com/caranovavidanova/amigao/pull/36): versão `0.1.3` +
+  `CHANGELOG.md` fechado — ver seção 7.
 - **A partir do PR #30, a branch de trabalho deste ambiente passou a ser
   `claude/project-context-dmiarx`** (a antiga `claude/caranovavidanova-amigao-kad1fu`, usada nos PRs
   #12 a #28, não precisa mais ser reutilizada — mesmo padrão de sempre, branch → PR → merge direto
   sem esperar aprovação manual, ver seção 3).
-- **Tag `v0.1.2` ainda NÃO publicada** — a usuária pediu pra publicar o instalador ("upa o
-  instalador") nesta sessão, mas o ambiente de sandbox onde o Claude roda **não tem permissão de
-  push direto pra `main`/tags no GitHub** (só pra branches de feature via PR — deu erro `403` ao
-  tentar `git push origin v0.1.2`). `package.json` já está em `"version": "0.1.2"` e tudo mergeado
-  em `main` (PRs #19 a #28: correções pós-v0.1.1, botão voltar, Categorias/Relatórios de
-  estoque/Garantias/Contagem, correção da migration 0015, texto de garantia configurável, preview de
-  NF/garantia) — **falta só a usuária rodar no terminal dela**: `git checkout main && git pull
-  origin main && git tag v0.1.2 && git push origin v0.1.2` (ver tutorial na seção 9). **Sessões
-  futuras: não tentar dar `git push` de tags/direto em `main` a partir do sandbox — vai falhar com
-  403 da mesma forma; esse passo é sempre da usuária.**
+- **Tag `v0.1.3` ainda NÃO publicada** — mesma limitação de sempre: o sandbox onde o Claude roda
+  **não tem permissão de push direto pra `main`/tags no GitHub** (só pra branches de feature via
+  PR — tentativas anteriores de `git push origin v0.1.2` deram erro `403`). `package.json` já está
+  em `"version": "0.1.3"` e tudo mergeado em `main` (PRs #19 a #36: tudo que está descrito na seção
+  7 desde o botão voltar até o ícone novo e o fechamento do changelog) — **falta só a usuária rodar
+  no terminal dela**: `git checkout main && git pull origin main && git tag v0.1.3 && git push
+  origin v0.1.3` (ver tutorial na seção 9). A usuária confirmou que vai instalar primeiro **na
+  própria máquina dela** (não direto na da borracharia) pra testar antes. **Sessões futuras: não
+  tentar dar `git push` de tags/direto em `main` a partir do sandbox — vai falhar com 403 da mesma
+  forma; esse passo é sempre da usuária.**
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

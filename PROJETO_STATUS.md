@@ -994,6 +994,27 @@ com Supabase real**:
   usuária mencionou) **não foi implementado** — fica pra uma sessão futura, ver item novo na seção 8.
 - **Migrations 0024 e 0025 ainda não foram rodadas pela usuária** — ver tutorial novo na seção 9.
 
+**⏳ Implementado nesta sessão (reorganização da tela de Configurações), mergeado em `main` via PR
+[#44](https://github.com/caranovavidanova/amigao/pull/44), ainda sem confirmação da usuária rodando
+com Supabase real** — a usuária mandou um print reclamando que todas as seções de configuração
+apareciam abertas ao mesmo tempo e que o botão "+ Novo operador" ficava solto no cabeçalho da
+página, separado da própria lista de operadores. Mudança só de JSX/CSS, **sem migration**:
+
+- **Componente novo `src/components/SecaoRecolhivel.tsx`**: bloco `sakura-card` com cabeçalho
+  clicável (título + descrição + seta que gira) que expande/recolhe o conteúdo — reutilizável por
+  qualquer tela futura que precisar do mesmo padrão de "acordeão".
+- **Juros de parcelamento, Categorias de produto, Categorias de caixa, Texto de garantia e Dados
+  fiscais da loja** agora começam **fechados** e abrem só ao clicar no título (antes ficavam todos
+  abertos ao carregar a página).
+- **"Operadores" virou sua própria seção** (sempre visível, não recolhível — é o conteúdo principal
+  da página), com o botão "+ Novo operador" dentro dela, ao lado do título — antes ele ficava sozinho
+  no cabeçalho da página, sem ligação visual com a lista de operadores logo abaixo.
+- Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshot do Electron real
+  (`xvfb-run` + Playwright `_electron.launch`) com as chamadas REST/Auth do Supabase interceptadas via
+  `page.route()` — confirmado visualmente que as seções abrem/fecham certinho e que "Operadores" ficou
+  como bloco próprio com o botão junto, sem erro no console (sandbox não acessa `*.supabase.co`, ver
+  item 7 da seção 6).
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -1418,6 +1439,9 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   - PR [#42](https://github.com/caranovavidanova/amigao/pull/42): módulo novo "Contas a Pagar"
     (migration 0025) — ver seção 7.
   - **Confirmado pela usuária nesta sessão**: migration 0024 rodada com sucesso no Supabase dela.
+- PR [#44](https://github.com/caranovavidanova/amigao/pull/44) (branch `claude/ssace-3y3p8y`):
+  reorganização da tela de Configurações (seções recolhíveis + "Operadores" em bloco próprio) — ver
+  seção 7. Mergeado nesta mesma sessão, sem mudança de schema.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

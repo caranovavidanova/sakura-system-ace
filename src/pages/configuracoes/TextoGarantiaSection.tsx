@@ -30,15 +30,7 @@ export function TextoGarantiaSection({ texto, onSalvo }: TextoGarantiaSectionPro
   }
 
   return (
-    <div className="sakura-card p-6">
-      <h2 className="text-sm font-semibold text-sakura-purple-dark">Texto de garantia</h2>
-      <p className="mt-1 text-xs text-sakura-gray">
-        Usado pelos botões "Imprimir garantia"/"Baixar garantia" na aba Fechamento de uma Ordem de
-        Serviço. Use estes campos que são substituídos automaticamente:{" "}
-        <code>{"{cliente}"}</code>, <code>{"{veiculo}"}</code>, <code>{"{itens}"}</code> e{" "}
-        <code>{"{data}"}</code> (data de fechamento da OS).
-      </p>
-
+    <>
       {erro && (
         <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
       )}
@@ -65,6 +57,6 @@ export function TextoGarantiaSection({ texto, onSalvo }: TextoGarantiaSectionPro
           {salvando ? "Salvando..." : "Salvar texto"}
         </button>
       </div>
-    </div>
+    </>
   );
 }

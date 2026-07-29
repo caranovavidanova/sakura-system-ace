@@ -43,14 +43,7 @@ export function CategoriasSection({ categorias, onSalvo }: CategoriasSectionProp
   }
 
   return (
-    <div className="sakura-card p-6">
-      <h2 className="text-sm font-semibold text-sakura-purple-dark">
-        Categorias de produto
-      </h2>
-      <p className="mt-1 text-xs text-sakura-gray">
-        Usadas no cadastro de produtos (aba Estoque → Produtos) para agrupar peças.
-      </p>
-
+    <>
       {erro && (
         <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
       )}
@@ -93,6 +86,6 @@ export function CategoriasSection({ categorias, onSalvo }: CategoriasSectionProp
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

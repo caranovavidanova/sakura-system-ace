@@ -76,16 +76,7 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
   }
 
   return (
-    <div className="sakura-card p-6">
-      <h2 className="text-sm font-semibold text-sakura-purple-dark">
-        Categorias de caixa (Entradas e Saídas)
-      </h2>
-      <p className="mt-1 text-xs text-sakura-gray">
-        Usadas nas abas "Entradas" e "Saídas" do Caixa Diário para classificar lançamentos
-        manuais que não vêm de uma OS — ex: aluguel, mercado, limpeza (saída) ou venda de
-        sucata (entrada).
-      </p>
-
+    <>
       {erro && (
         <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
       )}
@@ -119,6 +110,6 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
         <Lista titulo="Categorias de entrada" itens={categoriasEntrada} />
         <Lista titulo="Categorias de saída" itens={categoriasSaida} />
       </div>
-    </div>
+    </>
   );
 }

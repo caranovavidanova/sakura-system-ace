@@ -82,14 +82,8 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
   }
 
   return (
-    <div className="sakura-card p-6">
-      <h2 className="text-sm font-semibold text-sakura-purple-dark">Dados fiscais da loja</h2>
-      <p className="mt-1 text-xs text-sakura-gray">
-        Usados na emissão de nota fiscal (NFC-e/NFS-e). O token do Focus NFe fica vazio até a
-        assinatura de um plano — sem ele, a emissão automática continua indisponível.
-      </p>
-
-      {erro && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+    <>
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
       {salvo && (
         <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
           Dados fiscais salvos.
@@ -266,6 +260,6 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
           {salvando ? "Salvando..." : "Salvar dados fiscais"}
         </button>
       </div>
-    </div>
+    </>
   );
 }

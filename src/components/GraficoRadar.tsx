@@ -44,7 +44,7 @@ export function GraficoRadar({
 
   if (eixos.length < 3) {
     return (
-      <p className="text-sm text-sakura-gray">
+      <p className="text-sm text-sakura-muted">
         Precisa de pelo menos 3 métricas pra montar o gráfico de radar.
       </p>
     );
@@ -69,7 +69,7 @@ export function GraficoRadar({
 
   return (
     <div className="relative">
-      <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-sakura-purple-dark/70">
+      <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-sakura-purple-dark/90">
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-4 rounded-full bg-sakura-purple-dark" />
           {rotuloAtual}

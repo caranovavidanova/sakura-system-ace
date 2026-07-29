@@ -70,7 +70,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
           </label>
         </div>
 
-        <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-xs text-sakura-purple-dark/70">
+        <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-xs text-sakura-purple-dark/90">
           Isso lança uma Saída de {formatarMoeda(Number(valor) || 0)} no Caixa automaticamente.
         </p>
       </div>
@@ -79,7 +79,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
         <button
           type="button"
           onClick={onFechar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>

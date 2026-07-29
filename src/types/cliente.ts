@@ -1,3 +1,13 @@
+export type TipoVeiculo = "hatch" | "sedan" | "suv" | "picape" | "moto";
+
+export const TIPO_VEICULO_LABEL: Record<TipoVeiculo, string> = {
+  hatch: "Hatch",
+  sedan: "Sedã",
+  suv: "SUV",
+  picape: "Picape",
+  moto: "Moto",
+};
+
 export interface Veiculo {
   id: string;
   cliente_id: string;
@@ -6,6 +16,7 @@ export interface Veiculo {
   modelo: string | null;
   ano: number | null;
   cor: string | null;
+  tipo: TipoVeiculo | null;
   km_atual: number | null;
   criado_em: string;
 }

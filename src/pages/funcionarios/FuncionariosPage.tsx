@@ -66,7 +66,7 @@ export function FuncionariosPage() {
             <h1 className="text-2xl font-semibold text-sakura-purple-dark">
               Funcionários
             </h1>
-            <p className="text-sm text-sakura-gray">
+            <p className="text-sm text-sakura-muted">
               Técnicos, vendedores e demais funcionários — selecionáveis na Ordem de Serviço
             </p>
           </div>
@@ -102,9 +102,9 @@ export function FuncionariosPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : funcionarios.length === 0 ? (
-        <p className="text-sm text-sakura-gray">Nenhum funcionário cadastrado ainda.</p>
+        <p className="text-sm text-sakura-muted">Nenhum funcionário cadastrado ainda.</p>
       ) : (
         <div className="overflow-hidden sakura-card">
           <table className="w-full text-left text-sm">
@@ -130,7 +130,7 @@ export function FuncionariosPage() {
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                         funcionario.ativo
                           ? "bg-emerald-50 text-emerald-700"
-                          : "bg-sakura-gray/20 text-sakura-gray"
+                          : "bg-sakura-gray/20 text-sakura-muted"
                       }`}
                     >
                       {funcionario.ativo ? "Ativo" : "Inativo"}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MiniCalendario } from "@/components/MiniCalendario";
-import { Sparkline } from "@/components/Sparkline";
+import { VeiculoIcone } from "@/components/VeiculoIcone";
 import { feriadosNacionais } from "@/lib/feriados";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarMovimentosCaixa } from "@/lib/caixa";
@@ -86,73 +86,63 @@ export function PainelPage() {
   const hoje = new Date();
   const ano = hoje.getFullYear();
   const mes = hoje.getMonth();
-  const inicioMesAtual = new Date(ano, mes, 1);
   const diaDeHoje = hoje.getDate();
-  const totalDiasNoMes = new Date(ano, mes + 1, 0).getDate();
 
-  const { vendasPorDia, custosPorDia, vendasMes, custosMes, ticketMedioPorDia, ticketMedioMes } =
-    useMemo(() => {
-      const vendas = Array(diaDeHoje).fill(0);
-      const custos = Array(diaDeHoje).fill(0);
-      const somaTicket = Array(diaDeHoje).fill(0);
-      const qtdTicket = Array(diaDeHoje).fill(0);
+  const { vendasMes, custosMes, ticketMedioMes } = useMemo(() => {
+    const inicioMesAtual = new Date(ano, mes, 1);
+    let vendas = 0;
+    let custos = 0;
+    let somaTicket = 0;
+    let qtdTicket = 0;
 
-      for (const movimento of movimentos) {
-        const dataMovimento = new Date(movimento.data);
-        if (dataMovimento < inicioMesAtual) continue;
-        const dia = dataMovimento.getDate();
-        if (dia > diaDeHoje) continue;
-        const alvo = movimento.tipo === "entrada" ? vendas : custos;
-        alvo[dia - 1] += movimento.valor;
-
-        if (movimento.tipo === "entrada" && movimento.ordem_servico_id) {
-          somaTicket[dia - 1] += movimento.valor;
-          qtdTicket[dia - 1] += 1;
+    for (const movimento of movimentos) {
+      const dataMovimento = new Date(movimento.data);
+      if (dataMovimento < inicioMesAtual) continue;
+      if (dataMovimento.getDate() > diaDeHoje) continue;
+      if (movimento.tipo === "entrada") {
+        vendas += movimento.valor;
+        if (movimento.ordem_servico_id) {
+          somaTicket += movimento.valor;
+          qtdTicket += 1;
         }
+      } else {
+        custos += movimento.valor;
       }
+    }
 
-      const ticketPorDia = somaTicket.map((soma, i) => (qtdTicket[i] > 0 ? soma / qtdTicket[i] : 0));
-      const somaTicketMes = somaTicket.reduce((total, v) => total + v, 0);
-      const qtdTicketMes = qtdTicket.reduce((total, v) => total + v, 0);
+    return {
+      vendasMes: vendas,
+      custosMes: custos,
+      ticketMedioMes: qtdTicket > 0 ? somaTicket / qtdTicket : 0,
+    };
+  }, [movimentos, ano, mes, diaDeHoje]);
 
-      return {
-        vendasPorDia: vendas,
-        custosPorDia: custos,
-        vendasMes: vendas.reduce((total, v) => total + v, 0),
-        custosMes: custos.reduce((total, v) => total + v, 0),
-        ticketMedioPorDia: ticketPorDia,
-        ticketMedioMes: qtdTicketMes > 0 ? somaTicketMes / qtdTicketMes : 0,
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [movimentos, diaDeHoje]);
-
-  const lucrosPorDia = vendasPorDia.map((v, i) => v - custosPorDia[i]);
   const lucrosMes = vendasMes - custosMes;
 
-  const { contasPorDia, contasVencendoMes } = useMemo(() => {
-    const porDia = Array(totalDiasNoMes).fill(0);
+  const contasVencendoMes = useMemo(() => {
     let total = 0;
     for (const conta of contas) {
       if (conta.status !== "pendente") continue;
-      const [anoVencimento, mesVencimento, diaVencimento] = conta.vencimento.split("-").map(Number);
+      const [anoVencimento, mesVencimento] = conta.vencimento.split("-").map(Number);
       if (anoVencimento !== ano || mesVencimento - 1 !== mes) continue;
-      porDia[diaVencimento - 1] += conta.valor;
       total += conta.valor;
     }
-    return { contasPorDia: porDia, contasVencendoMes: total };
-  }, [contas, ano, mes, totalDiasNoMes]);
+    return total;
+  }, [contas, ano, mes]);
 
-  const valoresPorMetrica: Record<CartaoMetrica, { valor: string; valores: number[] }> = {
-    vendas_mes: { valor: formatarMoeda(vendasMes), valores: vendasPorDia },
-    custos_mes: { valor: formatarMoeda(custosMes), valores: custosPorDia },
-    lucro_mes: { valor: formatarMoeda(lucrosMes), valores: lucrosPorDia },
-    ticket_medio_mes: { valor: formatarMoeda(ticketMedioMes), valores: ticketMedioPorDia },
-    contas_pagar_vencendo: { valor: formatarMoeda(contasVencendoMes), valores: contasPorDia },
+  const valoresPorMetrica: Record<CartaoMetrica, string> = {
+    vendas_mes: formatarMoeda(vendasMes),
+    custos_mes: formatarMoeda(custosMes),
+    lucro_mes: formatarMoeda(lucrosMes),
+    ticket_medio_mes: formatarMoeda(ticketMedioMes),
+    contas_pagar_vencendo: formatarMoeda(contasVencendoMes),
   };
 
   const filaDeAtendimento = ordens
     .filter((o) => o.status === "aberta" || o.status === "em_andamento")
     .sort((a, b) => (a.data_abertura < b.data_abertura ? -1 : 1));
+
+  const veiculosNoPatio = filaDeAtendimento.filter((o) => o.veiculo);
 
   const eventosDoMes = useMemo(() => {
     const feriados = feriadosNacionais(ano)
@@ -199,7 +189,7 @@ export function PainelPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold text-sakura-purple-dark">Início</h1>
-        <p className="text-sm text-sakura-gray">Visão geral da loja, em tempo real</p>
+        <p className="text-sm text-sakura-muted">Visão geral da loja, em tempo real</p>
       </header>
 
       {!isSupabaseConfigured && (
@@ -215,16 +205,15 @@ export function PainelPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-4">
             {cartoesConfig.map((chave) => (
-              <CartaoTendencia
+              <CartaoValor
                 key={chave}
                 titulo={TITULO_CARTAO[chave]}
-                valor={valoresPorMetrica[chave].valor}
-                valores={valoresPorMetrica[chave].valores}
+                valor={valoresPorMetrica[chave]}
                 cor={COR_CARTAO[chave]}
               />
             ))}
@@ -245,7 +234,7 @@ export function PainelPage() {
                 OS abertas
               </h2>
               {filaDeAtendimento.length === 0 ? (
-                <p className="text-sm text-sakura-purple-dark/60">
+                <p className="text-sm text-sakura-purple-dark/85">
                   Nenhuma ordem de serviço em aberto no momento.
                 </p>
               ) : (
@@ -278,28 +267,75 @@ export function PainelPage() {
 
             <MiniCalendario ano={ano} mes={mes} eventos={eventosDoMes} />
           </div>
+
+          <section className="sakura-card p-4">
+            <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+              Veículos no pátio
+            </h2>
+            {veiculosNoPatio.length === 0 ? (
+              <p className="text-sm text-sakura-purple-dark/85">
+                Nenhum veículo no pátio no momento.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {veiculosNoPatio.map((ordem) => (
+                  <div
+                    key={ordem.id}
+                    className="sakura-card flex items-center gap-3 p-3"
+                  >
+                    <VeiculoIcone
+                      tipo={ordem.veiculo?.tipo ?? null}
+                      cor={ordem.veiculo?.cor}
+                      className="h-14 w-24 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-sakura-purple-dark">
+                        {ordem.cliente?.nome ?? "—"}
+                      </p>
+                      <p className="truncate text-xs text-sakura-muted">
+                        {ordem.veiculo?.placa ?? "—"}
+                        {(ordem.veiculo?.marca || ordem.veiculo?.modelo) &&
+                          ` · ${[ordem.veiculo?.marca, ordem.veiculo?.modelo]
+                            .filter(Boolean)
+                            .join(" ")}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
     </div>
   );
 }
 
-function CartaoTendencia({
+function CartaoValor({
   titulo,
   valor,
-  valores,
   cor,
 }: {
   titulo: string;
   valor: string;
-  valores: number[];
   cor: string;
 }) {
   return (
-    <div className="sakura-card p-4">
-      <p className="text-xs text-sakura-purple-dark/60">{titulo}</p>
-      <p className="mt-1 text-lg font-semibold text-sakura-purple-dark">{valor}</p>
-      <Sparkline valores={valores} cor={cor} />
+    <div
+      className="sakura-card p-5"
+      style={{
+        boxShadow:
+          "0 14px 34px -10px rgba(110, 77, 104, 0.4), " +
+          "0 2px 8px -2px rgba(110, 77, 104, 0.2), " +
+          "inset 0 1px 0 rgba(255, 255, 255, 0.75), " +
+          `inset -12px 2px 26px -6px ${cor}66`,
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs text-sakura-muted">{titulo}</p>
+        <span className="text-sakura-purple-dark/60">›</span>
+      </div>
+      <p className="mt-2 text-2xl font-semibold text-sakura-purple-dark">{valor}</p>
     </div>
   );
 }

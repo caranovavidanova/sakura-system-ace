@@ -103,25 +103,25 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
 
       <div className="grid grid-cols-4 gap-4">
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Entradas do dia</p>
+          <p className="text-xs text-sakura-muted">Entradas do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(entradas)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Saídas do dia</p>
+          <p className="text-xs text-sakura-muted">Saídas do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(saidas)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Saldo do dia</p>
+          <p className="text-xs text-sakura-muted">Saldo do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(entradas - saidas)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Lucro do dia</p>
+          <p className="text-xs text-sakura-muted">Lucro do dia</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalLucro)}
           </p>
@@ -136,7 +136,7 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {porFormaPagamento.map(([forma, valor]) => (
               <div key={forma} className="sakura-card px-4 py-3">
-                <p className="text-xs text-sakura-gray">{forma}</p>
+                <p className="text-xs text-sakura-muted">{forma}</p>
                 <p className="text-base font-semibold text-sakura-purple-dark">
                   {formatarMoeda(valor)}
                 </p>
@@ -147,7 +147,7 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
       )}
 
       {movimentosDoDia.length === 0 ? (
-        <p className="text-sm text-sakura-gray">Nenhuma movimentação neste dia.</p>
+        <p className="text-sm text-sakura-muted">Nenhuma movimentação neste dia.</p>
       ) : (
         <div className="overflow-hidden sakura-card">
           <table className="w-full text-left text-sm">

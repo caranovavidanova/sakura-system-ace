@@ -79,7 +79,7 @@ export function ServicosPage() {
             <h1 className="text-2xl font-semibold text-sakura-purple-dark">
               Serviços
             </h1>
-            <p className="text-sm text-sakura-gray">
+            <p className="text-sm text-sakura-muted">
               Catálogo de serviços oferecidos, com preço padrão
             </p>
           </div>
@@ -116,9 +116,9 @@ export function ServicosPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : servicos.length === 0 ? (
-        <p className="text-sm text-sakura-gray">
+        <p className="text-sm text-sakura-muted">
           Nenhum serviço cadastrado ainda.
         </p>
       ) : (
@@ -144,7 +144,7 @@ export function ServicosPage() {
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                         servico.ativo
                           ? "bg-emerald-50 text-emerald-700"
-                          : "bg-sakura-gray/20 text-sakura-gray"
+                          : "bg-sakura-gray/20 text-sakura-muted"
                       }`}
                     >
                       {servico.ativo ? "Ativo" : "Inativo"}

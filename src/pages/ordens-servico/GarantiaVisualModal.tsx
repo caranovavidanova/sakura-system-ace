@@ -76,7 +76,7 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
         </p>
       ) : (
         <>
-          {carregando && <p className="text-sm text-sakura-gray">Gerando pré-visualização...</p>}
+          {carregando && <p className="text-sm text-sakura-muted">Gerando pré-visualização...</p>}
           {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>}
 
           {!carregando && !erro && html && (
@@ -91,7 +91,7 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
                 <button
                   type="button"
                   onClick={onFechar}
-                  className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+                  className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
                 >
                   Fechar
                 </button>

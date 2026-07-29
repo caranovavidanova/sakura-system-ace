@@ -52,7 +52,7 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
       </p>
       <div className="grid grid-cols-7 gap-1 text-center text-xs">
         {DIAS_SEMANA.map((dia, i) => (
-          <div key={i} className="py-1 font-medium text-sakura-purple-dark/50">
+          <div key={i} className="py-1 font-medium text-sakura-purple-dark/75">
             {dia}
           </div>
         ))}
@@ -99,7 +99,7 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
           {eventos
             .sort((a, b) => a.dia - b.dia)
             .map((evento, i) => (
-              <p key={i} className="text-xs text-sakura-gray">
+              <p key={i} className="text-xs text-sakura-muted">
                 <span className="font-medium text-sakura-purple-dark">
                   {String(evento.dia).padStart(2, "0")}
                 </span>{" "}

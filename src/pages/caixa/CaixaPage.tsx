@@ -62,7 +62,7 @@ export function CaixaPage() {
           <h1 className="text-2xl font-semibold text-sakura-purple-dark">
             Caixa Diário
           </h1>
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             Vendas e movimentação do dia, nascendo das ordens de serviço faturadas
           </p>
         </div>
@@ -89,7 +89,7 @@ export function CaixaPage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : aba === "diario" ? (
         <DiarioSection
           movimentos={movimentos}
@@ -131,7 +131,7 @@ function AbaBotao({
       className={`px-4 py-2.5 text-sm font-medium transition-colors ${
         ativa
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-          : "text-sakura-purple-dark/60 hover:text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
       }`}
     >
       {label}

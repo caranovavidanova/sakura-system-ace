@@ -66,7 +66,7 @@ export function CategoriasSection({ categorias, onSalvo }: CategoriasSectionProp
       </form>
 
       {categorias.length === 0 ? (
-        <p className="mt-4 text-sm text-sakura-gray">Nenhuma categoria cadastrada ainda.</p>
+        <p className="mt-4 text-sm text-sakura-muted">Nenhuma categoria cadastrada ainda.</p>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
           {categorias.map((categoria) => (
@@ -78,7 +78,7 @@ export function CategoriasSection({ categorias, onSalvo }: CategoriasSectionProp
               <button
                 onClick={() => handleExcluir(categoria.id)}
                 title="Excluir categoria"
-                className="text-sakura-purple-dark/50 hover:text-red-600"
+                className="text-sakura-purple-dark/75 hover:text-red-600"
               >
                 ×
               </button>

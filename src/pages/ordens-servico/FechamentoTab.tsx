@@ -108,19 +108,19 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
 
       <section className="space-y-4 sakura-card p-4">
         <div className="space-y-2">
-          <p className="text-xs font-medium text-sakura-purple-dark/60">Nota fiscal</p>
+          <p className="text-xs font-medium text-sakura-purple-dark/85">Nota fiscal</p>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setPreviewNF("NFC-e")}
-              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
+              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
             >
               Emitir NFC-e
             </button>
             <button
               type="button"
               onClick={() => setPreviewNF("NFS-e")}
-              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
+              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
             >
               Emitir NFS-e
             </button>
@@ -128,11 +128,11 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium text-sakura-purple-dark/60">Garantia</p>
+          <p className="text-xs font-medium text-sakura-purple-dark/85">Garantia</p>
           <button
             type="button"
             onClick={() => setPreviewGarantiaAberta(true)}
-            className="w-full rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
+            className="w-full rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
           >
             Ver garantia
           </button>
@@ -144,13 +144,13 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <div className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-3 rounded-lg bg-sakura-pink-soft/60 p-3">
               <div>
-                <p className="text-xs text-sakura-purple-dark/60">Cliente</p>
+                <p className="text-xs text-sakura-purple-dark/85">Cliente</p>
                 <p className="font-medium text-sakura-purple-dark">
                   {ordem.cliente?.nome ?? "—"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-sakura-purple-dark/60">Veículo</p>
+                <p className="text-xs text-sakura-purple-dark/85">Veículo</p>
                 <p className="font-medium text-sakura-purple-dark">
                   {ordem.veiculo?.placa ?? "—"}
                 </p>

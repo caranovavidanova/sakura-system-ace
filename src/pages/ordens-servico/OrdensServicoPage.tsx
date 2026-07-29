@@ -128,7 +128,7 @@ export function OrdensServicoPage() {
             <h1 className="text-2xl font-semibold text-sakura-purple-dark">
               Ordens de Serviço
             </h1>
-            <p className="text-sm text-sakura-gray">
+            <p className="text-sm text-sakura-muted">
               Cliente + veículo + peças usadas + serviço realizado
             </p>
           </div>
@@ -200,9 +200,9 @@ export function OrdensServicoPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : ordens.length === 0 ? (
-        <p className="text-sm text-sakura-gray">
+        <p className="text-sm text-sakura-muted">
           Nenhuma ordem de serviço aberta ainda.
         </p>
       ) : (

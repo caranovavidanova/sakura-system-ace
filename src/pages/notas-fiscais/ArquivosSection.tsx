@@ -181,7 +181,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
             <button
               type="button"
               onClick={() => setMostrarFormulario(false)}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
               Cancelar
             </button>
@@ -197,9 +197,9 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : grupos.size === 0 ? (
-        <p className="text-sm text-sakura-gray">Nenhum arquivo enviado ainda.</p>
+        <p className="text-sm text-sakura-muted">Nenhum arquivo enviado ainda.</p>
       ) : (
         [...grupos.entries()].map(([chave, arquivosDoMes]) => (
           <div key={chave} className="overflow-hidden sakura-card">
@@ -209,7 +209,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
               </h3>
             </div>
             <table className="w-full text-left text-sm">
-              <thead className="text-sakura-purple-dark/70">
+              <thead className="text-sakura-purple-dark/90">
                 <tr>
                   <th className="px-4 py-2 font-medium">Arquivo</th>
                   <th className="px-4 py-2 font-medium">Ordem de Serviço</th>

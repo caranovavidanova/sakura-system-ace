@@ -25,10 +25,10 @@ export function SecaoRecolhivel({
       >
         <div>
           <h2 className="text-sm font-semibold text-sakura-purple-dark">{titulo}</h2>
-          {descricao && <p className="mt-1 text-xs text-sakura-gray">{descricao}</p>}
+          {descricao && <p className="mt-1 text-xs text-sakura-muted">{descricao}</p>}
         </div>
         <svg
-          className={`mt-1 h-4 w-4 shrink-0 text-sakura-purple-dark/60 transition-transform ${
+          className={`mt-1 h-4 w-4 shrink-0 text-sakura-purple-dark/85 transition-transform ${
             aberta ? "rotate-180" : ""
           }`}
           viewBox="0 0 24 24"

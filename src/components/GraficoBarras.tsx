@@ -64,14 +64,14 @@ export function GraficoBarras({
   );
 
   if (categorias.length === 0) {
-    return <p className="text-sm text-sakura-gray">Sem dados suficientes pra montar o gráfico ainda.</p>;
+    return <p className="text-sm text-sakura-muted">Sem dados suficientes pra montar o gráfico ainda.</p>;
   }
 
   return (
     <div className="relative">
       <div className="mb-3 flex flex-wrap items-center gap-4">
         {series.map((s) => (
-          <span key={s.chave} className="flex items-center gap-1.5 text-xs text-sakura-purple-dark/70">
+          <span key={s.chave} className="flex items-center gap-1.5 text-xs text-sakura-purple-dark/90">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.cor }} />
             {s.nome}
           </span>

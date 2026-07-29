@@ -64,7 +64,7 @@ export function ClientesPage() {
             <h1 className="text-2xl font-semibold text-sakura-purple-dark">
               Clientes
             </h1>
-            <p className="text-sm text-sakura-gray">
+            <p className="text-sm text-sakura-muted">
               Cadastro de clientes e veículos
             </p>
           </div>
@@ -101,9 +101,9 @@ export function ClientesPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : clientes.length === 0 ? (
-        <p className="text-sm text-sakura-gray">
+        <p className="text-sm text-sakura-muted">
           Nenhum cliente cadastrado ainda.
         </p>
       ) : (

@@ -80,7 +80,7 @@ export function FaturamentoCard({
           <h3 className="text-sm font-semibold text-sakura-purple-dark">
             Faturar OS de {ordem.cliente?.nome ?? "cliente"}
           </h3>
-          <p className="text-xs text-sakura-gray">
+          <p className="text-xs text-sakura-muted">
             Total dos itens: {formatarMoeda(total)}
           </p>
         </div>
@@ -164,7 +164,7 @@ export function FaturamentoCard({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>

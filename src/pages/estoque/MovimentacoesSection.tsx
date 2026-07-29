@@ -87,7 +87,7 @@ export function MovimentacoesSection({
         </div>
 
         {movimentosFiltrados.length === 0 ? (
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             {movimentos.length === 0
               ? "Nenhuma movimentação registrada ainda."
               : "Nenhuma movimentação para este produto."}

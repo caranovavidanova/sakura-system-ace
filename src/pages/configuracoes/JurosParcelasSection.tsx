@@ -58,7 +58,7 @@ export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSe
       <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6">
         {NUMEROS_PARCELA.map((n) => (
           <label key={n} className="flex flex-col gap-1 text-xs">
-            <span className="text-sakura-purple-dark/70">{n}x</span>
+            <span className="text-sakura-purple-dark/90">{n}x</span>
             <div className="flex items-center gap-1">
               <input
                 type="number"
@@ -70,7 +70,7 @@ export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSe
                 }
                 className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
               />
-              <span className="text-sakura-gray">%</span>
+              <span className="text-sakura-muted">%</span>
             </div>
           </label>
         ))}

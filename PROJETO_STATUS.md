@@ -49,7 +49,23 @@ base arquitetural.
   `sakura-purple-dark` e `sakura-pink-soft` criadas para acessibilidade).
 - Estilo: painel visual e acolhedor, navegação lateral por módulos, bastante espaçamento (oposto
   da densidade de ERP tradicional). Os indicadores tipo velocímetro/gauge do rascunho inicial não
-  vingaram — foram trocados por cartões de tendência com sparkline (ver seção 7, redesenho do Início).
+  vingaram — foram trocados por cartões de tendência com sparkline (redesenho do Início, PR #8),
+  e **os cartões do Início voltaram a mudar nesta sessão**: a sparkline saiu de novo (a usuária
+  mandou uma referência do Figma de um cartão "Total earnings" só com valor grande + seta `›`,
+  sem gráfico nenhum) — ver seção 7 pro redesenho mais recente.
+- **`sakura-muted` (nesta sessão)**: token de texto novo em `globals.css` (`#6b5d68`), substituindo
+  `text-sakura-gray` (`#c7c7c7`) em todo o app (88 usos) — o cinza claro tinha contraste real baixo
+  como texto (~1.5:1 sobre os cards claros, reprovava WCAG), servia bem só como borda/fundo sutil.
+  Também os textos que usavam `text-sakura-purple-dark/40..70` (opacidade baixa) tiveram a opacidade
+  aumentada (`/65..90`) pelo mesmo motivo — a usuária relatou "coisas difíceis de ler" e pediu mais
+  contraste. **Se algum texto novo usar `text-sakura-gray` ou opacidade `/60` ou menor em cima de
+  `sakura-card`, é provável que fique com contraste ruim — usar `text-sakura-muted` (secundário) ou
+  `text-sakura-purple-dark` (primário) em vez disso.**
+- **Barra de rolagem customizada (nesta sessão)**: a usuária reclamou que a barra de rolagem nativa
+  do Windows/Chromium destoava da estética do app. `globals.css` ganhou `::-webkit-scrollbar` +
+  `scrollbar-color` globais — fina (10px), sem track visível, "polegar" arredondado num tom
+  roxo-acinzentado translúcido. Vale pra qualquer área com `overflow-y-auto`/`overflow-x-auto` do
+  app inteiro, não precisa de classe por tela.
 - **Estilo "glassmorphism" (nesta sessão)**: o app inteiro passou a usar blocos arredondados e
   translúcidos (`sakura-card` em `src/styles/globals.css`, com `backdrop-filter: blur`) flutuando
   sobre um fundo rosa com brilho difuso (`sakura-shell-bg`) — a pedido do usuário, que mandou prints
@@ -125,8 +141,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7), SecaoRecolhivel.tsx (bloco "acordeão" recolhível, usado em Configurações), GraficoBarras.tsx e GraficoRadar.tsx (gráficos SVG puros, sem lib externa, usados em Relações — ver seção 7)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia + dados fiscais da loja) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS) + garantiaDocumento.ts (monta o HTML estruturado da garantia, ver seção 7) + notaFiscalXml.ts (interpreta XML de NFe/NFCe/NFS-e e monta o recibo HTML "versão para o cliente", ver seção 7) + focusNfe.ts (casca da integração com a API do Focus NFe — auth + URLs por ambiente, emissão em si ainda não implementada, ver seção 7 e 8)
+│   ├── components/             # Sidebar.tsx, Logo.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7), SecaoRecolhivel.tsx (bloco "acordeão" recolhível, usado em Configurações), GraficoBarras.tsx e GraficoRadar.tsx (gráficos SVG puros, sem lib externa, usados em Relações — ver seção 7), VeiculoIcone.tsx (ícone SVG por tipo de veículo/hatch/sedã/SUV/picape/moto, pintado com a cor cadastrada — ver seção 7; **Sparkline.tsx foi removido nesta sessão** por ter ficado sem uso depois do redesenho dos cartões do Início)
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia + dados fiscais da loja) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS) + garantiaDocumento.ts (monta o HTML estruturado da garantia, ver seção 7) + notaFiscalXml.ts (interpreta XML de NFe/NFCe/NFS-e e monta o recibo HTML "versão para o cliente", ver seção 7) + focusNfe.ts (casca da integração com a API do Focus NFe — auth + URLs por ambiente, emissão em si ainda não implementada, ver seção 7 e 8) + corVeiculo.ts (mapeia nome de cor em português, ex: "Prata"/"Vermelho", pro hex aproximado usado no ícone do veículo — fallback cinza pra cor não reconhecida, ver seção 7)
 │   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, contas-pagar, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
@@ -194,7 +210,9 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   cpf_cnpj também muda pra "CPF" ou "CNPJ" na tela conforme esse valor), cpf_cnpj, telefone, email,
   cep, rua, numero, bairro, cidade, uf, data_nascimento (migration 0009 — usada pro calendário do
   Início marcar aniversário do mês), criado_em
-- **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, km_atual, criado_em
+- **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, **tipo** (`hatch`/`sedan`/`suv`/
+  `picape`/`moto`, opcional — migration 0027, usado só pra escolher o ícone certo na seção "Veículos
+  no pátio" do Início, ver seção 7), km_atual, criado_em
 - **`pecas`**: id, codigo_interno (exibido como "Referência" na tela), codigo_barras, descricao,
   marca, modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
   cst_ou_csosn, aliquota_icms, categoria_id (FK categorias, opcional — migration 0016),
@@ -1069,6 +1087,49 @@ sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 
   lista abaixo do calendário.
 - Migration **0026 ainda não foi rodada pela usuária** — ver tutorial novo na seção 9.
 
+**⏳ Implementado nesta sessão (PR [#47](https://github.com/caranovavidanova/amigao/pull/47) — ícone
+de veículo no pátio, cartões do Início sem sparkline, scrollbar e contraste), ainda sem confirmação
+da usuária rodando com Supabase real** — a usuária perguntou se dava pra mostrar um "carrinho 3D" do
+veículo exato de cada cliente; expliquei 3 níveis (3D exato = caro/não cobre carro raro; 3D genérico
+único = pouco fiel; ícone 2D por tipo de veículo, pintado com a cor cadastrada = bom custo-benefício,
+sem depender de serviço pago) e recomendei o terceiro — ela topou ("do jeitinho 2D que você disse").
+Ela também pediu, na mesma mensagem: tirar o gráfico dos cartões do Início (só valor, como um print
+do Figma que mandou), decidir se "Custos" devia continuar aparecendo por padrão (achou estranho
+mostrar algo "negativo" logo de cara — pedi pra eu mesma sugerir), trocar a barra de rolagem (nativa
+do Windows, destoava do resto) e aumentar o contraste geral (tinha texto difícil de ler). Validado no
+sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots do Electron real (`xvfb-run` +
+Playwright `_electron.launch`) com dados simulados via `page.route()`, incluindo os 5 tipos de
+veículo/cor renderizados na seção nova, o seletor "Tipo" no cadastro de veículo, e a barra de rolagem
+customizada visível ao rolar o formulário de Cliente — tudo sem erro no console (sandbox não acessa
+`*.supabase.co`, ver item 7 da seção 6):
+
+- **Tipo de veículo + ícone** (migration `0027_veiculos_tipo.sql`): campo `tipo` em `veiculos`
+  (opcional, 5 valores: hatch/sedã/SUV/picape/moto — moto é um ícone só de propósito, a usuária
+  confirmou que quase não aparece moto na borracharia, não vale detalhar tipos). Seletor "Tipo" novo
+  no cadastro de veículo (`ClienteForm.tsx`, dentro do bloco de cada veículo). `VeiculoIcone.tsx`
+  desenha o ícone certo em SVG puro (sem lib externa, mesmo padrão de todo ícone do app) e pinta a
+  carroceria com a cor real cadastrada — `lib/corVeiculo.ts` traduz nomes de cor em português
+  ("Prata", "Vermelho"...) pro hex aproximado, com cinza como fallback pra cor não reconhecida/texto
+  livre. **Não é o carro exato do cliente** (não existe banco de modelo 3D nem foto real por
+  trás) — é um ícone por categoria de carroceria, pintado com a cor certa.
+- **Seção "Veículos no pátio" no Início**: nova seção abaixo de "OS abertas"/calendário, listando
+  (com o ícone) todo veículo vinculado a uma OS `aberta`/`em_andamento` — mesma definição de "está na
+  loja agora" que a fila de atendimento já usava, só que reaproveitada aqui em formato de cartão com
+  ícone em vez de linha de tabela. `lib/ordensServico.ts` ampliou o `select` de `listarOrdens()` pra
+  trazer `marca`/`modelo`/`cor`/`tipo` do veículo junto (antes só trazia a placa).
+- **Cartões do Início sem sparkline**: a pedido da usuária, que mandou uma referência do Figma (cartão
+  "Total earnings" só com rótulo + seta `›` + valor grande, sem gráfico). `Sparkline.tsx` foi
+  removido (ficou sem uso). Os cartões ganharam uma sombra interna colorida por métrica (glow sutil no
+  canto, mesma cor que já identificava cada métrica) pra dar profundidade sem reintroduzir gráfico —
+  inspirado na técnica de inner shadow + drop shadow do print que a usuária mandou (um card em vidro
+  escuro do Figma), adaptada pra dentro da paleta clara do Sakura System (não copiamos o visual escuro/
+  laranja do print, só a técnica de sombra/profundidade).
+- **"Custos" saiu do padrão dos cartões do Início** (sugestão minha, que a usuária pediu explicitamente
+  — "acho que não é legal mostrar algo negativo ali"): o padrão agora é Vendas/Lucro/Ticket médio;
+  Custos continua disponível pra quem quiser escolher em Configurações → "Cartões do Início". Migration
+  0026 (ainda não rodada pela usuária) já foi ajustada com esse novo padrão antes de publicar.
+- Scrollbar e contraste: ver detalhe técnico completo na seção 2 (Identidade visual).
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -1307,7 +1368,7 @@ A migration 0024 (dados fiscais da loja) **já foi rodada** pela usuária nesta 
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
-### Tutorial: pegar a versão nova (migration 0026 — Cartões do Início) e rodar
+### Tutorial: pegar a versão nova (migrations 0026 e 0027 — Cartões do Início e tipo de veículo) e rodar
 
 1. Feche o app se estiver aberto.
 2. No terminal, dentro da pasta `sakura-system-autocenter`:
@@ -1315,10 +1376,11 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
    git checkout main
    git pull origin main
    ```
-3. **Rode a migration nova no Supabase** (SQL Editor do Supabase — abra o arquivo no VS Code, copie
-   todo o conteúdo, cole numa "New query" e clique em "Run"):
+3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada arquivo
+   no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
    - `supabase/migrations/0026_configuracoes_painel_inicio.sql` — cria a tabela
      `configuracoes_painel_inicio`.
+   - `supabase/migrations/0027_veiculos_tipo.sql` — cria o campo `tipo` em `veiculos`.
 4. `npm install && npm run dev`.
 5. O que testar:
    - **Menu lateral**: o item que era "Relatórios" agora aparece como "Relações".
@@ -1326,11 +1388,19 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
      Diário/Semanal/Mensal) e o gráfico de radar logo abaixo ("Comparativo do período"). Passe o
      mouse sobre uma barra ou um ponto do radar pra ver o valor exato.
    - **Configurações → "Cartões do Início"**: escolha indicadores diferentes pros 3 cartões (ex:
-     troque "Custos mês" por "Ticket médio do mês") e salve — confira que a tela Início reflete a
-     escolha.
+     troque "Lucro mês" por "Custos mês") e salve — confira que a tela Início reflete a escolha.
    - **Início**: confira o calendário do mês — se você tiver alguma conta a pagar pendente com
      vencimento nesse mês, deve aparecer uma bolinha laranja (ainda não venceu) ou vermelha (já
-     venceu) no dia certo, com o nome da conta na lista abaixo do calendário.
+     venceu) no dia certo, com o nome da conta na lista abaixo do calendário. Os 3 cartões do topo
+     não devem ter mais gráfico, só o valor grande com uma seta `›` no canto.
+   - **Clientes → Novo cliente → dentro do bloco de um veículo**: escolha um "Tipo" (Hatch, Sedã,
+     SUV, Picape ou Moto) e preencha uma "Cor" (ex: Prata, Vermelho, Azul, Preto, Branco — nomes
+     comuns em português funcionam melhor; cor não reconhecida cai num cinza neutro).
+   - **Início → "Veículos no pátio"**: abra uma Ordem de Serviço nova (ou deixe uma já aberta/em
+     andamento) vinculada a um veículo com tipo/cor preenchidos — o ícone do carro/moto deve aparecer
+     nessa seção, pintado com a cor cadastrada.
+   - **Barra de rolagem**: em qualquer tela com scroll (ex: o próprio formulário de Cliente), confira
+     que a barra é fina e discreta, na paleta do app — não mais a barra grossa cinza do Windows.
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
@@ -1523,6 +1593,13 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
 - PR [#44](https://github.com/caranovavidanova/amigao/pull/44) (branch `claude/ssace-3y3p8y`):
   reorganização da tela de Configurações (seções recolhíveis + "Operadores" em bloco próprio) — ver
   seção 7. Mergeado nesta mesma sessão, sem mudança de schema.
+- PR [#46](https://github.com/caranovavidanova/amigao/pull/46): "Relatórios" virou "Relações" com
+  gráficos de barras/radar, cartões do Início personalizáveis (migration 0026) — ver seção 7.
+  Mergeado nesta mesma sessão.
+- PR [#47](https://github.com/caranovavidanova/amigao/pull/47): tipo de veículo + ícone por
+  carroceria (migration 0027), seção "Veículos no pátio" no Início, cartões do Início sem sparkline,
+  scrollbar customizada e passe de contraste (`sakura-muted`) — ver seção 2 e 7. Mergeado nesta mesma
+  sessão.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

@@ -52,7 +52,7 @@ export function CartoesInicioSection({ cartoes, onSalvo }: CartoesInicioSectionP
 
       <div className="mt-4 grid grid-cols-3 gap-3">
         {valores.map((valor, indice) => (
-          <label key={indice} className="flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+          <label key={indice} className="flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
             Cartão {indice + 1}
             <select
               value={valor}

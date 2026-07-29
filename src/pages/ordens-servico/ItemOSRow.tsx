@@ -119,7 +119,7 @@ export function ItemOSRow({
       )}
 
       <div className="flex gap-2">
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/70">
+        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
           Quantidade
           <input
             type="number"
@@ -131,7 +131,7 @@ export function ItemOSRow({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/70">
+        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
           Preço unitário
           <input
             type="number"
@@ -143,7 +143,7 @@ export function ItemOSRow({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/70">
+        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
           Desconto
           <input
             type="number"
@@ -155,7 +155,7 @@ export function ItemOSRow({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/70">
+        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
           Técnico
           <select
             value={item.tecnico_id ?? ""}

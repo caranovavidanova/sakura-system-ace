@@ -37,7 +37,7 @@ function PaginaInicial() {
 
   return (
     <div className="sakura-card p-8 text-center">
-      <p className="text-sm text-sakura-purple-dark/70">
+      <p className="text-sm text-sakura-purple-dark/90">
         Nenhum módulo liberado para o seu usuário. Fale com o administrador.
       </p>
     </div>
@@ -50,7 +50,7 @@ export default function App() {
   if (carregando) {
     return (
       <div className="sakura-shell-bg flex h-screen items-center justify-center">
-        <p className="text-sm text-sakura-purple-dark/70">Carregando...</p>
+        <p className="text-sm text-sakura-purple-dark/90">Carregando...</p>
       </div>
     );
   }

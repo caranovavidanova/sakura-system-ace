@@ -170,7 +170,7 @@ export function RelatoriosPage() {
         <BotaoVoltar />
         <div>
           <h1 className="text-2xl font-semibold text-sakura-purple-dark">Relações</h1>
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             Como vendas, custos e lucro se relacionam ao longo do tempo
           </p>
         </div>
@@ -190,19 +190,19 @@ export function RelatoriosPage() {
 
       <div className="grid grid-cols-3 gap-4">
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Vendas hoje</p>
+          <p className="text-xs text-sakura-muted">Vendas hoje</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalHoje)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Vendas esta semana</p>
+          <p className="text-xs text-sakura-muted">Vendas esta semana</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalSemana)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Vendas este mês</p>
+          <p className="text-xs text-sakura-muted">Vendas este mês</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalMes)}
           </p>
@@ -210,7 +210,7 @@ export function RelatoriosPage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : (
         <>
           <section className="sakura-card p-5">
@@ -226,7 +226,7 @@ export function RelatoriosPage() {
                     className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                       periodo === p.chave
                         ? "bg-sakura-purple text-white"
-                        : "text-sakura-purple-dark/60 hover:bg-white/60"
+                        : "text-sakura-purple-dark/85 hover:bg-white/60"
                     }`}
                   >
                     {p.label}
@@ -251,7 +251,7 @@ export function RelatoriosPage() {
               <h2 className="mb-1 text-sm font-semibold text-sakura-purple-dark">
                 Comparativo do período
               </h2>
-              <p className="mb-4 text-xs text-sakura-gray">
+              <p className="mb-4 text-xs text-sakura-muted">
                 {PERIODOS.find((p) => p.chave === periodo)?.label} atual comparado com o anterior.
               </p>
               <GraficoRadar
@@ -281,7 +281,7 @@ export function RelatoriosPage() {
           )}
 
           {totaisPorDia.length === 0 ? (
-            <p className="text-sm text-sakura-gray">
+            <p className="text-sm text-sakura-muted">
               Nenhuma venda registrada ainda (faturamentos de OS aparecem aqui automaticamente).
             </p>
           ) : (

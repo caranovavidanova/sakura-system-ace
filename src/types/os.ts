@@ -1,3 +1,5 @@
+import type { TipoVeiculo } from "@/types/cliente";
+
 export type StatusOS = "aberta" | "em_andamento" | "concluida" | "faturada";
 
 export type TipoItemOS = "peca" | "servico";
@@ -33,7 +35,13 @@ export interface OrdemServico {
   criado_por_id: string | null;
   atualizado_por_id: string | null;
   cliente?: { nome: string };
-  veiculo?: { placa: string } | null;
+  veiculo?: {
+    placa: string;
+    marca: string | null;
+    modelo: string | null;
+    cor: string | null;
+    tipo: TipoVeiculo | null;
+  } | null;
   vendedor?: { nome: string } | null;
   criado_por?: { nome: string } | null;
   atualizado_por?: { nome: string } | null;

@@ -13,7 +13,7 @@ export function NotasFiscaisPage() {
         <BotaoVoltar />
         <div>
           <h1 className="text-2xl font-semibold text-sakura-purple-dark">Notas Fiscais</h1>
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             Arquivos XML de NFe e NFS-e, organizados por mês — a emissão automática ainda
             não existe, então por enquanto é upload manual das notas já emitidas por fora
           </p>
@@ -53,7 +53,7 @@ function AbaBotao({
       className={`px-4 py-2.5 text-sm font-medium transition-colors ${
         ativa
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-          : "text-sakura-purple-dark/60 hover:text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
       }`}
     >
       {label}

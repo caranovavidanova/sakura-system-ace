@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
-import type { NovoCliente, NovoVeiculo } from "@/types/cliente";
+import { TIPO_VEICULO_LABEL } from "@/types/cliente";
+import type { NovoCliente, NovoVeiculo, TipoVeiculo } from "@/types/cliente";
 
 interface ClienteFormProps {
   onSalvar: (cliente: NovoCliente, veiculos: NovoVeiculo[]) => Promise<void>;
@@ -29,6 +30,7 @@ const veiculoVazio: NovoVeiculo = {
   modelo: "",
   ano: null,
   cor: "",
+  tipo: null,
   km_atual: null,
 };
 
@@ -207,7 +209,7 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
             >
               {veiculos.length > 1 && (
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-medium text-sakura-gray">
+                  <p className="text-xs font-medium text-sakura-muted">
                     Veículo {index + 1}
                   </p>
                   <button
@@ -256,6 +258,25 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
                     atualizarVeiculo(index, { km_atual: v ? Number(v) : null })
                   }
                 />
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-sakura-purple-dark/80">Tipo</span>
+                  <select
+                    value={veiculo.tipo ?? ""}
+                    onChange={(e) =>
+                      atualizarVeiculo(index, {
+                        tipo: (e.target.value || null) as TipoVeiculo | null,
+                      })
+                    }
+                    className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+                  >
+                    <option value="">Selecione...</option>
+                    {(Object.keys(TIPO_VEICULO_LABEL) as TipoVeiculo[]).map((chave) => (
+                      <option key={chave} value={chave}>
+                        {TIPO_VEICULO_LABEL[chave]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
           ))}
@@ -266,7 +287,7 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>

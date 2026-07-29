@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
+import type { Categoria } from "@/types/categoria";
 import type { NovaPeca } from "@/types/peca";
 
 interface PecaFormProps {
+  categorias: Categoria[];
   onSalvar: (peca: NovaPeca, quantidadeInicial: number | null) => Promise<void>;
   onCancelar: () => void;
 }
@@ -24,6 +26,8 @@ const pecaVazia: NovaPeca = {
   origem: "",
   cst_ou_csosn: "",
   aliquota_icms: null,
+  categoria_id: null,
+  prazo_garantia_dias: null,
   ativo: true,
 };
 
@@ -43,7 +47,7 @@ function arredondar(valor: number): number {
   return Math.round(valor * 100) / 100;
 }
 
-export function PecaForm({ onSalvar, onCancelar }: PecaFormProps) {
+export function PecaForm({ categorias, onSalvar, onCancelar }: PecaFormProps) {
   const [peca, setPeca] = useState<NovaPeca>(pecaVazia);
   const [margemTexto, setMargemTexto] = useState("");
   const [quantidadeInicial, setQuantidadeInicial] = useState<number | null>(null);
@@ -145,6 +149,30 @@ export function PecaForm({ onSalvar, onCancelar }: PecaFormProps) {
             required
             value={peca.unidade ?? ""}
             onChange={(v) => setPeca({ ...peca, unidade: v.toUpperCase() })}
+          />
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">Categoria</span>
+            <select
+              value={peca.categoria_id ?? ""}
+              onChange={(e) =>
+                setPeca({ ...peca, categoria_id: e.target.value || null })
+              }
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            >
+              <option value="">Sem categoria</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <CampoNumero
+            label="Garantia (dias, opcional)"
+            value={peca.prazo_garantia_dias}
+            onChange={(v) =>
+              setPeca({ ...peca, prazo_garantia_dias: v === null ? null : Math.round(v) })
+            }
           />
         </div>
         <label className="mt-4 flex flex-col gap-1 text-sm">

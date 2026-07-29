@@ -1,20 +1,25 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { listarCategorias } from "@/lib/categorias";
 import { mensagemDeErro } from "@/lib/errors";
 import { calcularSaldoPorPeca, listarMovimentos } from "@/lib/estoque";
 import { listarPecas } from "@/lib/pecas";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { Categoria } from "@/types/categoria";
 import type { MovimentoEstoque } from "@/types/estoque";
 import type { Peca } from "@/types/peca";
+import { ContagemSection } from "./ContagemSection";
 import { MovimentacoesSection } from "./MovimentacoesSection";
 import { ProdutosSection } from "./ProdutosSection";
+import { RelatoriosEstoqueSection } from "./RelatoriosEstoqueSection";
 
-type Aba = "produtos" | "movimentacoes";
+type Aba = "produtos" | "movimentacoes" | "contagem" | "relatorios";
 
 export function EstoquePage() {
   const [aba, setAba] = useState<Aba>("produtos");
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [movimentos, setMovimentos] = useState<MovimentoEstoque[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -26,12 +31,14 @@ export function EstoquePage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [pecasCarregadas, movimentosCarregados] = await Promise.all([
+      const [pecasCarregadas, movimentosCarregados, categoriasCarregadas] = await Promise.all([
         listarPecas(),
         listarMovimentos(),
+        listarCategorias(),
       ]);
       setPecas(pecasCarregadas);
       setMovimentos(movimentosCarregados);
+      setCategorias(categoriasCarregadas);
     } catch (err) {
       console.error("Erro ao carregar estoque:", err);
       setErro(mensagemDeErro(err));
@@ -81,17 +88,40 @@ export function EstoquePage() {
           ativa={aba === "movimentacoes"}
           onClick={() => setAba("movimentacoes")}
         />
+        <AbaBotao
+          label="Contagem"
+          ativa={aba === "contagem"}
+          onClick={() => setAba("contagem")}
+        />
+        <AbaBotao
+          label="Relatórios"
+          ativa={aba === "relatorios"}
+          onClick={() => setAba("relatorios")}
+        />
       </div>
 
       {carregando ? (
         <p className="text-sm text-sakura-gray">Carregando...</p>
       ) : aba === "produtos" ? (
-        <ProdutosSection pecas={pecas} saldos={saldos} onRecarregar={carregar} />
-      ) : (
+        <ProdutosSection
+          pecas={pecas}
+          categorias={categorias}
+          saldos={saldos}
+          onRecarregar={carregar}
+        />
+      ) : aba === "movimentacoes" ? (
         <MovimentacoesSection
           pecas={pecas}
           movimentos={movimentos}
           onRecarregar={carregar}
+        />
+      ) : aba === "contagem" ? (
+        <ContagemSection pecas={pecas} saldos={saldos} onRecarregar={carregar} />
+      ) : (
+        <RelatoriosEstoqueSection
+          pecas={pecas}
+          movimentos={movimentos}
+          saldos={saldos}
         />
       )}
     </div>

@@ -2,11 +2,13 @@ import { useState } from "react";
 import { atualizarStatusPeca, criarPeca, excluirPeca } from "@/lib/pecas";
 import { criarMovimento } from "@/lib/estoque";
 import { mensagemDeErro } from "@/lib/errors";
+import type { Categoria } from "@/types/categoria";
 import type { NovaPeca, Peca } from "@/types/peca";
 import { PecaForm } from "./PecaForm";
 
 interface ProdutosSectionProps {
   pecas: Peca[];
+  categorias: Categoria[];
   saldos: Map<string, number>;
   onRecarregar: () => Promise<void>;
 }
@@ -16,7 +18,12 @@ function formatarPreco(valor: number | null): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export function ProdutosSection({ pecas, saldos, onRecarregar }: ProdutosSectionProps) {
+export function ProdutosSection({
+  pecas,
+  categorias,
+  saldos,
+  onRecarregar,
+}: ProdutosSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -71,6 +78,7 @@ export function ProdutosSection({ pecas, saldos, onRecarregar }: ProdutosSection
 
       {mostrarFormulario && (
         <PecaForm
+          categorias={categorias}
           onSalvar={handleSalvar}
           onCancelar={() => setMostrarFormulario(false)}
         />
@@ -92,6 +100,7 @@ export function ProdutosSection({ pecas, saldos, onRecarregar }: ProdutosSection
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Descrição</th>
+                <th className="px-4 py-3 font-medium">Categoria</th>
                 <th className="px-4 py-3 font-medium">Código</th>
                 <th className="px-4 py-3 font-medium">Unidade</th>
                 <th className="px-4 py-3 font-medium">Preço custo</th>
@@ -105,6 +114,9 @@ export function ProdutosSection({ pecas, saldos, onRecarregar }: ProdutosSection
               {pecas.map((peca) => (
                 <tr key={peca.id} className="border-t border-sakura-gray/20">
                   <td className="px-4 py-3">{peca.descricao}</td>
+                  <td className="px-4 py-3">
+                    {categorias.find((c) => c.id === peca.categoria_id)?.nome ?? "—"}
+                  </td>
                   <td className="px-4 py-3">{peca.codigo_interno || "—"}</td>
                   <td className="px-4 py-3">{peca.unidade || "—"}</td>
                   <td className="px-4 py-3">{formatarPreco(peca.preco_custo)}</td>

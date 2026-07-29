@@ -52,6 +52,14 @@ export async function enviarArquivo({
   }
 }
 
+export async function buscarConteudoArquivo(arquivo: NotaFiscalArquivo): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from("notas-fiscais")
+    .download(arquivo.storage_path);
+  if (error) throw error;
+  return data.text();
+}
+
 export async function baixarArquivo(arquivo: NotaFiscalArquivo): Promise<void> {
   const { data, error } = await supabase.storage
     .from("notas-fiscais")

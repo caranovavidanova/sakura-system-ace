@@ -10,6 +10,7 @@ interface ClienteFormProps {
 
 const clienteVazio: NovoCliente = {
   nome: "",
+  tipo_pessoa: "fisica",
   cpf_cnpj: "",
   telefone: "",
   email: "",
@@ -88,15 +89,37 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
         <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
           Dados do cliente
         </h3>
+        <div className="mb-4 flex gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="tipo_pessoa"
+              checked={cliente.tipo_pessoa === "fisica"}
+              onChange={() => setCliente({ ...cliente, tipo_pessoa: "fisica" })}
+              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
+            />
+            <span className="text-sakura-purple-dark/80">Pessoa física</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="tipo_pessoa"
+              checked={cliente.tipo_pessoa === "juridica"}
+              onChange={() => setCliente({ ...cliente, tipo_pessoa: "juridica" })}
+              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
+            />
+            <span className="text-sakura-purple-dark/80">Pessoa jurídica</span>
+          </label>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <Campo
-            label="Nome completo"
+            label={cliente.tipo_pessoa === "juridica" ? "Razão social" : "Nome completo"}
             required
             value={cliente.nome}
             onChange={(v) => setCliente({ ...cliente, nome: v })}
           />
           <Campo
-            label="CPF/CNPJ"
+            label={cliente.tipo_pessoa === "juridica" ? "CNPJ" : "CPF"}
             value={cliente.cpf_cnpj ?? ""}
             onChange={(v) => setCliente({ ...cliente, cpf_cnpj: v })}
           />

@@ -8,6 +8,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ### Adicionado
 - Configurações → "Dados fiscais da loja": CNPJ, razão social, IE/IM, regime tributário, endereço e token de integração com o Focus NFe (ambiente de homologação/produção) — preparação para a emissão automática de NFC-e, ainda não habilitada.
 - Notas Fiscais: botão "Versão para o cliente" gera um recibo em HTML (imprimir ou baixar) a partir do XML já enviado, além do "Baixar XML" que já existia.
+- Garantia da OS (aba Fechamento) redesenhada: cabeçalho com dados da loja, dados do cliente e do veículo, tabela de peças/serviços com técnico, totalização (produtos/serviços/subtotal/descontos), forma de pagamento (com parcelas, se houver) e linhas de assinatura — além do texto de garantia configurável, que continua editável em Configurações.
 
 ## [0.1.3] - 2026-07-29
 

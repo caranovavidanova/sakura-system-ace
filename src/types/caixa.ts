@@ -10,11 +10,13 @@ export interface MovimentoCaixa {
   forma_pagamento: string | null;
   valor: number;
   descricao: string | null;
+  categoria_id: string | null;
   ordem_servico?: {
     id: string;
     cliente: { nome: string } | null;
     itens: ItemOS[];
   } | null;
+  categoria?: { nome: string } | null;
 }
 
-export type NovoMovimentoCaixa = Omit<MovimentoCaixa, "id" | "data">;
+export type NovoMovimentoCaixa = Omit<MovimentoCaixa, "id" | "data" | "categoria">;

@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarClientes } from "@/lib/clientes";
-import { listarOperadores } from "@/lib/operadores";
+import { listarFuncionarios } from "@/lib/funcionarios";
 import {
   adicionarItensOrdem,
   atualizarOrdem,
@@ -17,7 +17,7 @@ import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Cliente } from "@/types/cliente";
 import type { JurosParcela } from "@/types/configuracao";
-import type { Operador } from "@/types/operador";
+import type { Funcionario } from "@/types/funcionario";
 import type {
   NovaOrdemServico,
   NovoItemOS,
@@ -36,13 +36,15 @@ export function OrdensServicoPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
-  const [operadores, setOperadores] = useState<Operador[]>([]);
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [ordemEmEdicao, setOrdemEmEdicao] = useState<OrdemServico | null>(null);
   const [ordemFaturando, setOrdemFaturando] = useState<OrdemServico | null>(null);
+  const funcionarioAtualId =
+    funcionarios.find((f) => f.operador_id === operador?.id)?.id ?? "";
 
   async function carregar() {
     if (!isSupabaseConfigured) {
@@ -57,21 +59,21 @@ export function OrdensServicoPage() {
         clientesCarregados,
         pecasCarregadas,
         servicosCarregados,
-        operadoresCarregados,
+        funcionariosCarregados,
         jurosCarregados,
       ] = await Promise.all([
         listarOrdens(),
         listarClientes(),
         listarPecas(),
         listarServicos(),
-        listarOperadores(),
+        listarFuncionarios(),
         listarJurosParcelas(),
       ]);
       setOrdens(ordensCarregadas);
       setClientes(clientesCarregados);
       setPecas(pecasCarregadas);
       setServicos(servicosCarregados);
-      setOperadores(operadoresCarregados);
+      setFuncionarios(funcionariosCarregados);
       setJurosParcelas(jurosCarregados);
     } catch (err) {
       console.error("Erro ao carregar ordens de serviço:", err);
@@ -160,8 +162,8 @@ export function OrdensServicoPage() {
           clientes={clientes}
           pecas={pecas}
           servicos={servicos}
-          operadores={operadores}
-          operadorAtualId={operador.id}
+          funcionarios={funcionarios}
+          funcionarioAtualId={funcionarioAtualId}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
           onCancelar={() => setMostrarFormulario(false)}
@@ -173,8 +175,8 @@ export function OrdensServicoPage() {
           clientes={clientes}
           pecas={pecas}
           servicos={servicos}
-          operadores={operadores}
-          operadorAtualId={operador.id}
+          funcionarios={funcionarios}
+          funcionarioAtualId={funcionarioAtualId}
           ordemExistente={ordemEmEdicao}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}

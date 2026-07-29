@@ -94,8 +94,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
 │   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts, categorias.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, caixa, relatorios, lucratividade, garantias, login, configuracoes
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, relatorios, lucratividade, garantias, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
 │   │       EstoquePage.tsx tem 4 abas: "Produtos" (ProdutosSection.tsx + PecaForm.tsx),
@@ -108,11 +108,17 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │       ganhou FaturamentoCard.tsx (tela de faturamento com forma de pagamento + parcelas
 │   │       calculadas, ver seção 7 — SimulacaoParcelas.tsx existiu por uma sessão e foi removido, não
 │   │       vingou). pages/configuracoes/ ganhou JurosParcelasSection.tsx (config de juros por
-│   │       parcela), CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7) e
-│       TextoGarantiaSection.tsx (template do texto de garantia, ver seção 7)
+│   │       parcela), CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7),
+│   │       CategoriasCaixaSection.tsx (CRUD de categorias de entrada/saída do Caixa, ver seção 7) e
+│       TextoGarantiaSection.tsx (template do texto de garantia, ver seção 7). pages/funcionarios/
+│       é um módulo novo (FuncionariosPage.tsx + FuncionarioForm.tsx, sem abas, padrão Editar/
+│       Inativar — ver seção 7). pages/caixa/ ganhou abas: CaixaPage.tsx virou só o orquestrador
+│       (abas + carregamento), com DiarioSection.tsx (comportamento antigo, agora isolado),
+│       EntradaSaidaSection.tsx (reusado tanto pra aba "Entradas" quanto "Saídas", parametrizado
+│       por `tipo`) — ver seção 7
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, categoria.ts, contagem.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0018), todas idempotentes (seguro rodar de novo)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts) + configuracao.ts (JurosParcela)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0020), todas idempotentes (seguro rodar de novo)
 ├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
@@ -163,22 +169,38 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema (rótulo na tela é
   "Observação", mesmo campo), forma_pagamento, parcelas (int, default 1 — migration 0013, preenchido
   no faturamento), data_abertura, data_fechamento. Campos da migration 0012: previsao_entrega,
-  data_retorno (timestamptz, opcionais — "Prazos" na tela), vendedor_id/criado_por_id/atualizado_por_id
-  (FK operadores — autoria). **Os três campos de checklist do veículo (direção hidráulica/ar
-  condicionado/direção elétrica) da migration 0012 foram removidos na migration 0013** — o usuário
-  pediu pra tirar, não vingou.
+  data_retorno (timestamptz, opcionais — "Prazos" na tela), vendedor_id (FK **funcionarios**, desde a
+  migration 0019 — era FK operadores antes, ver item novo abaixo)/criado_por_id/atualizado_por_id
+  (FK operadores — autoria de sistema, isso continua). **Os três campos de checklist do veículo
+  (direção hidráulica/ar condicionado/direção elétrica) da migration 0012 foram removidos na migration
+  0013** — o usuário pediu pra tirar, não vingou.
 - **`ordens_servico_itens`**: id, ordem_servico_id (FK), tipo (`peca`/`servico`), peca_id (FK opcional,
   só para tipo peça), servico_id (FK opcional, só para tipo serviço — migration 0012; item de serviço
   pode ficar sem servico_id quando for "avulso", digitado na hora em vez de vir do catálogo),
-  tecnico_id (FK operadores, opcional — migration 0013, técnico responsável por aquele item
-  especificamente, diferente do vendedor/atendente que é da OS toda), descricao, quantidade,
-  preco_unitario, desconto
+  tecnico_id (FK **funcionarios**, opcional — migration 0013 criou apontando pra operadores, migration
+  0019 repontou pra funcionarios, técnico responsável por aquele item especificamente, diferente do
+  vendedor/atendente que é da OS toda), descricao, quantidade, preco_unitario, desconto
 - **`configuracoes_juros_parcelas`** (migration 0013): numero_parcelas (PK, 2 a 12), juros_percentual.
   Editável só pelo admin em Configurações — define quanto de juros (% sobre o total) é cobrado quando
   o cliente parcela no cartão de crédito ao faturar uma OS. 1x é sempre à vista, sem juros, não tem
   linha aqui.
 - **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
-  faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao
+  faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao, categoria_id (FK
+  categorias_caixa, opcional — migration 0020, usado pelas abas "Entradas"/"Saídas" do Caixa)
+- **`categorias_caixa`** (migration 0020): id, nome, tipo (`entrada`/`saida`), criado_em. Gerenciada
+  em Configurações (`CategoriasCaixaSection.tsx`, admin), selecionável ao lançar um movimento manual
+  no Caixa. Ex: "Aluguel"/"Mercado"/"Limpeza" (saída) ou "Sucata" (entrada). Não tem relação com
+  `categorias` (que é só pra produtos) — tabela separada porque o conceito é diferente (tipo
+  entrada/saída em vez de agrupar produto).
+- **`funcionarios`** (migration 0019): id, nome, cargo (texto livre, opcional), operador_id (FK
+  operadores, opcional e único — presente quando esse funcionário também tem login no sistema),
+  ativo, criado_em. Cadastro leve pra gente que não precisa logar no sistema mas precisa ser
+  selecionável como técnico (peça/serviço na OS) ou vendedor/atendente (OS toda). **Todo operador
+  criado em Configurações ganha automaticamente um `funcionarios` espelhado** (nome/status
+  sincronizados via trigger `sincroniza_funcionario_operador`), então o seletor de técnico/vendedor
+  sempre junta quem loga e quem não loga sem exigir cadastro duplicado. Gerenciado no módulo
+  "Funcionários" (`FuncionariosPage.tsx`, padrão Editar/Inativar — sem excluir de verdade, porque
+  pode estar referenciado em OS antigas).
 - **`contagens_estoque`** (migration 0017): id, peca_id (FK), quantidade_contada, saldo_sistema
   (o que o sistema calculava no momento), diferenca, observacao, operador_id (FK operadores),
   criado_em. Histórico de contagens de inventário físico — ao salvar uma contagem com diferença, o
@@ -707,6 +729,39 @@ item 7 da seção 6):
   garantia") que abre o preview com o texto já formatado (placeholders substituídos); os botões
   "Baixar .txt" e "Imprimir" ficam dentro do preview, então a usuária sempre vê o texto antes de agir.
 
+**⏳ Implementado nesta sessão (módulo Funcionários + abas Entradas/Saídas no Caixa), ainda sem
+confirmação da usuária rodando com Supabase real** — pedido direto da usuária: (1) vincular técnicos
+a peças/serviços na OS e cadastrar "outros funcionários", (2) lançar saídas não convencionais (aluguel,
+mercado, limpeza) e (3) lançar entradas não convencionais (ex: venda de sucata). Duas decisões
+estruturais foram apresentadas com opções + recomendação antes de codar (ver seção 1) — a usuária
+escolheu as duas opções recomendadas. Validado no sandbox via `npx tsc -b`, `npm run build`,
+`npm run lint` e screenshots Playwright com dados simulados via `page.route()` interceptando as
+chamadas REST/Auth do Supabase, incluindo abrir os três formulários novos e navegar pelas três abas
+do Caixa sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **Módulo "Funcionários" novo** (migration 0019, tabela `funcionarios` — ver seção 5 pro modelo
+  completo): cadastro leve (nome + cargo, sem usuário/senha) pra gente que não precisa logar no
+  sistema mas precisa aparecer como técnico ou vendedor/atendente numa OS. Todo operador (quem loga)
+  ganha automaticamente um `funcionarios` espelhado por um gatilho no banco — o cadastro de operador
+  em Configurações não mudou em nada, o espelho é automático e invisível pra usuária.
+- **Seletores de "Técnico" (por item da OS) e "Vendedor/atendente" (da OS toda) passaram a listar
+  funcionários, não mais só operadores** — `ItemOSRow.tsx` e `OrdemServicoForm.tsx` trocaram a prop
+  `operadores` por `funcionarios`. `tecnico_id` (em `ordens_servico_itens`) e `vendedor_id` (em
+  `ordens_servico`) foram repontados de `operadores(id)` pra `funcionarios(id)` pela migration 0019,
+  com backfill automático dos dados já existentes (nenhuma OS antiga perde a informação de quem foi o
+  técnico/vendedor). `criado_por_id`/`atualizado_por_id` continuam apontando pra `operadores` —
+  esses são sobre quem mexeu no sistema (auditoria), não sobre quem prestou o serviço.
+- **Categorias de caixa novas** (migration 0020, tabela `categorias_caixa` — ver seção 5): admin
+  cadastra categorias de entrada (ex: Sucata) ou saída (ex: Aluguel, Mercado, Limpeza) em
+  Configurações (`CategoriasCaixaSection.tsx`), e qualquer lançamento manual do Caixa pode escolher
+  uma (opcional).
+- **Caixa Diário ganhou abas**: "Diário" (comportamento de sempre, sem mudança nenhuma pra usuária),
+  "Entradas" e "Saídas" (novas) — mostram só os lançamentos manuais (não inclui faturamento de OS,
+  que já aparece na aba Diário) daquele tipo, com total por categoria e um formulário de "+ Nova
+  entrada"/"+ Nova saída" com o tipo já travado. Essas duas abas ficam **dentro** do Caixa Diário, não
+  viraram módulos separados — decisão explícita da usuária entre duas opções apresentadas, pra não
+  duplicar onde o dinheiro é controlado (ver seção 1).
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -783,11 +838,12 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0018) — as de 0001 a 0015 já foram confirmadas rodando sem erro
+`supabase/migrations/*.sql` (0001 a 0020) — as de 0001 a 0015 já foram confirmadas rodando sem erro
 pela usuária nesse projeto (a 0015 precisou de uma correção nesta sessão — ver item 13 da seção 6 —
-antes de rodar limpo). **As migrations 0016, 0017 e 0018 ainda precisam ser rodadas** — ver tutorial
-abaixo. Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro
-projeto Supabase do zero.
+antes de rodar limpo). **As migrations 0016 a 0020 ainda precisam ser rodadas** — ver tutoriais
+abaixo (0016/0017/0018 no primeiro tutorial, 0019/0020 — Funcionários e categorias de Caixa — no
+segundo, mais recente). Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou
+usar outro projeto Supabase do zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
 redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
@@ -831,6 +887,40 @@ Sessões passadas ficam registradas na seção 10.)*
    - **Ordem de Serviço concluída/faturada → aba Fechamento**: clique em "Baixar garantia" (deve
      baixar um `.txt`) e "Imprimir garantia" (deve abrir a caixa de impressão do Windows só com o
      texto da garantia, não a tela inteira do app).
+
+Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+
+### Tutorial: pegar a versão nova (migrations 0019 e 0020 — Funcionários e Entradas/Saídas) e rodar
+
+1. Feche o app se estiver aberto.
+2. No terminal, dentro da pasta `sakura-system-autocenter`:
+   ```powershell
+   git checkout main
+   git pull origin main
+   ```
+3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
+   arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
+   - `supabase/migrations/0019_funcionarios.sql` — cria a tabela `funcionarios` e move os campos
+     de técnico (na peça/serviço da OS) e vendedor/atendente (da OS) pra apontar pra ela em vez de
+     `operadores`. **Não perde nenhum dado**: a migration copia automaticamente o técnico/vendedor
+     que já estava preenchido nas OS existentes.
+   - `supabase/migrations/0020_categorias_caixa.sql` — cria a tabela `categorias_caixa` (categorias
+     de entrada/saída do Caixa) e o campo `categoria_id` em `caixa_movimentos`.
+4. `npm install && npm run dev`.
+5. O que testar:
+   - **Funcionários** (item novo no menu lateral): cadastre um funcionário sem marcar nada de
+     login (ex: "João, Mecânico") e confira que ele aparece na lista junto com os operadores que já
+     existiam (esses aparecem automaticamente, com a coluna "Login" preenchida).
+   - **Ordens de Serviço → Nova OS**: no seletor "Técnico" de cada peça/serviço e no "Vendedor/
+     atendente", confira que aparecem tanto os operadores quanto os funcionários novos sem login.
+   - **Configurações → "Categorias de caixa"**: cadastre uma categoria de saída (ex: "Aluguel") e
+     uma de entrada (ex: "Sucata").
+   - **Caixa Diário → aba "Saídas"**: clique em "+ Nova saída", escolha a categoria "Aluguel" e
+     salve — confira que aparece na lista da aba e não aparece misturada na aba "Diário" fora do dia
+     de hoje.
+   - **Caixa Diário → aba "Entradas"**: mesma coisa, com a categoria "Sucata".
+   - **Caixa Diário → aba "Diário"**: confira que continua mostrando tudo (OS faturadas + lançamentos
+     manuais) igual antes, sem nada quebrado.
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 

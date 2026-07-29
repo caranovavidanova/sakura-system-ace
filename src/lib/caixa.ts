@@ -2,7 +2,8 @@ import { supabase } from "./supabase";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
 
 const SELECT_MOVIMENTO =
-  "*, ordem_servico:ordens_servico(id, cliente:clientes(nome), itens:ordens_servico_itens(*))";
+  "*, ordem_servico:ordens_servico(id, cliente:clientes(nome), itens:ordens_servico_itens(*)), " +
+  "categoria:categorias_caixa(nome)";
 
 export async function listarMovimentosCaixa(): Promise<MovimentoCaixa[]> {
   const { data, error } = await supabase

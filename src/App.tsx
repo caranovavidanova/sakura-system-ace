@@ -6,6 +6,7 @@ import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
+import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
 import { LoginPage } from "./pages/login/LoginPage";
 import { LucratividadePage } from "./pages/lucratividade/LucratividadePage";
@@ -91,6 +92,14 @@ export default function App() {
             element={
               <PermissaoRoute modulo="ordens_servico">
                 <OrdensServicoPage />
+              </PermissaoRoute>
+            }
+          />
+          <Route
+            path="/funcionarios"
+            element={
+              <PermissaoRoute modulo="funcionarios">
+                <FuncionariosPage />
               </PermissaoRoute>
             }
           />

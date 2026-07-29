@@ -1,7 +1,12 @@
 import { supabase } from "./supabase";
-import type { Funcionario, NovoFuncionario } from "@/types/funcionario";
+import type {
+  Funcionario,
+  NovoFuncionario,
+  NovoFuncionarioFilho,
+} from "@/types/funcionario";
 
-const SELECT_FUNCIONARIO = "*, operador:operadores(usuario)";
+const SELECT_FUNCIONARIO =
+  "*, operador:operadores(usuario), filhos:funcionario_filhos(*)";
 
 export async function listarFuncionarios(): Promise<Funcionario[]> {
   const { data, error } = await supabase
@@ -13,7 +18,10 @@ export async function listarFuncionarios(): Promise<Funcionario[]> {
   return data as unknown as Funcionario[];
 }
 
-export async function criarFuncionario(funcionario: NovoFuncionario): Promise<Funcionario> {
+export async function criarFuncionario(
+  funcionario: NovoFuncionario,
+  filhos: NovoFuncionarioFilho[] = [],
+): Promise<Funcionario> {
   const { data, error } = await supabase
     .from("funcionarios")
     .insert(funcionario)
@@ -21,13 +29,41 @@ export async function criarFuncionario(funcionario: NovoFuncionario): Promise<Fu
     .single();
 
   if (error) throw error;
-  return data as Funcionario;
+  const criado = data as Funcionario;
+  if (filhos.length > 0) {
+    await sincronizarFilhos(criado.id, filhos);
+  }
+  return criado;
 }
 
 export async function atualizarFuncionario(
   id: string,
-  patch: Partial<Pick<Funcionario, "nome" | "cargo" | "ativo">>,
+  patch: Partial<NovoFuncionario & { ativo: boolean }>,
+  filhos?: NovoFuncionarioFilho[],
 ): Promise<void> {
   const { error } = await supabase.from("funcionarios").update(patch).eq("id", id);
   if (error) throw error;
+  if (filhos) {
+    await sincronizarFilhos(id, filhos);
+  }
+}
+
+// Substitui a lista de filhos inteira — mais simples que calcular diff, e a
+// tabela não tem nenhuma referência externa a funcionario_filhos.id.
+async function sincronizarFilhos(
+  funcionarioId: string,
+  filhos: NovoFuncionarioFilho[],
+): Promise<void> {
+  const { error: erroExclusao } = await supabase
+    .from("funcionario_filhos")
+    .delete()
+    .eq("funcionario_id", funcionarioId);
+  if (erroExclusao) throw erroExclusao;
+
+  if (filhos.length === 0) return;
+
+  const { error: erroInsercao } = await supabase
+    .from("funcionario_filhos")
+    .insert(filhos.map((filho) => ({ ...filho, funcionario_id: funcionarioId })));
+  if (erroInsercao) throw erroInsercao;
 }

@@ -17,6 +17,11 @@
   borracharia) pra testar antes de levar pra loja de verdade — bom lembrar disso ao dar instruções
   de instalação/teste, não assumir que ela já está testando no ambiente de produção.
 - E-mail: caranovavidanova@gmail.com.
+- **A organização atual de módulos/abas no menu lateral e dentro de cada tela (ex: Caixa com abas
+  Diário/Entradas/Saídas, "Contas a Pagar" como módulo próprio) é provisória** — a usuária disse
+  explicitamente (sessão de 2026-07-29) que pretende repensar essa organização melhor no futuro.
+  **Não tratar a posição/formato atual de nenhum módulo como definitivo** nem resistir a reorganizar
+  quando ela pedir — é esperado que isso mude.
 - **Sempre que eu aprender uma preferência de trabalho nova** (pedida explicitamente ou percebida ao
   longo da conversa), **documentar aqui no PROJETO_STATUS.md** — não só nas decisões técnicas da
   seção 3, mas qualquer coisa sobre *como* o usuário quer que eu trabalhe. Sessões futuras não têm
@@ -121,8 +126,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
 │   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia + dados fiscais da loja) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS) + garantiaDocumento.ts (monta o HTML estruturado da garantia, ver seção 7) + notaFiscalXml.ts (interpreta XML de NFe/NFCe/NFS-e e monta o recibo HTML "versão para o cliente", ver seção 7) + focusNfe.ts (casca da integração com a API do Focus NFe — auth + URLs por ambiente, emissão em si ainda não implementada, ver seção 7 e 8)
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, contas-pagar, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
 │   │       EstoquePage.tsx tem 4 abas: "Produtos" (ProdutosSection.tsx + PecaForm.tsx),
@@ -145,10 +150,16 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │       isolado), EntradaSaidaSection.tsx (reusado tanto pra aba "Entradas" quanto "Saídas",
 │       parametrizado por `tipo`). pages/notas-fiscais/ é um módulo novo (NotasFiscaisPage.tsx com
 │       abas "NFe"/"NFS-e" + ArquivosSection.tsx, reusado pelas duas abas — arquivos XML agrupados
-│       por mês, upload manual, vínculo opcional com uma OS — ver seção 7)
+│       por mês, upload manual, vínculo opcional com uma OS, botão "Versão para o cliente" que abre
+│       `NotaFiscalVisualModal.tsx` com um recibo HTML gerado do XML — ver seção 7). pages/contas-pagar/
+│       é um módulo novo (ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx — contas
+│       mensais com vencimento, diferente das Entradas/Saídas manuais do Caixa, ver seção 7).
+│       pages/ordens-servico/ ganhou GarantiaVisualModal.tsx (documento de garantia estruturado em
+│       HTML, ver seção 7). pages/configuracoes/ ganhou DadosFiscaisSection.tsx (CNPJ/razão social/
+│       endereço da loja + token do Focus NFe, ver seção 7)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts, notaFiscal.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0023), todas idempotentes (seguro rodar de novo)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts, notaFiscal.ts, contaPagar.ts) + configuracao.ts (JurosParcela, ConfiguracaoGarantia, ConfiguracaoFiscalLoja)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0025), todas idempotentes (seguro rodar de novo)
 ├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
@@ -255,19 +266,47 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   aba Fechamento da OS, com placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na
   hora (`lib/garantiaTexto.ts`). Editável só pelo admin em Configurações
   (`TextoGarantiaSection.tsx`).
-- **`notas_fiscais_arquivos`** (migration 0023): id, tipo (`nfe`/`nfse`), competencia (date, primeiro
-  dia do mês — usado só pra agrupar/ordenar por mês na tela), nome_arquivo, storage_path (caminho
-  dentro do bucket), ordem_servico_id (FK ordens_servico, opcional — vínculo com a OS relacionada),
-  operador_id (FK operadores, quem enviou), criado_em. O arquivo XML em si **não fica no Postgres** —
-  fica no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path` segue o padrão
+- **`notas_fiscais_arquivos`** (migration 0023, ampliada na 0024): id, tipo (`nfe`/`nfse`), competencia
+  (date, primeiro dia do mês — usado só pra agrupar/ordenar por mês na tela), nome_arquivo,
+  storage_path (caminho dentro do bucket), ordem_servico_id (FK ordens_servico, opcional — vínculo
+  com a OS relacionada), operador_id (FK operadores, quem enviou), criado_em, **origem**
+  (`manual`/`automatica`, default `manual` — migration 0024, preparação pra quando a emissão via
+  Focus NFe gravar direto aqui em vez de só upload manual), **numero**, **chave_acesso**, **status**
+  (todos opcionais, migration 0024 — preenchidos só quando `origem = automatica`, ainda sem uso real
+  porque a emissão automática não está pronta). O arquivo XML em si **não fica no Postgres** — fica
+  no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path` segue o padrão
   `<tipo>/<ano>-<mes>/<uuid>-<nome original>`). **Primeira vez que o projeto usa Supabase Storage**
   (não só tabelas Postgres) — o bucket também tem uma policy exigindo login (mesmo padrão das
   tabelas). Gerenciado no módulo "Notas Fiscais" (upload manual — a emissão fiscal automática ainda
-  não existe, ver seção 8).
+  não existe, ver seção 8). Cada arquivo tem um botão **"Versão para o cliente"** que interpreta o
+  XML (`lib/notaFiscalXml.ts`) e monta um recibo em HTML pra imprimir/baixar (ver seção 7) — **não é
+  o DANFE oficial** (sem código de barras/QR code), só uma versão legível dos mesmos dados.
+- **`configuracoes_fiscais_loja`** (migration 0024): tabela "singleton" (1 linha só, `id` fixo em 1)
+  com os dados fiscais da loja — cnpj, razao_social, nome_fantasia, inscricao_estadual,
+  inscricao_municipal, regime_tributario (`simples_nacional`/`lucro_presumido`/`lucro_real`), cep,
+  rua, numero, bairro, cidade, uf, telefone, email, mais **focus_nfe_token** e **focus_nfe_ambiente**
+  (`homologacao`/`producao`) — token de acesso da API do Focus NFe, provedor escolhido pela usuária
+  (plano básico, ainda não assinado). Editável em Configurações → "Dados fiscais da loja"
+  (`DadosFiscaisSection.tsx`). Reaproveitada pelo documento de garantia (`GarantiaVisualModal.tsx`)
+  pro cabeçalho com nome/endereço/telefone da loja.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
   permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
-  estoque, servicos, ordens_servico, caixa, relatorios, lucratividade, garantias, notas_fiscais),
-  ativo, criado_em. Única tabela com RLS de verdade (baseada em login) — ver seção 6.
+  ordens_servico, estoque, servicos, funcionarios, caixa, contas_pagar, relatorios, lucratividade,
+  garantias, notas_fiscais), ativo, criado_em. Única tabela com RLS de verdade (baseada em login) —
+  ver seção 6.
+- **`contas_pagar`** (migration 0025): id, descricao, valor, vencimento (date), categoria_id (FK
+  **categorias_caixa**, opcional — reaproveita as mesmas categorias de saída do Caixa, ex:
+  "Aluguel"), recorrente (bool), status (`pendente`/`paga`), data_pagamento (timestamptz, opcional),
+  caixa_movimento_id (FK caixa_movimentos, opcional — o lançamento de Saída gerado ao marcar como
+  paga), operador_id (FK operadores, quem marcou como paga), criado_em. Diferente das abas
+  Entradas/Saídas do Caixa (que só registram dinheiro que **já saiu**): uma conta a pagar existe
+  **antes** de ser paga, com vencimento — pensada pra contas mensais como aluguel. Gerenciado no
+  módulo "Contas a Pagar" (`lib/contasPagar.ts`). Regra de negócio: marcar uma conta como paga
+  (`PagarContaModal.tsx`) gera automaticamente uma Saída em `caixa_movimentos` (mesmo padrão do
+  faturamento de OS gerando Entrada) e, se a conta for `recorrente`, já cria a próxima ocorrência
+  (mesmo valor, vencimento um mês depois) sozinha. **Sem "desfazer pagamento"** pelo app ainda — se
+  marcar uma conta como paga por engano, precisa corrigir direto no Supabase (excluir a Saída em
+  `caixa_movimentos` e voltar o `status` da conta pra `pendente` manualmente).
 
 Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -895,6 +934,66 @@ validando com `npm install` (sem alterar o lockfile) antes de commitar. **Sempre
 `replace_all` num lockfile.** Falta só a usuária publicar a tag (ver seção 9 e comandos no fim da
 seção 10) — o sandbox não tem permissão de `git push` de tags/direto em `main`.
 
+**⏳ Implementado nesta sessão (2026-07-29, sessão longa — preparação do Focus NFe, recibo visual de
+nota fiscal, garantia redesenhada e módulo Contas a Pagar), mergeado em `main` via PRs
+[#39](https://github.com/caranovavidanova/amigao/pull/39),
+[#40](https://github.com/caranovavidanova/amigao/pull/40),
+[#41](https://github.com/caranovavidanova/amigao/pull/41) e
+[#42](https://github.com/caranovavidanova/amigao/pull/42), ainda sem confirmação da usuária rodando
+com Supabase real**:
+
+- **Escolha do provedor fiscal: Focus NFe, plano básico** — a usuária decidiu depois de eu pesquisar
+  preços/modelo dos concorrentes (Focus NFe, eNotas, PlugNotas — ver comparação nesta conversa;
+  planos giram em torno de R$89 a R$347/mês dependendo da franquia de notas). **Ainda não assinou** —
+  pediu pra deixar o código "semi pronto" antes de assinar. Confirmado com ela: pra peça vendida
+  presencialmente (balcão), o documento certo é **NFC-e** (não NFe, que é pra venda não presencial/
+  B2B) — os botões da aba Fechamento da OS foram renomeados de "Emitir NFe" pra "Emitir NFC-e".
+  - `configuracoes_fiscais_loja` (migration 0024) + `DadosFiscaisSection.tsx` em Configurações — CNPJ,
+    razão social, IE/IM, regime tributário, endereço da loja, e o campo do token do Focus NFe
+    (ambiente homologação/produção).
+  - `lib/focusNfe.ts` — só a "casca" da integração (autenticação Basic com o token, URLs por ambiente,
+    função HTTP genérica). **A emissão de NFC-e em si (`emitirNFCe()`) ainda lança erro de propósito,
+    não implementa nada** — não foi possível acessar `doc.focusnfe.com.br` a partir deste ambiente
+    (bloqueou acesso automatizado, 403) pra confirmar os nomes exatos dos campos do pedido (CFOP, NCM,
+    situação tributária do ICMS por item). **Não "chutar" esses campos** — só implementar de verdade
+    quando tiver um token real (ambiente de homologação) pra testar contra a API de verdade. Ver
+    pendência atualizada no item 1 da seção 8.
+- **Recibo visual da nota fiscal** (`lib/notaFiscalXml.ts` + `NotaFiscalVisualModal.tsx`, módulo Notas
+  Fiscais): botão novo "Versão para o cliente" ao lado do "Baixar XML" — interpreta o XML já enviado
+  e monta um recibo em HTML (imprimir ou baixar), pra dar pro cliente em mãos. NFe/NFCe usam o layout
+  nacional da SEFAZ (estável, interpretação confiável); NFS-e usa o modelo nacional obrigatório desde
+  jan/2026 (mais recente, interpretação "melhor esforço" — se não reconhecer os campos esperados,
+  mostra aviso em vez de dado incompleto/errado). **Não é uma cópia do DANFE oficial** (sem código de
+  barras/QR code da chave de acesso) — deixado claro no próprio recibo gerado.
+- **Garantia da OS redesenhada** (`lib/garantiaDocumento.ts` + `GarantiaVisualModal.tsx`, substitui o
+  texto corrido de antes): a usuária mandou uma **foto do papel de garantia que a Pneus Amigão (sistema
+  antigo) já usa hoje na loja de verdade** e pediu pra aplicar um layout parecido. Documento novo tem:
+  cabeçalho com dados da loja (reaproveita `configuracoes_fiscais_loja`), dados do cliente e do
+  veículo (busca o cadastro completo via `buscarClientePorId`/`buscarVeiculoPorId`, novas em
+  `lib/clientes.ts` — a OS só trazia nome/placa resumidos), tabela de peças/serviços com técnico,
+  totalização (produtos/serviços/subtotal/descontos), forma de pagamento (com tabela de parcelas se
+  faturada parcelada, usando o valor **realmente cobrado com juros**, buscado do lançamento de Caixa
+  via `buscarMovimentoCaixaPorOrdem()` nova em `lib/caixa.ts`) e linhas de assinatura (cliente/
+  técnico/gerente). **Decisão confirmada com a usuária**: os campos de veículo do papel de referência
+  (direção elétrica/ar condicionado/direção hidráulica) **não foram trazidos de volta** — ela mesma já
+  tinha tirado esses campos do sistema numa sessão anterior por não terem "vingado" (ver seção 5, OS).
+  O texto de garantia configurável (Configurações → "Texto de garantia") continua existindo, agora
+  **embutido dentro** desse documento maior em vez de ser o documento inteiro — se a usuária quiser
+  reaproveitar o texto fixo de garantias por categoria (pneu/suspensão/amortecedor/etc.) que via no
+  papel antigo, é só colar esse texto lá. A antiga classe CSS `.apenas-impressao` (truque de "esconder
+  a tela inteira" pra imprimir) **foi removida** — o recibo de nota fiscal e a garantia agora imprimem
+  via `iframe.contentWindow.print()` (documento isolado dentro de um `<iframe>`), mais simples e sem
+  depender de esconder o resto do app.
+- **Módulo "Contas a Pagar"** (`lib/contasPagar.ts`, tabela `contas_pagar` — migration 0025, ver seção
+  5): pedido da usuária pra controlar contas mensais (aluguel, etc.) com vencimento — diferente das
+  Entradas/Saídas manuais do Caixa, que só registram dinheiro que **já saiu**. Três decisões
+  confirmadas com opções + recomendação antes de codar (ela escolheu as três recomendadas): (a)
+  marcar como paga gera Saída automática no Caixa, (b) contas recorrentes já criam a próxima ocorrência
+  sozinhas ao pagar, (c) módulo próprio no menu lateral (não uma aba dentro do Caixa) — permissão
+  dedicada `contas_pagar` em `MODULOS`. **Sistema de notificação de conta a vencer** (ideia que a
+  usuária mencionou) **não foi implementado** — fica pra uma sessão futura, ver item novo na seção 8.
+- **Migrations 0024 e 0025 ainda não foram rodadas pela usuária** — ver tutorial novo na seção 9.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -927,15 +1026,17 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
 
 1. **Parte fiscal (prioridade alta, NÃO bloqueia o uso na loja — ver decisão na seção 7)**: emissão
    de NFC-e (peças, padrão estadual/SEFAZ) e NFS-e (serviço, padrão municipal — varia por cidade).
-   Estratégia definida: integrar com um provedor intermediário (Focus NFe, eNotas, PlugNotas ou
-   similar) em vez de implementar comunicação direta com SEFAZ/prefeituras. **Ainda não escolhido
-   qual provedor** — depende da cidade/UF da loja (NFS-e) e se já existe certificado digital A1 pro
-   CNPJ — perguntas em aberto na seção 8.1. Isso é uma decisão que precisa ser apresentada ao usuário
-   antes de codar. A tela de Ordem de Serviço já tem os botões "Emitir NFe"/"Emitir NFS-e" (ver seção
-   7), mas por enquanto são só placeholder — passam a emitir de verdade quando essa decisão for
-   tomada. Também falta modelar os **dados fiscais da própria loja** (CNPJ, razão social, IE, IM,
-   regime tributário, endereço) — hoje não existe nenhuma tabela/tela pra isso, é pré-requisito pra
-   emitir qualquer nota.
+   **Provedor escolhido: Focus NFe, plano básico** (ver seção 7) — usuária ainda não assinou, pediu
+   pra deixar o código "semi pronto" antes. **Já feito**: modelagem dos dados fiscais da loja
+   (`configuracoes_fiscais_loja`, migration 0024) + tela em Configurações + a "casca" da integração
+   HTTP com o Focus NFe (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a função de
+   emissão de verdade (`emitirNFCe()`) — não foi possível confirmar o formato exato do corpo da
+   requisição (campos de CFOP/NCM/ICMS por item) contra a documentação oficial do Focus NFe a partir
+   deste ambiente (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real
+   de teste (ambiente de homologação) pra validar contra a API de verdade antes de codar isso —
+   **não implementar chutando os nomes dos campos**. Os botões da aba Fechamento da OS já foram
+   renomeados de "Emitir NFe" pra "Emitir NFC-e" (documento certo pra venda presencial de balcão,
+   confirmado com a usuária).
 2. ~~Autenticação / login de usuário~~ — **construído nesta sessão** (ver seção 7): login com
    usuário/senha + permissões por módulo, checadas na interface. O que ficou de fora e ainda é
    próximo passo possível: reforçar em RLS por categoria (trade-off aceito por ora, ver seção 6.1),
@@ -957,6 +1058,14 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já implementada
      — essa depende do módulo de Fornecedores ainda não construído)
 
+6. **Sistema de notificação de conta a vencer** — a usuária mencionou a ideia ao pedir o módulo
+   "Contas a Pagar" (ver seção 7), mas confirmou que é pra depois, não pra essa sessão. `contas_pagar`
+   já tem o campo `vencimento` pronto pra isso quando for construído. Nenhuma decisão de como
+   notificar (dentro do app ao abrir? e-mail? Windows notification?) foi tomada ainda — apresentar
+   opções antes de codar.
+7. **"Desfazer pagamento" de uma conta paga** (módulo Contas a Pagar) — hoje não existe pelo app; se
+   marcar uma conta como paga por engano, precisa corrigir direto no Supabase (ver seção 5).
+
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
@@ -972,13 +1081,11 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0023) — as de 0001 a 0015 já foram confirmadas rodando sem erro
-pela usuária nesse projeto (a 0015 precisou de uma correção nesta sessão — ver item 13 da seção 6 —
-antes de rodar limpo). **As migrations 0016 a 0023 ainda precisam ser rodadas** — ver tutoriais
-abaixo (0016/0017/0018 no primeiro tutorial, 0019/0020 — Funcionários e categorias de Caixa — no
-segundo, 0021/0022/0023 — tipo de cliente, RH completo de Funcionários e Notas Fiscais — no
-terceiro, mais recente). Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou
-usar outro projeto Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0025) — as de 0001 a 0023 já foram confirmadas rodando sem erro
+pela usuária nesse projeto (a 0015 precisou de uma correção — ver item 13 da seção 6 — antes de
+rodar limpo; a 0024 ela confirmou ter rodado nesta sessão, ver abaixo). **A migration 0025 ainda
+precisa ser rodada** — ver tutorial novo abaixo. Todas são seguras de rodar de novo (idempotentes)
+caso precise reconectar ou usar outro projeto Supabase do zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
 redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
@@ -1092,6 +1199,36 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
      aba "NFS-e".
    - Confira que todo o resto continua funcionando normalmente (nada nas outras telas deveria ter
      mudado, fora o ícone de casinha no botão "voltar" das telas de lista, no lugar da seta antiga).
+
+Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+
+### Tutorial: pegar a versão nova (migration 0025 — Contas a Pagar) e rodar
+
+A migration 0024 (dados fiscais da loja) **já foi rodada** pela usuária nesta sessão — só falta a
+0025.
+
+1. Feche o app se estiver aberto.
+2. No terminal, dentro da pasta `sakura-system-autocenter`:
+   ```powershell
+   git checkout main
+   git pull origin main
+   ```
+3. **Rode a migration nova no Supabase** (SQL Editor do Supabase — abra o arquivo no VS Code, copie
+   todo o conteúdo, cole numa "New query" e clique em "Run"):
+   - `supabase/migrations/0025_contas_pagar.sql` — cria a tabela `contas_pagar`.
+4. `npm install && npm run dev`.
+5. O que testar:
+   - **Configurações → "Dados fiscais da loja"** (se ainda não testou): preencher CNPJ, razão
+     social, endereço etc. e salvar.
+   - **Contas a Pagar** (item novo no menu lateral): cadastre uma conta recorrente (ex: "Aluguel",
+     valor, vencimento, marcar "recorrente") e clique em "Marcar como paga" — confira que aparece uma
+     Saída em Caixa Diário → aba "Saídas" e que uma nova conta pendente aparece automaticamente com
+     vencimento um mês depois.
+   - **Notas Fiscais**: em qualquer arquivo já enviado, clique em "Versão para o cliente" — deve
+     abrir um preview em HTML com os dados da nota; teste "Baixar HTML" e "Imprimir".
+   - **Ordem de Serviço concluída/faturada → aba Fechamento**: clique em "Ver garantia" — o documento
+     deve vir com cabeçalho da loja, dados do cliente/veículo, tabela de itens e assinaturas (layout
+     novo, parecido com o papel da Pneus Amigão). Teste "Baixar HTML" e "Imprimir".
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
@@ -1266,6 +1403,21 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   rodando de verdade (login, telas, o ícone novo aparecendo) — só confirmou que o download/instalador
   em si funcionou. Perguntar/confirmar isso antes de marcar qualquer item da seção 7 como "testado
   rodando de verdade" só com base nisso.
+- **Nova sessão (2026-07-29, continuação), mesma branch `claude/ssace-context-ruolmh`** (branch
+  designada pelo orquestrador desta sessão — diferente de `claude/project-context-dmiarx` usada nos
+  PRs #30 a #38; mesmo padrão de sempre, branch → PR → merge direto sem esperar aprovação manual, ver
+  seção 3):
+  - PR [#39](https://github.com/caranovavidanova/amigao/pull/39): dados fiscais da loja
+    (`configuracoes_fiscais_loja`, migration 0024) + casca da integração Focus NFe (`lib/focusNfe.ts`)
+    — ver seção 7.
+  - PR [#40](https://github.com/caranovavidanova/amigao/pull/40): recibo visual (HTML) pros XMLs de
+    nota fiscal, botão "Versão para o cliente" — ver seção 7.
+  - PR [#41](https://github.com/caranovavidanova/amigao/pull/41): garantia da OS redesenhada num
+    layout estruturado (HTML), inspirada no modelo de papel que a usuária já usa na Pneus Amigão —
+    ver seção 7.
+  - PR [#42](https://github.com/caranovavidanova/amigao/pull/42): módulo novo "Contas a Pagar"
+    (migration 0025) — ver seção 7.
+  - **Confirmado pela usuária nesta sessão**: migration 0024 rodada com sucesso no Supabase dela.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

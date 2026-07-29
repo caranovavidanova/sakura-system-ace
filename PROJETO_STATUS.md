@@ -1259,16 +1259,13 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   `claude/project-context-dmiarx`** (a antiga `claude/caranovavidanova-amigao-kad1fu`, usada nos PRs
   #12 a #28, não precisa mais ser reutilizada — mesmo padrão de sempre, branch → PR → merge direto
   sem esperar aprovação manual, ver seção 3).
-- **Tag `v0.1.3` ainda NÃO publicada** — mesma limitação de sempre: o sandbox onde o Claude roda
-  **não tem permissão de push direto pra `main`/tags no GitHub** (só pra branches de feature via
-  PR — tentativas anteriores de `git push origin v0.1.2` deram erro `403`). `package.json` já está
-  em `"version": "0.1.3"` e tudo mergeado em `main` (PRs #19 a #36: tudo que está descrito na seção
-  7 desde o botão voltar até o ícone novo e o fechamento do changelog) — **falta só a usuária rodar
-  no terminal dela**: `git checkout main && git pull origin main && git tag v0.1.3 && git push
-  origin v0.1.3` (ver tutorial na seção 9). A usuária confirmou que vai instalar primeiro **na
-  própria máquina dela** (não direto na da borracharia) pra testar antes. **Sessões futuras: não
-  tentar dar `git push` de tags/direto em `main` a partir do sandbox — vai falhar com 403 da mesma
-  forma; esse passo é sempre da usuária.**
+- **✅ Tag `v0.1.3` publicada pela usuária e instalador baixado com sucesso** — ela rodou os
+  comandos (`git tag v0.1.3 && git push origin v0.1.3`) e confirmou que o build do GitHub Actions
+  gerou o instalador certinho e que já baixou na própria máquina dela (ainda não levou pra
+  borracharia, ver seção 1). **Ainda não confirmado**: se ela já abriu o instalador e testou o app
+  rodando de verdade (login, telas, o ícone novo aparecendo) — só confirmou que o download/instalador
+  em si funcionou. Perguntar/confirmar isso antes de marcar qualquer item da seção 7 como "testado
+  rodando de verdade" só com base nisso.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

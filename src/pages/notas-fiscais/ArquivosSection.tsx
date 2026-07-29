@@ -5,6 +5,7 @@ import { baixarArquivo, enviarArquivo, excluirArquivo, listarArquivos } from "@/
 import { listarOrdens } from "@/lib/ordensServico";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
+import { NotaFiscalVisualModal } from "./NotaFiscalVisualModal";
 
 interface ArquivosSectionProps {
   tipo: TipoNotaFiscal;
@@ -33,6 +34,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   const [competencia, setCompetencia] = useState(competenciaAtual());
   const [ordemServicoId, setOrdemServicoId] = useState("");
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
+  const [arquivoVisualizando, setArquivoVisualizando] = useState<NotaFiscalArquivo | null>(null);
 
   async function carregar() {
     setCarregando(true);
@@ -226,10 +228,16 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-3">
                         <button
+                          onClick={() => setArquivoVisualizando(arquivo)}
+                          className="text-xs font-medium text-sakura-purple hover:underline"
+                        >
+                          Versão para o cliente
+                        </button>
+                        <button
                           onClick={() => handleBaixar(arquivo)}
                           className="text-xs font-medium text-sakura-purple hover:underline"
                         >
-                          Baixar
+                          Baixar XML
                         </button>
                         <button
                           onClick={() => handleExcluir(arquivo)}
@@ -245,6 +253,13 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
             </table>
           </div>
         ))
+      )}
+
+      {arquivoVisualizando && (
+        <NotaFiscalVisualModal
+          arquivo={arquivoVisualizando}
+          onFechar={() => setArquivoVisualizando(null)}
+        />
       )}
     </div>
   );

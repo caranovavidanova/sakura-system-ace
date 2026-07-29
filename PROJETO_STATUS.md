@@ -464,6 +464,26 @@ entrada em `caixa_movimentos` com o valor total da OS. Garantia dada ao cliente 
     seguro rodar de novo" no comentário**: sempre dropar o nome **final** da policy antes de criar,
     não só o nome antigo que ela está substituindo (as migrations 0016/0017, escritas do zero já
     seguindo esse padrão, não tinham esse problema).
+14. **Bug real de barra de rolagem duplicada** (achado pela usuária no PR #49, corrigido no PR
+    [#50](https://github.com/caranovavidanova/amigao/pull/50)): o reset de scrollbar nativo em
+    `globals.css` (a barra fina/quadrada, reforço pros lugares que ainda não usam `AreaRolavel`)
+    ficava **fora de qualquer `@layer`** — CSS assim ("sem camada") tem prioridade **maior** que
+    CSS dentro de uma `@layer` (como as classes que o Tailwind gera), **não importa a
+    especificidade**. Isso fazia a regra `scrollbar-width: thin` do reset global vencer a
+    `scrollbar-width: none` que a `AreaRolavel` usa pra esconder a barra nativa — confirmado
+    programaticamente comparando o `getComputedStyle` do container antes/depois (`thin` → `none`).
+    Resultado: a barra nativa (fina) ainda aparecia sobreposta à barra customizada (arredondada).
+    **Corrigido** envolvendo o bloco de reset de scrollbar em `@layer base` (`src/styles/
+    globals.css`) — assim ele entra na mesma camada que o Tailwind usa pro próprio reset, e a
+    camada de utilitários (mais "forte" na ordem das camadas) consegue vencer de novo. Aproveitado
+    pra também dar uma margem no topo/base do polegar desenhado (`AreaRolavel.tsx`,
+    `MARGEM_TRILHO`), que antes encostava na quina arredondada do `sakura-card` e parecia cortado.
+    **Se algum elemento novo com CSS "puro" (fora de qualquer `@layer`) parecer não ser
+    sobrescrito por uma classe do Tailwind que deveria vencer, é esse mesmo padrão** — o CSS puro
+    escrito direto em `globals.css` (não dentro de `@layer`) sempre vence classes do Tailwind
+    (que ficam dentro de `@layer utilities`/`base`/etc.), então regras de reset "globais" (`*`,
+    `body`, seletores soltos) precisam ficar dentro de `@layer base` pra não atropelar utilitários
+    mais específicos.
 
 ## 7. O que já está pronto e validado (pelo usuário, rodando de verdade)
 
@@ -1626,6 +1646,12 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   (`AreaRolavel.tsx`, substitui de vez a tentativa só-CSS do PR #47 que a usuária achou que ainda
   parecia nativa) + accent-color em checkbox/rádio + cor do ícone de calendário — ver seção 2.
   Mergeado nesta mesma sessão, sem mudança de schema.
+- **Nova sessão (2026-07-29, continuação), branch `claude/1-0-quase-pronta-fcqe6d`** (branch
+  designada pelo orquestrador desta sessão — diferente de `claude/ssace-3y3p8y` usada no PR #49;
+  mesmo padrão de sempre, branch → PR → merge direto sem esperar aprovação manual, ver seção 3):
+  - PR [#50](https://github.com/caranovavidanova/amigao/pull/50): corrige a barra de rolagem
+    aparecendo duplicada (nativa + customizada sobrepostas) e cortada no topo — ver item 14 da
+    seção 6. Mergeado nesta mesma sessão, sem mudança de schema.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

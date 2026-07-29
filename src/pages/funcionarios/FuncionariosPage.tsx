@@ -7,7 +7,7 @@ import {
   listarFuncionarios,
 } from "@/lib/funcionarios";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import type { Funcionario, NovoFuncionario } from "@/types/funcionario";
+import type { Funcionario, NovoFuncionario, NovoFuncionarioFilho } from "@/types/funcionario";
 import { FuncionarioForm } from "./FuncionarioForm";
 
 export function FuncionariosPage() {
@@ -37,11 +37,11 @@ export function FuncionariosPage() {
     carregar();
   }, []);
 
-  async function handleSalvar(funcionario: NovoFuncionario) {
+  async function handleSalvar(funcionario: NovoFuncionario, filhos: NovoFuncionarioFilho[]) {
     if (formulario && formulario !== "novo") {
-      await atualizarFuncionario(formulario.id, funcionario);
+      await atualizarFuncionario(formulario.id, funcionario, filhos);
     } else {
-      await criarFuncionario(funcionario);
+      await criarFuncionario(funcionario, filhos);
     }
     setFormulario(null);
     await carregar();

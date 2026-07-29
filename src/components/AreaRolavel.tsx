@@ -7,6 +7,9 @@ interface AreaRolavelProps {
 }
 
 const ALTURA_MINIMA_THUMB = 32;
+// Afasta o polegar do topo/base do container — sem isso ele encostava bem na
+// quina arredondada do sakura-card e parecia "cortado" pela curva.
+const MARGEM_TRILHO = 10;
 
 /**
  * Substitui a barra de rolagem nativa do sistema por uma barrinha desenhada
@@ -29,9 +32,13 @@ export function AreaRolavel({ className = "", children }: AreaRolavelProps) {
       setThumb({ altura: 0, topo: 0, visivel: false });
       return;
     }
-    const altura = Math.max((clientHeight / scrollHeight) * clientHeight, ALTURA_MINIMA_THUMB);
-    const maxTopo = clientHeight - altura;
-    const topo = (scrollTop / (scrollHeight - clientHeight)) * maxTopo;
+    const trilho = Math.max(clientHeight - MARGEM_TRILHO * 2, 0);
+    const altura = Math.min(
+      Math.max((clientHeight / scrollHeight) * trilho, ALTURA_MINIMA_THUMB),
+      trilho,
+    );
+    const maxTopo = trilho - altura;
+    const topo = MARGEM_TRILHO + (scrollTop / (scrollHeight - clientHeight)) * maxTopo;
     setThumb({ altura, topo, visivel: true });
   }
 
@@ -53,8 +60,12 @@ export function AreaRolavel({ className = "", children }: AreaRolavelProps) {
       const el = containerRef.current;
       if (!arrastando.current || !el) return;
       const { scrollHeight, clientHeight } = el;
-      const altura = Math.max((clientHeight / scrollHeight) * clientHeight, ALTURA_MINIMA_THUMB);
-      const maxTopo = clientHeight - altura;
+      const trilho = Math.max(clientHeight - MARGEM_TRILHO * 2, 0);
+      const altura = Math.min(
+        Math.max((clientHeight / scrollHeight) * trilho, ALTURA_MINIMA_THUMB),
+        trilho,
+      );
+      const maxTopo = trilho - altura;
       if (maxTopo <= 0) return;
       const deltaY = e.clientY - arrastoInicialY.current;
       const deltaScroll = (deltaY / maxTopo) * (scrollHeight - clientHeight);

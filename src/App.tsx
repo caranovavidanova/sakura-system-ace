@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AreaRolavel } from "./components/AreaRolavel";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
 import { Sidebar } from "./components/Sidebar";
 import { useAuth } from "./contexts/AuthContext";
@@ -62,106 +63,108 @@ export default function App() {
   return (
     <div className="sakura-shell-bg flex h-screen gap-4 overflow-hidden p-4">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-4">
-        <Routes>
-          <Route path="/" element={<PaginaInicial />} />
-          <Route
-            path="/clientes"
-            element={
-              <PermissaoRoute modulo="clientes">
-                <ClientesPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/estoque"
-            element={
-              <PermissaoRoute modulo="estoque">
-                <EstoquePage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/servicos"
-            element={
-              <PermissaoRoute modulo="servicos">
-                <ServicosPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/ordens-servico"
-            element={
-              <PermissaoRoute modulo="ordens_servico">
-                <OrdensServicoPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/funcionarios"
-            element={
-              <PermissaoRoute modulo="funcionarios">
-                <FuncionariosPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/caixa"
-            element={
-              <PermissaoRoute modulo="caixa">
-                <CaixaPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/contas-pagar"
-            element={
-              <PermissaoRoute modulo="contas_pagar">
-                <ContasPagarPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/relatorios"
-            element={
-              <PermissaoRoute modulo="relatorios">
-                <RelatoriosPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/lucratividade"
-            element={
-              <PermissaoRoute modulo="lucratividade">
-                <LucratividadePage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/garantias"
-            element={
-              <PermissaoRoute modulo="garantias">
-                <GarantiasPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/notas-fiscais"
-            element={
-              <PermissaoRoute modulo="notas_fiscais">
-                <NotasFiscaisPage />
-              </PermissaoRoute>
-            }
-          />
-          <Route
-            path="/configuracoes"
-            element={
-              <AdminRoute>
-                <ConfiguracoesPage />
-              </AdminRoute>
-            }
-          />
-        </Routes>
+      <main className="min-h-0 flex-1">
+        <AreaRolavel className="p-4">
+          <Routes>
+            <Route path="/" element={<PaginaInicial />} />
+            <Route
+              path="/clientes"
+              element={
+                <PermissaoRoute modulo="clientes">
+                  <ClientesPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/estoque"
+              element={
+                <PermissaoRoute modulo="estoque">
+                  <EstoquePage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/servicos"
+              element={
+                <PermissaoRoute modulo="servicos">
+                  <ServicosPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/ordens-servico"
+              element={
+                <PermissaoRoute modulo="ordens_servico">
+                  <OrdensServicoPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/funcionarios"
+              element={
+                <PermissaoRoute modulo="funcionarios">
+                  <FuncionariosPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/caixa"
+              element={
+                <PermissaoRoute modulo="caixa">
+                  <CaixaPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/contas-pagar"
+              element={
+                <PermissaoRoute modulo="contas_pagar">
+                  <ContasPagarPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/relatorios"
+              element={
+                <PermissaoRoute modulo="relatorios">
+                  <RelatoriosPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/lucratividade"
+              element={
+                <PermissaoRoute modulo="lucratividade">
+                  <LucratividadePage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/garantias"
+              element={
+                <PermissaoRoute modulo="garantias">
+                  <GarantiasPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/notas-fiscais"
+              element={
+                <PermissaoRoute modulo="notas_fiscais">
+                  <NotasFiscaisPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/configuracoes"
+              element={
+                <AdminRoute>
+                  <ConfiguracoesPage />
+                </AdminRoute>
+              }
+            />
+          </Routes>
+        </AreaRolavel>
       </main>
     </div>
   );

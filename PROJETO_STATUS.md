@@ -61,11 +61,33 @@ base arquitetural.
   contraste. **Se algum texto novo usar `text-sakura-gray` ou opacidade `/60` ou menor em cima de
   `sakura-card`, é provável que fique com contraste ruim — usar `text-sakura-muted` (secundário) ou
   `text-sakura-purple-dark` (primário) em vez disso.**
-- **Barra de rolagem customizada (nesta sessão)**: a usuária reclamou que a barra de rolagem nativa
-  do Windows/Chromium destoava da estética do app. `globals.css` ganhou `::-webkit-scrollbar` +
-  `scrollbar-color` globais — fina (10px), sem track visível, "polegar" arredondado num tom
-  roxo-acinzentado translúcido. Vale pra qualquer área com `overflow-y-auto`/`overflow-x-auto` do
-  app inteiro, não precisa de classe por tela.
+- **Barra de rolagem 100% customizada (nesta sessão)**: a usuária reclamou que a barra de rolagem
+  nativa do Windows/Chromium destoava da estética do app. A primeira tentativa (`::-webkit-scrollbar`
+  + `scrollbar-color` no CSS, mais arredondada, sem as setinhas, com respiro do topo/base) melhorou
+  mas **não resolveu de verdade** — ela apontou que ainda "parecia algo externo ao software" e que a
+  barra "vazava" pra fora da quina arredondada dos blocos (`sakura-card`). Motivo: uma barra de
+  rolagem nativa é desenhada pelo motor do navegador numa camada própria que **não respeita
+  `border-radius`** do elemento, então nunca fica de verdade "dentro" do card de vidro, não importa
+  quanto CSS se jogue nela. **Solução**: `src/components/AreaRolavel.tsx`, um componente novo que
+  esconde a barra nativa por completo (`scrollbar-width: none` + `::-webkit-scrollbar { display:
+  none }` só dentro dele) e desenha o próprio "polegar" como uma div comum (arredondada, na cor
+  `sakura-purple-dark`, translúcida), posicionada por cima do conteúdo e calculada via
+  `scroll`/`ResizeObserver` — como é uma div normal dentro do card, ela **respeita o `overflow-hidden`
+  arredondado do próprio card**, nunca vaza pra fora, e dá pra arrastar com o mouse (`pointerdown`/
+  `pointermove`/`pointerup`) igual uma barra de verdade. Aplicado nos dois lugares que mais rolam:
+  `<main>` (App.tsx, todo o conteúdo das páginas) e a barra lateral (`Sidebar.tsx`, lista de módulos).
+  **Não aplicado no `Modal.tsx`** de propósito — ele já tem `max-h-[85vh]` fixo e só rola quando o
+  conteúdo realmente excede isso (caso bem mais raro que as duas áreas principais), então manter a
+  barra nativa (já estilizada) ali evitou uma complexidade extra sem ganho perceptível.
+- **Outros controles nativos "com cara de sistema" (mesma sessão)**: a usuária pediu uma varredura
+  geral por outras coisas visuais "deslocadas" depois do caso da barra de rolagem. Checkbox/rádio
+  (`input[type=checkbox]`/`type=radio`) ganharam `accent-color` na paleta do app (antes usavam o azul
+  padrão do Windows/Chromium) e o ícone do calendário em campos de data (`input[type=date]`) ganhou um
+  filtro de cor pra ficar no tom roxo do app (o resto do campo já respeitava a paleta, só esse ícone
+  que o navegador desenha sozinho não). **Não mexido**: o menu suspenso de `<select>` continua com a
+  seta nativa do sistema — dá pra trocar via `appearance: none` + seta customizada, mas os ~15 selects
+  do app têm paddings variados; arriscaria desalinhar texto/seta em vários lugares sem look-and-feel
+  visual pra conferir cada um. Fica como próximo passo se a usuária achar que ainda vale a pena.
 - **Estilo "glassmorphism" (nesta sessão)**: o app inteiro passou a usar blocos arredondados e
   translúcidos (`sakura-card` em `src/styles/globals.css`, com `backdrop-filter: blur`) flutuando
   sobre um fundo rosa com brilho difuso (`sakura-shell-bg`) — a pedido do usuário, que mandou prints
@@ -141,7 +163,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7), SecaoRecolhivel.tsx (bloco "acordeão" recolhível, usado em Configurações), GraficoBarras.tsx e GraficoRadar.tsx (gráficos SVG puros, sem lib externa, usados em Relações — ver seção 7), VeiculoIcone.tsx (ícone SVG por tipo de veículo/hatch/sedã/SUV/picape/moto, pintado com a cor cadastrada — ver seção 7; **Sparkline.tsx foi removido nesta sessão** por ter ficado sem uso depois do redesenho dos cartões do Início)
+│   ├── components/             # Sidebar.tsx, Logo.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7), SecaoRecolhivel.tsx (bloco "acordeão" recolhível, usado em Configurações), GraficoBarras.tsx e GraficoRadar.tsx (gráficos SVG puros, sem lib externa, usados em Relações — ver seção 7), VeiculoIcone.tsx (ícone SVG por tipo de veículo/hatch/sedã/SUV/picape/moto, pintado com a cor cadastrada — ver seção 7; **Sparkline.tsx foi removido nesta sessão** por ter ficado sem uso depois do redesenho dos cartões do Início), AreaRolavel.tsx (barra de rolagem 100% customizada — esconde a nativa e desenha o próprio "polegar", ver seção 2)
 │   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia + dados fiscais da loja) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS) + garantiaDocumento.ts (monta o HTML estruturado da garantia, ver seção 7) + notaFiscalXml.ts (interpreta XML de NFe/NFCe/NFS-e e monta o recibo HTML "versão para o cliente", ver seção 7) + focusNfe.ts (casca da integração com a API do Focus NFe — auth + URLs por ambiente, emissão em si ainda não implementada, ver seção 7 e 8) + corVeiculo.ts (mapeia nome de cor em português, ex: "Prata"/"Vermelho", pro hex aproximado usado no ícone do veículo — fallback cinza pra cor não reconhecida, ver seção 7)
 │   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, contas-pagar, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
@@ -1600,6 +1622,10 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   carroceria (migration 0027), seção "Veículos no pátio" no Início, cartões do Início sem sparkline,
   scrollbar customizada e passe de contraste (`sakura-muted`) — ver seção 2 e 7. Mergeado nesta mesma
   sessão.
+- PR [#49](https://github.com/caranovavidanova/amigao/pull/49): barra de rolagem 100% customizada
+  (`AreaRolavel.tsx`, substitui de vez a tentativa só-CSS do PR #47 que a usuária achou que ainda
+  parecia nativa) + accent-color em checkbox/rádio + cor do ícone de calendário — ver seção 2.
+  Mergeado nesta mesma sessão, sem mudança de schema.
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

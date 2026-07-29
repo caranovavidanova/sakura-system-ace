@@ -1,20 +1,38 @@
 import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
+import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { NovoMovimentoCaixa, TipoCaixa } from "@/types/caixa";
 
 interface CaixaFormProps {
+  categorias: CategoriaCaixa[];
+  tipoInicial?: TipoCaixa;
+  tipoBloqueado?: boolean;
   onSalvar: (movimento: NovoMovimentoCaixa) => Promise<void>;
   onCancelar: () => void;
 }
 
-export function CaixaForm({ onSalvar, onCancelar }: CaixaFormProps) {
-  const [tipo, setTipo] = useState<TipoCaixa>("entrada");
+export function CaixaForm({
+  categorias,
+  tipoInicial = "entrada",
+  tipoBloqueado = false,
+  onSalvar,
+  onCancelar,
+}: CaixaFormProps) {
+  const [tipo, setTipo] = useState<TipoCaixa>(tipoInicial);
+  const [categoriaId, setCategoriaId] = useState("");
   const [valor, setValor] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("dinheiro");
   const [descricao, setDescricao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const categoriasDoTipo = categorias.filter((c) => c.tipo === tipo);
+
+  function handleTipoChange(novoTipo: TipoCaixa) {
+    setTipo(novoTipo);
+    setCategoriaId("");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,9 +52,11 @@ export function CaixaForm({ onSalvar, onCancelar }: CaixaFormProps) {
         forma_pagamento: formaPagamento || null,
         valor: valorNumero,
         descricao: descricao.trim() || null,
+        categoria_id: categoriaId || null,
       });
       setValor("");
       setDescricao("");
+      setCategoriaId("");
     } catch (err) {
       console.error("Erro ao registrar movimento de caixa:", err);
       setErro(mensagemDeErro(err));
@@ -68,8 +88,9 @@ export function CaixaForm({ onSalvar, onCancelar }: CaixaFormProps) {
           <span className="text-sakura-purple-dark/80">Tipo</span>
           <select
             value={tipo}
-            onChange={(e) => setTipo(e.target.value as TipoCaixa)}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            onChange={(e) => handleTipoChange(e.target.value as TipoCaixa)}
+            disabled={tipoBloqueado}
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-gray"
           >
             <option value="entrada">Entrada</option>
             <option value="saida">Saída</option>
@@ -89,6 +110,22 @@ export function CaixaForm({ onSalvar, onCancelar }: CaixaFormProps) {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">Categoria (opcional)</span>
+          <select
+            value={categoriaId}
+            onChange={(e) => setCategoriaId(e.target.value)}
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+          >
+            <option value="">Sem categoria</option>
+            {categoriasDoTipo.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
           <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
           <input
             type="text"
@@ -98,7 +135,7 @@ export function CaixaForm({ onSalvar, onCancelar }: CaixaFormProps) {
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="col-span-2 flex flex-col gap-1 text-sm">
           <span className="text-sakura-purple-dark/80">Descrição</span>
           <input
             type="text"

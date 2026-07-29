@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
+import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
 import { buscarTextoGarantia, listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operadores";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
+import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { JurosParcela } from "@/types/configuracao";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
+import { CategoriasCaixaSection } from "./CategoriasCaixaSection";
 import { CategoriasSection } from "./CategoriasSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
 import { OperadorForm } from "./OperadorForm";
@@ -20,6 +23,7 @@ export function ConfiguracoesPage() {
   const [operadores, setOperadores] = useState<Operador[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [categoriasCaixa, setCategoriasCaixa] = useState<CategoriaCaixa[]>([]);
   const [textoGarantia, setTextoGarantia] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -33,16 +37,23 @@ export function ConfiguracoesPage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [operadoresCarregados, jurosCarregados, categoriasCarregadas, textoGarantiaCarregado] =
-        await Promise.all([
-          listarOperadores(),
-          listarJurosParcelas(),
-          listarCategorias(),
-          buscarTextoGarantia(),
-        ]);
+      const [
+        operadoresCarregados,
+        jurosCarregados,
+        categoriasCarregadas,
+        categoriasCaixaCarregadas,
+        textoGarantiaCarregado,
+      ] = await Promise.all([
+        listarOperadores(),
+        listarJurosParcelas(),
+        listarCategorias(),
+        listarCategoriasCaixa(),
+        buscarTextoGarantia(),
+      ]);
       setOperadores(operadoresCarregados);
       setJurosParcelas(jurosCarregados);
       setCategorias(categoriasCarregadas);
+      setCategoriasCaixa(categoriasCaixaCarregadas);
       setTextoGarantia(textoGarantiaCarregado);
     } catch (err) {
       console.error("Erro ao carregar operadores:", err);
@@ -131,6 +142,7 @@ export function ConfiguracoesPage() {
         <>
           <JurosParcelasSection jurosParcelas={jurosParcelas} onSalvo={carregar} />
           <CategoriasSection categorias={categorias} onSalvo={carregar} />
+          <CategoriasCaixaSection categorias={categoriasCaixa} onSalvo={carregar} />
           <TextoGarantiaSection texto={textoGarantia} onSalvo={carregar} />
         </>
       )}

@@ -1,4 +1,4 @@
-import type { Operador } from "@/types/operador";
+import type { Funcionario } from "@/types/funcionario";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import type { NovoItemOS, TipoItemOS } from "@/types/os";
@@ -7,7 +7,7 @@ interface ItemOSRowProps {
   item: NovoItemOS;
   pecas: Peca[];
   servicos: Servico[];
-  operadores: Operador[];
+  funcionarios: Funcionario[];
   onChange: (item: NovoItemOS) => void;
   onRemover: () => void;
 }
@@ -18,7 +18,7 @@ export function ItemOSRow({
   item,
   pecas,
   servicos,
-  operadores,
+  funcionarios,
   onChange,
   onRemover,
 }: ItemOSRowProps) {
@@ -163,9 +163,9 @@ export function ItemOSRow({
             className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
           >
             <option value="">Sem técnico definido</option>
-            {operadores.map((operador) => (
-              <option key={operador.id} value={operador.id}>
-                {operador.nome}
+            {funcionarios.map((funcionario) => (
+              <option key={funcionario.id} value={funcionario.id}>
+                {funcionario.nome}
               </option>
             ))}
           </select>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import type { Cliente } from "@/types/cliente";
-import type { Operador } from "@/types/operador";
+import type { Funcionario } from "@/types/funcionario";
 import type {
   NovaOrdemServico,
   NovoItemOS,
@@ -22,8 +22,8 @@ interface OrdemServicoFormProps {
   clientes: Cliente[];
   pecas: Peca[];
   servicos: Servico[];
-  operadores: Operador[];
-  operadorAtualId: string;
+  funcionarios: Funcionario[];
+  funcionarioAtualId: string;
   ordemExistente?: OrdemServico;
   onSalvarNova: (ordem: NovaOrdemServico, itens: NovoItemOS[]) => Promise<void>;
   onSalvarEdicao: (
@@ -62,8 +62,8 @@ export function OrdemServicoForm({
   clientes,
   pecas,
   servicos,
-  operadores,
-  operadorAtualId,
+  funcionarios,
+  funcionarioAtualId,
   ordemExistente,
   onSalvarNova,
   onSalvarEdicao,
@@ -78,7 +78,7 @@ export function OrdemServicoForm({
     ordemExistente?.descricao_problema ?? "",
   );
   const [vendedorId, setVendedorId] = useState(
-    ordemExistente?.vendedor_id ?? operadorAtualId,
+    ordemExistente?.vendedor_id ?? funcionarioAtualId,
   );
   const [status, setStatus] = useState<StatusOS>(ordemExistente?.status ?? "aberta");
   const [itens, setItens] = useState<NovoItemOS[]>(
@@ -271,9 +271,9 @@ export function OrdemServicoForm({
                 onChange={(e) => setVendedorId(e.target.value)}
                 className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
               >
-                {operadores.map((operador) => (
-                  <option key={operador.id} value={operador.id}>
-                    {operador.nome}
+                {funcionarios.map((funcionario) => (
+                  <option key={funcionario.id} value={funcionario.id}>
+                    {funcionario.nome}
                   </option>
                 ))}
               </select>
@@ -336,7 +336,7 @@ export function OrdemServicoForm({
                   item={item}
                   pecas={pecas}
                   servicos={servicos}
-                  operadores={operadores}
+                  funcionarios={funcionarios}
                   onChange={(novoItem) => atualizarItem(index, novoItem)}
                   onRemover={() => removerItem(index)}
                 />

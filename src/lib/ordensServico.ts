@@ -9,10 +9,10 @@ import type {
 
 const SELECT_ORDEM =
   "*, cliente:clientes(nome), veiculo:veiculos(placa), " +
-  "vendedor:operadores!ordens_servico_vendedor_id_fkey(nome), " +
+  "vendedor:funcionarios!ordens_servico_vendedor_id_fkey(nome), " +
   "criado_por:operadores!ordens_servico_criado_por_id_fkey(nome), " +
   "atualizado_por:operadores!ordens_servico_atualizado_por_id_fkey(nome), " +
-  "itens:ordens_servico_itens(*, tecnico:operadores(nome))";
+  "itens:ordens_servico_itens(*, tecnico:funcionarios(nome))";
 
 export async function listarOrdens(): Promise<OrdemServico[]> {
   const { data, error } = await supabase
@@ -56,7 +56,6 @@ export async function criarOrdem(
     .from("ordens_servico")
     .insert({
       ...ordem,
-      vendedor_id: ordem.vendedor_id ?? operadorId,
       criado_por_id: operadorId,
       atualizado_por_id: operadorId,
       status: "aberta",
@@ -120,5 +119,6 @@ export async function faturarOrdem(
     forma_pagamento: formaPagamento,
     valor: valorCobrado,
     descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
+    categoria_id: null,
   });
 }

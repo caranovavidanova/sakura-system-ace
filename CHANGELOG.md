@@ -6,6 +6,10 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ## [Não lançado]
 
 ### Adicionado
+- Categorias de produto: cadastro em Configurações, selecionável no cadastro de produto.
+- Estoque → aba "Relatórios": estoque físico-financeiro, saldo por situação (positivo/negativo/zerado) e produtos sem movimentação.
+- Estoque → aba "Contagem": inventário físico com ajuste automático de estoque quando há diferença.
+- Módulo "Garantias": lista peças vendidas com prazo de garantia definido, calculando o vencimento a partir do fechamento da OS.
 - Cadastro de Produto: campos de código de barras, marca, modelo, aplicação, C.E.S.T. e origem da mercadoria; margem % calcula o preço final automaticamente (e vice-versa); quantidade de estoque inicial no cadastro já gera o lançamento de entrada.
 - Início (antigo "Painel de Controle"): cartões de tendência do mês (Vendas, Custos, Lucros) com mini-gráfico, seção "OS abertas" e um calendário do mês com feriados nacionais e aniversário de cliente.
 - Campo de data de nascimento no cadastro de cliente, usado para marcar aniversário no calendário do Início.
@@ -26,6 +30,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Painel de Controle: indicadores tipo velocímetro de faturamento (mês atual vs. anterior) e margem bruta do mês, além da fila de atendimento (ordens de serviço em aberto).
 
 ### Corrigido
+- Migration de RLS (`0015_rls_exige_login.sql`) dava erro "política já existe" ao ser rodada mais de uma vez; agora é realmente segura de repetir.
 - Mensagens de erro genéricas no cadastro de clientes agora mostram a causa real.
 - `npm run lint` estava quebrado (faltava o arquivo de configuração do ESLint e os plugins de React); adicionado `eslint.config.js` com as regras básicas de hooks do React.
 - Tela em branco ao rodar `npm run dev` com o `.env` copiado do exemplo: as variáveis do Supabase ficavam como texto vazio (não "ausentes"), e o app tentava conectar com um endereço vazio e travava antes de desenhar a tela.

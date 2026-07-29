@@ -105,3 +105,29 @@ textarea {
     transform: translateY(0) scale(0.96);
   }
 }
+
+/* Área usada só pra "Imprimir garantia" (FechamentoTab.tsx) — fica fora da
+   tela no uso normal e só aparece quando a impressão do sistema é chamada,
+   escondendo o resto do app nesse momento. */
+.apenas-impressao {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  white-space: pre-wrap;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .apenas-impressao,
+  .apenas-impressao * {
+    visibility: visible;
+  }
+
+  .apenas-impressao {
+    position: static;
+    left: 0;
+  }
+}

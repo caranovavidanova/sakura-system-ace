@@ -1,3 +1,7 @@
+import { useEffect, useMemo, useState } from "react";
+import { buscarTextoGarantia } from "@/lib/configuracoes";
+import { mensagemDeErro } from "@/lib/errors";
+import { montarTextoGarantia } from "@/lib/garantiaTexto";
 import type { OrdemServico } from "@/types/os";
 import { totalOrdem } from "@/types/os";
 
@@ -24,15 +28,58 @@ function emitirPlaceholderFiscal(tipo: "NFe" | "NFS-e") {
   );
 }
 
-function garantiaPlaceholder(acao: "Imprimir" | "Baixar") {
-  alert(
-    `${acao} garantia ainda não está disponível — falta definir o texto/modelo da garantia. ` +
-      "Assim que isso for decidido, este botão passa a funcionar de verdade.",
-  );
-}
-
 export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const itens = ordem.itens ?? [];
+  const [templateGarantia, setTemplateGarantia] = useState("");
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        setTemplateGarantia(await buscarTextoGarantia());
+      } catch (err) {
+        console.error("Erro ao carregar texto de garantia:", err);
+      }
+    }
+    carregar();
+  }, []);
+
+  const textoGarantia = useMemo(
+    () => (templateGarantia ? montarTextoGarantia(templateGarantia, ordem) : ""),
+    [templateGarantia, ordem],
+  );
+
+  function handleImprimirGarantia() {
+    if (!textoGarantia) {
+      alert(
+        "Configure o texto de garantia em Configurações antes de imprimir " +
+          "(seção \"Texto de garantia\").",
+      );
+      return;
+    }
+    window.print();
+  }
+
+  function handleBaixarGarantia() {
+    if (!textoGarantia) {
+      alert(
+        "Configure o texto de garantia em Configurações antes de baixar " +
+          "(seção \"Texto de garantia\").",
+      );
+      return;
+    }
+    try {
+      const blob = new Blob([textoGarantia], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `garantia-OS-${ordem.id.slice(0, 8)}.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Erro ao baixar garantia:", err);
+      alert(mensagemDeErro(err));
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -113,14 +160,14 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => garantiaPlaceholder("Imprimir")}
+              onClick={handleImprimirGarantia}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
             >
               Imprimir garantia
             </button>
             <button
               type="button"
-              onClick={() => garantiaPlaceholder("Baixar")}
+              onClick={handleBaixarGarantia}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
             >
               Baixar garantia
@@ -128,6 +175,8 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           </div>
         </div>
       </section>
+
+      <pre className="apenas-impressao">{textoGarantia}</pre>
     </div>
   );
 }

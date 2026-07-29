@@ -94,7 +94,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
 │   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento)
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts, categorias.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
 │   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, caixa, relatorios, lucratividade, garantias, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
@@ -108,10 +108,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │       ganhou FaturamentoCard.tsx (tela de faturamento com forma de pagamento + parcelas
 │   │       calculadas, ver seção 7 — SimulacaoParcelas.tsx existiu por uma sessão e foi removido, não
 │   │       vingou). pages/configuracoes/ ganhou JurosParcelasSection.tsx (config de juros por
-│   │       parcela) e CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7)
+│   │       parcela), CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7) e
+│       TextoGarantiaSection.tsx (template do texto de garantia, ver seção 7)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, categoria.ts, contagem.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0017), todas idempotentes (seguro rodar de novo)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0018), todas idempotentes (seguro rodar de novo)
 ├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
@@ -183,6 +184,11 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   criado_em. Histórico de contagens de inventário físico — ao salvar uma contagem com diferença, o
   app gera automaticamente um lançamento de ajuste em `estoque_movimentos` (mesmo padrão do "Qtde.
   estoque inicial" do cadastro de produto).
+- **`configuracoes_garantia`** (migration 0018): tabela "singleton" (1 linha só, `id` fixo em 1) com
+  `texto` — template do texto de garantia usado pelos botões "Imprimir garantia"/"Baixar garantia" na
+  aba Fechamento da OS, com placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na
+  hora (`lib/garantiaTexto.ts`). Editável só pelo admin em Configurações
+  (`TextoGarantiaSection.tsx`).
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
   permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
   estoque, servicos, ordens_servico, caixa, relatorios, lucratividade, garantias), ativo, criado_em.
@@ -668,6 +674,27 @@ item 7 da seção 6):
 - **Itens do mesmo menu que o usuário optou por NÃO fazer agora** (continuam na lista do item 5 da
   seção 8): Fornecedores/Pedido de Compra, Entrada via NFe, Cadastro de Depósito.
 
+**⏳ Implementado e mergeado em `main` nesta sessão (PR [#27](https://github.com/caranovavidanova/amigao/pull/27)), ainda sem confirmação da usuária rodando com Supabase real** — texto de garantia configurável, resolvendo o item 3 da seção 8.1 (confirmado nesta mesma sessão: texto configurável, não multi-loja). Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots Playwright com dados simulados, incluindo clicar de verdade em "Baixar garantia" e conferir que não lança erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **Tabela `configuracoes_garantia`** (migration 0018) — "singleton" (1 linha só), com um texto
+  padrão semeado na própria migration. Editável em Configurações → "Texto de garantia"
+  (`TextoGarantiaSection.tsx`, admin-only, mesmo padrão visual das outras seções de config).
+- **Placeholders substituídos automaticamente** (`lib/garantiaTexto.ts`): `{cliente}`, `{veiculo}`,
+  `{itens}` (lista de peças/serviços da OS) e `{data}` (data de fechamento).
+- **Botões "Imprimir garantia"/"Baixar garantia" na aba Fechamento da OS** (`FechamentoTab.tsx`) —
+  deixaram de ser placeholder:
+  - **Baixar**: gera um arquivo `.txt` na hora (via `Blob` + link temporário), sem precisar de
+    biblioteca de PDF nem de nenhuma dependência nova.
+  - **Imprimir**: chama `window.print()` do próprio Electron. Pra imprimir só o texto da garantia (e
+    não a tela inteira do app), o texto renderizado fica numa área escondida
+    (`.apenas-impressao` em `globals.css`) que só aparece via `@media print` — o CSS esconde todo o
+    resto da página (`body * { visibility: hidden }`) e revela só essa área durante a impressão.
+    **Esse é o padrão a seguir se algum dia precisar imprimir outra coisa** (ex: OS, orçamento):
+    reaproveitar a classe `.apenas-impressao` em vez de abrir uma janela nova (`window.open` não tem
+    handler configurado no `electron/main.ts`, então ficaria bloqueado por padrão).
+  - Se o admin ainda não configurou nenhum texto (ex: migration 0018 não rodada ainda), os botões
+    mostram um aviso pedindo pra configurar em Configurações, em vez de travar.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -682,9 +709,9 @@ pela usuária nesta sessão**:
    de a emissão fiscal funcionar de verdade (é pré-requisito pra qualquer provedor). Perguntar de novo
    quando for a hora de configurar o provedor escolhido.
 3. **Escopo do "modelo de garantia editável"**: **confirmado** — é um texto configurável (editável em
-   Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não multi-loja. Ainda não
-   modelado/implementado — os botões "Imprimir garantia"/"Baixar garantia" na aba Fechamento da OS
-   continuam placeholder (ver seção 7, PR #11) até essa tela ser construída.
+   Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não multi-loja. **Implementado
+   nesta mesma sessão** (ver seção 7, PR #27) — os botões "Imprimir garantia"/"Baixar garantia" na
+   aba Fechamento da OS não são mais placeholder.
 
 **Instalador Windows**: a usuária pediu pra publicar a v0.1.2 nesta sessão (não ficou mais pendente).
 `package.json` já foi atualizado pra `"version": "0.1.2"` e mergeado em `main` — falta só ela rodar
@@ -744,18 +771,18 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0017) — as de 0001 a 0015 já foram confirmadas rodando sem erro
+`supabase/migrations/*.sql` (0001 a 0018) — as de 0001 a 0015 já foram confirmadas rodando sem erro
 pela usuária nesse projeto (a 0015 precisou de uma correção nesta sessão — ver item 13 da seção 6 —
-antes de rodar limpo). **As migrations 0016 e 0017 ainda precisam ser rodadas** — ver tutorial abaixo.
-Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto
-Supabase do zero.
+antes de rodar limpo). **As migrations 0016, 0017 e 0018 ainda precisam ser rodadas** — ver tutorial
+abaixo. Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro
+projeto Supabase do zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
 redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
 0013/0014 — foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7.
 Sessões passadas ficam registradas na seção 10.)*
 
-### Tutorial: pegar a versão nova (migrations 0015, 0016 e 0017) e rodar
+### Tutorial: pegar a versão nova (migrations 0015 a 0018) e rodar
 
 1. Feche o app se estiver aberto.
 2. No terminal, dentro da pasta `sakura-system-autocenter`:
@@ -763,15 +790,19 @@ Sessões passadas ficam registradas na seção 10.)*
    git checkout main
    git pull origin main
    ```
-3. **Rode as 3 migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
+3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
    arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
    - `supabase/migrations/0015_rls_exige_login.sql` — fecha o acesso sem login nas tabelas de
-     negócio (ver item 1 da seção 6).
+     negócio (ver item 1 da seção 6). **Se já rodou essa antes e deu erro de "política já existe",
+     já foi corrigido — é só rodar de novo, o arquivo atual já está certo.**
    - `supabase/migrations/0016_categorias_e_garantia.sql` — cria a tabela `categorias` e os campos
      `categoria_id`/`prazo_garantia_dias` em `pecas` (usados pelas telas novas de Categorias e
      Garantias).
    - `supabase/migrations/0017_contagens_estoque.sql` — cria a tabela `contagens_estoque` (usada
      pela aba nova "Contagem" em Estoque).
+   - `supabase/migrations/0018_configuracoes_garantia.sql` — cria a tabela `configuracoes_garantia`
+     (texto de garantia editável, usado pelos botões "Imprimir garantia"/"Baixar garantia" na aba
+     Fechamento da OS).
 4. `npm install && npm run dev`.
 5. O que testar:
    - Tudo deve continuar funcionando **normalmente enquanto você estiver logado** (Clientes, Estoque,
@@ -784,6 +815,10 @@ Sessões passadas ficam registradas na seção 10.)*
      filtros de saldo positivo/negativo/zerado.
    - **Garantias** (item novo no menu lateral): só aparece depois de vender (faturar uma OS) uma
      peça que tenha "Garantia (dias)" preenchida no cadastro.
+   - **Configurações → "Texto de garantia"**: edite o texto e salve.
+   - **Ordem de Serviço concluída/faturada → aba Fechamento**: clique em "Baixar garantia" (deve
+     baixar um `.txt`) e "Imprimir garantia" (deve abrir a caixa de impressão do Windows só com o
+     texto da garantia, não a tela inteira do app).
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
@@ -909,8 +944,22 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
 - PR [#22](https://github.com/caranovavidanova/amigao/pull/22) (`claude/project-context-pk6m3h` →
   `main`): Categorias de produto, Relatórios de estoque, Garantias e Contagem/Inventário físico —
   4 itens do menu de Estoque do sistema de referência escolhidos pelo usuário nesta sessão, ver
-  seção 7. Migrations 0016 e 0017. Mergeado nesta mesma sessão, ainda sem confirmação da usuária
-  rodando com Supabase real (migrations 0015/0016/0017 pendentes de rodar — ver tutorial na seção 9).
+  seção 7. Migrations 0016 e 0017. Mergeado nesta mesma sessão.
+- PR [#23](https://github.com/caranovavidanova/amigao/pull/23): atualização de documentação
+  (PROJETO_STATUS.md) referente ao PR #22.
+- PR [#24](https://github.com/caranovavidanova/amigao/pull/24): correção da migration 0015 não
+  idempotente — achado pela usuária rodando de verdade (erro "política já existe" ao repetir a
+  execução), ver item 13 da seção 6.
+- PR [#25](https://github.com/caranovavidanova/amigao/pull/25): documentação — registra as 3
+  respostas fiscais/garantia da usuária (seção 8.1) e a confirmação de que a 0015 corrigida rodou
+  sem erro.
+- PR [#26](https://github.com/caranovavidanova/amigao/pull/26): `"version"` do `package.json` subiu
+  pra `0.1.2` + `CHANGELOG.md` atualizado, a pedido da usuária pra publicar o próximo instalador.
+- PR [#27](https://github.com/caranovavidanova/amigao/pull/27): texto de garantia configurável
+  (migration 0018, `TextoGarantiaSection.tsx`, botões "Imprimir/Baixar garantia" na aba Fechamento
+  da OS deixaram de ser placeholder) — ver seção 7. Mergeado nesta mesma sessão, ainda sem
+  confirmação da usuária rodando com Supabase real (migrations 0016/0017/0018 pendentes de rodar —
+  ver tutorial na seção 9).
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

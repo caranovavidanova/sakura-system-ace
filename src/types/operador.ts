@@ -6,6 +6,7 @@ export const MODULOS = [
   { chave: "servicos", label: "Serviços", rota: "/servicos" },
   { chave: "funcionarios", label: "Funcionários", rota: "/funcionarios" },
   { chave: "caixa", label: "Caixa Diário", rota: "/caixa" },
+  { chave: "contas_pagar", label: "Contas a Pagar", rota: "/contas-pagar" },
   { chave: "relatorios", label: "Relatórios", rota: "/relatorios" },
   { chave: "lucratividade", label: "Lucratividade", rota: "/lucratividade" },
   { chave: "garantias", label: "Garantias", rota: "/garantias" },

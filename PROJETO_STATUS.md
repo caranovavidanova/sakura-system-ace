@@ -686,12 +686,12 @@ pela usuária nesta sessão**:
    modelado/implementado — os botões "Imprimir garantia"/"Baixar garantia" na aba Fechamento da OS
    continuam placeholder (ver seção 7, PR #11) até essa tela ser construída.
 
-**Instalador Windows pendente de propósito**: o código em `main` já tem as correções dos bugs da
-v0.1.1 (texto invisível em modo escuro, exclusão de cliente silenciosa) e o botão "voltar" novo, mas
-**nenhuma tag/versão nova foi publicada ainda** — pedido explícito do usuário ("deixe o instalador
-pendente") antes de trocar de sessão. Quando ele quiser gerar o próximo instalador, é só pedir "atualiza
-a versão pra 0.1.2 e publica" (ver tutorial na seção 9) — mesmo fluxo de sempre, só que ainda não foi
-disparado.
+**Instalador Windows**: a usuária pediu pra publicar a v0.1.2 nesta sessão (não ficou mais pendente).
+`package.json` já foi atualizado pra `"version": "0.1.2"` e mergeado em `main` — falta só ela rodar
+`git tag v0.1.2 && git push origin v0.1.2` (ver tutorial na seção 9) pra disparar o build no GitHub
+Actions. Essa versão inclui: correções da v0.1.1 (texto invisível em modo escuro, exclusão de cliente
+silenciosa), botão "voltar", e Categorias/Relatórios de estoque/Garantias/Contagem (PR #22) + a
+correção da migration 0015 (PR #24).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 

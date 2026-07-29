@@ -1,4 +1,5 @@
 export type TipoNotaFiscal = "nfe" | "nfse";
+export type OrigemNotaFiscal = "manual" | "automatica";
 
 export interface NotaFiscalArquivo {
   id: string;
@@ -9,6 +10,10 @@ export interface NotaFiscalArquivo {
   ordem_servico_id: string | null;
   operador_id: string | null;
   criado_em: string;
+  origem: OrigemNotaFiscal;
+  numero: string | null;
+  chave_acesso: string | null;
+  status: string | null;
   ordem_servico?: { cliente?: { nome: string } | null } | null;
   operador?: { nome: string } | null;
 }

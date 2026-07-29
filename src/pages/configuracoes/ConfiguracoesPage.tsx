@@ -3,17 +3,22 @@ import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
-import { buscarTextoGarantia, listarJurosParcelas } from "@/lib/configuracoes";
+import {
+  buscarConfiguracaoFiscal,
+  buscarTextoGarantia,
+  listarJurosParcelas,
+} from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operadores";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
-import type { JurosParcela } from "@/types/configuracao";
+import type { ConfiguracaoFiscalLoja, JurosParcela } from "@/types/configuracao";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
 import { CategoriasCaixaSection } from "./CategoriasCaixaSection";
 import { CategoriasSection } from "./CategoriasSection";
+import { DadosFiscaisSection } from "./DadosFiscaisSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
 import { OperadorForm } from "./OperadorForm";
 import { TextoGarantiaSection } from "./TextoGarantiaSection";
@@ -25,6 +30,9 @@ export function ConfiguracoesPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriasCaixa, setCategoriasCaixa] = useState<CategoriaCaixa[]>([]);
   const [textoGarantia, setTextoGarantia] = useState("");
+  const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(
+    null,
+  );
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
@@ -43,18 +51,21 @@ export function ConfiguracoesPage() {
         categoriasCarregadas,
         categoriasCaixaCarregadas,
         textoGarantiaCarregado,
+        configuracaoFiscalCarregada,
       ] = await Promise.all([
         listarOperadores(),
         listarJurosParcelas(),
         listarCategorias(),
         listarCategoriasCaixa(),
         buscarTextoGarantia(),
+        buscarConfiguracaoFiscal(),
       ]);
       setOperadores(operadoresCarregados);
       setJurosParcelas(jurosCarregados);
       setCategorias(categoriasCarregadas);
       setCategoriasCaixa(categoriasCaixaCarregadas);
       setTextoGarantia(textoGarantiaCarregado);
+      setConfiguracaoFiscal(configuracaoFiscalCarregada);
     } catch (err) {
       console.error("Erro ao carregar operadores:", err);
       setErro(mensagemDeErro(err));
@@ -144,6 +155,7 @@ export function ConfiguracoesPage() {
           <CategoriasSection categorias={categorias} onSalvo={carregar} />
           <CategoriasCaixaSection categorias={categoriasCaixa} onSalvo={carregar} />
           <TextoGarantiaSection texto={textoGarantia} onSalvo={carregar} />
+          <DadosFiscaisSection configuracao={configuracaoFiscal} onSalvo={carregar} />
         </>
       )}
 

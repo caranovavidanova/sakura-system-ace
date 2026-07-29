@@ -5,6 +5,9 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 
 ## [Não lançado]
 
+### Adicionado
+- Configurações → "Dados fiscais da loja": CNPJ, razão social, IE/IM, regime tributário, endereço e token de integração com o Focus NFe (ambiente de homologação/produção) — preparação para a emissão automática de NFC-e, ainda não habilitada.
+
 ## [0.1.3] - 2026-07-29
 
 ### Adicionado

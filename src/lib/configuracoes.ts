@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { ConfiguracaoGarantia, JurosParcela } from "@/types/configuracao";
+import type { ConfiguracaoFiscalLoja, ConfiguracaoGarantia, JurosParcela } from "@/types/configuracao";
 
 export async function listarJurosParcelas(): Promise<JurosParcela[]> {
   const { data, error } = await supabase
@@ -34,6 +34,27 @@ export async function salvarTextoGarantia(texto: string): Promise<void> {
   const { error } = await supabase
     .from("configuracoes_garantia")
     .upsert({ id: 1, texto }, { onConflict: "id" });
+
+  if (error) throw error;
+}
+
+export async function buscarConfiguracaoFiscal(): Promise<ConfiguracaoFiscalLoja | null> {
+  const { data, error } = await supabase
+    .from("configuracoes_fiscais_loja")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as ConfiguracaoFiscalLoja | null;
+}
+
+export async function salvarConfiguracaoFiscal(
+  config: Omit<ConfiguracaoFiscalLoja, "id" | "atualizado_em">,
+): Promise<void> {
+  const { error } = await supabase
+    .from("configuracoes_fiscais_loja")
+    .upsert({ id: 1, ...config, atualizado_em: new Date().toISOString() }, { onConflict: "id" });
 
   if (error) throw error;
 }

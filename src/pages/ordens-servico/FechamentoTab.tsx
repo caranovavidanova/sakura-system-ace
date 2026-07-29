@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { buscarTextoGarantia } from "@/lib/configuracoes";
+import { buscarConfiguracaoFiscal, buscarTextoGarantia } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
+import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { OrdemServico } from "@/types/os";
 import { totalOrdem } from "@/types/os";
 
@@ -28,7 +29,10 @@ function formatarMoeda(valor: number): string {
 export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const itens = ordem.itens ?? [];
   const [templateGarantia, setTemplateGarantia] = useState("");
-  const [previewNF, setPreviewNF] = useState<"NFe" | "NFS-e" | null>(null);
+  const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(
+    null,
+  );
+  const [previewNF, setPreviewNF] = useState<"NFC-e" | "NFS-e" | null>(null);
   const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
 
   useEffect(() => {
@@ -38,9 +42,16 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
       } catch (err) {
         console.error("Erro ao carregar texto de garantia:", err);
       }
+      try {
+        setConfiguracaoFiscal(await buscarConfiguracaoFiscal());
+      } catch (err) {
+        console.error("Erro ao carregar dados fiscais da loja:", err);
+      }
     }
     carregar();
   }, []);
+
+  const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_token);
 
   const textoGarantia = useMemo(
     () => (templateGarantia ? montarTextoGarantia(templateGarantia, ordem) : ""),
@@ -134,10 +145,10 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setPreviewNF("NFe")}
+              onClick={() => setPreviewNF("NFC-e")}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
             >
-              Emitir NFe
+              Emitir NFC-e
             </button>
             <button
               type="button"
@@ -197,10 +208,20 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
             </p>
 
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Isto é só uma pré-visualização com os dados da OS — a emissão de {previewNF} ainda
-              não está disponível de verdade. Falta escolher o provedor fiscal (Focus NFe, eNotas,
-              PlugNotas ou similar) e cadastrar os dados fiscais da loja (CNPJ, razão social, IE/IM,
-              regime tributário).
+              {focusNfeConfigurado ? (
+                <>
+                  Isto é só uma pré-visualização com os dados da OS — a emissão de {previewNF}{" "}
+                  via Focus NFe ainda não está disponível de verdade. Os dados fiscais da loja já
+                  estão cadastrados, mas a integração ainda precisa ser testada e concluída antes
+                  de emitir de verdade.
+                </>
+              ) : (
+                <>
+                  Isto é só uma pré-visualização com os dados da OS — a emissão de {previewNF}{" "}
+                  ainda não está disponível de verdade. Falta cadastrar o token do Focus NFe (e os
+                  dados fiscais da loja) em Configurações → "Dados fiscais da loja".
+                </>
+              )}
             </p>
           </div>
 

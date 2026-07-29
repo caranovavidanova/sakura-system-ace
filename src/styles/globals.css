@@ -55,42 +55,50 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(31%) sepia(11%) saturate(1252%) hue-rotate(272deg) brightness(92%) contrast(87%);
 }
 
-/* Barra de rolagem discreta, na estética do app — sem isso o Electron usa a
-   barra padrão do Windows (grossa, cinza), que destoa do resto da interface. */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(110, 77, 104, 0.35) transparent;
-}
+/* Barra de rolagem nativa discreta — usada só como reforço/fallback nos
+   poucos lugares que ainda não usam o componente <AreaRolavel> (ex: Modal.tsx,
+   de propósito, ver PROJETO_STATUS.md seção 2). Precisa ficar dentro de
+   "@layer base": como é CSS puro (fora de @layer), sem isso ela teria
+   prioridade MAIOR que as classes do Tailwind que a AreaRolavel usa pra
+   esconder essa mesma barra nativa (CSS "sem camada" sempre vence CSS "em
+   camada", não importa a especificidade) — causava a barra customizada
+   arredondada e a nativa aparecerem sobrepostas ao mesmo tempo. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(110, 77, 104, 0.35) transparent;
+  }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
 
-/* Sem as setinhas de subir/descer nas pontas — não combinam com o resto da
-   interface, que não usa esse tipo de botão em nenhum outro lugar. */
-::-webkit-scrollbar-button {
-  display: none;
-  width: 0;
-  height: 0;
-}
+  /* Sem as setinhas de subir/descer nas pontas — não combinam com o resto da
+     interface, que não usa esse tipo de botão em nenhum outro lugar. */
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-  /* Afasta a barra um pouco do topo/base — sem isso ela encostava bem na
-     quina arredondada dos blocos (sakura-card) e parecia "vazar" pra fora. */
-  margin-block: 10px;
-}
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    /* Afasta a barra um pouco do topo/base — sem isso ela encostava bem na
+       quina arredondada dos blocos (sakura-card) e parecia "vazar" pra fora. */
+    margin-block: 10px;
+  }
 
-::-webkit-scrollbar-thumb {
-  background-color: rgba(110, 77, 104, 0.4);
-  border-radius: 9999px;
-  border: 3px solid transparent;
-  background-clip: padding-box;
-}
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(110, 77, 104, 0.4);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(110, 77, 104, 0.6);
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(110, 77, 104, 0.6);
+  }
 }
 
 /* Fundo rosa "flutuante" do app inteiro — os blocos (sakura-card) boiam por

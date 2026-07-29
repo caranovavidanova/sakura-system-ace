@@ -287,6 +287,17 @@ entrada em `caixa_movimentos` com o valor total da OS. Garantia dada ao cliente 
     duas telas, mais uma mensagem amigável específica pro caso de OS vinculada (em vez do erro cru do
     Postgres). **Se um botão de "Excluir"/ação parecer não fazer nada em alguma tela nova, confirmar
     que a função tem `try/catch` chamando `setErro(mensagemDeErro(err))` — é fácil esquecer.**
+13. **Bug real de migration não idempotente, achado pela usuária rodando de verdade**: a migration
+    `0015_rls_exige_login.sql` dropava a policy **antiga** (`..._acesso_temporario`) antes de criar a
+    nova (`..._acesso_autenticados`), mas nunca dropava a policy **nova** antes de recriá-la. Rodar a
+    migration uma segunda vez (ex: depois de uma tentativa que falhou no meio, ou por engano) dava
+    `ERROR: 42710: policy "..._acesso_autenticados" for table "..." already exists` a partir da
+    primeira tabela cuja policy nova já existia — travando o resto do script. **Corrigido**
+    adicionando `drop policy if exists "..._acesso_autenticados" on ...` antes de cada `create policy`
+    nas 9 tabelas do arquivo. **Esse é o padrão a seguir em toda migration que reafirma "idempotente,
+    seguro rodar de novo" no comentário**: sempre dropar o nome **final** da policy antes de criar,
+    não só o nome antigo que ela está substituindo (as migrations 0016/0017, escritas do zero já
+    seguindo esse padrão, não tinham esse problema).
 
 ## 7. O que já está pronto e validado (pelo usuário, rodando de verdade)
 

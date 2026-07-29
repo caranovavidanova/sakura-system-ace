@@ -45,15 +45,7 @@ export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSe
   }
 
   return (
-    <div className="sakura-card p-6">
-      <h2 className="text-sm font-semibold text-sakura-purple-dark">
-        Juros de parcelamento
-      </h2>
-      <p className="mt-1 text-xs text-sakura-gray">
-        % de juros cobrado sobre o total quando o cliente parcela no cartão de crédito, na
-        hora de faturar uma Ordem de Serviço. 1x é sempre à vista, sem juros.
-      </p>
-
+    <>
       {erro && (
         <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
       )}
@@ -94,6 +86,6 @@ export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSe
           {salvando ? "Salvando..." : "Salvar juros"}
         </button>
       </div>
-    </div>
+    </>
   );
 }

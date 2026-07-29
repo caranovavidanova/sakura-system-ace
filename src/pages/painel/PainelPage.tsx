@@ -6,9 +6,14 @@ import { feriadosNacionais } from "@/lib/feriados";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarMovimentosCaixa } from "@/lib/caixa";
 import { listarClientes } from "@/lib/clientes";
+import { listarContasPagar } from "@/lib/contasPagar";
+import { buscarConfiguracaoPainelInicio } from "@/lib/configuracoes";
 import { listarOrdens } from "@/lib/ordensServico";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { CARTOES_INICIO_PADRAO } from "@/types/configuracao";
+import type { CartaoMetrica } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
+import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
 import type { OrdemServico } from "@/types/os";
 
@@ -23,10 +28,28 @@ const statusLabel: Record<string, string> = {
   faturada: "Faturada",
 };
 
+const TITULO_CARTAO: Record<CartaoMetrica, string> = {
+  vendas_mes: "Vendas mês",
+  custos_mes: "Custos mês",
+  lucro_mes: "Lucros mês",
+  ticket_medio_mes: "Ticket médio",
+  contas_pagar_vencendo: "Contas a pagar vencendo",
+};
+
+const COR_CARTAO: Record<CartaoMetrica, string> = {
+  vendas_mes: "#B38DAC",
+  custos_mes: "#C7C7C7",
+  lucro_mes: "#6E4D68",
+  ticket_medio_mes: "#7A9CC6",
+  contas_pagar_vencendo: "#D99A4E",
+};
+
 export function PainelPage() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [contas, setContas] = useState<ContaPagar[]>([]);
+  const [cartoesConfig, setCartoesConfig] = useState<CartaoMetrica[]>(CARTOES_INICIO_PADRAO);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -37,11 +60,19 @@ export function PainelPage() {
         return;
       }
       try {
-        const [movimentosCarregados, ordensCarregadas, clientesCarregados] =
-          await Promise.all([listarMovimentosCaixa(), listarOrdens(), listarClientes()]);
+        const [movimentosCarregados, ordensCarregadas, clientesCarregados, contasCarregadas, cartoesCarregados] =
+          await Promise.all([
+            listarMovimentosCaixa(),
+            listarOrdens(),
+            listarClientes(),
+            listarContasPagar(),
+            buscarConfiguracaoPainelInicio(),
+          ]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
         setClientes(clientesCarregados);
+        setContas(contasCarregadas);
+        setCartoesConfig(cartoesCarregados);
       } catch (err) {
         console.error("Erro ao carregar painel:", err);
         setErro(mensagemDeErro(err));
@@ -57,31 +88,67 @@ export function PainelPage() {
   const mes = hoje.getMonth();
   const inicioMesAtual = new Date(ano, mes, 1);
   const diaDeHoje = hoje.getDate();
+  const totalDiasNoMes = new Date(ano, mes + 1, 0).getDate();
 
-  const { vendasPorDia, custosPorDia, vendasMes, custosMes } = useMemo(() => {
-    const vendas = Array(diaDeHoje).fill(0);
-    const custos = Array(diaDeHoje).fill(0);
+  const { vendasPorDia, custosPorDia, vendasMes, custosMes, ticketMedioPorDia, ticketMedioMes } =
+    useMemo(() => {
+      const vendas = Array(diaDeHoje).fill(0);
+      const custos = Array(diaDeHoje).fill(0);
+      const somaTicket = Array(diaDeHoje).fill(0);
+      const qtdTicket = Array(diaDeHoje).fill(0);
 
-    for (const movimento of movimentos) {
-      const dataMovimento = new Date(movimento.data);
-      if (dataMovimento < inicioMesAtual) continue;
-      const dia = dataMovimento.getDate();
-      if (dia > diaDeHoje) continue;
-      const alvo = movimento.tipo === "entrada" ? vendas : custos;
-      alvo[dia - 1] += movimento.valor;
-    }
+      for (const movimento of movimentos) {
+        const dataMovimento = new Date(movimento.data);
+        if (dataMovimento < inicioMesAtual) continue;
+        const dia = dataMovimento.getDate();
+        if (dia > diaDeHoje) continue;
+        const alvo = movimento.tipo === "entrada" ? vendas : custos;
+        alvo[dia - 1] += movimento.valor;
 
-    return {
-      vendasPorDia: vendas,
-      custosPorDia: custos,
-      vendasMes: vendas.reduce((total, v) => total + v, 0),
-      custosMes: custos.reduce((total, v) => total + v, 0),
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movimentos, diaDeHoje]);
+        if (movimento.tipo === "entrada" && movimento.ordem_servico_id) {
+          somaTicket[dia - 1] += movimento.valor;
+          qtdTicket[dia - 1] += 1;
+        }
+      }
+
+      const ticketPorDia = somaTicket.map((soma, i) => (qtdTicket[i] > 0 ? soma / qtdTicket[i] : 0));
+      const somaTicketMes = somaTicket.reduce((total, v) => total + v, 0);
+      const qtdTicketMes = qtdTicket.reduce((total, v) => total + v, 0);
+
+      return {
+        vendasPorDia: vendas,
+        custosPorDia: custos,
+        vendasMes: vendas.reduce((total, v) => total + v, 0),
+        custosMes: custos.reduce((total, v) => total + v, 0),
+        ticketMedioPorDia: ticketPorDia,
+        ticketMedioMes: qtdTicketMes > 0 ? somaTicketMes / qtdTicketMes : 0,
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [movimentos, diaDeHoje]);
 
   const lucrosPorDia = vendasPorDia.map((v, i) => v - custosPorDia[i]);
   const lucrosMes = vendasMes - custosMes;
+
+  const { contasPorDia, contasVencendoMes } = useMemo(() => {
+    const porDia = Array(totalDiasNoMes).fill(0);
+    let total = 0;
+    for (const conta of contas) {
+      if (conta.status !== "pendente") continue;
+      const [anoVencimento, mesVencimento, diaVencimento] = conta.vencimento.split("-").map(Number);
+      if (anoVencimento !== ano || mesVencimento - 1 !== mes) continue;
+      porDia[diaVencimento - 1] += conta.valor;
+      total += conta.valor;
+    }
+    return { contasPorDia: porDia, contasVencendoMes: total };
+  }, [contas, ano, mes, totalDiasNoMes]);
+
+  const valoresPorMetrica: Record<CartaoMetrica, { valor: string; valores: number[] }> = {
+    vendas_mes: { valor: formatarMoeda(vendasMes), valores: vendasPorDia },
+    custos_mes: { valor: formatarMoeda(custosMes), valores: custosPorDia },
+    lucro_mes: { valor: formatarMoeda(lucrosMes), valores: lucrosPorDia },
+    ticket_medio_mes: { valor: formatarMoeda(ticketMedioMes), valores: ticketMedioPorDia },
+    contas_pagar_vencendo: { valor: formatarMoeda(contasVencendoMes), valores: contasPorDia },
+  };
 
   const filaDeAtendimento = ordens
     .filter((o) => o.status === "aberta" || o.status === "em_andamento")
@@ -107,8 +174,26 @@ export function PainelPage() {
       })
       .filter((e): e is NonNullable<typeof e> => e !== null);
 
-    return [...feriados, ...aniversarios];
-  }, [ano, mes, clientes]);
+    const contasDoMes = contas
+      .filter((c) => c.status === "pendente")
+      .map((c) => {
+        const [anoVencimento, mesVencimento, diaVencimento] = c.vencimento.split("-").map(Number);
+        if (anoVencimento !== ano || mesVencimento - 1 !== mes) return null;
+        const vencida = new Date(c.vencimento) < new Date(ano, mes, hoje.getDate());
+        const tipo: "conta_vencida" | "conta_a_vencer" = vencida
+          ? "conta_vencida"
+          : "conta_a_vencer";
+        return {
+          dia: diaVencimento,
+          tipo,
+          nome: `${vencida ? "Venceu" : "Vence"}: ${c.descricao} (${formatarMoeda(c.valor)})`,
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
+
+    return [...feriados, ...aniversarios, ...contasDoMes];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ano, mes, clientes, contas]);
 
   return (
     <div className="space-y-6">
@@ -134,24 +219,15 @@ export function PainelPage() {
       ) : (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <CartaoTendencia
-              titulo="Vendas mês"
-              valor={formatarMoeda(vendasMes)}
-              valores={vendasPorDia}
-              cor="#B38DAC"
-            />
-            <CartaoTendencia
-              titulo="Custos mês"
-              valor={formatarMoeda(custosMes)}
-              valores={custosPorDia}
-              cor="#C7C7C7"
-            />
-            <CartaoTendencia
-              titulo="Lucros mês"
-              valor={formatarMoeda(lucrosMes)}
-              valores={lucrosPorDia}
-              cor="#6E4D68"
-            />
+            {cartoesConfig.map((chave) => (
+              <CartaoTendencia
+                key={chave}
+                titulo={TITULO_CARTAO[chave]}
+                valor={valoresPorMetrica[chave].valor}
+                valores={valoresPorMetrica[chave].valores}
+                cor={COR_CARTAO[chave]}
+              />
+            ))}
           </div>
 
           <div className="flex justify-center">
@@ -159,7 +235,7 @@ export function PainelPage() {
               to="/relatorios"
               className="rounded-full bg-white/50 px-5 py-2 text-xs font-medium text-sakura-purple-dark hover:bg-white/70"
             >
-              Ver relatórios completos →
+              Ver relações completas →
             </Link>
           </div>
 

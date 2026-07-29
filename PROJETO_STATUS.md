@@ -125,7 +125,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7)
+│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7), SecaoRecolhivel.tsx (bloco "acordeão" recolhível, usado em Configurações), GraficoBarras.tsx e GraficoRadar.tsx (gráficos SVG puros, sem lib externa, usados em Relações — ver seção 7)
 │   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia + dados fiscais da loja) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS) + garantiaDocumento.ts (monta o HTML estruturado da garantia, ver seção 7) + notaFiscalXml.ts (interpreta XML de NFe/NFCe/NFS-e e monta o recibo HTML "versão para o cliente", ver seção 7) + focusNfe.ts (casca da integração com a API do Focus NFe — auth + URLs por ambiente, emissão em si ainda não implementada, ver seção 7 e 8)
 │   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, contas-pagar, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
@@ -307,6 +307,12 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   (mesmo valor, vencimento um mês depois) sozinha. **Sem "desfazer pagamento"** pelo app ainda — se
   marcar uma conta como paga por engano, precisa corrigir direto no Supabase (excluir a Saída em
   `caixa_movimentos` e voltar o `status` da conta pra `pendente` manualmente).
+- **`configuracoes_painel_inicio`** (migration 0026): tabela "singleton" (1 linha só, `id` fixo em 1)
+  com `cartoes` (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência
+  da tela Início (ex: `vendas_mes`, `ticket_medio_mes`, `contas_pagar_vencendo`). Ajuste único pra
+  loja inteira (não por operador), editável só pelo admin em Configurações → "Cartões do Início"
+  (`CartoesInicioSection.tsx`). As 5 chaves possíveis e seus rótulos ficam em
+  `CARTAO_METRICA_LABEL` (`types/configuracao.ts`).
 
 Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -1015,6 +1021,54 @@ página, separado da própria lista de operadores. Mudança só de JSX/CSS, **se
   como bloco próprio com o botão junto, sem erro no console (sandbox não acessa `*.supabase.co`, ver
   item 7 da seção 6).
 
+**⏳ Implementado nesta sessão (módulo "Relatórios" virou "Relações" com gráficos, e cartões do
+Início personalizáveis), mergeado em `main` via PR [#46](https://github.com/caranovavidanova/amigao/pull/46), ainda sem confirmação da
+usuária rodando com Supabase real** — pedido da usuária: renomear "Relatórios" pra "Relações",
+mostrar gráficos comparando vendas/custos/lucro (ela pediu algo "estilo estatísticas de League of
+Legends"), tornar os 3 cartões de tendência do Início personalizáveis, e mostrar contas a pagar
+vencendo no calendário do Início. Antes de codar, apresentei 4 perguntas de escopo (estilo de
+gráfico, quais métricas comparar, se a personalização dos cartões é por operador ou única pra loja,
+quais indicadores ficam disponíveis) — ela escolheu: **barras + radar** (os dois estilos), só
+**Vendas x Custos x Lucro** como comparação, cartões **únicos pra loja inteira** (não por
+operador), e o pool de métricas **Vendas/Custos/Lucro (já existentes) + Ticket médio + Contas a
+pagar vencendo**. Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e
+screenshots do Electron real (`xvfb-run` + Playwright `_electron.launch`) com dados simulados via
+`page.route()`, incluindo hover nos tooltips do gráfico de barras e do radar, troca de período
+(Diário/Semanal/Mensal), e a seção nova de Configurações com métricas não-padrão selecionadas — tudo
+sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **"Relatórios" virou "Relações"** — só o label em `MODULOS` (`src/types/operador.ts`) mudou; a
+  chave interna continua `relatorios` e a rota `/relatorios`, então operadores já cadastrados não
+  precisam ser reconfigurados.
+- **Componentes novos de gráfico, sem biblioteca externa** (mesmo padrão do `Sparkline.tsx` — SVG
+  puro): `src/components/GraficoBarras.tsx` (barras agrupadas por período, com legenda e tooltip ao
+  passar o mouse) e `src/components/GraficoRadar.tsx` (radar/teia com N eixos, comparando "este
+  período" vs. "período anterior", também com tooltip). Antes de escrever os gráficos, consultei a
+  skill `dataviz` do projeto e validei a paleta categórica com o script de validação dela — as cores
+  antigas do Início (`#B38DAC`/`#C7C7C7`/`#6E4D68`) não passavam como paleta categórica de 3 séries
+  simultâneas (falha de contraste/croma), então os gráficos de Relações usam uma paleta nova
+  validada (verde `#1baf7a` Vendas, laranja `#eb6834` Custos, violeta `#4a3aa7` Lucro) — os cartões
+  do Início continuam com as cores antigas, que funcionam bem porque cada cartão mostra uma série
+  sozinha (não precisa de distinção categórica).
+- **`RelatoriosPage.tsx`**: seletor de período (Diário/Semanal/Mensal) controlando os agrupamentos
+  do gráfico de barras (Vendas x Custos x Lucro, evolução no tempo) e do radar (comparando o último
+  período com o anterior — ex: hoje vs. ontem, esta semana vs. a passada, este mês vs. o passado).
+  Mantidos os 3 cards de resumo (Vendas hoje/semana/mês) e a tabela "Vendas por dia" de antes.
+- **Cartões do Início personalizáveis** (migration `0026_configuracoes_painel_inicio.sql` — tabela
+  "singleton", mesmo padrão de `configuracoes_garantia`): admin escolhe em Configurações → "Cartões
+  do Início" (`CartoesInicioSection.tsx`, 3 selects) quais 3 indicadores aparecem nos cartões de
+  tendência — pool de 5 opções: Vendas/Custos/Lucro do mês (os 3 de sempre), **Ticket médio do mês**
+  (faturamento de OS ÷ número de OS faturadas, novo) e **Contas a pagar vencendo** (soma das contas
+  pendentes com vencimento no mês, novo — usa `contas_pagar`). Ajuste único pra loja inteira, não por
+  operador (decisão explícita da usuária). `PainelPage.tsx` renderiza os 3 cartões conforme essa
+  configuração, com fallback pros 3 de sempre se a tabela ainda não tiver sido criada/configurada.
+- **Calendário do Início mostra contas a pagar vencendo** (`MiniCalendario.tsx` ganhou dois tipos de
+  evento novos: `conta_a_vencer` — bolinha laranja — e `conta_vencida` — bolinha vermelha, pra contas
+  ainda pendentes cujo vencimento já passou). `PainelPage.tsx` busca as contas pendentes do mês e
+  inclui no calendário junto com feriados/aniversários, com texto "Vence: ..." ou "Venceu: ..." na
+  lista abaixo do calendário.
+- Migration **0026 ainda não foi rodada pela usuária** — ver tutorial novo na seção 9.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -1250,6 +1304,33 @@ A migration 0024 (dados fiscais da loja) **já foi rodada** pela usuária nesta 
    - **Ordem de Serviço concluída/faturada → aba Fechamento**: clique em "Ver garantia" — o documento
      deve vir com cabeçalho da loja, dados do cliente/veículo, tabela de itens e assinaturas (layout
      novo, parecido com o papel da Pneus Amigão). Teste "Baixar HTML" e "Imprimir".
+
+Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+
+### Tutorial: pegar a versão nova (migration 0026 — Cartões do Início) e rodar
+
+1. Feche o app se estiver aberto.
+2. No terminal, dentro da pasta `sakura-system-autocenter`:
+   ```powershell
+   git checkout main
+   git pull origin main
+   ```
+3. **Rode a migration nova no Supabase** (SQL Editor do Supabase — abra o arquivo no VS Code, copie
+   todo o conteúdo, cole numa "New query" e clique em "Run"):
+   - `supabase/migrations/0026_configuracoes_painel_inicio.sql` — cria a tabela
+     `configuracoes_painel_inicio`.
+4. `npm install && npm run dev`.
+5. O que testar:
+   - **Menu lateral**: o item que era "Relatórios" agora aparece como "Relações".
+   - **Relações**: confira o gráfico de barras "Vendas x Custos x Lucro" (alterne entre
+     Diário/Semanal/Mensal) e o gráfico de radar logo abaixo ("Comparativo do período"). Passe o
+     mouse sobre uma barra ou um ponto do radar pra ver o valor exato.
+   - **Configurações → "Cartões do Início"**: escolha indicadores diferentes pros 3 cartões (ex:
+     troque "Custos mês" por "Ticket médio do mês") e salve — confira que a tela Início reflete a
+     escolha.
+   - **Início**: confira o calendário do mês — se você tiver alguma conta a pagar pendente com
+     vencimento nesse mês, deve aparecer uma bolinha laranja (ainda não venceu) ou vermelha (já
+     venceu) no dia certo, com o nome da conta na lista abaixo do calendário.
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 

@@ -1,6 +1,6 @@
 interface EventoCalendario {
   dia: number;
-  tipo: "feriado" | "aniversario";
+  tipo: "feriado" | "aniversario" | "conta_a_vencer" | "conta_vencida";
   nome: string;
 }
 
@@ -61,6 +61,8 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
           const eventosDoDia = eventosPorDia.get(dia) ?? [];
           const feriado = eventosDoDia.find((e) => e.tipo === "feriado");
           const aniversario = eventosDoDia.find((e) => e.tipo === "aniversario");
+          const contaVencida = eventosDoDia.find((e) => e.tipo === "conta_vencida");
+          const contaAVencer = eventosDoDia.find((e) => e.tipo === "conta_a_vencer");
           const ehHoje = ehMesAtual && hoje.getDate() === dia;
 
           return (
@@ -72,13 +74,19 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
               } ${feriado && !ehHoje ? "bg-sakura-pink-soft" : ""}`}
             >
               <span>{dia}</span>
-              {(feriado || aniversario) && (
+              {(feriado || aniversario || contaVencida || contaAVencer) && (
                 <span className="flex gap-0.5">
                   {feriado && (
                     <span className="h-1.5 w-1.5 rounded-full bg-sakura-purple" />
                   )}
                   {aniversario && (
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  )}
+                  {contaAVencer && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+                  )}
+                  {contaVencida && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                   )}
                 </span>
               )}

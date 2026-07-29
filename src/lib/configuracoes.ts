@@ -1,5 +1,12 @@
 import { supabase } from "./supabase";
-import type { ConfiguracaoFiscalLoja, ConfiguracaoGarantia, JurosParcela } from "@/types/configuracao";
+import { CARTOES_INICIO_PADRAO } from "@/types/configuracao";
+import type {
+  CartaoMetrica,
+  ConfiguracaoFiscalLoja,
+  ConfiguracaoGarantia,
+  ConfiguracaoPainelInicio,
+  JurosParcela,
+} from "@/types/configuracao";
 
 export async function listarJurosParcelas(): Promise<JurosParcela[]> {
   const { data, error } = await supabase
@@ -47,6 +54,27 @@ export async function buscarConfiguracaoFiscal(): Promise<ConfiguracaoFiscalLoja
 
   if (error) throw error;
   return data as ConfiguracaoFiscalLoja | null;
+}
+
+export async function buscarConfiguracaoPainelInicio(): Promise<CartaoMetrica[]> {
+  const { data, error } = await supabase
+    .from("configuracoes_painel_inicio")
+    .select("cartoes")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as ConfiguracaoPainelInicio | null)?.cartoes ?? CARTOES_INICIO_PADRAO;
+}
+
+export async function salvarConfiguracaoPainelInicio(
+  cartoes: CartaoMetrica[],
+): Promise<void> {
+  const { error } = await supabase
+    .from("configuracoes_painel_inicio")
+    .upsert({ id: 1, cartoes }, { onConflict: "id" });
+
+  if (error) throw error;
 }
 
 export async function salvarConfiguracaoFiscal(

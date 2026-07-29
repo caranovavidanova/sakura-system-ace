@@ -975,10 +975,16 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
 - PR [#28](https://github.com/caranovavidanova/amigao/pull/28): preview antes de emitir NFe/NFS-e
   ou baixar/imprimir garantia (`Modal.tsx` novo, `FechamentoTab.tsx`) — ver seção 7. Mergeado nesta
   mesma sessão, sem mudança de schema.
-- **Tag `v0.1.2` publicada nesta sessão**, a pedido da usuária ("upa o instalador") — dispara o
-  build do instalador Windows no GitHub Actions. Inclui tudo dos PRs #19 a #28 (correções pós-v0.1.1,
-  botão voltar, Categorias/Relatórios de estoque/Garantias/Contagem, correção da migration 0015,
-  texto de garantia configurável, preview de NF/garantia).
+- **Tag `v0.1.2` ainda NÃO publicada** — a usuária pediu pra publicar o instalador ("upa o
+  instalador") nesta sessão, mas o ambiente de sandbox onde o Claude roda **não tem permissão de
+  push direto pra `main`/tags no GitHub** (só pra branches de feature via PR — deu erro `403` ao
+  tentar `git push origin v0.1.2`). `package.json` já está em `"version": "0.1.2"` e tudo mergeado
+  em `main` (PRs #19 a #28: correções pós-v0.1.1, botão voltar, Categorias/Relatórios de
+  estoque/Garantias/Contagem, correção da migration 0015, texto de garantia configurável, preview de
+  NF/garantia) — **falta só a usuária rodar no terminal dela**: `git checkout main && git pull
+  origin main && git tag v0.1.2 && git push origin v0.1.2` (ver tutorial na seção 9). **Sessões
+  futuras: não tentar dar `git push` de tags/direto em `main` a partir do sandbox — vai falhar com
+  403 da mesma forma; esse passo é sempre da usuária.**
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

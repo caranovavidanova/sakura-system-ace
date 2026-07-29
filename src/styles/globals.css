@@ -41,6 +41,20 @@ textarea {
   color: var(--color-sakura-purple-dark);
 }
 
+/* Checkbox/rádio nativos com a cor da paleta em vez do azul padrão do
+   Windows/Chromium — outro elemento que "denunciava" ser um componente do
+   sistema, não do app. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-sakura-purple);
+}
+
+/* Ícone de calendário do input de data, também na paleta (o resto do campo
+   já respeita a cor do app; só esse ícone que o navegador desenha sozinho). */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(31%) sepia(11%) saturate(1252%) hue-rotate(272deg) brightness(92%) contrast(87%);
+}
+
 /* Barra de rolagem discreta, na estética do app — sem isso o Electron usa a
    barra padrão do Windows (grossa, cinza), que destoa do resto da interface. */
 * {
@@ -53,19 +67,30 @@ textarea {
   height: 10px;
 }
 
+/* Sem as setinhas de subir/descer nas pontas — não combinam com o resto da
+   interface, que não usa esse tipo de botão em nenhum outro lugar. */
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 ::-webkit-scrollbar-track {
   background: transparent;
+  /* Afasta a barra um pouco do topo/base — sem isso ela encostava bem na
+     quina arredondada dos blocos (sakura-card) e parecia "vazar" pra fora. */
+  margin-block: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(110, 77, 104, 0.35);
+  background-color: rgba(110, 77, 104, 0.4);
   border-radius: 9999px;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(110, 77, 104, 0.55);
+  background-color: rgba(110, 77, 104, 0.6);
 }
 
 /* Fundo rosa "flutuante" do app inteiro — os blocos (sakura-card) boiam por

@@ -6,6 +6,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ## [Não lançado]
 
 ### Adicionado
+- Pré-visualização antes de emitir NFe/NFS-e ou baixar/imprimir a garantia, na aba Fechamento da Ordem de Serviço.
+- Texto de garantia configurável em Configurações, usado pelos botões "Imprimir garantia"/"Baixar garantia".
 - Categorias de produto: cadastro em Configurações, selecionável no cadastro de produto.
 - Estoque → aba "Relatórios": estoque físico-financeiro, saldo por situação (positivo/negativo/zerado) e produtos sem movimentação.
 - Estoque → aba "Contagem": inventário físico com ajuste automático de estoque quando há diferença.

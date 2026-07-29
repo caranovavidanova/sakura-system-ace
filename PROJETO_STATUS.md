@@ -93,7 +93,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
+│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia)
 │   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts, categorias.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
 │   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, caixa, relatorios, lucratividade, garantias, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
@@ -695,6 +695,18 @@ item 7 da seção 6):
   - Se o admin ainda não configurou nenhum texto (ex: migration 0018 não rodada ainda), os botões
     mostram um aviso pedindo pra configurar em Configurações, em vez de travar.
 
+**⏳ Implementado e mergeado em `main` nesta sessão (PR [#28](https://github.com/caranovavidanova/amigao/pull/28)), ainda sem confirmação da usuária rodando com Supabase real** — pré-visualização antes de emitir NFe/NFS-e ou baixar/imprimir a garantia, a pedido explícito da usuária ("queria que as telas de NF e garantia tivesse um preview antes de baixar emitir"). Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots Playwright, incluindo clicar de verdade em "Baixar .txt" dentro do preview sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **`src/components/Modal.tsx`** — modal genérico novo (fundo escurecido, `sakura-card` centralizado, fecha
+  clicando fora ou no ✕), reutilizável por qualquer tela que precisar de um popup no futuro.
+- **Nota fiscal**: os botões "Emitir NFe"/"Emitir NFS-e" agora abrem um preview com cliente, veículo,
+  itens e total (mesmos dados já mostrados na aba, só reorganizados como um "rascunho" de nota) mais um
+  aviso de que a emissão de verdade ainda depende de escolher o provedor fiscal e cadastrar os dados
+  fiscais da loja — não há mais o `alert()` cru de antes.
+- **Garantia**: os dois botões "Imprimir garantia"/"Baixar garantia" viraram **um botão só** ("Ver
+  garantia") que abre o preview com o texto já formatado (placeholders substituídos); os botões
+  "Baixar .txt" e "Imprimir" ficam dentro do preview, então a usuária sempre vê o texto antes de agir.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -960,6 +972,13 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   da OS deixaram de ser placeholder) — ver seção 7. Mergeado nesta mesma sessão, ainda sem
   confirmação da usuária rodando com Supabase real (migrations 0016/0017/0018 pendentes de rodar —
   ver tutorial na seção 9).
+- PR [#28](https://github.com/caranovavidanova/amigao/pull/28): preview antes de emitir NFe/NFS-e
+  ou baixar/imprimir garantia (`Modal.tsx` novo, `FechamentoTab.tsx`) — ver seção 7. Mergeado nesta
+  mesma sessão, sem mudança de schema.
+- **Tag `v0.1.2` publicada nesta sessão**, a pedido da usuária ("upa o instalador") — dispara o
+  build do instalador Windows no GitHub Actions. Inclui tudo dos PRs #19 a #28 (correções pós-v0.1.1,
+  botão voltar, Categorias/Relatórios de estoque/Garantias/Contagem, correção da migration 0015,
+  texto de garantia configurável, preview de NF/garantia).
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

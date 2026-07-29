@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Modal } from "@/components/Modal";
 import { buscarTextoGarantia } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
@@ -20,17 +21,15 @@ function formatarData(iso: string | null | undefined): string {
   });
 }
 
-function emitirPlaceholderFiscal(tipo: "NFe" | "NFS-e") {
-  alert(
-    `Emissão de ${tipo} ainda não está disponível — falta escolher o provedor fiscal ` +
-      "(Focus NFe, eNotas, PlugNotas ou similar) e, no caso da NFS-e, confirmar o " +
-      "município da loja. Assim que essa decisão for tomada, este botão passa a emitir de verdade.",
-  );
+function formatarMoeda(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const itens = ordem.itens ?? [];
   const [templateGarantia, setTemplateGarantia] = useState("");
+  const [previewNF, setPreviewNF] = useState<"NFe" | "NFS-e" | null>(null);
+  const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -120,17 +119,12 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
                 {item.tipo === "peca" ? "Peça" : "Serviço"} — {item.descricao} (
                 {item.quantidade}x){item.tecnico?.nome ? ` · técnico: ${item.tecnico.nome}` : ""}
               </span>
-              <span>
-                {(item.quantidade * item.preco_unitario - item.desconto).toLocaleString(
-                  "pt-BR",
-                  { style: "currency", currency: "BRL" },
-                )}
-              </span>
+              <span>{formatarMoeda(item.quantidade * item.preco_unitario - item.desconto)}</span>
             </div>
           ))}
         </div>
         <p className="mt-3 text-right text-sm font-semibold text-sakura-purple-dark">
-          Total geral: {totalOrdem(itens).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          Total geral: {formatarMoeda(totalOrdem(itens))}
         </p>
       </section>
 
@@ -140,14 +134,14 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => emitirPlaceholderFiscal("NFe")}
+              onClick={() => setPreviewNF("NFe")}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
             >
               Emitir NFe
             </button>
             <button
               type="button"
-              onClick={() => emitirPlaceholderFiscal("NFS-e")}
+              onClick={() => setPreviewNF("NFS-e")}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
             >
               Emitir NFS-e
@@ -157,24 +151,111 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
 
         <div className="space-y-2">
           <p className="text-xs font-medium text-sakura-purple-dark/60">Garantia</p>
-          <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPreviewGarantiaAberta(true)}
+            className="w-full rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
+          >
+            Ver garantia
+          </button>
+        </div>
+      </section>
+
+      {previewNF && (
+        <Modal titulo={`Pré-visualização — ${previewNF}`} onFechar={() => setPreviewNF(null)}>
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 rounded-lg bg-sakura-pink-soft/60 p-3">
+              <div>
+                <p className="text-xs text-sakura-purple-dark/60">Cliente</p>
+                <p className="font-medium text-sakura-purple-dark">
+                  {ordem.cliente?.nome ?? "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-sakura-purple-dark/60">Veículo</p>
+                <p className="font-medium text-sakura-purple-dark">
+                  {ordem.veiculo?.placa ?? "—"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              {itens.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between text-sakura-purple-dark/80"
+                >
+                  <span>
+                    {item.descricao} ({item.quantidade}x)
+                  </span>
+                  <span>{formatarMoeda(item.quantidade * item.preco_unitario - item.desconto)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-right font-semibold text-sakura-purple-dark">
+              Total: {formatarMoeda(totalOrdem(itens))}
+            </p>
+
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Isto é só uma pré-visualização com os dados da OS — a emissão de {previewNF} ainda
+              não está disponível de verdade. Falta escolher o provedor fiscal (Focus NFe, eNotas,
+              PlugNotas ou similar) e cadastrar os dados fiscais da loja (CNPJ, razão social, IE/IM,
+              regime tributário).
+            </p>
+          </div>
+
+          <div className="mt-4 flex justify-end">
             <button
               type="button"
-              onClick={handleImprimirGarantia}
-              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
+              onClick={() => setPreviewNF(null)}
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
             >
-              Imprimir garantia
+              Entendi
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {previewGarantiaAberta && (
+        <Modal titulo="Pré-visualização da garantia" onFechar={() => setPreviewGarantiaAberta(false)}>
+          {textoGarantia ? (
+            <pre className="max-h-96 overflow-y-auto rounded-lg bg-sakura-pink-soft/60 p-3 text-sm whitespace-pre-wrap text-sakura-purple-dark">
+              {textoGarantia}
+            </pre>
+          ) : (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Configure o texto de garantia em Configurações (seção "Texto de garantia") antes de
+              imprimir ou baixar.
+            </p>
+          )}
+
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setPreviewGarantiaAberta(false)}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+            >
+              Fechar
             </button>
             <button
               type="button"
               onClick={handleBaixarGarantia}
-              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/60 hover:bg-sakura-gray/10"
+              disabled={!textoGarantia}
+              className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10 disabled:opacity-50"
             >
-              Baixar garantia
+              Baixar .txt
+            </button>
+            <button
+              type="button"
+              onClick={handleImprimirGarantia}
+              disabled={!textoGarantia}
+              className="rounded-xl bg-sakura-purple px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              Imprimir
             </button>
           </div>
-        </div>
-      </section>
+        </Modal>
+      )}
 
       <pre className="apenas-impressao">{textoGarantia}</pre>
     </div>

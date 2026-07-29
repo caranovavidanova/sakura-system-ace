@@ -10,6 +10,7 @@ import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
 import { LoginPage } from "./pages/login/LoginPage";
 import { LucratividadePage } from "./pages/lucratividade/LucratividadePage";
+import { NotasFiscaisPage } from "./pages/notas-fiscais/NotasFiscaisPage";
 import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
 import { PainelPage } from "./pages/painel/PainelPage";
 import { RelatoriosPage } from "./pages/relatorios/RelatoriosPage";
@@ -132,6 +133,14 @@ export default function App() {
             element={
               <PermissaoRoute modulo="garantias">
                 <GarantiasPage />
+              </PermissaoRoute>
+            }
+          />
+          <Route
+            path="/notas-fiscais"
+            element={
+              <PermissaoRoute modulo="notas_fiscais">
+                <NotasFiscaisPage />
               </PermissaoRoute>
             }
           />

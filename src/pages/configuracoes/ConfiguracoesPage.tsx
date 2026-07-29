@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarCategorias } from "@/lib/categorias";
 import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operadores";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { Categoria } from "@/types/categoria";
 import type { JurosParcela } from "@/types/configuracao";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
+import { CategoriasSection } from "./CategoriasSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
 import { OperadorForm } from "./OperadorForm";
 
@@ -15,6 +18,7 @@ export function ConfiguracoesPage() {
   const { operador: operadorLogado } = useAuth();
   const [operadores, setOperadores] = useState<Operador[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
@@ -27,12 +31,14 @@ export function ConfiguracoesPage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [operadoresCarregados, jurosCarregados] = await Promise.all([
+      const [operadoresCarregados, jurosCarregados, categoriasCarregadas] = await Promise.all([
         listarOperadores(),
         listarJurosParcelas(),
+        listarCategorias(),
       ]);
       setOperadores(operadoresCarregados);
       setJurosParcelas(jurosCarregados);
+      setCategorias(categoriasCarregadas);
     } catch (err) {
       console.error("Erro ao carregar operadores:", err);
       setErro(mensagemDeErro(err));
@@ -117,7 +123,10 @@ export function ConfiguracoesPage() {
       )}
 
       {!carregando && (
-        <JurosParcelasSection jurosParcelas={jurosParcelas} onSalvo={carregar} />
+        <>
+          <JurosParcelasSection jurosParcelas={jurosParcelas} onSalvo={carregar} />
+          <CategoriasSection categorias={categorias} onSalvo={carregar} />
+        </>
       )}
 
       {carregando ? (

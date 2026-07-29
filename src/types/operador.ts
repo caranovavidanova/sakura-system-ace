@@ -7,6 +7,7 @@ export const MODULOS = [
   { chave: "caixa", label: "Caixa Diário", rota: "/caixa" },
   { chave: "relatorios", label: "Relatórios", rota: "/relatorios" },
   { chave: "lucratividade", label: "Lucratividade", rota: "/lucratividade" },
+  { chave: "garantias", label: "Garantias", rota: "/garantias" },
 ] as const;
 
 export type ModuloChave = (typeof MODULOS)[number]["chave"];

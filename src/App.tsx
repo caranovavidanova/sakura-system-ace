@@ -6,6 +6,7 @@ import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
+import { GarantiasPage } from "./pages/garantias/GarantiasPage";
 import { LoginPage } from "./pages/login/LoginPage";
 import { LucratividadePage } from "./pages/lucratividade/LucratividadePage";
 import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
@@ -114,6 +115,14 @@ export default function App() {
             element={
               <PermissaoRoute modulo="lucratividade">
                 <LucratividadePage />
+              </PermissaoRoute>
+            }
+          />
+          <Route
+            path="/garantias"
+            element={
+              <PermissaoRoute modulo="garantias">
+                <GarantiasPage />
               </PermissaoRoute>
             }
           />

@@ -15,6 +15,8 @@ export interface Peca {
   origem: string | null;
   cst_ou_csosn: string | null;
   aliquota_icms: number | null;
+  categoria_id: string | null;
+  prazo_garantia_dias: number | null;
   ativo: boolean;
   criado_em: string;
 }

@@ -1172,6 +1172,48 @@ customizada visível ao rolar o formulário de Cliente — tudo sem erro no cons
   0026 (ainda não rodada pela usuária) já foi ajustada com esse novo padrão antes de publicar.
 - Scrollbar e contraste: ver detalhe técnico completo na seção 2 (Identidade visual).
 
+**⏳ Implementado nesta sessão (importar produto por foto da nota fiscal, com IA), ainda sem
+confirmação da usuária rodando de verdade** — pedido direto da usuária: hoje ela tira foto da
+nota fiscal, manda pro Gemini pedir os tributos prováveis (NCM/CFOP/CST-CSOSN/ICMS/CEST) e digita
+tudo na mão; ela queria isso automatizado dentro do próprio sistema, com um botão na tela de
+cadastro de peça. Antes de codar, apresentei 2 decisões estruturais com opções + recomendação (ver
+seção 1) — ela escolheu, pra guardar a chave da IA: **um "servidor" intermediário (Supabase Edge
+Function) escondendo a chave por completo** (em vez de guardar a chave da IA no próprio app
+Electron, que seria mais simples mas deixaria a chave exposta pra qualquer um com acesso ao
+computador) — e, pro escopo, **nota inteira com vários itens, várias notas de uma vez** (ela
+confirmou que já faz isso hoje no Gemini, colocando duas notas lado a lado numa foto só, e funciona
+bem):
+
+- **Primeira Edge Function do projeto** (`supabase/functions/ler-notas-fiscais/index.ts`) — até
+  agora o projeto só usava tabelas Postgres e Storage (bucket de notas fiscais), nunca uma função
+  de servidor de verdade. Essa função roda no Supabase (Deno), recebe uma ou mais fotos em base64,
+  chama a API do Claude (Anthropic, modelo `claude-sonnet-5`, com "saída estruturada" — a IA é
+  obrigada a responder num formato JSON fixo, sem risco de vir bagunçado) e devolve a lista de
+  itens já com os campos fiscais preenchidos. **A chave da Anthropic (`ANTHROPIC_API_KEY`) fica só
+  como "secret" dessa função no Supabase — nunca é enviada nem guardada no app instalado no
+  computador da loja.** Isso é o "servidor intermediário" que a usuária escolheu.
+- **Botão "📷 Importar por foto"** em Estoque → Produtos, ao lado de "+ Novo produto"
+  (`ImportarNotasFiscaisModal.tsx`): abre um popup onde a usuária escolhe várias fotos de uma vez
+  (`<input type="file" multiple>`), clica "Ler fotos", e o sistema mostra uma tabela com **todos os
+  produtos identificados em todas as fotos** (descrição, categoria, NCM, CEST, CFOP, origem,
+  CST/CSOSN, alíquota de ICMS, unidade, custo, quantidade) — cada célula é editável e cada linha tem
+  uma caixinha pra incluir ou não. Ao clicar em "Cadastrar N produtos", cria todas as peças
+  selecionadas de uma vez (reaproveitando `criarPeca()` e o mesmo padrão de "Qtde. estoque inicial"
+  que já existe no cadastro manual, só que em lote — motivo do movimento de estoque é `compra` em
+  vez de `ajuste`, já que veio de uma nota fiscal de verdade, não de um ajuste manual).
+- **Sem tabela nova nem migration** — o resultado da leitura só passa pela tela de revisão em
+  memória; o que fica salvo de fato é só em `pecas`/`estoque_movimentos`, do jeito que já existia.
+- **Pendência de configuração manual da usuária** (ver tutorial na seção 9): ela precisa (1) criar
+  uma chave de API na Anthropic (console.anthropic.com) e (2) publicar essa Edge Function no painel
+  do Supabase (Edge Functions → criar função → colar o código → Deploy) e configurar o secret
+  `ANTHROPIC_API_KEY` lá. **O sandbox não consegue fazer esse deploy** (mesma limitação de sempre —
+  não alcança `*.supabase.co`, ver item 7 da seção 6) — por isso ficou como passo manual dela,
+  documentado no tutorial.
+- Validado no sandbox via `npx tsc -b`, `npm run build` e `npm run lint` — sem erro. **Não deu pra
+  testar rodando de verdade** (nem a Edge Function contra o Supabase real, nem a leitura de uma foto
+  de nota real contra a API da Anthropic) porque o sandbox não alcança `*.supabase.co` nem tem uma
+  foto de nota fiscal de verdade pra testar — depende da usuária rodar isso na loja.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -1445,6 +1487,36 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
      que a barra é fina e discreta, na paleta do app — não mais a barra grossa cinza do Windows.
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+
+### Tutorial: ativar o "Importar por foto" (leitura de nota fiscal por IA)
+
+Diferente das outras funcionalidades, essa não depende de rodar uma migration — depende de
+publicar uma **Edge Function** no Supabase (a primeira do projeto) e configurar uma chave de
+API. São dois passos únicos, feitos pelo painel do Supabase (não precisa instalar nada no
+computador):
+
+1. **Criar uma chave de API na Anthropic** (empresa do Claude): entre em
+   `console.anthropic.com`, crie uma conta se ainda não tiver, vá em "Settings" → "API Keys" →
+   "Create Key", e copie a chave gerada (começa com `sk-ant-...`). Essa conta é sua/da loja —
+   você mesma acompanha o gasto lá (pra essa leitura de nota, deve ficar em torno de 1 a 3
+   centavos por peça lida, bem barato pro volume que você usa).
+2. **Publicar a função no Supabase**: no painel do seu projeto Supabase, vá em **Edge
+   Functions** → **"Deploy a new function"** (ou "Create a new function") → dê o nome
+   `ler-notas-fiscais` → cole todo o conteúdo do arquivo
+   `supabase/functions/ler-notas-fiscais/index.ts` (abra no VS Code, copie tudo) → clique em
+   **Deploy**.
+3. **Configurar o secret**: ainda em Edge Functions (geralmente uma aba "Secrets" da função, ou
+   em Project Settings → Edge Functions → "Add new secret") crie um secret chamado
+   `ANTHROPIC_API_KEY` com o valor sendo a chave que você copiou no passo 1.
+4. `git checkout main && git pull origin main && npm install && npm run dev`.
+5. O que testar: **Estoque → Produtos → "📷 Importar por foto"** — escolha uma ou mais fotos de
+   nota fiscal (pode ser mais de uma nota na mesma leitura, do jeito que você já faz no Gemini),
+   clique em "Ler fotos", confira a tabela de produtos identificados (dá pra editar qualquer
+   campo antes de salvar, e desmarcar o que não quiser importar), e clique em "Cadastrar N
+   produtos".
+
+Se der erro na leitura (ex: "ANTHROPIC_API_KEY não configurada"), confira se o secret do passo 3
+foi salvo certinho. Qualquer outro erro, me manda o print do DevTools que eu ajudo a resolver.
 
 ### Tutorial: gerar o instalador Windows e publicar uma versão (pra usar na borracharia)
 

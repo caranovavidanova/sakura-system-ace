@@ -4,6 +4,7 @@ import { criarMovimento } from "@/lib/estoque";
 import { mensagemDeErro } from "@/lib/errors";
 import type { Categoria } from "@/types/categoria";
 import type { NovaPeca, Peca } from "@/types/peca";
+import { ImportarNotasFiscaisModal } from "./ImportarNotasFiscaisModal";
 import { PecaForm } from "./PecaForm";
 
 interface ProdutosSectionProps {
@@ -25,6 +26,7 @@ export function ProdutosSection({
   onRecarregar,
 }: ProdutosSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarImportar, setMostrarImportar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   async function handleSalvar(peca: NovaPeca, quantidadeInicial: number | null) {
@@ -66,7 +68,13 @@ export function ProdutosSection({
   return (
     <div className="space-y-6">
       {!mostrarFormulario && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setMostrarImportar(true)}
+            className="rounded-xl border border-sakura-purple/40 px-5 py-2.5 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+          >
+            📷 Importar por foto
+          </button>
           <button
             onClick={() => setMostrarFormulario(true)}
             className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
@@ -81,6 +89,14 @@ export function ProdutosSection({
           categorias={categorias}
           onSalvar={handleSalvar}
           onCancelar={() => setMostrarFormulario(false)}
+        />
+      )}
+
+      {mostrarImportar && (
+        <ImportarNotasFiscaisModal
+          categorias={categorias}
+          onFechar={() => setMostrarImportar(false)}
+          onImportado={onRecarregar}
         />
       )}
 

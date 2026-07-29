@@ -10,9 +10,12 @@ export interface Veiculo {
   criado_em: string;
 }
 
+export type TipoPessoa = "fisica" | "juridica";
+
 export interface Cliente {
   id: string;
   nome: string;
+  tipo_pessoa: TipoPessoa;
   cpf_cnpj: string | null;
   telefone: string | null;
   email: string | null;

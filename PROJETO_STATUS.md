@@ -118,7 +118,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │       por `tipo`) — ver seção 7
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0020), todas idempotentes (seguro rodar de novo)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0021), todas idempotentes (seguro rodar de novo)
 ├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
@@ -148,8 +148,11 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-- **`clientes`**: id, nome, cpf_cnpj, telefone, email, cep, rua, numero, bairro, cidade, uf,
-  data_nascimento (migration 0009 — usada pro calendário do Início marcar aniversário do mês), criado_em
+- **`clientes`**: id, nome (rótulo na tela vira "Razão social" quando `tipo_pessoa` é jurídica, mesmo
+  campo), tipo_pessoa (`fisica`/`juridica`, default `fisica` — migration 0021; rótulo do campo
+  cpf_cnpj também muda pra "CPF" ou "CNPJ" na tela conforme esse valor), cpf_cnpj, telefone, email,
+  cep, rua, numero, bairro, cidade, uf, data_nascimento (migration 0009 — usada pro calendário do
+  Início marcar aniversário do mês), criado_em
 - **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, km_atual, criado_em
 - **`pecas`**: id, codigo_interno (exibido como "Referência" na tela), codigo_barras, descricao,
   marca, modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
@@ -762,6 +765,16 @@ do Caixa sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da
   viraram módulos separados — decisão explícita da usuária entre duas opções apresentadas, pra não
   duplicar onde o dinheiro é controlado (ver seção 1).
 
+**⏳ Implementado nesta sessão (pessoa física/jurídica no cadastro de Cliente), ainda sem confirmação
+da usuária rodando com Supabase real** — pedido direto da usuária. Migration `0021_clientes_tipo_pessoa.sql`
+adiciona `tipo_pessoa` (`fisica`/`juridica`, default `fisica` pra não quebrar clientes já cadastrados).
+`ClienteForm.tsx` ganhou dois rádios "Pessoa física"/"Pessoa jurídica" no topo do cadastro — trocar a
+opção muda o rótulo dos campos "Nome completo"/"CPF" para "Razão social"/"CNPJ" (mesmos campos por
+trás, só o rótulo e o `tipo_pessoa` mudam). Não mexeu na lista de clientes nem no cadastro de edição
+(esse módulo não tem edição, só criar/excluir, ver `ClientesPage.tsx`). Validado via `npx tsc -b`,
+`npm run build`, `npm run lint` e screenshot Playwright alternando entre as duas opções (sandbox não
+acessa `*.supabase.co`, ver item 7 da seção 6).
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -838,9 +851,9 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0020) — as de 0001 a 0015 já foram confirmadas rodando sem erro
+`supabase/migrations/*.sql` (0001 a 0021) — as de 0001 a 0015 já foram confirmadas rodando sem erro
 pela usuária nesse projeto (a 0015 precisou de uma correção nesta sessão — ver item 13 da seção 6 —
-antes de rodar limpo). **As migrations 0016 a 0020 ainda precisam ser rodadas** — ver tutoriais
+antes de rodar limpo). **As migrations 0016 a 0021 ainda precisam ser rodadas** — ver tutoriais
 abaixo (0016/0017/0018 no primeiro tutorial, 0019/0020 — Funcionários e categorias de Caixa — no
 segundo, mais recente). Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou
 usar outro projeto Supabase do zero.
@@ -890,7 +903,7 @@ Sessões passadas ficam registradas na seção 10.)*
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
-### Tutorial: pegar a versão nova (migrations 0019 e 0020 — Funcionários e Entradas/Saídas) e rodar
+### Tutorial: pegar a versão nova (migrations 0019 a 0021 — Funcionários, Entradas/Saídas e tipo de cliente) e rodar
 
 1. Feche o app se estiver aberto.
 2. No terminal, dentro da pasta `sakura-system-autocenter`:
@@ -906,6 +919,8 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
      que já estava preenchido nas OS existentes.
    - `supabase/migrations/0020_categorias_caixa.sql` — cria a tabela `categorias_caixa` (categorias
      de entrada/saída do Caixa) e o campo `categoria_id` em `caixa_movimentos`.
+   - `supabase/migrations/0021_clientes_tipo_pessoa.sql` — cria o campo `tipo_pessoa` em `clientes`
+     (default `fisica`, não muda nenhum cliente já cadastrado).
 4. `npm install && npm run dev`.
 5. O que testar:
    - **Funcionários** (item novo no menu lateral): cadastre um funcionário sem marcar nada de
@@ -921,6 +936,8 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
    - **Caixa Diário → aba "Entradas"**: mesma coisa, com a categoria "Sucata".
    - **Caixa Diário → aba "Diário"**: confira que continua mostrando tudo (OS faturadas + lançamentos
      manuais) igual antes, sem nada quebrado.
+   - **Clientes → Novo cliente**: confira os rádios "Pessoa física"/"Pessoa jurídica" no topo do
+     formulário — ao trocar para jurídica, os campos "Nome completo"/"CPF" viram "Razão social"/"CNPJ".
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 

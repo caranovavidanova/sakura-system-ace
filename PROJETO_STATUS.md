@@ -1018,8 +1018,8 @@ com Supabase real**:
   usuária mencionou) **não foi implementado** — fica pra uma sessão futura, ver item novo na seção 8.
 - **Migrations 0024 e 0025 ainda não foram rodadas pela usuária** — ver tutorial novo na seção 9.
 
-**⏳ Implementado nesta sessão (reorganização da tela de Configurações), mergeado em `main` via PR
-[#44](https://github.com/caranovavidanova/amigao/pull/44), ainda sem confirmação da usuária rodando
+**✅ Implementado nesta sessão (reorganização da tela de Configurações), mergeado em `main` via PR
+[#44](https://github.com/caranovavidanova/amigao/pull/44), confirmado pela usuária rodando
 com Supabase real** — a usuária mandou um print reclamando que todas as seções de configuração
 apareciam abertas ao mesmo tempo e que o botão "+ Novo operador" ficava solto no cabeçalho da
 página, separado da própria lista de operadores. Mudança só de JSX/CSS, **sem migration**:
@@ -1039,9 +1039,9 @@ página, separado da própria lista de operadores. Mudança só de JSX/CSS, **se
   como bloco próprio com o botão junto, sem erro no console (sandbox não acessa `*.supabase.co`, ver
   item 7 da seção 6).
 
-**⏳ Implementado nesta sessão (módulo "Relatórios" virou "Relações" com gráficos, e cartões do
-Início personalizáveis), mergeado em `main` via PR [#46](https://github.com/caranovavidanova/amigao/pull/46), ainda sem confirmação da
-usuária rodando com Supabase real** — pedido da usuária: renomear "Relatórios" pra "Relações",
+**✅ Implementado nesta sessão (módulo "Relatórios" virou "Relações" com gráficos, e cartões do
+Início personalizáveis), mergeado em `main` via PR [#46](https://github.com/caranovavidanova/amigao/pull/46), confirmado pela
+usuária rodando com Supabase real (migration 0026 rodada)** — pedido da usuária: renomear "Relatórios" pra "Relações",
 mostrar gráficos comparando vendas/custos/lucro (ela pediu algo "estilo estatísticas de League of
 Legends"), tornar os 3 cartões de tendência do Início personalizáveis, e mostrar contas a pagar
 vencendo no calendário do Início. Antes de codar, apresentei 4 perguntas de escopo (estilo de
@@ -1087,9 +1087,9 @@ sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 
   lista abaixo do calendário.
 - Migration **0026 ainda não foi rodada pela usuária** — ver tutorial novo na seção 9.
 
-**⏳ Implementado nesta sessão (PR [#47](https://github.com/caranovavidanova/amigao/pull/47) — ícone
-de veículo no pátio, cartões do Início sem sparkline, scrollbar e contraste), ainda sem confirmação
-da usuária rodando com Supabase real** — a usuária perguntou se dava pra mostrar um "carrinho 3D" do
+**✅ Implementado nesta sessão (PR [#47](https://github.com/caranovavidanova/amigao/pull/47) — ícone
+de veículo no pátio, cartões do Início sem sparkline, scrollbar e contraste), confirmado pela
+usuária rodando com Supabase real (migration 0027 rodada)** — a usuária perguntou se dava pra mostrar um "carrinho 3D" do
 veículo exato de cada cliente; expliquei 3 níveis (3D exato = caro/não cobre carro raro; 3D genérico
 único = pouco fiel; ícone 2D por tipo de veículo, pintado com a cor cadastrada = bom custo-benefício,
 sem depender de serviço pago) e recomendei o terceiro — ela topou ("do jeitinho 2D que você disse").

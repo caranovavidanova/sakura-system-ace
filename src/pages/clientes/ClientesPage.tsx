@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { criarCliente, excluirCliente, listarClientes } from "@/lib/clientes";
 import { mensagemDeErro } from "@/lib/errors";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -57,13 +58,16 @@ export function ClientesPage() {
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-            Clientes
-          </h1>
-          <p className="text-sm text-sakura-gray">
-            Cadastro de clientes e veículos
-          </p>
+        <div className="flex items-center gap-3">
+          <BotaoVoltar />
+          <div>
+            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+              Clientes
+            </h1>
+            <p className="text-sm text-sakura-gray">
+              Cadastro de clientes e veículos
+            </p>
+          </div>
         </div>
         {!mostrarFormulario && (
           <button

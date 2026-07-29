@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import type { JurosParcela } from "@/types/configuracao";
 import type { OrdemServico } from "@/types/os";
@@ -73,13 +74,16 @@ export function FaturamentoCard({
 
   return (
     <div className="space-y-5 sakura-card p-6 shadow-sm">
-      <div>
-        <h3 className="text-sm font-semibold text-sakura-purple-dark">
-          Faturar OS de {ordem.cliente?.nome ?? "cliente"}
-        </h3>
-        <p className="text-xs text-sakura-gray">
-          Total dos itens: {formatarMoeda(total)}
-        </p>
+      <div className="flex items-center gap-3">
+        <BotaoVoltar onClick={onCancelar} />
+        <div>
+          <h3 className="text-sm font-semibold text-sakura-purple-dark">
+            Faturar OS de {ordem.cliente?.nome ?? "cliente"}
+          </h3>
+          <p className="text-xs text-sakura-gray">
+            Total dos itens: {formatarMoeda(total)}
+          </p>
+        </div>
       </div>
 
       {erro && (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import type { Cliente } from "@/types/cliente";
 import type { Operador } from "@/types/operador";
@@ -148,21 +149,31 @@ export function OrdemServicoForm({
       onSubmit={handleSubmit}
       className="space-y-6 sakura-card p-6 shadow-sm"
     >
-      {ordemExistente && (
+      {ordemExistente ? (
         <div className="flex items-center justify-between border-b border-sakura-gray/20 pb-4">
-          <div>
-            <p className="text-xs text-sakura-gray">
-              OS #{ordemExistente.id.slice(0, 8)} · aberta em{" "}
-              {formatarData(ordemExistente.data_abertura)}
-            </p>
-            <h2 className="text-lg font-semibold text-sakura-purple-dark">
-              {ordemExistente.cliente?.nome ?? "Cliente"}
-              {ordemExistente.veiculo?.placa ? ` — ${ordemExistente.veiculo.placa}` : ""}
-            </h2>
+          <div className="flex items-center gap-3">
+            <BotaoVoltar onClick={onCancelar} />
+            <div>
+              <p className="text-xs text-sakura-gray">
+                OS #{ordemExistente.id.slice(0, 8)} · aberta em{" "}
+                {formatarData(ordemExistente.data_abertura)}
+              </p>
+              <h2 className="text-lg font-semibold text-sakura-purple-dark">
+                {ordemExistente.cliente?.nome ?? "Cliente"}
+                {ordemExistente.veiculo?.placa ? ` — ${ordemExistente.veiculo.placa}` : ""}
+              </h2>
+            </div>
           </div>
           <span className="rounded-full bg-sakura-pink-soft px-3 py-1 text-xs font-medium text-sakura-purple-dark">
             {STATUS_LABEL[ordemExistente.status]}
           </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <BotaoVoltar onClick={onCancelar} />
+          <h2 className="text-lg font-semibold text-sakura-purple-dark">
+            Nova ordem de serviço
+          </h2>
         </div>
       )}
 

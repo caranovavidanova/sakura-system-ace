@@ -5,6 +5,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
+import { ContasPagarPage } from "./pages/contas-pagar/ContasPagarPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
 import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
@@ -109,6 +110,14 @@ export default function App() {
             element={
               <PermissaoRoute modulo="caixa">
                 <CaixaPage />
+              </PermissaoRoute>
+            }
+          />
+          <Route
+            path="/contas-pagar"
+            element={
+              <PermissaoRoute modulo="contas_pagar">
+                <ContasPagarPage />
               </PermissaoRoute>
             }
           />

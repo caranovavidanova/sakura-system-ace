@@ -6,6 +6,7 @@ import { listarCategorias } from "@/lib/categorias";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
 import {
   buscarConfiguracaoFiscal,
+  buscarConfiguracaoPainelInicio,
   buscarTextoGarantia,
   listarJurosParcelas,
 } from "@/lib/configuracoes";
@@ -14,9 +15,10 @@ import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operad
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
-import type { ConfiguracaoFiscalLoja, JurosParcela } from "@/types/configuracao";
+import type { CartaoMetrica, ConfiguracaoFiscalLoja, JurosParcela } from "@/types/configuracao";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
+import { CartoesInicioSection } from "./CartoesInicioSection";
 import { CategoriasCaixaSection } from "./CategoriasCaixaSection";
 import { CategoriasSection } from "./CategoriasSection";
 import { DadosFiscaisSection } from "./DadosFiscaisSection";
@@ -34,6 +36,7 @@ export function ConfiguracoesPage() {
   const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(
     null,
   );
+  const [cartoesInicio, setCartoesInicio] = useState<CartaoMetrica[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
@@ -53,6 +56,7 @@ export function ConfiguracoesPage() {
         categoriasCaixaCarregadas,
         textoGarantiaCarregado,
         configuracaoFiscalCarregada,
+        cartoesInicioCarregados,
       ] = await Promise.all([
         listarOperadores(),
         listarJurosParcelas(),
@@ -60,6 +64,7 @@ export function ConfiguracoesPage() {
         listarCategoriasCaixa(),
         buscarTextoGarantia(),
         buscarConfiguracaoFiscal(),
+        buscarConfiguracaoPainelInicio(),
       ]);
       setOperadores(operadoresCarregados);
       setJurosParcelas(jurosCarregados);
@@ -67,6 +72,7 @@ export function ConfiguracoesPage() {
       setCategoriasCaixa(categoriasCaixaCarregadas);
       setTextoGarantia(textoGarantiaCarregado);
       setConfiguracaoFiscal(configuracaoFiscalCarregada);
+      setCartoesInicio(cartoesInicioCarregados);
     } catch (err) {
       console.error("Erro ao carregar operadores:", err);
       setErro(mensagemDeErro(err));
@@ -271,6 +277,13 @@ export function ConfiguracoesPage() {
             descricao="Usados na emissão de nota fiscal (NFC-e/NFS-e). O token do Focus NFe fica vazio até a assinatura de um plano — sem ele, a emissão automática continua indisponível."
           >
             <DadosFiscaisSection configuracao={configuracaoFiscal} onSalvo={carregar} />
+          </SecaoRecolhivel>
+
+          <SecaoRecolhivel
+            titulo="Cartões do Início"
+            descricao="Escolha até 3 indicadores pra aparecer nos cartões de tendência da tela Início. Vale pra todo mundo que usa o sistema."
+          >
+            <CartoesInicioSection cartoes={cartoesInicio} onSalvo={carregar} />
           </SecaoRecolhivel>
         </>
       )}

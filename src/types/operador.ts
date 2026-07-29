@@ -7,7 +7,7 @@ export const MODULOS = [
   { chave: "funcionarios", label: "Funcionários", rota: "/funcionarios" },
   { chave: "caixa", label: "Caixa Diário", rota: "/caixa" },
   { chave: "contas_pagar", label: "Contas a Pagar", rota: "/contas-pagar" },
-  { chave: "relatorios", label: "Relatórios", rota: "/relatorios" },
+  { chave: "relatorios", label: "Relações", rota: "/relatorios" },
   { chave: "lucratividade", label: "Lucratividade", rota: "/lucratividade" },
   { chave: "garantias", label: "Garantias", rota: "/garantias" },
   { chave: "notas_fiscais", label: "Notas Fiscais", rota: "/notas-fiscais" },

@@ -37,3 +37,29 @@ export const REGIME_TRIBUTARIO_LABEL: Record<RegimeTributario, string> = {
   lucro_presumido: "Lucro Presumido",
   lucro_real: "Lucro Real",
 };
+
+export type CartaoMetrica =
+  | "vendas_mes"
+  | "custos_mes"
+  | "lucro_mes"
+  | "ticket_medio_mes"
+  | "contas_pagar_vencendo";
+
+export const CARTAO_METRICA_LABEL: Record<CartaoMetrica, string> = {
+  vendas_mes: "Vendas do mês",
+  custos_mes: "Custos do mês",
+  lucro_mes: "Lucro do mês",
+  ticket_medio_mes: "Ticket médio do mês",
+  contas_pagar_vencendo: "Contas a pagar vencendo",
+};
+
+export const CARTOES_INICIO_PADRAO: CartaoMetrica[] = [
+  "vendas_mes",
+  "custos_mes",
+  "lucro_mes",
+];
+
+export interface ConfiguracaoPainelInicio {
+  id: 1;
+  cartoes: CartaoMetrica[];
+}

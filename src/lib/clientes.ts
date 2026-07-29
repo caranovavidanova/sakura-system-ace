@@ -38,4 +38,16 @@ export async function excluirCliente(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function buscarClientePorId(id: string): Promise<Cliente> {
+  const { data, error } = await supabase.from("clientes").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data as Cliente;
+}
+
+export async function buscarVeiculoPorId(id: string): Promise<Veiculo> {
+  const { data, error } = await supabase.from("veiculos").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data as Veiculo;
+}
+
 export type { Veiculo };

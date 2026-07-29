@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { buscarConfiguracaoFiscal, buscarTextoGarantia } from "@/lib/configuracoes";
-import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { OrdemServico } from "@/types/os";
 import { totalOrdem } from "@/types/os";
+import { GarantiaVisualModal } from "./GarantiaVisualModal";
 
 interface FechamentoTabProps {
   ordem: OrdemServico;
@@ -57,39 +57,6 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
     () => (templateGarantia ? montarTextoGarantia(templateGarantia, ordem) : ""),
     [templateGarantia, ordem],
   );
-
-  function handleImprimirGarantia() {
-    if (!textoGarantia) {
-      alert(
-        "Configure o texto de garantia em Configurações antes de imprimir " +
-          "(seção \"Texto de garantia\").",
-      );
-      return;
-    }
-    window.print();
-  }
-
-  function handleBaixarGarantia() {
-    if (!textoGarantia) {
-      alert(
-        "Configure o texto de garantia em Configurações antes de baixar " +
-          "(seção \"Texto de garantia\").",
-      );
-      return;
-    }
-    try {
-      const blob = new Blob([textoGarantia], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `garantia-OS-${ordem.id.slice(0, 8)}.txt`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Erro ao baixar garantia:", err);
-      alert(mensagemDeErro(err));
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -238,47 +205,12 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
       )}
 
       {previewGarantiaAberta && (
-        <Modal titulo="Pré-visualização da garantia" onFechar={() => setPreviewGarantiaAberta(false)}>
-          {textoGarantia ? (
-            <pre className="max-h-96 overflow-y-auto rounded-lg bg-sakura-pink-soft/60 p-3 text-sm whitespace-pre-wrap text-sakura-purple-dark">
-              {textoGarantia}
-            </pre>
-          ) : (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Configure o texto de garantia em Configurações (seção "Texto de garantia") antes de
-              imprimir ou baixar.
-            </p>
-          )}
-
-          <div className="mt-4 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setPreviewGarantiaAberta(false)}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
-            >
-              Fechar
-            </button>
-            <button
-              type="button"
-              onClick={handleBaixarGarantia}
-              disabled={!textoGarantia}
-              className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10 disabled:opacity-50"
-            >
-              Baixar .txt
-            </button>
-            <button
-              type="button"
-              onClick={handleImprimirGarantia}
-              disabled={!textoGarantia}
-              className="rounded-xl bg-sakura-purple px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
-              Imprimir
-            </button>
-          </div>
-        </Modal>
+        <GarantiaVisualModal
+          ordem={ordem}
+          textoGarantia={textoGarantia}
+          onFechar={() => setPreviewGarantiaAberta(false)}
+        />
       )}
-
-      <pre className="apenas-impressao">{textoGarantia}</pre>
     </div>
   );
 }

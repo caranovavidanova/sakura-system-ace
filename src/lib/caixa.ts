@@ -15,6 +15,19 @@ export async function listarMovimentosCaixa(): Promise<MovimentoCaixa[]> {
   return data as unknown as MovimentoCaixa[];
 }
 
+export async function buscarMovimentoCaixaPorOrdem(
+  ordemServicoId: string,
+): Promise<MovimentoCaixa | null> {
+  const { data, error } = await supabase
+    .from("caixa_movimentos")
+    .select("*")
+    .eq("ordem_servico_id", ordemServicoId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as MovimentoCaixa | null;
+}
+
 export async function criarMovimentoCaixa(
   movimento: NovoMovimentoCaixa,
 ): Promise<MovimentoCaixa> {

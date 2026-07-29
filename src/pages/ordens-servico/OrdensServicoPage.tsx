@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
@@ -119,13 +120,16 @@ export function OrdensServicoPage() {
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-            Ordens de Serviço
-          </h1>
-          <p className="text-sm text-sakura-gray">
-            Cliente + veículo + peças usadas + serviço realizado
-          </p>
+        <div className="flex items-center gap-3">
+          <BotaoVoltar />
+          <div>
+            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+              Ordens de Serviço
+            </h1>
+            <p className="text-sm text-sakura-gray">
+              Cliente + veículo + peças usadas + serviço realizado
+            </p>
+          </div>
         </div>
         {clientes.length > 0 && !mostrarFormulario && !ordemEmEdicao && operador && (
           <button

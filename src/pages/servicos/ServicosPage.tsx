@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   atualizarStatusServico,
@@ -72,13 +73,16 @@ export function ServicosPage() {
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-            Serviços
-          </h1>
-          <p className="text-sm text-sakura-gray">
-            Catálogo de serviços oferecidos, com preço padrão
-          </p>
+        <div className="flex items-center gap-3">
+          <BotaoVoltar />
+          <div>
+            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+              Serviços
+            </h1>
+            <p className="text-sm text-sakura-gray">
+              Catálogo de serviços oferecidos, com preço padrão
+            </p>
+          </div>
         </div>
         {!mostrarFormulario && (
           <button

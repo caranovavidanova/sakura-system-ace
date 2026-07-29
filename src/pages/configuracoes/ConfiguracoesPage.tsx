@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
@@ -72,13 +73,16 @@ export function ConfiguracoesPage() {
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-            Configurações
-          </h1>
-          <p className="text-sm text-sakura-gray">
-            Operadores do sistema e permissões de acesso
-          </p>
+        <div className="flex items-center gap-3">
+          <BotaoVoltar />
+          <div>
+            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+              Configurações
+            </h1>
+            <p className="text-sm text-sakura-gray">
+              Operadores do sistema e permissões de acesso
+            </p>
+          </div>
         </div>
         {!formulario && (
           <button

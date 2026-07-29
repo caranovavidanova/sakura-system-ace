@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import type { Peca } from "@/types/peca";
 import type {
@@ -67,6 +68,13 @@ export function MovimentoForm({ pecas, onSalvar, onCancelar }: MovimentoFormProp
       onSubmit={handleSubmit}
       className="space-y-4 sakura-card p-6 shadow-sm"
     >
+      <div className="flex items-center gap-3">
+        <BotaoVoltar onClick={onCancelar} />
+        <h2 className="text-lg font-semibold text-sakura-purple-dark">
+          Nova movimentação
+        </h2>
+      </div>
+
       {erro && (
         <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
           {erro}

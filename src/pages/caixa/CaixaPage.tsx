@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import { criarMovimentoCaixa, listarMovimentosCaixa } from "@/lib/caixa";
 import { listarPecas } from "@/lib/pecas";
@@ -101,13 +102,16 @@ export function CaixaPage() {
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-            Caixa Diário
-          </h1>
-          <p className="text-sm text-sakura-gray">
-            Vendas e movimentação do dia, nascendo das ordens de serviço faturadas
-          </p>
+        <div className="flex items-center gap-3">
+          <BotaoVoltar />
+          <div>
+            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+              Caixa Diário
+            </h1>
+            <p className="text-sm text-sakura-gray">
+              Vendas e movimentação do dia, nascendo das ordens de serviço faturadas
+            </p>
+          </div>
         </div>
         {!mostrarFormulario && (
           <button

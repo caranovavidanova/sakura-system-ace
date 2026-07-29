@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarOrdens } from "@/lib/ordensServico";
 import { listarPecas } from "@/lib/pecas";
@@ -100,11 +101,14 @@ export function LucratividadePage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-sakura-purple-dark">Lucratividade</h1>
-        <p className="text-sm text-sakura-gray">
-          Margem por peça/serviço e lucro do período
-        </p>
+      <header className="flex items-center gap-3">
+        <BotaoVoltar />
+        <div>
+          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Lucratividade</h1>
+          <p className="text-sm text-sakura-gray">
+            Margem por peça/serviço e lucro do período
+          </p>
+        </div>
       </header>
 
       {!isSupabaseConfigured && (

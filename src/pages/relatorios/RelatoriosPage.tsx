@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarMovimentosCaixa } from "@/lib/caixa";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -70,11 +71,14 @@ export function RelatoriosPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-sakura-purple-dark">Relatórios</h1>
-        <p className="text-sm text-sakura-gray">
-          Comparativo de vendas diárias, semanais e mensais
-        </p>
+      <header className="flex items-center gap-3">
+        <BotaoVoltar />
+        <div>
+          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Relatórios</h1>
+          <p className="text-sm text-sakura-gray">
+            Comparativo de vendas diárias, semanais e mensais
+          </p>
+        </div>
       </header>
 
       {!isSupabaseConfigured && (

@@ -587,6 +587,32 @@ tomada:
   exatamente o que o GitHub Actions fornece) — só validei que `package.json`/`release.yml` estão com
   sintaxe correta e que `npm run build`/`lint`/`tsc -b` continuam passando.
 
+**⏳ Implementado e mergeado direto em `main` nesta sessão (correções pós-instalador v0.1.1 + botão
+"voltar"), ainda sem confirmação do usuário rodando de verdade**. Validado no sandbox via `npm run
+build`, `npm run lint`, `tsc -b` e screenshots Playwright (sandbox não acessa `*.supabase.co`, ver
+item 7 da seção 6):
+
+- **Dois bugs reais achados testando o instalador v0.1.1 de verdade** — ver itens 11 e 12 da seção 6
+  pro detalhe técnico completo:
+  - Campos de formulário "sem digitar": era texto **invisível** (branco sobre fundo claro) quando o
+    Windows está em modo escuro, por falta de `color-scheme: light` declarado. Corrigido em
+    `globals.css`.
+  - Botão "Excluir" de Clientes sem efeito nenhum: a exclusão **estava falhando de verdade** (cliente
+    com Ordem de Serviço vinculada, bloqueado de propósito pra não perder histórico), mas o erro não
+    aparecia em lugar nenhum. Corrigido com `try/catch` + mensagem amigável, igual ao padrão já usado
+    em Estoque/Serviços.
+- **Botão "voltar" (seta pra esquerda, estilo vidro)** — pedido do usuário, com prints de referência
+  do próprio estilo do app. Componente novo `src/components/BotaoVoltar.tsx` (SVG desenhado à mão,
+  sem biblioteca de ícones) + classe nova `sakura-icon-button` em `globals.css` (círculo de vidro com
+  efeito de hover — levanta e aumenta levemente ao passar o mouse). Aplicado em:
+  - **Todas as telas de lista** (Clientes, Estoque, Serviços, Ordens de Serviço, Caixa, Relatórios,
+    Lucratividade, Configurações — Início ficou de fora, por ser a tela inicial) — nesse caso o botão
+    volta pra rota anterior no histórico do navegador (`navigate(-1)`).
+  - **Todos os formulários de cadastro** (Cliente, Peça/Produto, Movimentação de estoque, Serviço,
+    Lançamento de caixa, Operador, Ordem de Serviço, Faturamento) — nesse caso o botão chama o mesmo
+    callback do botão "Cancelar" que já existia (fecha o formulário e volta pra lista, em vez de mudar
+    de rota) — por isso `BotaoVoltar` aceita uma prop `onClick` opcional pra sobrescrever o padrão.
+
 ## 8.1 Pendência em aberto nesta sessão
 
 **Preciso de 3 respostas da usuária antes de avançar na parte fiscal e na garantia** (decisões
@@ -603,6 +629,13 @@ estruturais, ver seção 1 — não decidir sozinho):
    Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não necessariamente suporte a
    várias lojas ao mesmo tempo no mesmo banco (isso seria multi-loja de verdade, decisão maior, já
    listada como futura na seção 8). Confirmar esse entendimento antes de modelar a tabela nova.
+
+**Instalador Windows pendente de propósito**: o código em `main` já tem as correções dos bugs da
+v0.1.1 (texto invisível em modo escuro, exclusão de cliente silenciosa) e o botão "voltar" novo, mas
+**nenhuma tag/versão nova foi publicada ainda** — pedido explícito do usuário ("deixe o instalador
+pendente") antes de trocar de sessão. Quando ele quiser gerar o próximo instalador, é só pedir "atualiza
+a versão pra 0.1.2 e publica" (ver tutorial na seção 9) — mesmo fluxo de sempre, só que ainda não foi
+disparado.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 

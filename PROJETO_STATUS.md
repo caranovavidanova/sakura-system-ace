@@ -93,9 +93,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, relatorios, lucratividade, garantias, login, configuracoes
+│   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7)
+│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS)
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
 │   │       EstoquePage.tsx tem 4 abas: "Produtos" (ProdutosSection.tsx + PecaForm.tsx),
@@ -111,14 +111,17 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │       parcela), CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7),
 │   │       CategoriasCaixaSection.tsx (CRUD de categorias de entrada/saída do Caixa, ver seção 7) e
 │       TextoGarantiaSection.tsx (template do texto de garantia, ver seção 7). pages/funcionarios/
-│       é um módulo novo (FuncionariosPage.tsx + FuncionarioForm.tsx, sem abas, padrão Editar/
-│       Inativar — ver seção 7). pages/caixa/ ganhou abas: CaixaPage.tsx virou só o orquestrador
-│       (abas + carregamento), com DiarioSection.tsx (comportamento antigo, agora isolado),
-│       EntradaSaidaSection.tsx (reusado tanto pra aba "Entradas" quanto "Saídas", parametrizado
-│       por `tipo`) — ver seção 7
+│       é um módulo novo (FuncionariosPage.tsx + FuncionarioForm.tsx com abas "Dados gerais"
+│       (documentos/CNH, endereço, contato, cargo/admissão) e "Família" (filiação, cônjuge, filhos —
+│       ver seção 7), padrão Editar/Inativar). pages/caixa/ ganhou abas: CaixaPage.tsx virou só o
+│       orquestrador (abas + carregamento), com DiarioSection.tsx (comportamento antigo, agora
+│       isolado), EntradaSaidaSection.tsx (reusado tanto pra aba "Entradas" quanto "Saídas",
+│       parametrizado por `tipo`). pages/notas-fiscais/ é um módulo novo (NotasFiscaisPage.tsx com
+│       abas "NFe"/"NFS-e" + ArquivosSection.tsx, reusado pelas duas abas — arquivos XML agrupados
+│       por mês, upload manual, vínculo opcional com uma OS — ver seção 7)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0021), todas idempotentes (seguro rodar de novo)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts, notaFiscal.ts) + configuracao.ts (JurosParcela)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0023), todas idempotentes (seguro rodar de novo)
 ├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
@@ -195,15 +198,26 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   no Caixa. Ex: "Aluguel"/"Mercado"/"Limpeza" (saída) ou "Sucata" (entrada). Não tem relação com
   `categorias` (que é só pra produtos) — tabela separada porque o conceito é diferente (tipo
   entrada/saída em vez de agrupar produto).
-- **`funcionarios`** (migration 0019): id, nome, cargo (texto livre, opcional), operador_id (FK
-  operadores, opcional e único — presente quando esse funcionário também tem login no sistema),
-  ativo, criado_em. Cadastro leve pra gente que não precisa logar no sistema mas precisa ser
-  selecionável como técnico (peça/serviço na OS) ou vendedor/atendente (OS toda). **Todo operador
-  criado em Configurações ganha automaticamente um `funcionarios` espelhado** (nome/status
+- **`funcionarios`** (migration 0019, ampliada na 0022): id, nome, cargo (texto livre, opcional),
+  operador_id (FK operadores, opcional e único — presente quando esse funcionário também tem login
+  no sistema), ativo, criado_em. Cadastro leve pra gente que não precisa logar no sistema mas
+  precisa ser selecionável como técnico (peça/serviço na OS) ou vendedor/atendente (OS toda). **Todo
+  operador criado em Configurações ganha automaticamente um `funcionarios` espelhado** (nome/status
   sincronizados via trigger `sincroniza_funcionario_operador`), então o seletor de técnico/vendedor
   sempre junta quem loga e quem não loga sem exigir cadastro duplicado. Gerenciado no módulo
   "Funcionários" (`FuncionariosPage.tsx`, padrão Editar/Inativar — sem excluir de verdade, porque
-  pode estar referenciado em OS antigas).
+  pode estar referenciado em OS antigas). **Migration 0022** (ver seção 7) ampliou bastante os campos,
+  pedido da usuária depois de mandar prints de um cadastro de RH de um sistema de referência —
+  documentos (cpf, rg, cnh_categoria, cnh_numero, data_nascimento, estado_civil, tipo_sanguineo),
+  endereço/contato (cep, endereco, numero, bairro, cidade, estado, complemento, telefone, celular,
+  email), cargo/admissão (pis, codigo_registro, cbo, salario, comissao, admissao, data_ferias) e
+  família/filiação (pai, mae, naturalidade, sexo, conjuge_nome, conjuge_nascimento, data_casamento,
+  conjuge_telefone, conjuge_celular). Dados de saúde (enfermidades/medicamentos) ficaram de fora por
+  escolha explícita da usuária (dado sensível, mais cuidado de LGPD).
+- **`funcionario_filhos`** (migration 0022): id, funcionario_id (FK, `on delete cascade`), nome,
+  data_nascimento (opcional), criado_em. Lista de filhos de um funcionário — editada junto com o
+  formulário (`FuncionarioForm.tsx` salva a lista inteira de uma vez, substituindo — apaga tudo e
+  reinsere — mais simples que calcular diff, e nada mais referencia o id de um filho).
 - **`contagens_estoque`** (migration 0017): id, peca_id (FK), quantidade_contada, saldo_sistema
   (o que o sistema calculava no momento), diferenca, observacao, operador_id (FK operadores),
   criado_em. Histórico de contagens de inventário físico — ao salvar uma contagem com diferença, o
@@ -214,10 +228,19 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   aba Fechamento da OS, com placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na
   hora (`lib/garantiaTexto.ts`). Editável só pelo admin em Configurações
   (`TextoGarantiaSection.tsx`).
+- **`notas_fiscais_arquivos`** (migration 0023): id, tipo (`nfe`/`nfse`), competencia (date, primeiro
+  dia do mês — usado só pra agrupar/ordenar por mês na tela), nome_arquivo, storage_path (caminho
+  dentro do bucket), ordem_servico_id (FK ordens_servico, opcional — vínculo com a OS relacionada),
+  operador_id (FK operadores, quem enviou), criado_em. O arquivo XML em si **não fica no Postgres** —
+  fica no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path` segue o padrão
+  `<tipo>/<ano>-<mes>/<uuid>-<nome original>`). **Primeira vez que o projeto usa Supabase Storage**
+  (não só tabelas Postgres) — o bucket também tem uma policy exigindo login (mesmo padrão das
+  tabelas). Gerenciado no módulo "Notas Fiscais" (upload manual — a emissão fiscal automática ainda
+  não existe, ver seção 8).
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
   permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
-  estoque, servicos, ordens_servico, caixa, relatorios, lucratividade, garantias), ativo, criado_em.
-  Única tabela com RLS de verdade (baseada em login) — ver seção 6.
+  estoque, servicos, ordens_servico, caixa, relatorios, lucratividade, garantias, notas_fiscais),
+  ativo, criado_em. Única tabela com RLS de verdade (baseada em login) — ver seção 6.
 
 Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -775,6 +798,46 @@ trás, só o rótulo e o `tipo_pessoa` mudam). Não mexeu na lista de clientes n
 `npm run build`, `npm run lint` e screenshot Playwright alternando entre as duas opções (sandbox não
 acessa `*.supabase.co`, ver item 7 da seção 6).
 
+**⏳ Implementado nesta sessão (cadastro de Funcionário ampliado — RH completo — e ícone de casinha no
+botão voltar), mergeado em `main` via PR
+[#32](https://github.com/caranovavidanova/amigao/pull/32), ainda sem confirmação da usuária rodando
+com Supabase real** — a usuária mandou 3 prints do cadastro de funcionário de um sistema de
+referência (S3Auto/Comsis) pedindo pra ter essas informações pra preencher. Antes de codar,
+apresentei os grupos de campo em opções (documentos/CNH, endereço/contato, cargo/admissão, família,
+e separadamente "dados de saúde") — ela escolheu tudo, exceto dados de saúde (enfermidades/
+medicamentos), por serem dado sensível/LGPD. Migration `0022_funcionarios_dados_completos.sql` (ver
+seção 5 pro detalhe dos campos). `FuncionarioForm.tsx` ganhou duas abas: **"Dados gerais"**
+(identificação, documentos, endereço, contato, cargo e admissão) e **"Família"** (filiação, cônjuge,
+lista de filhos com botão "+ Adicionar filho(a)"). Além disso, o `BotaoVoltar` (`src/components/
+BotaoVoltar.tsx`) sem `onClick` — usado nas telas de lista, que sempre levam pro Início — passou a
+mostrar um **ícone de casinha** em vez de seta, e a navegar direto pra `/` (em vez de
+`navigate(-1)`, que dependia do histórico do navegador e nem sempre batia com "Início" depois de
+navegar por vários módulos pelo menu lateral); o botão com `onClick` (usado nos formulários, que
+volta pra lista/cancela) continua com a seta. Validado via `npx tsc -b`, `npm run build`,
+`npm run lint` e screenshots Playwright com dados simulados via `page.route()` (sandbox não acessa
+`*.supabase.co`, ver item 7 da seção 6), incluindo preencher/exibir os campos novos nas duas abas.
+
+**⏳ Implementado nesta sessão (módulo "Notas Fiscais" — arquivos XML de NFe/NFS-e), mergeado em
+`main` via PR [#33](https://github.com/caranovavidanova/amigao/pull/33), ainda sem confirmação da
+usuária rodando com Supabase real** — pedido da usuária: mesmo sem o sistema de emissão fiscal
+pronto (ver item 1 da seção 8), ela quis já deixar um lugar pra guardar os XMLs das notas que emite
+por fora, organizados por mês. Duas decisões estruturais foram apresentadas com opções +
+recomendação antes de codar — ela escolheu as duas recomendadas: (a) módulo próprio no menu lateral
+(em vez de escondido em Configurações ou preso dentro da OS) e (b) cada arquivo pode
+**opcionalmente** ser vinculado a uma Ordem de Serviço específica. Migration
+`0023_notas_fiscais_xml.sql` (ver seção 5) — **primeira vez que o projeto usa Supabase Storage**
+além de tabelas Postgres: cria o bucket privado `notas-fiscais` (policy exigindo login, mesmo padrão
+das tabelas) e a tabela de metadados `notas_fiscais_arquivos`. Tela nova
+(`pages/notas-fiscais/NotasFiscaisPage.tsx`) com abas **NFe**/**NFS-e**, cada uma listando os
+arquivos **agrupados por mês de competência** (mais recente primeiro), botão "+ Enviar XML" (arquivo
++ mês de competência + Ordem de Serviço relacionada opcional) e "Baixar"/"Excluir" por arquivo
+(`lib/notasFiscais.ts` usa `supabase.storage` pra upload/download/remoção, junto com a tabela de
+metadados). Quando a emissão fiscal automática for construída futuramente, ela pode gravar direto
+nessa mesma tabela/bucket em vez de depender do upload manual. Validado via `npx tsc -b`,
+`npm run build`, `npm run lint` e screenshots Playwright com dados simulados via `page.route()`
+(sandbox não acessa `*.supabase.co`, ver item 7 da seção 6), incluindo lista agrupada por mês, aba
+vazia e o formulário de envio com o seletor de OS carregado.
+
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
 As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
@@ -851,11 +914,12 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0021) — as de 0001 a 0015 já foram confirmadas rodando sem erro
+`supabase/migrations/*.sql` (0001 a 0023) — as de 0001 a 0015 já foram confirmadas rodando sem erro
 pela usuária nesse projeto (a 0015 precisou de uma correção nesta sessão — ver item 13 da seção 6 —
-antes de rodar limpo). **As migrations 0016 a 0021 ainda precisam ser rodadas** — ver tutoriais
+antes de rodar limpo). **As migrations 0016 a 0023 ainda precisam ser rodadas** — ver tutoriais
 abaixo (0016/0017/0018 no primeiro tutorial, 0019/0020 — Funcionários e categorias de Caixa — no
-segundo, mais recente). Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou
+segundo, 0021/0022/0023 — tipo de cliente, RH completo de Funcionários e Notas Fiscais — no
+terceiro, mais recente). Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou
 usar outro projeto Supabase do zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
@@ -938,6 +1002,38 @@ Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
      manuais) igual antes, sem nada quebrado.
    - **Clientes → Novo cliente**: confira os rádios "Pessoa física"/"Pessoa jurídica" no topo do
      formulário — ao trocar para jurídica, os campos "Nome completo"/"CPF" viram "Razão social"/"CNPJ".
+
+Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+
+### Tutorial: pegar a versão nova (migrations 0022 e 0023 — RH completo de Funcionários e Notas Fiscais) e rodar
+
+1. Feche o app se estiver aberto.
+2. No terminal, dentro da pasta `sakura-system-autocenter`:
+   ```powershell
+   git checkout main
+   git pull origin main
+   ```
+3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
+   arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
+   - `supabase/migrations/0022_funcionarios_dados_completos.sql` — amplia a tabela `funcionarios`
+     (documentos, endereço, contato, cargo/admissão, família) e cria `funcionario_filhos`.
+   - `supabase/migrations/0023_notas_fiscais_xml.sql` — cria o bucket de arquivos `notas-fiscais`
+     (Supabase Storage) e a tabela `notas_fiscais_arquivos`. **Primeira migration do projeto que
+     mexe em Storage, não só em tabelas** — se der algum erro incomum (ex: "bucket already exists"
+     é normal e inofensivo, a migration é idempotente), me manda o print que eu ajudo.
+4. `npm install && npm run dev`.
+5. O que testar:
+   - **Funcionários → Editar um funcionário existente**: confira as duas abas novas do formulário —
+     "Dados gerais" (documentos, CNH, endereço, contato, cargo e admissão) e "Família" (filiação,
+     cônjuge, e a lista de filhos com "+ Adicionar filho(a)"). Preencha alguns campos, salve, edite
+     de novo e confirme que os dados voltam certinho.
+   - **Notas Fiscais** (item novo no menu lateral): clique em "+ Enviar XML" na aba "NFe", escolha
+     qualquer arquivo (pode ser um `.xml` de teste, ou até outro tipo de arquivo pra testar o botão),
+     escolha o mês e, opcionalmente, uma Ordem de Serviço — salve e confira que o arquivo aparece
+     agrupado no mês certo. Teste "Baixar" (deve baixar o arquivo de volta) e "Excluir". Repita na
+     aba "NFS-e".
+   - Confira que todo o resto continua funcionando normalmente (nada nas outras telas deveria ter
+     mudado, fora o ícone de casinha no botão "voltar" das telas de lista, no lugar da seta antiga).
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
@@ -1082,6 +1178,23 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
 - PR [#28](https://github.com/caranovavidanova/amigao/pull/28): preview antes de emitir NFe/NFS-e
   ou baixar/imprimir garantia (`Modal.tsx` novo, `FechamentoTab.tsx`) — ver seção 7. Mergeado nesta
   mesma sessão, sem mudança de schema.
+- PR [#29](https://github.com/caranovavidanova/amigao/pull/29): documentação — corrige o registro
+  incorreto de que a tag `v0.1.2` já tinha sido publicada (na real, o `git push` da tag deu 403).
+- PR [#30](https://github.com/caranovavidanova/amigao/pull/30) (nova sessão, branch
+  `claude/project-context-dmiarx`): módulo Funcionários + abas Entradas/Saídas do Caixa (migrations
+  0019/0020) — ver seção 7.
+- PR [#31](https://github.com/caranovavidanova/amigao/pull/31): tipo de pessoa (física/jurídica) no
+  cadastro de Cliente (migration 0021) — ver seção 7.
+- PR [#32](https://github.com/caranovavidanova/amigao/pull/32): cadastro de Funcionário ampliado
+  (RH completo — documentos, endereço, cargo/admissão, família — migration 0022) + ícone de casinha
+  no botão voltar das telas de lista — ver seção 7.
+- PR [#33](https://github.com/caranovavidanova/amigao/pull/33): módulo Notas Fiscais, arquivos XML
+  de NFe/NFS-e organizados por mês (migration 0023, primeiro uso de Supabase Storage no projeto) —
+  ver seção 7.
+- **A partir do PR #30, a branch de trabalho deste ambiente passou a ser
+  `claude/project-context-dmiarx`** (a antiga `claude/caranovavidanova-amigao-kad1fu`, usada nos PRs
+  #12 a #28, não precisa mais ser reutilizada — mesmo padrão de sempre, branch → PR → merge direto
+  sem esperar aprovação manual, ver seção 3).
 - **Tag `v0.1.2` ainda NÃO publicada** — a usuária pediu pra publicar o instalador ("upa o
   instalador") nesta sessão, mas o ambiente de sandbox onde o Claude roda **não tem permissão de
   push direto pra `main`/tags no GitHub** (só pra branches de feature via PR — deu erro `403` ao

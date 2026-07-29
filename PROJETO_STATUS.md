@@ -668,22 +668,23 @@ item 7 da seção 6):
 - **Itens do mesmo menu que o usuário optou por NÃO fazer agora** (continuam na lista do item 5 da
   seção 8): Fornecedores/Pedido de Compra, Entrada via NFe, Cadastro de Depósito.
 
-## 8.1 Pendência em aberto nesta sessão
+## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 
-**Preciso de 3 respostas da usuária antes de avançar na parte fiscal e na garantia** (decisões
-estruturais, ver seção 1 — não decidir sozinho):
+As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
+pela usuária nesta sessão**:
 
-1. **Cidade/UF da borracharia** — a NFS-e é municipal, cada prefeitura tem regras próprias, e a
-   cobertura varia por provedor (Focus NFe, eNotas, PlugNotas etc.). Preciso saber a cidade antes de
-   pesquisar/recomendar um provedor.
-2. **A loja já tem certificado digital (A1) no CNPJ?** — é pré-requisito pra emitir nota fiscal por
-   qualquer provedor, independente de qual for escolhido. Se não tiver, isso entra na lista de passos
-   antes da emissão funcionar de verdade.
-3. **Escopo do "modelo de garantia editável entre lojas"** — a arquitetura hoje é de loja única (ver
-   seção 3), então minha suposição é que ela quer um **texto configurável** (editável em
-   Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não necessariamente suporte a
-   várias lojas ao mesmo tempo no mesmo banco (isso seria multi-loja de verdade, decisão maior, já
-   listada como futura na seção 8). Confirmar esse entendimento antes de modelar a tabela nova.
+1. **Cidade/UF da borracharia**: **Araraquara** (assumindo SP — é a Araraquara mais conhecida do
+   Brasil; ainda não confirmado explicitamente pela usuária, vale confirmar se aparecer alguma
+   Araraquara de outro estado). Com isso já dá pra pesquisar/recomendar provedor de NFS-e (Focus NFe,
+   eNotas, PlugNotas etc.) — **pesquisa ainda não feita**, é o próximo passo antes de codar a emissão
+   fiscal (ver item 1 da seção 8).
+2. **Certificado digital A1 no CNPJ**: usuária respondeu **"não sei"** — precisa verificar isso antes
+   de a emissão fiscal funcionar de verdade (é pré-requisito pra qualquer provedor). Perguntar de novo
+   quando for a hora de configurar o provedor escolhido.
+3. **Escopo do "modelo de garantia editável"**: **confirmado** — é um texto configurável (editável em
+   Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não multi-loja. Ainda não
+   modelado/implementado — os botões "Imprimir garantia"/"Baixar garantia" na aba Fechamento da OS
+   continuam placeholder (ver seção 7, PR #11) até essa tela ser construída.
 
 **Instalador Windows pendente de propósito**: o código em `main` já tem as correções dos bugs da
 v0.1.1 (texto invisível em modo escuro, exclusão de cliente silenciosa) e o botão "voltar" novo, mas
@@ -743,10 +744,11 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0017) — as de 0001 a 0014 já foram confirmadas funcionando pelo
-usuário nesse projeto. **As migrations 0015, 0016 e 0017 ainda não foram rodadas no Supabase de
-verdade** — ver tutorial abaixo. Todas são seguras de rodar de novo (idempotentes) caso precise
-reconectar ou usar outro projeto Supabase do zero.
+`supabase/migrations/*.sql` (0001 a 0017) — as de 0001 a 0015 já foram confirmadas rodando sem erro
+pela usuária nesse projeto (a 0015 precisou de uma correção nesta sessão — ver item 13 da seção 6 —
+antes de rodar limpo). **As migrations 0016 e 0017 ainda precisam ser rodadas** — ver tutorial abaixo.
+Todas são seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto
+Supabase do zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
 redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations

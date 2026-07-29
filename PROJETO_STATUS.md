@@ -778,6 +778,8 @@ release "0.1.1" nova — porque o nome da release que ele publica no GitHub vem 
 frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da tag **antes** de publicar
 — documentado no tutorial acima como passo 1.
 
+## 10. Estado do Git
+
 - Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —
   foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`).
 - **`main` agora É o Sakura System** — nesta sessão, a branch `claude/sakura-autocenter-status-m6sio5`
@@ -829,6 +831,16 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   `claude/caranovavidanova-amigao-kad1fu`, commitar, abrir PR e mergear direto — sem deixar PR
   esperando aprovação manual (mesma decisão da seção 3), só que passando por PR em vez de commit
   direto em `main` (restrição do orquestrador desta sessão, não uma mudança de decisão do usuário).
+- **Sessão longa nesta mesma branch, PRs #12 a #20** (todos mergeados nesta sessão, mesmo padrão de
+  branch → PR → merge direto, ver seção 7 pro detalhe de cada um): RLS exigindo login (migration 0015,
+  PR #13), redesenho "glassmorphism" do app inteiro (PR #14), empacotamento do instalador Windows +
+  atualização automática configurados (PR #15), correção de release ficando como rascunho (PR #16),
+  correção de logo/imagens quebradas no instalador de verdade — caminho relativo (PR #17), correção de
+  `"version"` do `package.json` fora de sincronia com a tag publicada (PR #18), correção de texto
+  invisível em modo escuro do Windows + exclusão de cliente silenciosa (PR #19), botão "voltar" em
+  vidro em todas as telas/formulários (PR #20). **v0.1.1 foi a única versão do instalador publicada e
+  testada de verdade pela usuária até agora** — os PRs #19 e #20 (correções + botão voltar) ainda não
+  viraram uma versão nova de propósito, a pedido dela antes de trocar de sessão (ver seção 8.1).
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

@@ -93,7 +93,7 @@ export function ContagemSection({ pecas, saldos, onRecarregar }: ContagemSection
           <h2 className="text-sm font-semibold text-sakura-purple-dark">
             Nova contagem
           </h2>
-          <p className="text-xs text-sakura-gray">
+          <p className="text-xs text-sakura-muted">
             Confira a quantidade física do produto e compare com o saldo que o
             sistema calcula. Se houver diferença, um ajuste de estoque é lançado
             automaticamente.
@@ -188,9 +188,9 @@ export function ContagemSection({ pecas, saldos, onRecarregar }: ContagemSection
           Histórico de contagens
         </h2>
         {carregandoHistorico ? (
-          <p className="text-sm text-sakura-gray">Carregando...</p>
+          <p className="text-sm text-sakura-muted">Carregando...</p>
         ) : contagens.length === 0 ? (
-          <p className="text-sm text-sakura-gray">Nenhuma contagem registrada ainda.</p>
+          <p className="text-sm text-sakura-muted">Nenhuma contagem registrada ainda.</p>
         ) : (
           <div className="overflow-hidden sakura-card">
             <table className="w-full text-left text-sm">

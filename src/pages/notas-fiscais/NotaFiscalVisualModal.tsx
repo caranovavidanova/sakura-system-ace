@@ -53,7 +53,7 @@ export function NotaFiscalVisualModal({ arquivo, onFechar }: NotaFiscalVisualMod
 
   return (
     <Modal titulo="Versão para o cliente" onFechar={onFechar}>
-      {carregando && <p className="text-sm text-sakura-gray">Gerando pré-visualização...</p>}
+      {carregando && <p className="text-sm text-sakura-muted">Gerando pré-visualização...</p>}
 
       {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>}
 
@@ -76,7 +76,7 @@ export function NotaFiscalVisualModal({ arquivo, onFechar }: NotaFiscalVisualMod
             <button
               type="button"
               onClick={onFechar}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
               Fechar
             </button>

@@ -154,7 +154,7 @@ export function OrdemServicoForm({
           <div className="flex items-center gap-3">
             <BotaoVoltar onClick={onCancelar} />
             <div>
-              <p className="text-xs text-sakura-gray">
+              <p className="text-xs text-sakura-muted">
                 OS #{ordemExistente.id.slice(0, 8)} · aberta em{" "}
                 {formatarData(ordemExistente.data_abertura)}
               </p>
@@ -191,7 +191,7 @@ export function OrdemServicoForm({
             className={`px-4 py-2 text-sm font-medium ${
               aba === "detalhes"
                 ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-                : "text-sakura-purple-dark/50 hover:text-sakura-purple-dark"
+                : "text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
             }`}
           >
             Detalhes
@@ -202,7 +202,7 @@ export function OrdemServicoForm({
             className={`px-4 py-2 text-sm font-medium ${
               aba === "fechamento"
                 ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-                : "text-sakura-purple-dark/50 hover:text-sakura-purple-dark"
+                : "text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
             }`}
           >
             Fechamento
@@ -306,7 +306,7 @@ export function OrdemServicoForm({
 
             {itensExistentes.length > 0 && (
               <div className="mb-3 space-y-1.5 rounded-lg bg-sakura-gray/5 p-3">
-                <p className="mb-1 text-xs font-medium text-sakura-purple-dark/60">
+                <p className="mb-1 text-xs font-medium text-sakura-purple-dark/85">
                   Já lançados nesta OS
                 </p>
                 {itensExistentes.map((item) => (
@@ -342,7 +342,7 @@ export function OrdemServicoForm({
                 />
               ))}
               {itens.length === 0 && (
-                <p className="text-xs text-sakura-gray">
+                <p className="text-xs text-sakura-muted">
                   Nenhum item novo — use "+ adicionar item" pra lançar mais peças ou serviços.
                 </p>
               )}
@@ -374,13 +374,13 @@ export function OrdemServicoForm({
                   )}
                 </select>
                 {ordemExistente.status === "faturada" && (
-                  <span className="text-xs text-sakura-gray">
+                  <span className="text-xs text-sakura-muted">
                     OS já faturada — status não muda mais por aqui.
                   </span>
                 )}
               </label>
 
-              <div className="border-t border-sakura-gray/20 pt-3 text-xs text-sakura-purple-dark/70">
+              <div className="border-t border-sakura-gray/20 pt-3 text-xs text-sakura-purple-dark/90">
                 <p>
                   <span className="font-semibold">Criado por:</span>{" "}
                   {ordemExistente.criado_por?.nome ?? "—"}
@@ -400,7 +400,7 @@ export function OrdemServicoForm({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>

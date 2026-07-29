@@ -38,7 +38,7 @@ export function LoginPage() {
         <h1 className="text-center text-xl font-semibold text-sakura-purple-dark">
           Bem-vindo de volta
         </h1>
-        <p className="mb-6 text-center text-sm text-sakura-purple-dark/70">
+        <p className="mb-6 text-center text-sm text-sakura-purple-dark/90">
           Entre com seu usuário para continuar
         </p>
 
@@ -64,7 +64,7 @@ export function LoginPage() {
               autoFocus
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/40 focus:border-sakura-purple"
+              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/65 focus:border-sakura-purple"
             />
           </label>
 
@@ -74,7 +74,7 @@ export function LoginPage() {
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/40 focus:border-sakura-purple"
+              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/65 focus:border-sakura-purple"
             />
           </label>
 

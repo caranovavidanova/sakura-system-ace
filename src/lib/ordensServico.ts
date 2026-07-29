@@ -8,7 +8,7 @@ import type {
 } from "@/types/os";
 
 const SELECT_ORDEM =
-  "*, cliente:clientes(nome), veiculo:veiculos(placa), " +
+  "*, cliente:clientes(nome), veiculo:veiculos(placa, marca, modelo, cor, tipo), " +
   "vendedor:funcionarios!ordens_servico_vendedor_id_fkey(nome), " +
   "criado_por:operadores!ordens_servico_criado_por_id_fkey(nome), " +
   "atualizado_por:operadores!ordens_servico_atualizado_por_id_fkey(nome), " +

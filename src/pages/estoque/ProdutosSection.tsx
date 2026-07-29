@@ -91,7 +91,7 @@ export function ProdutosSection({
       )}
 
       {pecas.length === 0 ? (
-        <p className="text-sm text-sakura-gray">
+        <p className="text-sm text-sakura-muted">
           Nenhum produto cadastrado ainda.
         </p>
       ) : (
@@ -127,7 +127,7 @@ export function ProdutosSection({
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                         peca.ativo
                           ? "bg-emerald-50 text-emerald-700"
-                          : "bg-sakura-gray/20 text-sakura-gray"
+                          : "bg-sakura-gray/20 text-sakura-muted"
                       }`}
                     >
                       {peca.ativo ? "Ativo" : "Inativo"}

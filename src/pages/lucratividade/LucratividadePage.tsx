@@ -105,7 +105,7 @@ export function LucratividadePage() {
         <BotaoVoltar />
         <div>
           <h1 className="text-2xl font-semibold text-sakura-purple-dark">Lucratividade</h1>
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             Margem por peça/serviço e lucro do período
           </p>
         </div>
@@ -146,19 +146,19 @@ export function LucratividadePage() {
 
       <div className="grid grid-cols-3 gap-4">
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Receita do período</p>
+          <p className="text-xs text-sakura-muted">Receita do período</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalReceita)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Custo do período</p>
+          <p className="text-xs text-sakura-muted">Custo do período</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalCusto)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Margem do período</p>
+          <p className="text-xs text-sakura-muted">Margem do período</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalMargem)}
           </p>
@@ -166,9 +166,9 @@ export function LucratividadePage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : linhas.length === 0 ? (
-        <p className="text-sm text-sakura-gray">
+        <p className="text-sm text-sakura-muted">
           Nenhuma peça ou serviço vendido nesse período.
         </p>
       ) : (

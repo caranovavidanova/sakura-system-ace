@@ -527,7 +527,7 @@ export function FuncionarioForm({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/70 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
@@ -592,7 +592,7 @@ function AbaBotao({
       className={`px-4 py-2.5 text-sm font-medium transition-colors ${
         ativa
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-          : "text-sakura-purple-dark/60 hover:text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
       }`}
     >
       {label}

@@ -22,7 +22,7 @@ export function Modal({ titulo, onFechar, children }: ModalProps) {
             type="button"
             onClick={onFechar}
             aria-label="Fechar"
-            className="shrink-0 rounded-full p-1.5 text-sakura-purple-dark/60 hover:bg-sakura-gray/10 hover:text-sakura-purple-dark"
+            className="shrink-0 rounded-full p-1.5 text-sakura-purple-dark/85 hover:bg-sakura-gray/10 hover:text-sakura-purple-dark"
           >
             ✕
           </button>

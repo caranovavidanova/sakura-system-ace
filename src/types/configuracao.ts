@@ -53,10 +53,13 @@ export const CARTAO_METRICA_LABEL: Record<CartaoMetrica, string> = {
   contas_pagar_vencendo: "Contas a pagar vencendo",
 };
 
+// Custos não entra no padrão de propósito — a usuária achou estranho mostrar
+// algo "negativo" logo de cara no Início; continua disponível pra quem
+// quiser escolher em Configurações → "Cartões do Início".
 export const CARTOES_INICIO_PADRAO: CartaoMetrica[] = [
   "vendas_mes",
-  "custos_mes",
   "lucro_mes",
+  "ticket_medio_mes",
 ];
 
 export interface ConfiguracaoPainelInicio {

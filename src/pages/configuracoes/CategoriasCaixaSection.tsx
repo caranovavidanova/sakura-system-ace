@@ -49,9 +49,9 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
   function Lista({ titulo, itens }: { titulo: string; itens: CategoriaCaixa[] }) {
     return (
       <div>
-        <p className="text-xs font-medium text-sakura-purple-dark/60">{titulo}</p>
+        <p className="text-xs font-medium text-sakura-purple-dark/85">{titulo}</p>
         {itens.length === 0 ? (
-          <p className="mt-2 text-sm text-sakura-gray">Nenhuma categoria ainda.</p>
+          <p className="mt-2 text-sm text-sakura-muted">Nenhuma categoria ainda.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
             {itens.map((categoria) => (
@@ -63,7 +63,7 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
                 <button
                   onClick={() => handleExcluir(categoria.id)}
                   title="Excluir categoria"
-                  className="text-sakura-purple-dark/50 hover:text-red-600"
+                  className="text-sakura-purple-dark/75 hover:text-red-600"
                 >
                   ×
                 </button>

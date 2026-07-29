@@ -118,7 +118,7 @@ export function ConfiguracoesPage() {
           <h1 className="text-2xl font-semibold text-sakura-purple-dark">
             Configurações
           </h1>
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             Operadores do sistema e permissões de acesso
           </p>
         </div>
@@ -142,7 +142,7 @@ export function ConfiguracoesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-sakura-purple-dark">Operadores</h2>
-            <p className="mt-1 text-xs text-sakura-gray">
+            <p className="mt-1 text-xs text-sakura-muted">
               Quem tem login no sistema e quais módulos cada um acessa.
             </p>
           </div>
@@ -167,9 +167,9 @@ export function ConfiguracoesPage() {
         )}
 
         {carregando ? (
-          <p className="mt-4 text-sm text-sakura-gray">Carregando...</p>
+          <p className="mt-4 text-sm text-sakura-muted">Carregando...</p>
         ) : operadores.length === 0 ? (
-          <p className="mt-4 text-sm text-sakura-gray">
+          <p className="mt-4 text-sm text-sakura-muted">
             Nenhum operador cadastrado ainda.
           </p>
         ) : (
@@ -179,13 +179,13 @@ export function ConfiguracoesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium text-sakura-purple-dark">{op.nome}</p>
-                    <p className="text-sm text-sakura-gray">@{op.usuario}</p>
+                    <p className="text-sm text-sakura-muted">@{op.usuario}</p>
                   </div>
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                       op.ativo
                         ? "bg-emerald-50 text-emerald-700"
-                        : "bg-sakura-gray/20 text-sakura-gray"
+                        : "bg-sakura-gray/20 text-sakura-muted"
                     }`}
                   >
                     {op.ativo ? "Ativo" : "Inativo"}
@@ -198,7 +198,7 @@ export function ConfiguracoesPage() {
                       Administrador (acesso total)
                     </span>
                   ) : op.permissoes.length === 0 ? (
-                    <span className="text-xs text-sakura-gray">
+                    <span className="text-xs text-sakura-muted">
                       Nenhum módulo liberado
                     </span>
                   ) : (

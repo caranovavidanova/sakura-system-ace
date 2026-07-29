@@ -8,12 +8,12 @@
 
 create table if not exists configuracoes_painel_inicio (
   id smallint primary key default 1,
-  cartoes text[] not null default array['vendas_mes', 'custos_mes', 'lucro_mes'],
+  cartoes text[] not null default array['vendas_mes', 'lucro_mes', 'ticket_medio_mes'],
   constraint configuracoes_painel_inicio_singleton check (id = 1)
 );
 
 insert into configuracoes_painel_inicio (id, cartoes)
-values (1, array['vendas_mes', 'custos_mes', 'lucro_mes'])
+values (1, array['vendas_mes', 'lucro_mes', 'ticket_medio_mes'])
 on conflict (id) do nothing;
 
 alter table configuracoes_painel_inicio enable row level security;

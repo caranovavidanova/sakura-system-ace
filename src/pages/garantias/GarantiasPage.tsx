@@ -61,7 +61,7 @@ export function GarantiasPage() {
         <BotaoVoltar />
         <div>
           <h1 className="text-2xl font-semibold text-sakura-purple-dark">Garantias</h1>
-          <p className="text-sm text-sakura-gray">
+          <p className="text-sm text-sakura-muted">
             Peças vendidas com prazo de garantia definido no cadastro
           </p>
         </div>
@@ -98,9 +98,9 @@ export function GarantiasPage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : linhasFiltradas.length === 0 ? (
-        <p className="text-sm text-sakura-gray">
+        <p className="text-sm text-sakura-muted">
           {linhas.length === 0
             ? "Nenhuma peça vendida com garantia cadastrada ainda. Defina o prazo de garantia no cadastro do produto (aba Estoque → Produtos)."
             : "Nenhum item nessa situação."}
@@ -166,7 +166,7 @@ function FiltroBotao({
       className={`px-4 py-2.5 text-sm font-medium transition-colors ${
         ativo
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-          : "text-sakura-purple-dark/60 hover:text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
       }`}
     >
       {label}

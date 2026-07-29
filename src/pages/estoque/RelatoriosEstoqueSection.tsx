@@ -57,7 +57,7 @@ export function RelatoriosEstoqueSection({
         <h2 className="text-sm font-semibold text-sakura-purple-dark">
           Estoque físico-financeiro
         </h2>
-        <p className="mt-1 text-xs text-sakura-gray">
+        <p className="mt-1 text-xs text-sakura-muted">
           Valor do estoque parado (saldo atual × preço de custo), só produtos ativos.
         </p>
         <p className="mt-3 text-xl font-semibold text-sakura-purple-dark">
@@ -69,7 +69,7 @@ export function RelatoriosEstoqueSection({
         <h2 className="text-sm font-semibold text-sakura-purple-dark">
           Saldo por situação
         </h2>
-        <p className="mt-1 text-xs text-sakura-gray">
+        <p className="mt-1 text-xs text-sakura-muted">
           Produtos ativos, agrupados pelo saldo atual calculado.
         </p>
         <div className="mt-3 flex gap-1 border-b border-sakura-gray/30">
@@ -96,7 +96,7 @@ export function RelatoriosEstoqueSection({
         </div>
 
         {pecasFiltradasPorSaldo.length === 0 ? (
-          <p className="mt-4 text-sm text-sakura-gray">Nenhum produto nessa situação.</p>
+          <p className="mt-4 text-sm text-sakura-muted">Nenhum produto nessa situação.</p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-xl border border-sakura-gray/20">
             <table className="w-full text-left text-sm">
@@ -130,11 +130,11 @@ export function RelatoriosEstoqueSection({
         <h2 className="text-sm font-semibold text-sakura-purple-dark">
           Produtos sem movimentação
         </h2>
-        <p className="mt-1 text-xs text-sakura-gray">
+        <p className="mt-1 text-xs text-sakura-muted">
           Produtos ativos que nunca tiveram entrada ou saída registrada.
         </p>
         {pecasSemMovimento.length === 0 ? (
-          <p className="mt-4 text-sm text-sakura-gray">
+          <p className="mt-4 text-sm text-sakura-muted">
             Todos os produtos ativos já tiveram alguma movimentação.
           </p>
         ) : (
@@ -169,7 +169,7 @@ function FiltroBotao({
       className={`px-3 py-2 text-xs font-medium transition-colors ${
         ativo
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
-          : "text-sakura-purple-dark/60 hover:text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
       }`}
     >
       {label}

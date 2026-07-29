@@ -31,12 +31,12 @@ export function Sidebar() {
     <aside className="sakura-card flex h-full w-64 shrink-0 flex-col overflow-y-auto">
       <div className="px-6 py-6">
         <Logo />
-        <p className="mt-1 text-xs text-sakura-purple-dark/60">AutoCenter Edition</p>
+        <p className="mt-1 text-xs text-sakura-purple-dark/85">AutoCenter Edition</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
         {modulosLiberados.length === 0 && (
-          <p className="px-4 py-2.5 text-xs text-sakura-purple-dark/60">
+          <p className="px-4 py-2.5 text-xs text-sakura-purple-dark/85">
             Nenhum módulo liberado. Fale com o administrador.
           </p>
         )}
@@ -49,7 +49,7 @@ export function Sidebar() {
               `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-white/50 text-sakura-purple-dark"
-                  : "text-sakura-purple-dark/70 hover:bg-white/30"
+                  : "text-sakura-purple-dark/90 hover:bg-white/30"
               }`
             }
           >
@@ -65,7 +65,7 @@ export function Sidebar() {
               <p className="truncate text-sm font-medium text-sakura-purple-dark">
                 {operador.nome}
               </p>
-              <p className="truncate text-xs text-sakura-purple-dark/60">
+              <p className="truncate text-xs text-sakura-purple-dark/85">
                 @{operador.usuario}
               </p>
             </div>
@@ -77,7 +77,7 @@ export function Sidebar() {
                   `shrink-0 rounded-full p-2 transition-colors ${
                     isActive
                       ? "bg-white/50 text-sakura-purple-dark"
-                      : "text-sakura-purple-dark/60 hover:bg-white/30 hover:text-sakura-purple-dark"
+                      : "text-sakura-purple-dark/85 hover:bg-white/30 hover:text-sakura-purple-dark"
                   }`
                 }
               >

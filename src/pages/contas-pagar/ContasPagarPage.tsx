@@ -101,7 +101,7 @@ export function ContasPagarPage() {
           <BotaoVoltar />
           <div>
             <h1 className="text-2xl font-semibold text-sakura-purple-dark">Contas a Pagar</h1>
-            <p className="text-sm text-sakura-gray">
+            <p className="text-sm text-sakura-muted">
               Contas mensais (aluguel, etc.) com vencimento — diferente das Entradas/Saídas
               manuais do Caixa
             </p>
@@ -129,7 +129,7 @@ export function ContasPagarPage() {
 
       {!carregando && (
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-gray">Total pendente</p>
+          <p className="text-xs text-sakura-muted">Total pendente</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalPendente)}
           </p>
@@ -137,13 +137,13 @@ export function ContasPagarPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-gray">Carregando...</p>
+        <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : (
         <>
           <section>
             <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Pendentes</h2>
             {pendentes.length === 0 ? (
-              <p className="text-sm text-sakura-gray">Nenhuma conta pendente.</p>
+              <p className="text-sm text-sakura-muted">Nenhuma conta pendente.</p>
             ) : (
               <div className="overflow-hidden sakura-card">
                 <table className="w-full text-left text-sm">
@@ -168,7 +168,7 @@ export function ContasPagarPage() {
                           <td className="px-4 py-3">
                             {conta.descricao}
                             {conta.recorrente && (
-                              <span className="ml-2 rounded-full bg-sakura-pink-soft px-2 py-0.5 text-xs text-sakura-purple-dark/70">
+                              <span className="ml-2 rounded-full bg-sakura-pink-soft px-2 py-0.5 text-xs text-sakura-purple-dark/90">
                                 mensal
                               </span>
                             )}

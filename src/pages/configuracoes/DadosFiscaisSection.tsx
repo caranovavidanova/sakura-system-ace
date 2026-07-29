@@ -91,7 +91,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
       )}
 
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           CNPJ
           <input
             value={valores.cnpj ?? ""}
@@ -99,7 +99,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Inscrição estadual
           <input
             value={valores.inscricao_estadual ?? ""}
@@ -107,7 +107,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Inscrição municipal
           <input
             value={valores.inscricao_municipal ?? ""}
@@ -116,7 +116,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
           />
         </label>
 
-        <label className="col-span-2 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-2 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Razão social
           <input
             value={valores.razao_social ?? ""}
@@ -124,7 +124,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Nome fantasia
           <input
             value={valores.nome_fantasia ?? ""}
@@ -133,7 +133,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
           />
         </label>
 
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Regime tributário
           <select
             value={valores.regime_tributario ?? ""}
@@ -150,7 +150,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             ))}
           </select>
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Telefone
           <input
             value={valores.telefone ?? ""}
@@ -158,7 +158,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           E-mail
           <input
             type="email"
@@ -168,7 +168,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
           />
         </label>
 
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           CEP
           <input
             value={valores.cep ?? ""}
@@ -176,7 +176,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Rua
           <input
             value={valores.rua ?? ""}
@@ -184,7 +184,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Número
           <input
             value={valores.numero ?? ""}
@@ -193,7 +193,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
           />
         </label>
 
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Bairro
           <input
             value={valores.bairro ?? ""}
@@ -201,7 +201,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           Cidade
           <input
             value={valores.cidade ?? ""}
@@ -209,7 +209,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
             className={campoClasse}
           />
         </label>
-        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+        <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
           UF
           <input
             value={valores.uf ?? ""}
@@ -221,13 +221,13 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
       </div>
 
       <div className="mt-6 border-t border-sakura-gray/20 pt-4">
-        <p className="text-xs font-medium text-sakura-purple-dark/70">Integração Focus NFe</p>
-        <p className="mt-1 text-xs text-sakura-gray">
+        <p className="text-xs font-medium text-sakura-purple-dark/90">Integração Focus NFe</p>
+        <p className="mt-1 text-xs text-sakura-muted">
           Cole aqui o token de acesso quando assinar um plano no Focus NFe. Use o ambiente de
           homologação pra testar sem gerar nota de verdade.
         </p>
         <div className="mt-3 grid grid-cols-3 gap-3">
-          <label className="col-span-2 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+          <label className="col-span-2 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
             Token de acesso
             <input
               type="password"
@@ -236,7 +236,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
               className={campoClasse}
             />
           </label>
-          <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/70">
+          <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
             Ambiente
             <select
               value={valores.focus_nfe_ambiente}

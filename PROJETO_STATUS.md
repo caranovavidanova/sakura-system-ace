@@ -95,18 +95,23 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
 │   ├── components/             # Sidebar.tsx, Logo.tsx, Sparkline.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão)
 │   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, auth.ts, errors.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, caixa, relatorios, lucratividade, login, configuracoes
+│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, caixa, relatorios, lucratividade, garantias, login, configuracoes
 │   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
 │   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
-│   │       EstoquePage.tsx tem abas "Produtos" (ProdutosSection.tsx + PecaForm.tsx) e
-│   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx). pages/servicos/ é o
-│   │       catálogo de serviços (só lista + form, sem abas). pages/ordens-servico/ ganhou
-│   │       FaturamentoCard.tsx (tela de faturamento com forma de pagamento + parcelas calculadas,
-│   │       ver seção 7 — SimulacaoParcelas.tsx existiu por uma sessão e foi removido, não vingou).
-│   │       pages/configuracoes/ ganhou JurosParcelasSection.tsx (config de juros por parcela)
+│   │       EstoquePage.tsx tem 4 abas: "Produtos" (ProdutosSection.tsx + PecaForm.tsx),
+│   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx), "Contagem"
+│   │       (ContagemSection.tsx — inventário físico, ver seção 7) e "Relatórios"
+│   │       (RelatoriosEstoqueSection.tsx — estoque físico-financeiro/saldo por situação/sem
+│   │       movimentação, ver seção 7). pages/garantias/GarantiasPage.tsx é só lista (sem form —
+│   │       lê ordens_servico_itens + pecas.prazo_garantia_dias, não tem tabela própria).
+│   │       pages/servicos/ é o catálogo de serviços (só lista + form, sem abas). pages/ordens-servico/
+│   │       ganhou FaturamentoCard.tsx (tela de faturamento com forma de pagamento + parcelas
+│   │       calculadas, ver seção 7 — SimulacaoParcelas.tsx existiu por uma sessão e foi removido, não
+│   │       vingou). pages/configuracoes/ ganhou JurosParcelasSection.tsx (config de juros por
+│   │       parcela) e CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7)
 │   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts) + configuracao.ts (JurosParcela)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0015), todas idempotentes (seguro rodar de novo)
+│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, categoria.ts, contagem.ts) + configuracao.ts (JurosParcela)
+├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0017), todas idempotentes (seguro rodar de novo)
 ├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
 ├── eslint.config.js             # flat config do ESLint 9
@@ -141,9 +146,14 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
 - **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, km_atual, criado_em
 - **`pecas`**: id, codigo_interno (exibido como "Referência" na tela), codigo_barras, descricao,
   marca, modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
-  cst_ou_csosn, aliquota_icms, ativo, criado_em (campos codigo_barras/marca/modelo/aplicacao/cest/origem
-  são da migration 0010). **Margem % não é salva no banco** — é só calculada na tela a partir de
-  `preco_custo`/`preco_venda`, pra não duplicar um dado que já dá pra derivar dos outros dois.
+  cst_ou_csosn, aliquota_icms, categoria_id (FK categorias, opcional — migration 0016),
+  prazo_garantia_dias (int, opcional — migration 0016, usado pelo módulo Garantias), ativo, criado_em
+  (campos codigo_barras/marca/modelo/aplicacao/cest/origem são da migration 0010). **Margem % não é
+  salva no banco** — é só calculada na tela a partir de `preco_custo`/`preco_venda`, pra não duplicar
+  um dado que já dá pra derivar dos outros dois.
+- **`categorias`** (migration 0016): id, nome (único), criado_em. Gerenciada em Configurações
+  (`CategoriasSection.tsx`, admin), selecionável no cadastro de produto. Simples de propósito — não
+  tem hierarquia nem campos extras.
 - **`servicos`** (migration 0011 — catálogo de serviços, análogo a `pecas` mas sem estoque): id,
   codigo_interno (opcional), descricao, preco_padrao, ativo, criado_em
 - **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
@@ -168,14 +178,21 @@ novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
   linha aqui.
 - **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
   faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao
+- **`contagens_estoque`** (migration 0017): id, peca_id (FK), quantidade_contada, saldo_sistema
+  (o que o sistema calculava no momento), diferenca, observacao, operador_id (FK operadores),
+  criado_em. Histórico de contagens de inventário físico — ao salvar uma contagem com diferença, o
+  app gera automaticamente um lançamento de ajuste em `estoque_movimentos` (mesmo padrão do "Qtde.
+  estoque inicial" do cadastro de produto).
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
   permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
-  estoque, servicos, ordens_servico, caixa, relatorios, lucratividade), ativo, criado_em. Única tabela
-  com RLS de verdade (baseada em login) — ver seção 6.
+  estoque, servicos, ordens_servico, caixa, relatorios, lucratividade, garantias), ativo, criado_em.
+  Única tabela com RLS de verdade (baseada em login) — ver seção 6.
 
 Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
-entrada em `caixa_movimentos` com o valor total da OS.
+entrada em `caixa_movimentos` com o valor total da OS. Garantia dada ao cliente na venda (módulo
+"Garantias") **não tem tabela própria** — é calculada juntando `ordens_servico_itens` (tipo peça) +
+`pecas.prazo_garantia_dias` + `ordens_servico.data_fechamento` (vencimento = fechamento + prazo).
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
@@ -613,6 +630,33 @@ item 7 da seção 6):
     callback do botão "Cancelar" que já existia (fecha o formulário e volta pra lista, em vez de mudar
     de rota) — por isso `BotaoVoltar` aceita uma prop `onClick` opcional pra sobrescrever o padrão.
 
+**⏳ Implementado e mergeado em `main` nesta sessão (PR [#22](https://github.com/caranovavidanova/amigao/pull/22)), ainda sem confirmação do usuário rodando com Supabase real** — 4 dos itens do menu de Estoque do sistema de referência (S3Auto/Comsis) que estavam na lista de "ainda não avaliados" (ver seção 8, antiga lista do item 5), escolhidos pelo usuário entre os que não dependem de Fornecedores/Depósito. Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots Playwright com dados simulados via `page.route()` (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
+
+- **Categorias de produto** (migration 0016, tabela `categorias`): usuário escolheu **tabela própria**
+  em vez de campo de texto livre (evita duplicar categoria por erro de digitação, permite renomear em
+  massa). Gerenciada em Configurações (`CategoriasSection.tsx`, admin-only, mesmo padrão visual do
+  `JurosParcelasSection.tsx`) e selecionável no cadastro de produto (`PecaForm.tsx`); coluna
+  "Categoria" nova na lista de produtos (`ProdutosSection.tsx`).
+- **Relatórios de estoque**: 4ª aba "Relatórios" em `EstoquePage.tsx`
+  (`RelatoriosEstoqueSection.tsx`) — estoque físico-financeiro (soma de saldo × preço de custo),
+  saldo por situação (positivo/negativo/zerado, com filtro) e produtos ativos sem nenhuma
+  movimentação registrada. Tudo derivado de `pecas` + `estoque_movimentos` na tela, **sem tabela
+  nova**.
+- **Garantias**: usuário escolheu rastrear a **garantia dada ao cliente na venda** (não a garantia do
+  fornecedor na compra, já que o módulo de Fornecedores ainda não existe). Campo novo "Garantia
+  (dias)" no cadastro de produto (`prazo_garantia_dias`, migration 0016) + módulo novo "Garantias"
+  (`garantias` em `MODULOS`, rota `/garantias`, item no menu lateral) que lista peças vendidas com
+  prazo de garantia definido, calculando o vencimento a partir da data de fechamento da OS e
+  classificando "Dentro do prazo"/"Vencida". **Sem tabela nova** — deriva de `ordens_servico_itens`
+  join `pecas`/`ordens_servico` (`lib/garantias.ts`).
+- **Contagem/Inventário físico** (migration 0017, tabela `contagens_estoque`): 3ª aba "Contagem" em
+  `EstoquePage.tsx` (`ContagemSection.tsx`) — escolhe um produto, mostra o saldo que o sistema
+  calcula, o operador digita a quantidade contada fisicamente, e a diferença (se houver) gera
+  automaticamente um lançamento de ajuste em `estoque_movimentos` (mesmo padrão do "Qtde. estoque
+  inicial" do cadastro de produto). Histórico de contagens listado abaixo do formulário.
+- **Itens do mesmo menu que o usuário optou por NÃO fazer agora** (continuam na lista do item 5 da
+  seção 8): Fornecedores/Pedido de Compra, Entrada via NFe, Cadastro de Depósito.
+
 ## 8.1 Pendência em aberto nesta sessão
 
 **Preciso de 3 respostas da usuária antes de avançar na parte fiscal e na garantia** (decisões
@@ -663,20 +707,15 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
 4. Refinamentos possíveis no Painel de Controle e demais módulos, conforme feedback do usuário.
 5. **Itens do menu de estoque do sistema de referência (S3Auto/Comsis) ainda não avaliados/decididos**
    — usuário mandou prints do menu "Estoque" e "Relações" de um sistema básico que a família usa na
-   borracharia; a categoria em si já foi absorvida (ver seção 7), mas os itens abaixo exigem
-   modelagem de dados nova e **precisam de decisão do usuário antes de codar** (apresentar opções +
-   recomendação, não decidir sozinho — ver seção 1):
+   borracharia. A categoria em si (seção 7), Categorias de produto, Relatórios adicionais, Garantia
+   (dada ao cliente) e Contagem/Inventário físico **já foram implementados** (PR #22, ver seção 7).
+   Restam os itens que dependem de Fornecedores/multi-local, ainda **precisam de decisão do usuário
+   antes de codar** (apresentar opções + recomendação, não decidir sozinho — ver seção 1):
    - Pedido de Compra / Cotações de Peças por fornecedor (implica cadastro de Fornecedor)
    - Entrada de Produtos via NFe (importação de XML de nota fiscal do fornecedor)
    - Cadastro de Depósito (múltiplos locais físicos de estoque)
-   - Peças em Garantia (rastreamento de garantia por peça/fornecedor)
-   - Contagem/Inventário físico (conciliação entre estoque contado e sistema)
-   - Grupo/Categoria de produto (permitiria "atualizar preço por grupo", "zerar estoque por grupo",
-     relatórios por categoria — hoje `pecas` não tem esse campo)
-   - Relatórios adicionais do menu "Relações": estoque físico-financeiro, produtos não
-     vendidos/comprados, estoque positivo/negativo/zerado — a maioria dá pra derivar dos dados que já
-     existem (`pecas` + `estoque_movimentos`), sem mudança de schema, então são candidatos mais
-     simples de priorizar primeiro dentro desta lista.
+   - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já implementada
+     — essa depende do módulo de Fornecedores ainda não construído)
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -693,18 +732,17 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
 URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0015) — as de 0001 a 0014 já foram confirmadas funcionando pelo
-usuário nesse projeto. **A migration 0015 ainda não foi rodada no Supabase de verdade** (fecha o
-acesso sem login nas tabelas de negócio — ver item 1 da seção 6) — ver tutorial abaixo. Todas são
-seguras de rodar de novo (idempotentes) caso precise reconectar ou usar outro projeto Supabase do
-zero.
+`supabase/migrations/*.sql` (0001 a 0017) — as de 0001 a 0014 já foram confirmadas funcionando pelo
+usuário nesse projeto. **As migrations 0015, 0016 e 0017 ainda não foram rodadas no Supabase de
+verdade** — ver tutorial abaixo. Todas são seguras de rodar de novo (idempotentes) caso precise
+reconectar ou usar outro projeto Supabase do zero.
 
 *(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
 redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
 0013/0014 — foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7.
 Sessões passadas ficam registradas na seção 10.)*
 
-### Tutorial: pegar a versão nova (migration 0015, fecha acesso sem login) e rodar
+### Tutorial: pegar a versão nova (migrations 0015, 0016 e 0017) e rodar
 
 1. Feche o app se estiver aberto.
 2. No terminal, dentro da pasta `sakura-system-autocenter`:
@@ -712,13 +750,27 @@ Sessões passadas ficam registradas na seção 10.)*
    git checkout main
    git pull origin main
    ```
-3. **Rode a migration nova no Supabase**: abra `supabase/migrations/0015_rls_exige_login.sql`
-   no VS Code, copie todo o conteúdo, cole numa "New query" no SQL Editor do Supabase e clique em
-   "Run".
+3. **Rode as 3 migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
+   arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
+   - `supabase/migrations/0015_rls_exige_login.sql` — fecha o acesso sem login nas tabelas de
+     negócio (ver item 1 da seção 6).
+   - `supabase/migrations/0016_categorias_e_garantia.sql` — cria a tabela `categorias` e os campos
+     `categoria_id`/`prazo_garantia_dias` em `pecas` (usados pelas telas novas de Categorias e
+     Garantias).
+   - `supabase/migrations/0017_contagens_estoque.sql` — cria a tabela `contagens_estoque` (usada
+     pela aba nova "Contagem" em Estoque).
 4. `npm install && npm run dev`.
-5. O que testar: tudo deve continuar funcionando **normalmente enquanto você estiver logado**
-   (Clientes, Estoque, OS, Caixa etc.) — essa migration só bloqueia quem tenta acessar os dados **sem**
-   estar logado. Não deve aparecer nenhum erro novo nas telas que você já usa.
+5. O que testar:
+   - Tudo deve continuar funcionando **normalmente enquanto você estiver logado** (Clientes, Estoque,
+     OS, Caixa etc.) — a migration 0015 só bloqueia quem tenta acessar os dados **sem** estar logado.
+   - **Estoque → Produtos**: cadastrar/editar um produto agora tem um campo "Categoria" (crie
+     categorias em Configurações → "Categorias de produto" primeiro) e um campo "Garantia (dias)".
+   - **Estoque → Contagem** (aba nova): escolher um produto, digitar a quantidade contada e salvar —
+     confira que o saldo do produto em "Produtos" muda quando há diferença.
+   - **Estoque → Relatórios** (aba nova): confira os números de estoque físico-financeiro e os
+     filtros de saldo positivo/negativo/zerado.
+   - **Garantias** (item novo no menu lateral): só aparece depois de vender (faturar uma OS) uma
+     peça que tenha "Garantia (dias)" preenchida no cadastro.
 
 Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
 
@@ -841,6 +893,11 @@ frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da ta
   vidro em todas as telas/formulários (PR #20). **v0.1.1 foi a única versão do instalador publicada e
   testada de verdade pela usuária até agora** — os PRs #19 e #20 (correções + botão voltar) ainda não
   viraram uma versão nova de propósito, a pedido dela antes de trocar de sessão (ver seção 8.1).
+- PR [#22](https://github.com/caranovavidanova/amigao/pull/22) (`claude/project-context-pk6m3h` →
+  `main`): Categorias de produto, Relatórios de estoque, Garantias e Contagem/Inventário físico —
+  4 itens do menu de Estoque do sistema de referência escolhidos pelo usuário nesta sessão, ver
+  seção 7. Migrations 0016 e 0017. Mergeado nesta mesma sessão, ainda sem confirmação da usuária
+  rodando com Supabase real (migrations 0015/0016/0017 pendentes de rodar — ver tutorial na seção 9).
 
 ## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
 

@@ -4,13 +4,12 @@ export const MODULOS = [
   { chave: "ordens_servico", label: "Ordens de Serviço", rota: "/ordens-servico" },
   { chave: "estoque", label: "Estoque", rota: "/estoque" },
   { chave: "servicos", label: "Serviços", rota: "/servicos" },
-  { chave: "funcionarios", label: "Funcionários", rota: "/funcionarios" },
   { chave: "caixa", label: "Caixa Diário", rota: "/caixa" },
   { chave: "contas_pagar", label: "Contas a Pagar", rota: "/contas-pagar" },
   { chave: "relatorios", label: "Relações", rota: "/relatorios" },
-  { chave: "lucratividade", label: "Lucratividade", rota: "/lucratividade" },
   { chave: "garantias", label: "Garantias", rota: "/garantias" },
   { chave: "notas_fiscais", label: "Notas Fiscais", rota: "/notas-fiscais" },
+  { chave: "funcionarios", label: "Funcionários", rota: "/funcionarios" },
 ] as const;
 
 export type ModuloChave = (typeof MODULOS)[number]["chave"];

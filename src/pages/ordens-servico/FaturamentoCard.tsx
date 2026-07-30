@@ -59,7 +59,8 @@ export function FaturamentoCard({
     if (valor !== "cartao_credito") setParcelas(1);
   }
 
-  async function handleConfirmar() {
+  async function handleConfirmar(e: React.FormEvent) {
+    e.preventDefault();
     setErro(null);
     setConfirmando(true);
     try {
@@ -73,7 +74,7 @@ export function FaturamentoCard({
   }
 
   return (
-    <div className="space-y-5 sakura-card p-6 shadow-sm">
+    <form onSubmit={handleConfirmar} className="space-y-5 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <div>
@@ -169,14 +170,13 @@ export function FaturamentoCard({
           Cancelar
         </button>
         <button
-          type="button"
-          onClick={handleConfirmar}
+          type="submit"
           disabled={confirmando}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {confirmando ? "Faturando..." : "Confirmar faturamento"}
         </button>
       </div>
-    </div>
+    </form>
   );
 }

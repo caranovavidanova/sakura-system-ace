@@ -1,9 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { BotaoVoltar } from "@/components/BotaoVoltar";
-import { mensagemDeErro } from "@/lib/errors";
-import { listarOrdens } from "@/lib/ordensServico";
-import { listarPecas } from "@/lib/pecas";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { useMemo, useState } from "react";
 import type { OrdemServico } from "@/types/os";
 import type { Peca } from "@/types/peca";
 
@@ -28,36 +23,14 @@ interface LinhaLucro {
   margem: number;
 }
 
-export function LucratividadePage() {
-  const [ordens, setOrdens] = useState<OrdemServico[]>([]);
-  const [pecas, setPecas] = useState<Peca[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+interface LucratividadeSectionProps {
+  ordens: OrdemServico[];
+  pecas: Peca[];
+}
+
+export function LucratividadeSection({ ordens, pecas }: LucratividadeSectionProps) {
   const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes());
   const [dataFim, setDataFim] = useState(hojeStr());
-
-  useEffect(() => {
-    async function carregar() {
-      if (!isSupabaseConfigured) {
-        setCarregando(false);
-        return;
-      }
-      try {
-        const [ordensCarregadas, pecasCarregadas] = await Promise.all([
-          listarOrdens(),
-          listarPecas(),
-        ]);
-        setOrdens(ordensCarregadas);
-        setPecas(pecasCarregadas);
-      } catch (err) {
-        console.error("Erro ao carregar lucratividade:", err);
-        setErro(mensagemDeErro(err));
-      } finally {
-        setCarregando(false);
-      }
-    }
-    carregar();
-  }, []);
 
   const custoPorPeca = useMemo(() => {
     const mapa = new Map<string, number>();
@@ -100,29 +73,7 @@ export function LucratividadePage() {
   const totalMargem = linhas.reduce((total, l) => total + l.margem, 0);
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-center gap-3">
-        <BotaoVoltar />
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Lucratividade</h1>
-          <p className="text-sm text-sakura-muted">
-            Margem por peça/serviço e lucro do período
-          </p>
-        </div>
-      </header>
-
-      {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          O Supabase ainda não está configurado. Defina{" "}
-          <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
-          no arquivo <code>.env</code> para ver a lucratividade de verdade.
-        </p>
-      )}
-
-      {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
-      )}
-
+    <>
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
           De:
@@ -165,12 +116,8 @@ export function LucratividadePage() {
         </div>
       </div>
 
-      {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
-      ) : linhas.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
-          Nenhuma peça ou serviço vendido nesse período.
-        </p>
+      {linhas.length === 0 ? (
+        <p className="text-sm text-sakura-muted">Nenhuma peça ou serviço vendido nesse período.</p>
       ) : (
         <section>
           <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
@@ -202,6 +149,6 @@ export function LucratividadePage() {
           </div>
         </section>
       )}
-    </div>
+    </>
   );
 }

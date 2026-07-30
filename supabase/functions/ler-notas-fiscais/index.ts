@@ -1,9 +1,9 @@
-// Edge Function do Supabase — lê fotos de nota fiscal e devolve os produtos
-// já estruturados (NCM, CFOP, CST/CSOSN, alíquota de ICMS, etc.) usando o
-// Claude (Anthropic). Fica no Supabase de propósito: é o único lugar onde a
-// chave da Anthropic (ANTHROPIC_API_KEY, configurada como "secret" do projeto)
-// existe de verdade — o app Electron nunca vê essa chave, só chama esta
-// função (autenticado, com o login normal do operador).
+// Edge Function do Supabase — lê fotos ou PDFs de nota fiscal e devolve os
+// produtos já estruturados (NCM, CFOP, CST/CSOSN, alíquota de ICMS, etc.)
+// usando o Claude (Anthropic). Fica no Supabase de propósito: é o único
+// lugar onde a chave da Anthropic (ANTHROPIC_API_KEY, configurada como
+// "secret" do projeto) existe de verdade — o app Electron nunca vê essa
+// chave, só chama esta função (autenticado, com o login normal do operador).
 import Anthropic from "npm:@anthropic-ai/sdk";
 
 const corsHeaders = {
@@ -11,7 +11,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAX_IMAGENS = 10;
+const MAX_ARQUIVOS = 10;
 
 const ITEM_SCHEMA = {
   type: "object",
@@ -48,9 +48,10 @@ const ITEM_SCHEMA = {
   additionalProperties: false,
 };
 
-const PROMPT = `Você vai receber uma ou mais fotos de notas fiscais de peças/produtos
-automotivos (pode ser mais de uma nota na mesma leitura). Extraia TODOS os
-itens/produtos listados em todas as fotos, um por um, preenchendo os campos:
+const PROMPT = `Você vai receber uma ou mais fotos e/ou PDFs de notas fiscais de
+peças/produtos automotivos (pode ser mais de uma nota na mesma leitura).
+Extraia TODOS os itens/produtos listados em todos os arquivos, um por um,
+preenchendo os campos:
 
 - descricao: descrição do produto como está na nota
 - marca, modelo: se identificáveis pela descrição ou fabricante da nota
@@ -82,25 +83,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { imagens } = await req.json();
-    if (!Array.isArray(imagens) || imagens.length === 0) {
-      throw new Error("Envie ao menos uma imagem em 'imagens'.");
+    const { arquivos } = await req.json();
+    if (!Array.isArray(arquivos) || arquivos.length === 0) {
+      throw new Error("Envie ao menos um arquivo em 'arquivos'.");
     }
-    if (imagens.length > MAX_IMAGENS) {
-      throw new Error(`Envie no máximo ${MAX_IMAGENS} fotos por leitura.`);
+    if (arquivos.length > MAX_ARQUIVOS) {
+      throw new Error(`Envie no máximo ${MAX_ARQUIVOS} arquivos por leitura.`);
     }
 
     const client = new Anthropic({ apiKey });
 
-    const conteudoImagens = imagens.map(
-      (imagem: { base64: string; mediaType: string }) => ({
-        type: "image" as const,
-        source: {
-          type: "base64" as const,
-          media_type: imagem.mediaType,
-          data: imagem.base64,
-        },
-      }),
+    const conteudoArquivos = arquivos.map(
+      (arquivo: { base64: string; mediaType: string }) =>
+        arquivo.mediaType === "application/pdf"
+          ? {
+              type: "document" as const,
+              source: {
+                type: "base64" as const,
+                media_type: "application/pdf" as const,
+                data: arquivo.base64,
+              },
+            }
+          : {
+              type: "image" as const,
+              source: {
+                type: "base64" as const,
+                media_type: arquivo.mediaType,
+                data: arquivo.base64,
+              },
+            },
     );
 
     const response = await client.messages.create({
@@ -121,14 +132,14 @@ Deno.serve(async (req) => {
       messages: [
         {
           role: "user",
-          content: [...conteudoImagens, { type: "text", text: PROMPT }],
+          content: [...conteudoArquivos, { type: "text", text: PROMPT }],
         },
       ],
     });
 
     if (response.stop_reason === "refusal") {
       throw new Error(
-        "O Claude não conseguiu ler essas imagens (recusa de segurança). Tente fotos mais nítidas ou uma de cada vez.",
+        "O Claude não conseguiu ler esses arquivos (recusa de segurança). Tente fotos mais nítidas, um PDF de cada vez, ou um arquivo de cada vez.",
       );
     }
 

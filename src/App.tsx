@@ -3,6 +3,7 @@ import { AreaRolavel } from "./components/AreaRolavel";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
 import { Sidebar } from "./components/Sidebar";
 import { useAuth } from "./contexts/AuthContext";
+import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
@@ -11,7 +12,6 @@ import { EstoquePage } from "./pages/estoque/EstoquePage";
 import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
 import { LoginPage } from "./pages/login/LoginPage";
-import { LucratividadePage } from "./pages/lucratividade/LucratividadePage";
 import { NotasFiscaisPage } from "./pages/notas-fiscais/NotasFiscaisPage";
 import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
 import { PainelPage } from "./pages/painel/PainelPage";
@@ -47,6 +47,7 @@ function PaginaInicial() {
 
 export default function App() {
   const { carregando, session } = useAuth();
+  useEnterParaProximoCampo();
 
   if (carregando) {
     return (
@@ -100,14 +101,6 @@ export default function App() {
               }
             />
             <Route
-              path="/funcionarios"
-              element={
-                <PermissaoRoute modulo="funcionarios">
-                  <FuncionariosPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
               path="/caixa"
               element={
                 <PermissaoRoute modulo="caixa">
@@ -132,14 +125,6 @@ export default function App() {
               }
             />
             <Route
-              path="/lucratividade"
-              element={
-                <PermissaoRoute modulo="lucratividade">
-                  <LucratividadePage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
               path="/garantias"
               element={
                 <PermissaoRoute modulo="garantias">
@@ -152,6 +137,14 @@ export default function App() {
               element={
                 <PermissaoRoute modulo="notas_fiscais">
                   <NotasFiscaisPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/funcionarios"
+              element={
+                <PermissaoRoute modulo="funcionarios">
+                  <FuncionariosPage />
                 </PermissaoRoute>
               }
             />

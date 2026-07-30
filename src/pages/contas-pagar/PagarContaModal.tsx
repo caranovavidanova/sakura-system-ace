@@ -19,7 +19,8 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function handleConfirmar() {
+  async function handleConfirmar(e: React.FormEvent) {
+    e.preventDefault();
     setErro(null);
     const valorNumero = Number(valor);
     if (!valorNumero || valorNumero <= 0) {
@@ -39,7 +40,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
 
   return (
     <Modal titulo="Marcar como paga" onFechar={onFechar}>
-      <div className="space-y-3 text-sm">
+      <form onSubmit={handleConfirmar} className="space-y-3 text-sm">
         <p className="text-sakura-purple-dark/80">
           {conta.descricao} — venceu em {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
           {conta.recorrente ? " · a próxima ocorrência já é criada automaticamente" : ""}
@@ -73,25 +74,24 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
         <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-xs text-sakura-purple-dark/90">
           Isso lança uma Saída de {formatarMoeda(Number(valor) || 0)} no Caixa automaticamente.
         </p>
-      </div>
 
-      <div className="mt-4 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onFechar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={handleConfirmar}
-          disabled={confirmando}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {confirmando ? "Confirmando..." : "Confirmar pagamento"}
-        </button>
-      </div>
+        <div className="mt-4 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onFechar}
+            className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={confirmando}
+            className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {confirmando ? "Confirmando..." : "Confirmar pagamento"}
+          </button>
+        </div>
+      </form>
     </Modal>
   );
 }

@@ -244,8 +244,8 @@ projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a funda�
 descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0036`, criadas e validadas
 localmente nesta sessão — Postgres local, `service postgresql start` + `sudo -u postgres psql`,
 rodando a sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase
-real logo em seguida). **`0037` foi criada e validada localmente nesta mesma sessão (mesmo
-processo) mas AINDA NÃO foi rodada no Supabase real dela** — ver seção 8. Resumo das últimas:
+real logo em seguida). **`0037`, criada e validada localmente na mesma sessão, também já foi
+confirmada rodando no Supabase real dela.** Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -722,17 +722,17 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: primeiro, **aplicar a migration `0037` no Supabase real dela**
-(número sequencial de OS + simplificação de status + split de pagamento + a policy de exclusão de
-loja que faltava — construída e validada localmente nesta sessão, ver seção 5, mas ainda não
-rodada lá). Depois de rodar, testar na prática: abrir uma OS nova (deve nascer "Em andamento" já,
-sem "Aberta"), usar o botão "Encerrar OS", faturar dividindo entre 2 formas de pagamento, e excluir
-uma loja de teste vazia em Configurações → Lojas. Depois disso confirmado funcionando, ela mesma
-vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta seção) — combinado numa sessão
-anterior ("na outra sessão eu faço a inclusão da emissão de nota fiscal"). Ela só publica a próxima
-versão do instalador quando isso estiver pronto (ver aviso na seção 7, "Empacotamento"). Antes de
-codar a emissão de verdade, ela precisa ter criado a conta/token de homologação do Focus NFe (ver
-item 1).
+**Prioridade da próxima sessão**: a migration `0037` já está rodando no Supabase real dela
+(número sequencial de OS, simplificação de status, split de pagamento e a policy de exclusão de
+loja que faltava) — falta só ela **testar na prática** os fluxos novos (abrir uma OS nova e
+confirmar que nasce "Em andamento" com número sequencial, usar o botão "Encerrar OS", faturar
+dividindo entre 2 formas de pagamento, excluir uma loja de teste vazia em Configurações → Lojas) —
+confirmar isso no início da sessão, e só então seguir com pedidos novos. Depois disso confirmado
+funcionando, ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta seção) —
+combinado numa sessão anterior ("na outra sessão eu faço a inclusão da emissão de nota fiscal").
+Ela só publica a próxima versão do instalador quando isso estiver pronto (ver aviso na seção 7,
+"Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter criado a conta/token de
+homologação do Focus NFe (ver item 1).
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -745,9 +745,9 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0036` já foram confirmadas
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0037` já foram confirmadas
 rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
-`0034`-`0036`, todas já testadas por ela de verdade). **`0037` ainda precisa ser rodada lá.**
+`0034`-`0037`, todas já testadas por ela de verdade).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
@@ -757,8 +757,8 @@ até `0037`. Todas são idempotentes.
 
 ### Coisas pra confirmar que `0037` está funcionando na prática
 
-Rodada a migration, o roteiro de teste pra confirmar que os fluxos novos funcionam de verdade
-(pendente ela testar, ver "Prioridade da próxima sessão" acima):
+Migration já rodada; falta ela testar na prática se os fluxos novos funcionam (ver "Prioridade da
+próxima sessão" acima):
 1. Ordens de Serviço → abrir uma OS nova — deve nascer com status "Em andamento" direto (sem
    "Aberta") e um número sequencial (ex: "OS 1", "OS 2"...) em vez de código grande.
 2. Abrir uma OS em andamento → botão "Encerrar OS" → deve marcar como concluída e já abrir a tela

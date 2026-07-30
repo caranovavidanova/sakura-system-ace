@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { buscarConfiguracaoFiscal, buscarTextoGarantia } from "@/lib/configuracoes";
+import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { OrdemServico } from "@/types/os";
@@ -34,6 +35,7 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
   );
   const [previewNF, setPreviewNF] = useState<"NFC-e" | "NFS-e" | null>(null);
   const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     async function carregar() {
@@ -41,11 +43,13 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         setTemplateGarantia(await buscarTextoGarantia());
       } catch (err) {
         console.error("Erro ao carregar texto de garantia:", err);
+        setErro(mensagemDeErro(err));
       }
       try {
         setConfiguracaoFiscal(await buscarConfiguracaoFiscal());
       } catch (err) {
         console.error("Erro ao carregar dados fiscais da loja:", err);
+        setErro(mensagemDeErro(err));
       }
     }
     carregar();
@@ -60,6 +64,8 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
 
   return (
     <div className="space-y-6">
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+
       <section className="grid grid-cols-2 gap-4 sakura-card p-4 text-sm">
         <div>
           <p className="text-sakura-purple-dark/80">Cliente</p>

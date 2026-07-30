@@ -238,13 +238,13 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0033` em `supabase/migrations/` já estão confirmadas rodando sem erro no
+Migrations `0001` a `0036` em `supabase/migrations/` já estão confirmadas rodando sem erro no
 projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a fundação multi-loja
-(`0031`-`0033`), que ela já rodou e testou de verdade (criou uma 2ª loja, viu o bug de RLS descrito
-no `0034` abaixo). **`0034` a `0036` foram criadas e validadas nesta sessão (Postgres local,
-`service postgresql start` + `sudo -u postgres psql`, rodando a sequência inteira do zero e
-confirmando idempotência) mas AINDA NÃO foram rodadas no Supabase real dela** — isso é o primeiro
-passo da próxima sessão, ver seção 8. Resumo das últimas:
+(`0031`-`0033`, que ela testou de verdade: criou uma 2ª loja, foi quando apareceu o bug de RLS
+descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0036`, criadas e validadas
+localmente nesta sessão — Postgres local, `service postgresql start` + `sudo -u postgres psql`,
+rodando a sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase
+real logo em seguida). Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -685,15 +685,15 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: primeiro, **aplicar as migrations `0034` a `0036` no Supabase
-real dela** (corrige o bug de criar loja nova + custo de serviço + Contas a Receber — construídas e
-validadas localmente nesta sessão, ver seção 5, mas ainda não rodadas lá). Depois disso confirmado
-funcionando (testar criar uma loja nova de verdade, cadastrar custo de um serviço, e faturar uma OS
-escolhendo "A receber depois"), ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1
-desta seção) — combinado numa sessão anterior ("na outra sessão eu faço a inclusão da emissão de
-nota fiscal"). Ela só publica a próxima versão do instalador quando isso estiver pronto (ver aviso
-na seção 7, "Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter criado a
-conta/token de homologação do Focus NFe (ver item 1) — confirmar isso no início da sessão.
+**Prioridade da próxima sessão**: as migrations `0001` a `0036` já estão todas rodadas no Supabase
+real dela (confirmado por ela mesma) — falta só ela **testar na prática** os fluxos que dependiam
+delas (criar uma loja nova de verdade, cadastrar custo num serviço, faturar uma OS escolhendo "A
+receber depois" e depois marcar como recebido) — confirmar isso no início da sessão, e só então
+seguir com pedidos novos. Depois disso confirmado funcionando, ela mesma vai puxar a **emissão de
+nota fiscal** (Focus NFe, item 1 desta seção) — combinado numa sessão anterior ("na outra sessão eu
+faço a inclusão da emissão de nota fiscal"). Ela só publica a próxima versão do instalador quando
+isso estiver pronto (ver aviso na seção 7, "Empacotamento"). Antes de codar a emissão de verdade,
+ela precisa ter criado a conta/token de homologação do Focus NFe (ver item 1).
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -706,9 +706,9 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0033` já foram confirmadas
-rodando sem erro nesse projeto (incluindo a fundação multi-loja, que ela já testou de verdade).
-**`0034` a `0036` ainda precisam ser rodadas lá** — ver subseção logo abaixo.
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0036` já foram confirmadas
+rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
+`0034`-`0036`, todas já testadas por ela de verdade).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
@@ -716,12 +716,10 @@ Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
 até `0036`. Todas são idempotentes.
 
-### Rodar as migrations 0034 a 0036 no projeto real dela
+### Coisas pra confirmar que `0034`-`0036` estão funcionando na prática
 
-Mesmo passo a passo acima (SQL Editor, colar e rodar cada arquivo, na ordem): primeiro
-`0034_corrige_rls_criacao_loja.sql`, depois `0035_custo_servico.sql`, depois
-`0036_contas_receber.sql`. A ordem importa só entre `0034` e as outras duas (`0035`/`0036` são
-independentes entre si). Depois de rodar, checar:
+Rodadas as migrations, o roteiro de teste pra confirmar que os 3 fluxos novos funcionam de verdade
+(pendente ela testar, ver "Prioridade da próxima sessão" acima):
 1. Configurações → "Lojas" → criar uma loja nova de verdade — antes dava erro, agora deve
    funcionar e o vínculo já aparecer sozinho.
 2. Serviços → editar um serviço existente e preencher o campo "Custo" novo.

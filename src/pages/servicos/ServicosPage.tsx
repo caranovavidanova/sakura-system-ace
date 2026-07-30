@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { listarCategoriasServico } from "@/lib/categoriasServico";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   atualizarStatusServico,
@@ -8,6 +9,7 @@ import {
   listarServicos,
 } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { CategoriaServico } from "@/types/categoriaServico";
 import type { NovoServico, Servico } from "@/types/servico";
 import { ServicoForm } from "./ServicoForm";
 
@@ -18,6 +20,7 @@ function formatarPreco(valor: number | null): string {
 
 export function ServicosPage() {
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaServico[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -30,7 +33,12 @@ export function ServicosPage() {
     setCarregando(true);
     setErro(null);
     try {
-      setServicos(await listarServicos());
+      const [servicosCarregados, categoriasCarregadas] = await Promise.all([
+        listarServicos(),
+        listarCategoriasServico(),
+      ]);
+      setServicos(servicosCarregados);
+      setCategorias(categoriasCarregadas);
     } catch (err) {
       console.error("Erro ao carregar serviços:", err);
       setErro(mensagemDeErro(err));
@@ -104,6 +112,7 @@ export function ServicosPage() {
 
       {mostrarFormulario && (
         <ServicoForm
+          categorias={categorias}
           onSalvar={handleSalvar}
           onCancelar={() => setMostrarFormulario(false)}
         />
@@ -127,6 +136,7 @@ export function ServicosPage() {
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Descrição</th>
+                <th className="px-4 py-3 font-medium">Categoria</th>
                 <th className="px-4 py-3 font-medium">Código</th>
                 <th className="px-4 py-3 font-medium">Preço padrão</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -137,6 +147,9 @@ export function ServicosPage() {
               {servicos.map((servico) => (
                 <tr key={servico.id} className="border-t border-sakura-gray/20">
                   <td className="px-4 py-3">{servico.descricao}</td>
+                  <td className="px-4 py-3">
+                    {categorias.find((c) => c.id === servico.categoria_id)?.nome ?? "—"}
+                  </td>
                   <td className="px-4 py-3">{servico.codigo_interno || "—"}</td>
                   <td className="px-4 py-3">{formatarPreco(servico.preco_padrao)}</td>
                   <td className="px-4 py-3">

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
+import type { CategoriaServico } from "@/types/categoriaServico";
 import type { NovoServico } from "@/types/servico";
 
 interface ServicoFormProps {
+  categorias: CategoriaServico[];
   onSalvar: (servico: NovoServico) => Promise<void>;
   onCancelar: () => void;
 }
@@ -12,10 +14,11 @@ const servicoVazio: NovoServico = {
   codigo_interno: "",
   descricao: "",
   preco_padrao: null,
+  categoria_id: null,
   ativo: true,
 };
 
-export function ServicoForm({ onSalvar, onCancelar }: ServicoFormProps) {
+export function ServicoForm({ categorias, onSalvar, onCancelar }: ServicoFormProps) {
   const [servico, setServico] = useState<NovoServico>(servicoVazio);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -91,6 +94,24 @@ export function ServicoForm({ onSalvar, onCancelar }: ServicoFormProps) {
             }
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">Categoria</span>
+          <select
+            value={servico.categoria_id ?? ""}
+            onChange={(e) =>
+              setServico({ ...servico, categoria_id: e.target.value || null })
+            }
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+          >
+            <option value="">Sem categoria</option>
+            {categorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nome}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 

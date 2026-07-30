@@ -1285,6 +1285,18 @@ Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
    opções antes de codar.
 7. **"Desfazer pagamento" de uma conta paga** (módulo Contas a Pagar) — hoje não existe pelo app; se
    marcar uma conta como paga por engano, precisa corrigir direto no Supabase (ver seção 5).
+8. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
+   configurar o "Importar por foto" (ver seção 7), se ela pagaria pelas leituras de todas as
+   lojas que um dia usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu
+   próprio projeto Supabase, a Edge Function `ler-notas-fiscais` e o secret
+   `ANTHROPIC_API_KEY` ficam dentro do projeto de cada loja, então cada uma cria sua própria
+   conta na Anthropic e paga pelo próprio uso (mesmo modelo já aceito pro Focus NFe). **Mas isso
+   cria fricção**: pedir pra cada dono de autocenter (sem experiência técnica) criar conta na
+   Anthropic e publicar uma Edge Function é um trabalho manual chato de repetir por loja.
+   Quando a usuária estiver mais perto de vender pra outras lojas de verdade, vale reconsiderar
+   um modelo de backend central (ela paga uma conta só, cobra o uso de IA dentro da assinatura
+   do sistema) — mas isso é uma mudança de arquitetura maior, decidir com calma nessa hora, não
+   agora que só a loja dela usa o sistema.
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,

@@ -5,10 +5,12 @@ import { listarMovimentosCaixa } from "@/lib/caixa";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarOrdens } from "@/lib/ordensServico";
 import { listarPecas } from "@/lib/pecas";
+import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { MovimentoCaixa } from "@/types/caixa";
 import type { OrdemServico } from "@/types/os";
 import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 import { GraficosSection } from "./GraficosSection";
 import { LucratividadeSection } from "./LucratividadeSection";
 
@@ -20,6 +22,7 @@ export function RelatoriosPage() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -30,14 +33,17 @@ export function RelatoriosPage() {
         return;
       }
       try {
-        const [movimentosCarregados, ordensCarregadas, pecasCarregadas] = await Promise.all([
-          listarMovimentosCaixa(lojaAtual.id),
-          listarOrdens(lojaAtual.id),
-          listarPecas(),
-        ]);
+        const [movimentosCarregados, ordensCarregadas, pecasCarregadas, servicosCarregados] =
+          await Promise.all([
+            listarMovimentosCaixa(lojaAtual.id),
+            listarOrdens(lojaAtual.id),
+            listarPecas(),
+            listarServicos(),
+          ]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
         setPecas(pecasCarregadas);
+        setServicos(servicosCarregados);
       } catch (err) {
         console.error("Erro ao carregar relações:", err);
         setErro(mensagemDeErro(err));
@@ -88,7 +94,7 @@ export function RelatoriosPage() {
       ) : aba === "graficos" ? (
         <GraficosSection movimentos={movimentos} />
       ) : (
-        <LucratividadeSection ordens={ordens} pecas={pecas} />
+        <LucratividadeSection ordens={ordens} pecas={pecas} servicos={servicos} />
       )}
     </div>
   );

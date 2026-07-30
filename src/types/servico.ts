@@ -3,6 +3,7 @@ export interface Servico {
   codigo_interno: string | null;
   descricao: string;
   preco_padrao: number | null;
+  custo: number | null;
   categoria_id: string | null;
   ativo: boolean;
   criado_em: string;

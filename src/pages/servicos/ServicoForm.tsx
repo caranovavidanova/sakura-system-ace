@@ -14,6 +14,7 @@ const servicoVazio: NovoServico = {
   codigo_interno: "",
   descricao: "",
   preco_padrao: null,
+  custo: null,
   categoria_id: null,
   ativo: true,
 };
@@ -90,6 +91,23 @@ export function ServicoForm({ categorias, onSalvar, onCancelar }: ServicoFormPro
               setServico({
                 ...servico,
                 preco_padrao: e.target.value === "" ? null : Number(e.target.value),
+              })
+            }
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">Custo (ex: mão de obra)</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={servico.custo ?? ""}
+            onChange={(e) =>
+              setServico({
+                ...servico,
+                custo: e.target.value === "" ? null : Number(e.target.value),
               })
             }
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"

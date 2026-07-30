@@ -16,18 +16,12 @@ import type { CartaoMetrica } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
+import { STATUS_COR, STATUS_LABEL } from "@/types/os";
 import type { OrdemServico } from "@/types/os";
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
-
-const statusLabel: Record<string, string> = {
-  aberta: "Aberta",
-  em_andamento: "Em andamento",
-  concluida: "Concluída",
-  faturada: "Faturada",
-};
 
 const TITULO_CARTAO: Record<CartaoMetrica, string> = {
   vendas_mes: "Vendas mês",
@@ -265,7 +259,13 @@ export function PainelPage() {
                           <td className="px-4 py-3">
                             {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
                           </td>
-                          <td className="px-4 py-3">{statusLabel[ordem.status]}</td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COR[ordem.status]}`}
+                            >
+                              {STATUS_LABEL[ordem.status]}
+                            </span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

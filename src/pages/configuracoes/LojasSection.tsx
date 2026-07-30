@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { atualizarLoja, atualizarStatusLoja, criarLoja } from "@/lib/lojas";
+import { atualizarLoja, atualizarStatusLoja, criarLoja, excluirLoja } from "@/lib/lojas";
 import { mensagemDeErro } from "@/lib/errors";
 import type { Loja } from "@/types/loja";
 
@@ -50,6 +50,18 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
       await onSalvo();
     } catch (err) {
       console.error("Erro ao atualizar status da loja:", err);
+      setErro(mensagemDeErro(err));
+    }
+  }
+
+  async function handleExcluir(loja: Loja) {
+    if (!confirm(`Excluir a loja "${loja.nome}"? Isso não pode ser desfeito.`)) return;
+    setErro(null);
+    try {
+      await excluirLoja(loja.id);
+      await onSalvo();
+    } catch (err) {
+      console.error("Erro ao excluir loja:", err);
       setErro(mensagemDeErro(err));
     }
   }
@@ -199,9 +211,16 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
                 <button
                   onClick={() => handleAlternarStatus(loja)}
                   title={loja.ativo ? "Inativar loja" : "Reativar loja"}
-                  className="text-sakura-purple-dark/75 hover:text-red-600"
+                  className="text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
                 >
                   {loja.ativo ? "×" : "↺"}
+                </button>
+                <button
+                  onClick={() => handleExcluir(loja)}
+                  title="Excluir loja"
+                  className="text-sakura-purple-dark/75 hover:text-red-600"
+                >
+                  🗑
                 </button>
               </span>
             ),

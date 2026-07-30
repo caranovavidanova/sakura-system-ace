@@ -10,7 +10,7 @@ import type {
   PatchOrdemServico,
   StatusOS,
 } from "@/types/os";
-import { STATUS_LABEL, totalOrdem } from "@/types/os";
+import { STATUS_LABEL, nomeOrdem, totalOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { FechamentoTab } from "./FechamentoTab";
@@ -31,6 +31,7 @@ interface OrdemServicoFormProps {
     patch: PatchOrdemServico,
     novosItens: NovoItemOS[],
   ) => Promise<void>;
+  onEncerrar: (ordem: OrdemServico) => Promise<void>;
   onCancelar: () => void;
 }
 
@@ -67,6 +68,7 @@ export function OrdemServicoForm({
   ordemExistente,
   onSalvarNova,
   onSalvarEdicao,
+  onEncerrar,
   onCancelar,
 }: OrdemServicoFormProps) {
   const [clienteId, setClienteId] = useState(ordemExistente?.cliente_id ?? "");
@@ -80,11 +82,11 @@ export function OrdemServicoForm({
   const [vendedorId, setVendedorId] = useState(
     ordemExistente?.vendedor_id ?? funcionarioAtualId,
   );
-  const [status, setStatus] = useState<StatusOS>(ordemExistente?.status ?? "aberta");
   const [itens, setItens] = useState<NovoItemOS[]>(
     ordemExistente ? [] : [novoItemVazio()],
   );
   const [salvando, setSalvando] = useState(false);
+  const [encerrando, setEncerrando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const temFechamento =
     !!ordemExistente && STATUS_COM_FECHAMENTO.includes(ordemExistente.status);
@@ -128,11 +130,7 @@ export function OrdemServicoForm({
     setSalvando(true);
     try {
       if (ordemExistente) {
-        await onSalvarEdicao(
-          ordemExistente.id,
-          { ...camposComuns, status },
-          itensValidos,
-        );
+        await onSalvarEdicao(ordemExistente.id, camposComuns, itensValidos);
       } else {
         await onSalvarNova(camposComuns, itensValidos);
       }
@@ -141,6 +139,19 @@ export function OrdemServicoForm({
       setErro(mensagemDeErro(err));
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleEncerrar() {
+    if (!ordemExistente) return;
+    setErro(null);
+    setEncerrando(true);
+    try {
+      await onEncerrar(ordemExistente);
+    } catch (err) {
+      console.error("Erro ao encerrar ordem de serviço:", err);
+      setErro(mensagemDeErro(err));
+      setEncerrando(false);
     }
   }
 
@@ -155,8 +166,9 @@ export function OrdemServicoForm({
             <BotaoVoltar onClick={onCancelar} />
             <div>
               <p className="text-xs text-sakura-muted">
-                OS #{ordemExistente.id.slice(0, 8)} · aberta em{" "}
-                {formatarData(ordemExistente.data_abertura)}
+                {nomeOrdem(ordemExistente.numero)} · aberta em{" "}
+                {formatarData(ordemExistente.data_abertura)} · criado por{" "}
+                {ordemExistente.criado_por?.nome ?? "—"}
               </p>
               <h2 className="text-lg font-semibold text-sakura-purple-dark">
                 {ordemExistente.cliente?.nome ?? "Cliente"}
@@ -164,9 +176,21 @@ export function OrdemServicoForm({
               </h2>
             </div>
           </div>
-          <span className="rounded-full bg-sakura-pink-soft px-3 py-1 text-xs font-medium text-sakura-purple-dark">
-            {STATUS_LABEL[ordemExistente.status]}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-sakura-pink-soft px-3 py-1 text-xs font-medium text-sakura-purple-dark">
+              {STATUS_LABEL[ordemExistente.status]}
+            </span>
+            {ordemExistente.status === "em_andamento" && (
+              <button
+                type="button"
+                onClick={handleEncerrar}
+                disabled={encerrando}
+                className="rounded-xl bg-sakura-purple px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {encerrando ? "Encerrando..." : "Encerrar OS"}
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="flex items-center gap-3">
@@ -213,8 +237,7 @@ export function OrdemServicoForm({
       {aba === "fechamento" && ordemExistente && <FechamentoTab ordem={ordemExistente} />}
 
       {aba === "detalhes" && (
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
+      <div className="space-y-6">
           <section className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-sakura-purple-dark/80">
@@ -353,46 +376,6 @@ export function OrdemServicoForm({
               {totalGeral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </section>
-        </div>
-
-        <div className="space-y-4">
-          {ordemExistente && (
-            <div className="space-y-3 sakura-card p-4">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-sakura-purple-dark/80">Status</span>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as StatusOS)}
-                  disabled={ordemExistente.status === "faturada"}
-                  className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple disabled:opacity-50"
-                >
-                  <option value="aberta">Aberta</option>
-                  <option value="em_andamento">Em andamento</option>
-                  <option value="concluida">Concluída</option>
-                  {ordemExistente.status === "faturada" && (
-                    <option value="faturada">Faturada</option>
-                  )}
-                </select>
-                {ordemExistente.status === "faturada" && (
-                  <span className="text-xs text-sakura-muted">
-                    OS já faturada — status não muda mais por aqui.
-                  </span>
-                )}
-              </label>
-
-              <div className="border-t border-sakura-gray/20 pt-3 text-xs text-sakura-purple-dark/90">
-                <p>
-                  <span className="font-semibold">Criado por:</span>{" "}
-                  {ordemExistente.criado_por?.nome ?? "—"}
-                </p>
-                <p className="mt-1">
-                  <span className="font-semibold">Alterado por:</span>{" "}
-                  {ordemExistente.atualizado_por?.nome ?? "—"}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
       )}
 

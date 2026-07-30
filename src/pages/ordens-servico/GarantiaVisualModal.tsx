@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { buscarMovimentoCaixaPorOrdem } from "@/lib/caixa";
+import { listarMovimentosCaixaPorOrdem } from "@/lib/caixa";
 import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { montarHtmlGarantiaOS } from "@/lib/garantiaDocumento";
@@ -24,21 +24,25 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
       setCarregando(true);
       setErro(null);
       try {
-        const [cliente, veiculo, loja, movimento] = await Promise.all([
+        const [cliente, veiculo, loja, movimentos] = await Promise.all([
           buscarClientePorId(ordem.cliente_id).catch(() => null),
           ordem.veiculo_id ? buscarVeiculoPorId(ordem.veiculo_id).catch(() => null) : null,
           buscarConfiguracaoFiscal(ordem.loja_id).catch(() => null),
           ordem.status === "faturada"
-            ? buscarMovimentoCaixaPorOrdem(ordem.id).catch(() => null)
-            : null,
+            ? listarMovimentosCaixaPorOrdem(ordem.id).catch(() => [])
+            : [],
         ]);
+        const valorCobrado =
+          movimentos.length > 0
+            ? movimentos.reduce((soma, m) => soma + m.valor, 0)
+            : null;
         setHtml(
           montarHtmlGarantiaOS({
             ordem,
             cliente,
             veiculo,
             loja,
-            valorCobrado: movimento?.valor ?? null,
+            valorCobrado,
             textoGarantia,
           }),
         );
@@ -62,7 +66,7 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `garantia-OS-${ordem.id.slice(0, 8)}.html`;
+    link.download = `garantia-OS-${ordem.numero}.html`;
     link.click();
     URL.revokeObjectURL(url);
   }

@@ -49,6 +49,25 @@ export async function atualizarStatusLoja(id: string, ativo: boolean): Promise<v
   if (error) throw error;
 }
 
+// Exclusão de verdade (diferente do inativar acima). Só funciona se a loja
+// estiver "vazia" — sem nenhum dado vinculado (estoque, caixa, OS, contas,
+// funcionários...) — porque nenhuma dessas tabelas tem "on delete cascade"
+// pra loja_id de propósito: perder dado de negócio de verdade sem querer
+// seria muito pior que deixar uma loja "presa" como inativa. O próprio
+// Postgres barra o delete nesse caso (violação de chave estrangeira);
+// aqui só traduzimos isso pra uma mensagem que faça sentido pra usuária.
+export async function excluirLoja(id: string): Promise<void> {
+  const { error } = await supabase.from("lojas").delete().eq("id", id);
+  if (error) {
+    if (error.code === "23503") {
+      throw new Error(
+        "Não é possível excluir: essa loja ainda tem dados vinculados (estoque, caixa, ordens de serviço, funcionários...). Deixe-a inativa em vez de excluir.",
+      );
+    }
+    throw error;
+  }
+}
+
 export async function atualizarLoja(
   id: string,
   patch: { nome: string; cidade: string | null; uf: string | null },

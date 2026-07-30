@@ -1,6 +1,6 @@
 import type { TipoVeiculo } from "@/types/cliente";
 
-export type StatusOS = "aberta" | "em_andamento" | "concluida" | "faturada";
+export type StatusOS = "em_andamento" | "concluida" | "faturada";
 
 export type TipoItemOS = "peca" | "servico";
 
@@ -22,6 +22,7 @@ export type NovoItemOS = Omit<ItemOS, "id" | "ordem_servico_id" | "tecnico">;
 
 export interface OrdemServico {
   id: string;
+  numero: number;
   loja_id: string;
   cliente_id: string;
   veiculo_id: string | null;
@@ -70,7 +71,6 @@ export type PatchOrdemServico = Partial<
 >;
 
 export const STATUS_LABEL: Record<StatusOS, string> = {
-  aberta: "Aberta",
   em_andamento: "Em andamento",
   concluida: "Concluída",
   faturada: "Faturada",
@@ -80,10 +80,22 @@ export const STATUS_LABEL: Record<StatusOS, string> = {
 // (esperando faturar) usa laranja de propósito, pra chamar mais atenção que
 // as outras: é o estado que ainda exige uma ação (faturar).
 export const STATUS_COR: Record<StatusOS, string> = {
-  aberta: "bg-sky-50 text-sky-700",
   em_andamento: "bg-amber-50 text-amber-800",
   concluida: "bg-orange-100 text-orange-800",
   faturada: "bg-emerald-50 text-emerald-700",
+};
+
+// Nome curto e amigável da OS pra exibir em qualquer lugar do app — nunca o
+// UUID (`ordem.id`), que não tem nenhum sentido pra quem usa o sistema.
+export function nomeOrdem(numero: number): string {
+  return `OS ${numero}`;
+}
+
+export const FORMA_PAGAMENTO_LABEL: Record<string, string> = {
+  dinheiro: "Dinheiro",
+  pix: "Pix",
+  cartao_debito: "Cartão de débito",
+  cartao_credito: "Cartão de crédito",
 };
 
 export function totalOrdem(itens: ItemOS[]): number {

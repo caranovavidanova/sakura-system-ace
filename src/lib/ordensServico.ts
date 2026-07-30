@@ -1,12 +1,18 @@
 import { supabase } from "./supabase";
 import { criarMovimentoCaixa } from "./caixa";
 import { criarContaReceber } from "./contasReceber";
+import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
 import type {
   NovaOrdemServico,
   NovoItemOS,
   OrdemServico,
   PatchOrdemServico,
 } from "@/types/os";
+
+export interface PagamentoOrdem {
+  formaPagamento: string;
+  valor: number;
+}
 
 const SELECT_ORDEM =
   "*, cliente:clientes(nome), veiculo:veiculos(placa, marca, modelo, cor, tipo), " +
@@ -28,6 +34,7 @@ export async function listarOrdens(lojaId: string): Promise<OrdemServico[]> {
 
 async function inserirItens(
   ordemId: string,
+  numeroOrdem: number,
   itens: NovoItemOS[],
   lojaId: string,
 ): Promise<void> {
@@ -46,7 +53,7 @@ async function inserirItens(
         tipo: "saida" as const,
         quantidade: item.quantidade,
         motivo: "uso_em_os" as const,
-        referencia: `OS ${ordemId.slice(0, 8)}`,
+        referencia: nomeOrdem(numeroOrdem),
         loja_id: lojaId,
       })),
     );
@@ -66,7 +73,6 @@ export async function criarOrdem(
       ...ordem,
       criado_por_id: operadorId,
       atualizado_por_id: operadorId,
-      status: "aberta",
       loja_id: lojaId,
     })
     .select()
@@ -74,7 +80,7 @@ export async function criarOrdem(
 
   if (erroOrdem) throw erroOrdem;
 
-  await inserirItens(ordemCriada.id, itens, lojaId);
+  await inserirItens(ordemCriada.id, ordemCriada.numero, itens, lojaId);
 
   return ordemCriada as OrdemServico;
 }
@@ -97,26 +103,40 @@ export async function atualizarOrdem(
 // pra uma etapa própria (ver PROJETO_STATUS.md).
 export async function adicionarItensOrdem(
   ordemId: string,
+  numeroOrdem: number,
   itens: NovoItemOS[],
   operadorId: string,
   lojaId: string,
 ): Promise<void> {
-  await inserirItens(ordemId, itens, lojaId);
+  await inserirItens(ordemId, numeroOrdem, itens, lojaId);
   await atualizarOrdem(ordemId, {}, operadorId);
+}
+
+// Marca a OS como "concluída" — usado pelo botão "Encerrar OS", que já leva
+// direto pra tela de faturamento em seguida.
+export async function concluirOrdem(id: string, operadorId: string): Promise<void> {
+  await atualizarOrdem(id, { status: "concluida" }, operadorId);
 }
 
 export async function faturarOrdem(
   ordem: OrdemServico,
-  formaPagamento: string,
+  pagamentos: PagamentoOrdem[],
   parcelas: number,
-  valorCobrado: number,
   previsaoRecebimento: string | null,
 ): Promise<void> {
+  const valorTotal = pagamentos.reduce((soma, p) => soma + p.valor, 0);
+  // Resumo legível pra exibir em qualquer lugar (garantia, lista de OS) —
+  // uma forma só continua mostrando só ela; duas ou mais aparecem juntas
+  // (ex: "Pix + Cartão de crédito").
+  const formaPagamentoResumo = [...new Set(pagamentos.map((p) => p.formaPagamento))]
+    .map((forma) => FORMA_PAGAMENTO_LABEL[forma] ?? forma)
+    .join(" + ");
+
   const { error: erroOrdem } = await supabase
     .from("ordens_servico")
     .update({
       status: "faturada",
-      forma_pagamento: formaPagamento,
+      forma_pagamento: formaPagamentoResumo,
       parcelas,
       data_fechamento: new Date().toISOString(),
     })
@@ -125,29 +145,33 @@ export async function faturarOrdem(
   if (erroOrdem) throw erroOrdem;
 
   // Sem previsão de recebimento = cliente já pagou na hora, lança a Entrada
-  // no Caixa direto (comportamento de sempre). Com previsão = cliente ainda
-  // vai pagar depois; em vez de lançar a Entrada agora, cria uma conta a
-  // receber pendente — o Caixa só recebe o lançamento quando ela for
-  // marcada como recebida de verdade (Contas a Receber).
+  // no Caixa direto (comportamento de sempre) — um lançamento por forma de
+  // pagamento usada, pra cobrir o caso de pagamento dividido (ex: metade
+  // Pix, metade cartão). Com previsão = cliente ainda vai pagar depois; em
+  // vez de lançar a Entrada agora, cria uma conta a receber pendente — o
+  // Caixa só recebe o lançamento quando ela for marcada como recebida de
+  // verdade (Contas a Receber).
   if (!previsaoRecebimento) {
-    await criarMovimentoCaixa(
-      {
-        ordem_servico_id: ordem.id,
-        tipo: "entrada",
-        forma_pagamento: formaPagamento,
-        valor: valorCobrado,
-        descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
-        categoria_id: null,
-      },
-      ordem.loja_id,
-    );
+    for (const pagamento of pagamentos) {
+      await criarMovimentoCaixa(
+        {
+          ordem_servico_id: ordem.id,
+          tipo: "entrada",
+          forma_pagamento: pagamento.formaPagamento,
+          valor: pagamento.valor,
+          descricao: `Faturamento da ${nomeOrdem(ordem.numero)}`,
+          categoria_id: null,
+        },
+        ordem.loja_id,
+      );
+    }
   } else {
     await criarContaReceber(
       {
         cliente_id: ordem.cliente_id,
         ordem_servico_id: ordem.id,
-        descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
-        valor: valorCobrado,
+        descricao: `Faturamento da ${nomeOrdem(ordem.numero)}`,
+        valor: valorTotal,
         vencimento: previsaoRecebimento,
       },
       ordem.loja_id,

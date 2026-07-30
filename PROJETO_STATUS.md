@@ -244,7 +244,8 @@ projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a funda�
 descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0036`, criadas e validadas
 localmente nesta sessão — Postgres local, `service postgresql start` + `sudo -u postgres psql`,
 rodando a sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase
-real logo em seguida). Resumo das últimas:
+real logo em seguida). **`0037` foi criada e validada localmente nesta mesma sessão (mesmo
+processo) mas AINDA NÃO foi rodada no Supabase real dela** — ver seção 8. Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -262,6 +263,16 @@ real logo em seguida). Resumo das últimas:
 - `0035`: adiciona `custo` a `servicos` (mesmo padrão de `pecas.preco_custo`) — sem isso, a aba
   Lucratividade sempre considerava o custo de serviço como zero.
 - `0036`: cria `contas_receber` — ver módulo "Contas a Receber" na seção 7.
+- `0037`: três mudanças pedidas pela usuária depois de usar o sistema na prática — (a) número
+  sequencial por loja em `ordens_servico.numero` (1, 2, 3... por loja, via trigger `before insert`,
+  em vez do UUID cortado que aparecia como "OS #a0270a6e"); (b) simplifica `status` da OS, removendo
+  "aberta" como estado distinto de "em_andamento" (toda OS nova já nasce "em_andamento"); (c) remove
+  a trava de "1 lançamento de Caixa por OS" (`caixa_movimentos_ordem_id_idx_unique`), permitindo
+  faturar dividindo entre mais de uma forma de pagamento (1 lançamento por forma usada). Corrige
+  também, de brinde, um bug real encontrado testando a exclusão de loja: nunca existiu policy de
+  RLS pra `DELETE` em `lojas` (só select/insert/update) — sem policy nenhuma cobrindo o comando, o
+  delete "funcionava" sem erro nenhum, mas apagava 0 linhas (bug silencioso, sem mensagem de erro
+  nenhuma). Ver item 15 da seção 6.
 
 Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
 (não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
@@ -350,11 +361,15 @@ outro projeto Supabase do zero (ver seção 9).
   opcional), ativo, criado_em. Vem semeado com ~17 serviços padrão sem preço (migration `0030`).
 - **`estoque_movimentos`**: id, loja_id (FK lojas), peca_id (FK), tipo (`entrada`/`saida`),
   quantidade, motivo (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
-- **`ordens_servico`**: id, loja_id (FK lojas), cliente_id (FK), veiculo_id (FK, opcional), status
-  (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema (rótulo
-  "Observação"), forma_pagamento, parcelas (int, default 1, preenchido no faturamento),
-  data_abertura, data_fechamento, vendedor_id (FK **funcionarios**)/criado_por_id/atualizado_por_id
-  (FK operadores — autoria de sistema).
+- **`ordens_servico`**: id, **numero** (int, sequencial **por loja** — 1, 2, 3..., atribuído
+  sozinho por trigger no insert; é como a OS aparece pra usuária em todo o app, nunca o `id`), loja_id
+  (FK lojas), cliente_id (FK), veiculo_id (FK, opcional), status
+  (`em_andamento`/`concluida`/`faturada` — sem "aberta" desde a migration 0037; toda OS nova já
+  nasce "em_andamento"), km_entrada, descricao_problema (rótulo "Observação"), forma_pagamento
+  (texto livre — quando o faturamento é dividido em mais de uma forma, vira um resumo tipo "Pix +
+  Cartão de crédito"), parcelas (int, default 1, preenchido no faturamento), data_abertura,
+  data_fechamento, vendedor_id (FK **funcionarios**)/criado_por_id/atualizado_por_id (FK operadores
+  — autoria de sistema).
 - **`ordens_servico_itens`**: id, ordem_servico_id (FK), tipo (`peca`/`servico`), peca_id (FK
   opcional, só tipo peça), servico_id (FK opcional, só tipo serviço — item de serviço pode ficar
   sem servico_id quando for "avulso"), tecnico_id (FK **funcionarios**, opcional — técnico
@@ -363,8 +378,9 @@ outro projeto Supabase do zero (ver seção 9).
 - **`configuracoes_juros_parcelas`**: loja_id (FK lojas) + numero_parcelas (PK composta, 2 a 12),
   juros_percentual. Editável só pelo admin — define o juro (% sobre o total) cobrado quando o
   cliente parcela no cartão ao faturar uma OS. 1x é sempre à vista, sem juros.
-- **`caixa_movimentos`**: id, loja_id (FK lojas), data, ordem_servico_id (FK opcional, único — 1
-  lançamento por OS faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao,
+- **`caixa_movimentos`**: id, loja_id (FK lojas), data, ordem_servico_id (FK opcional — **não é mais
+  único** desde a migration 0037: uma OS faturada com pagamento dividido em mais de uma forma gera
+  1 lançamento por forma usada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao,
   categoria_id (FK categorias_caixa, opcional)
 - **`categorias_caixa`**: id, nome, tipo (`entrada`/`saida`), criado_em. Gerenciada em
   Configurações (admin), selecionável ao lançar um movimento manual no Caixa (ex: "Aluguel",
@@ -526,6 +542,17 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     importa a especificidade**. Reset "globais" (`*`, `body`, seletores soltos) precisam ficar
     dentro de `@layer base` pra não atropelar utilitários mais específicos — foi assim que a barra
     de rolagem customizada (ver seção 2) ficou duplicada com a nativa por uma sessão inteira.
+15. **Padrão de bug: RLS sem policy pra uma operação específica falha *em silêncio*, sem erro** —
+    uma tabela pode ter policy de `select`/`insert`/`update` e faltar a de `delete` (ou qualquer
+    outra combinação) sem ninguém perceber, porque o Postgres não recusa o comando com uma
+    mensagem — ele só filtra a zero linhas visíveis pra aquela operação. Do lado do app, um
+    `.delete()` (ou `.update()`) que "roda sem erro" mas não muda nada é indistinguível de "deu
+    certo" até alguém checar o banco direto. Encontrado assim: `lojas` tinha policy de update mas
+    nunca teve uma de delete (migration 0031 só cobriu select/insert/update), então o botão
+    "excluir loja" simplesmente não fazia nada — corrigido na migration 0037. **Lição**: toda vez
+    que uma tabela ganha uma ação nova (excluir, reativar, etc.), conferir explicitamente se existe
+    policy cobrindo *aquele comando exato* — não basta a tabela já ter RLS habilitada com outras
+    policies.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -567,21 +594,30 @@ normal (quebra de linha).
   semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
   Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa ficha de orçamento de
   referência do ramo — ponto de partida, não os preços/serviços reais dela.
-- **Ordens de Serviço**: form em duas colunas, reabre pra editar (só permite acrescentar itens,
-  não editar/remover item já lançado — evita desfazer baixa de estoque). Técnico por item +
-  vendedor/atendente da OS (ambos listam `funcionarios`, não só operadores). Lista de OS tem filtro
-  de período (De/Até) e busca por cliente/placa — OS em aberto sempre aparecem, não importa a data
-  (só o histórico já faturado é filtrado por período, pra lista não crescer sem controle); colunas
-  de Peças/Serviços/Total/Lucro por ordem; status com cor por etapa (Concluída em laranja, de
-  propósito, pra chamar atenção de que falta faturar) — mesma cor no card "OS abertas" do Início.
-  Faturamento (`FaturamentoCard.tsx`) calcula parcelas automaticamente conforme os juros
-  configurados em Configurações, e deixa escolher entre "Recebido agora" (lança a Entrada no Caixa
-  na hora, como sempre foi) ou "A receber depois" (não lança nada no Caixa ainda, cria uma pendência
-  em Contas a Receber — ver módulo abaixo). Aba "Fechamento" (só aparece com status
-  concluída/faturada): botões "Emitir NFC-e"/"Emitir NFS-e" (ainda placeholder, com preview do
-  rascunho — emissão de verdade depende do Focus NFe, ver seção 8) e "Ver garantia" (abre preview do
-  documento completo — cabeçalho da loja, dados de cliente/veículo, itens, totais, forma de
-  pagamento com parcelas reais, assinaturas — com opção de baixar HTML/imprimir via `iframe`).
+- **Ordens de Serviço**: cada OS tem um número sequencial **por loja** (`numero`, 1/2/3...,
+  atribuído por trigger no insert) — é como a OS é identificada em toda tela ("OS 12"), nunca mais
+  o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
+  "aberta" separada) → **concluída** → **faturada**. Form em duas colunas, reabre pra editar (só
+  permite acrescentar itens, não editar/remover item já lançado — evita desfazer baixa de estoque).
+  Não existe mais seletor manual de status no form — o cabeçalho mostra o status atual (badge) e,
+  enquanto "em_andamento", um botão **"Encerrar OS"** que marca como concluída e já abre a tela de
+  faturamento na sequência, num fluxo só. Técnico por item + vendedor/atendente da OS (ambos listam
+  `funcionarios`, não só operadores). Lista de OS tem filtro de período (De/Até) e busca por
+  cliente/placa — OS em aberto sempre aparecem, não importa a data (só o histórico já faturado é
+  filtrado por período, pra lista não crescer sem controle); colunas de Nº/Peças/Serviços/Total/Lucro
+  por ordem; status com cor por etapa (Concluída em laranja, de propósito, pra chamar atenção de que
+  falta faturar) — mesma cor no card "OS abertas" do Início. Faturamento (`FaturamentoCard.tsx`)
+  calcula parcelas automaticamente conforme os juros configurados em Configurações, deixa **dividir
+  o pagamento em mais de uma forma** (ex: metade Pix, metade cartão — cada forma vira seu próprio
+  lançamento de Caixa, soma precisa bater com o total antes de confirmar; parcelamento só é
+  permitido quando é uma forma só), e deixa escolher entre "Recebido agora" (lança a Entrada no
+  Caixa na hora, como sempre foi) ou "A receber depois" (não lança nada no Caixa ainda, cria uma
+  pendência em Contas a Receber — ver módulo abaixo; aqui não dá pra dividir forma de pagamento,
+  só ao receber depois). Aba "Fechamento" (só aparece com status concluída/faturada): botões "Emitir
+  NFC-e"/"Emitir NFS-e" (ainda placeholder, com preview do rascunho — emissão de verdade depende do
+  Focus NFe, ver seção 8) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja,
+  dados de cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com
+  opção de baixar HTML/imprimir via `iframe`).
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
   abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
 - **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
@@ -609,31 +645,32 @@ normal (quebra de linha).
   "Veículos no pátio" (com ícone por tipo/cor).
 - **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador", e agora um
   multi-select de lojas dentro do form, só aparece com 2+ lojas cadastradas), Lojas (novo card,
-  sempre visível — criar/inativar lojas), e seções recolhíveis — Juros de parcelamento, Categorias
-  de produto, Categorias de serviço, Categorias de caixa, Texto de garantia, Dados fiscais da loja,
-  Cartões do Início (essas últimas 4, junto com Juros, agora são **por loja** — ver seção 5).
-- **Multi-loja (fundação)** — construída nesta sessão, ainda **não aplicada no Supabase real da
-  usuária** (só validada localmente, ver seção 8 pro passo a passo que falta): 1 projeto Supabase
-  pode servir 2+ lojas com um painel único (não instalações separadas). Catálogo compartilhado
-  (clientes, peças, serviços, categorias); estoque/caixa/OS/contas a pagar/notas fiscais/funcionários/
-  configurações separados por loja. Um operador pode ter acesso a 1 ou mais lojas
-  (`operador_lojas`); `LojaSwitcher.tsx` na Sidebar deixa trocar de loja ativa, só aparece pra quem
-  tem 2+. Detalhe completo do desenho na seção 5, subseção "Multi-loja".
+  sempre visível — criar/editar nome-cidade-UF/inativar lojas; **excluir de verdade** também é
+  possível, mas só funciona com a loja "vazia" — sem estoque/caixa/OS/funcionários vinculados; com
+  dado de negócio, o app explica e sugere inativar em vez de excluir), e seções recolhíveis — Juros
+  de parcelamento, Categorias de produto, Categorias de serviço, Categorias de caixa, Texto de
+  garantia, Dados fiscais da loja, Cartões do Início (essas últimas 4, junto com Juros, agora são
+  **por loja** — ver seção 5).
+- **Multi-loja** — já aplicada e testada de verdade no Supabase real da usuária (criou uma 2ª loja,
+  o que revelou o bug corrigido na migration 0034). 1 projeto Supabase serve 2+ lojas com um painel
+  único (não instalações separadas). Catálogo compartilhado (clientes, peças, serviços, categorias);
+  estoque/caixa/OS/contas a pagar/contas a receber/notas fiscais/funcionários/configurações
+  separados por loja. Um operador pode ter acesso a 1 ou mais lojas (`operador_lojas`);
+  `LojaSwitcher.tsx` na Sidebar deixa trocar de loja ativa, só aparece pra quem tem 2+. Detalhe
+  completo do desenho na seção 5, subseção "Multi-loja".
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
-  enviada. **Versão atual do `package.json`: `0.9.0`** (bump feito nesta sessão, refletindo a
-  fundação multi-loja — **ainda sem tag `v0.9.0` publicada/instalador gerado**, ela decide quando
-  publicar). A versão agora aparece pequena no canto inferior direito do app (`VersaoApp.tsx`, lê
-  `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive login. Última tag
-  publicada de verdade continua sendo `v0.1.3` — **muita coisa foi implementada depois** dela
-  (Funcionários RH completo, Contas a Pagar, Notas Fiscais, Relações com gráficos, cartões
-  personalizáveis, veículos no pátio, scrollbar customizada, Importar por foto/PDF, menu
-  reorganizado, Relações+Lucratividade unificados, Enter avançando entre campos, categorias de
-  serviço, e agora a fundação multi-loja) **sem nenhuma tag nova publicada — decisão explícita da
-  usuária**: só publicar a próxima versão do instalador **quando a emissão de nota fiscal também
-  estiver pronta**, pra não ter que atualizar o instalador duas vezes seguidas. Até lá, ela usa a
-  loja rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com `.env`
-  configurado nesse PC também) em vez do instalador.
+  enviada. **Versão atual do `package.json`: `0.9.2`**. Última tag publicada de verdade é `v0.9.0`
+  (ela baixou e testou o instalador dessa versão) — bastante coisa foi implementada depois dela
+  (correção do bug de criar loja, edição/exclusão de loja, atalho de OS no Início e em Contas a
+  Receber, filtro/busca/cores/colunas na lista de OS, custo de serviço, módulo Contas a Receber,
+  número sequencial de OS, simplificação de status, botão Encerrar OS, split de pagamento) **sem
+  nenhuma tag nova publicada ainda** — mesma decisão de sempre: só publicar a próxima versão do
+  instalador **quando a emissão de nota fiscal também estiver pronta**. Até lá, ela usa a loja
+  rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com `.env` configurado
+  nesse PC também) em vez do instalador. A versão aparece pequena no canto inferior direito do app
+  (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive
+  login.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -685,15 +722,17 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: as migrations `0001` a `0036` já estão todas rodadas no Supabase
-real dela (confirmado por ela mesma) — falta só ela **testar na prática** os fluxos que dependiam
-delas (criar uma loja nova de verdade, cadastrar custo num serviço, faturar uma OS escolhendo "A
-receber depois" e depois marcar como recebido) — confirmar isso no início da sessão, e só então
-seguir com pedidos novos. Depois disso confirmado funcionando, ela mesma vai puxar a **emissão de
-nota fiscal** (Focus NFe, item 1 desta seção) — combinado numa sessão anterior ("na outra sessão eu
-faço a inclusão da emissão de nota fiscal"). Ela só publica a próxima versão do instalador quando
-isso estiver pronto (ver aviso na seção 7, "Empacotamento"). Antes de codar a emissão de verdade,
-ela precisa ter criado a conta/token de homologação do Focus NFe (ver item 1).
+**Prioridade da próxima sessão**: primeiro, **aplicar a migration `0037` no Supabase real dela**
+(número sequencial de OS + simplificação de status + split de pagamento + a policy de exclusão de
+loja que faltava — construída e validada localmente nesta sessão, ver seção 5, mas ainda não
+rodada lá). Depois de rodar, testar na prática: abrir uma OS nova (deve nascer "Em andamento" já,
+sem "Aberta"), usar o botão "Encerrar OS", faturar dividindo entre 2 formas de pagamento, e excluir
+uma loja de teste vazia em Configurações → Lojas. Depois disso confirmado funcionando, ela mesma
+vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta seção) — combinado numa sessão
+anterior ("na outra sessão eu faço a inclusão da emissão de nota fiscal"). Ela só publica a próxima
+versão do instalador quando isso estiver pronto (ver aviso na seção 7, "Empacotamento"). Antes de
+codar a emissão de verdade, ela precisa ter criado a conta/token de homologação do Focus NFe (ver
+item 1).
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -708,23 +747,28 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
 URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0036` já foram confirmadas
 rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
-`0034`-`0036`, todas já testadas por ela de verdade).
+`0034`-`0036`, todas já testadas por ela de verdade). **`0037` ainda precisa ser rodada lá.**
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0036`. Todas são idempotentes.
+até `0037`. Todas são idempotentes.
 
-### Coisas pra confirmar que `0034`-`0036` estão funcionando na prática
+### Coisas pra confirmar que `0037` está funcionando na prática
 
-Rodadas as migrations, o roteiro de teste pra confirmar que os 3 fluxos novos funcionam de verdade
+Rodada a migration, o roteiro de teste pra confirmar que os fluxos novos funcionam de verdade
 (pendente ela testar, ver "Prioridade da próxima sessão" acima):
-1. Configurações → "Lojas" → criar uma loja nova de verdade — antes dava erro, agora deve
-   funcionar e o vínculo já aparecer sozinho.
-2. Serviços → editar um serviço existente e preencher o campo "Custo" novo.
-3. Ordens de Serviço → faturar uma OS escolhendo "A receber depois" — deve aparecer em Contas a
-   Receber, pendente, sem lançar nada no Caixa ainda; marcar como recebido aí sim lança a Entrada.
+1. Ordens de Serviço → abrir uma OS nova — deve nascer com status "Em andamento" direto (sem
+   "Aberta") e um número sequencial (ex: "OS 1", "OS 2"...) em vez de código grande.
+2. Abrir uma OS em andamento → botão "Encerrar OS" → deve marcar como concluída e já abrir a tela
+   de faturamento.
+3. Faturar marcando "Dividir em mais de uma forma de pagamento" com 2 formas — deve dar pra
+   confirmar só quando a soma bater com o total, e devem aparecer 2 lançamentos no Caixa.
+4. Configurações → "Lojas" → criar uma loja de teste vazia (sem nada lançado nela) e excluir de
+   verdade — antes não fazia nada (bug silencioso), agora deve sumir da lista. Tentar excluir uma
+   loja com dado de verdade deve dar uma mensagem clara explicando por que não dá, sugerindo
+   inativar.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):

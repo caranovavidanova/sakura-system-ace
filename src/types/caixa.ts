@@ -14,6 +14,7 @@ export interface MovimentoCaixa {
   categoria_id: string | null;
   ordem_servico?: {
     id: string;
+    numero: number;
     cliente: { nome: string } | null;
     itens: ItemOS[];
   } | null;

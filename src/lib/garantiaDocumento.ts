@@ -1,5 +1,6 @@
 import type { Cliente, Veiculo } from "@/types/cliente";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
+import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
 import type { ItemOS, OrdemServico } from "@/types/os";
 
 // Sakura System — AutoCenter Edition
@@ -8,13 +9,6 @@ import type { ItemOS, OrdemServico } from "@/types/os";
 // pagamento, texto de garantia configurável e linhas de assinatura) —
 // inspirado no modelo que a usuária já usa hoje na Pneus Amigão. Reaproveita
 // a mesma técnica da versão visual da nota fiscal (HTML pra imprimir/baixar).
-
-const FORMA_PAGAMENTO_LABEL: Record<string, string> = {
-  dinheiro: "Dinheiro",
-  pix: "Pix",
-  cartao_debito: "Cartão de débito",
-  cartao_credito: "Cartão de crédito",
-};
 
 export interface DadosGarantiaDocumento {
   ordem: OrdemServico;
@@ -113,7 +107,7 @@ export function montarHtmlGarantiaOS(dados: DadosGarantiaDocumento): string {
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
-<title>Garantia — OS ${ordem.id.slice(0, 8).toUpperCase()}</title>
+<title>Garantia — ${nomeOrdem(ordem.numero)}</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -162,7 +156,7 @@ export function montarHtmlGarantiaOS(dados: DadosGarantiaDocumento): string {
     ${enderecoLoja(loja) ? `<p class="subtitulo">${enderecoLoja(loja)}</p>` : ""}
     ${contatoLoja ? `<p class="subtitulo">${contatoLoja}</p>` : ""}
     <p class="subtitulo" style="margin-top:8px;font-weight:600;">
-      Garantia — OS ${ordem.id.slice(0, 8).toUpperCase()} · ${formatarData(ordem.data_fechamento)}
+      Garantia — ${nomeOrdem(ordem.numero)} · ${formatarData(ordem.data_fechamento)}
     </p>
   </div>
 

@@ -2,7 +2,7 @@ import { supabase } from "./supabase";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
 
 const SELECT_MOVIMENTO =
-  "*, ordem_servico:ordens_servico(id, cliente:clientes(nome), itens:ordens_servico_itens(*)), " +
+  "*, ordem_servico:ordens_servico(id, numero, cliente:clientes(nome), itens:ordens_servico_itens(*)), " +
   "categoria:categorias_caixa(nome)";
 
 export async function listarMovimentosCaixa(lojaId: string): Promise<MovimentoCaixa[]> {
@@ -16,17 +16,19 @@ export async function listarMovimentosCaixa(lojaId: string): Promise<MovimentoCa
   return data as unknown as MovimentoCaixa[];
 }
 
-export async function buscarMovimentoCaixaPorOrdem(
+// Uma OS pode ter mais de um lançamento de Caixa quando o faturamento foi
+// dividido em mais de uma forma de pagamento (ex: metade Pix, metade
+// cartão) — por isso retorna uma lista, não um único registro.
+export async function listarMovimentosCaixaPorOrdem(
   ordemServicoId: string,
-): Promise<MovimentoCaixa | null> {
+): Promise<MovimentoCaixa[]> {
   const { data, error } = await supabase
     .from("caixa_movimentos")
     .select("*")
-    .eq("ordem_servico_id", ordemServicoId)
-    .maybeSingle();
+    .eq("ordem_servico_id", ordemServicoId);
 
   if (error) throw error;
-  return data as MovimentoCaixa | null;
+  return data as MovimentoCaixa[];
 }
 
 export async function criarMovimentoCaixa(

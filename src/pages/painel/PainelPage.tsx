@@ -333,7 +333,7 @@ function CartaoValor({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs text-sakura-muted">{titulo}</p>
-        <span className="text-sakura-purple-dark/60">›</span>
+        <span className="text-sakura-purple-dark/70">›</span>
       </div>
       <p className="mt-2 text-2xl font-semibold text-sakura-purple-dark">{valor}</p>
     </div>

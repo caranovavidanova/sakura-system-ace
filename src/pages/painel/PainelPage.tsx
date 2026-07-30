@@ -16,7 +16,7 @@ import type { CartaoMetrica } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
-import { STATUS_COR, STATUS_LABEL } from "@/types/os";
+import { nomeOrdem } from "@/types/os";
 import type { OrdemServico } from "@/types/os";
 
 function formatarMoeda(valor: number): string {
@@ -136,7 +136,7 @@ export function PainelPage() {
   };
 
   const filaDeAtendimento = ordens
-    .filter((o) => o.status === "aberta" || o.status === "em_andamento")
+    .filter((o) => o.status === "em_andamento")
     .sort((a, b) => (a.data_abertura < b.data_abertura ? -1 : 1));
 
   const veiculosNoPatio = filaDeAtendimento.filter((o) => o.veiculo);
@@ -239,10 +239,10 @@ export function PainelPage() {
                   <table className="w-full text-left text-sm">
                     <thead className="bg-white/40 text-sakura-purple-dark">
                       <tr>
+                        <th className="px-4 py-3 font-medium">Nº</th>
                         <th className="px-4 py-3 font-medium">Cliente</th>
                         <th className="px-4 py-3 font-medium">Veículo</th>
                         <th className="px-4 py-3 font-medium">Aberta em</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -254,17 +254,13 @@ export function PainelPage() {
                           }
                           className="cursor-pointer border-t border-white/40 hover:bg-white/30"
                         >
+                          <td className="px-4 py-3 text-sakura-purple-dark/85">
+                            {nomeOrdem(ordem.numero)}
+                          </td>
                           <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
                           <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
                           <td className="px-4 py-3">
                             {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COR[ordem.status]}`}
-                            >
-                              {STATUS_LABEL[ordem.status]}
-                            </span>
                           </td>
                         </tr>
                       ))}

@@ -3,6 +3,22 @@
 Todas as mudanças notáveis do Sakura System — AutoCenter Edition são registradas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto usa [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.9.2] - 2026-07-30
+
+### Corrigido
+- Configurações → Lojas: encontrado (testando a exclusão) e corrigido outro bug real de RLS — nunca existiu uma policy de permissão pra excluir loja, então o botão "excluir" simplesmente não fazia nada, sem erro nenhum (Postgres deixava 0 linhas visíveis pro delete, em vez de recusar com uma mensagem).
+- Contas a Receber: clicar numa linha agora leva direto pra aquela ordem de serviço em Ordens de Serviço, igual já acontecia no Início.
+
+### Adicionado
+- Ordens de Serviço agora têm um número sequencial por loja (OS 1, OS 2, OS 3...) em vez de mostrar um pedaço do código interno (ex: "OS #a0270a6e") — usado em toda tela que referencia uma OS (cabeçalho da OS, lista de Ordens de Serviço, Início, Caixa Diário, garantia).
+- Configurações → Lojas: agora dá pra excluir uma loja de verdade (não só inativar) — funciona apenas quando ela está "vazia" (sem estoque, caixa, OS, funcionários...); com dado de negócio vinculado, o app explica e sugere inativar em vez de excluir, pra nunca apagar histórico sem querer.
+- Faturar uma OS agora aceita dividir o pagamento em mais de uma forma (ex: metade Pix, metade cartão) — cada forma gera sua própria Entrada no Caixa, e a soma das partes precisa bater com o total antes de confirmar.
+- Botão "Encerrar OS": marca a OS como concluída e já abre a tela de faturamento na hora, sem precisar mudar status manualmente antes de faturar.
+
+### Alterado
+- Simplifica o status da Ordem de Serviço: removida a diferenciação entre "Aberta" e "Em andamento" — toda OS nova já nasce "Em andamento" diretamente. Status possíveis agora: Em andamento, Concluída, Faturada.
+- Removido o bloco de "Status" (seletor manual) e "Criado por/Alterado por" do formulário de Ordem de Serviço — "Criado por" passou pra uma linha discreta no cabeçalho, e trocar status manualmente foi substituído pelo botão "Encerrar OS".
+
 ## [0.9.1] - 2026-07-30
 
 ### Corrigido

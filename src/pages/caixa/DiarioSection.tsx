@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { totalOrdem } from "@/types/os";
+import { nomeOrdem, totalOrdem } from "@/types/os";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
 import type { Peca } from "@/types/peca";
@@ -171,7 +171,9 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
                     </td>
                     <td className="px-4 py-3">
                       {m.ordem_servico_id
-                        ? `OS #${m.ordem_servico_id.slice(0, 8).toUpperCase()}`
+                        ? m.ordem_servico?.numero
+                          ? nomeOrdem(m.ordem_servico.numero)
+                          : "OS"
                         : m.categoria?.nome || m.descricao || "Lançamento manual"}
                     </td>
                     <td className="px-4 py-3">{m.ordem_servico?.cliente?.nome ?? "—"}</td>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarContasReceber, receberConta } from "@/lib/contasReceber";
@@ -19,6 +20,7 @@ function hojeIso(): string {
 
 export function ContasReceberPage() {
   const { operador, lojaAtual } = useAuth();
+  const navigate = useNavigate();
   const [contas, setContas] = useState<ContaReceber[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -116,7 +118,20 @@ export function ContasReceberPage() {
                     {pendentes.map((conta) => {
                       const vencida = conta.vencimento < hoje;
                       return (
-                        <tr key={conta.id} className="border-t border-sakura-gray/20">
+                        <tr
+                          key={conta.id}
+                          onClick={() =>
+                            conta.ordem_servico_id &&
+                            navigate("/ordens-servico", {
+                              state: { abrirOrdemId: conta.ordem_servico_id },
+                            })
+                          }
+                          className={`border-t border-sakura-gray/20 ${
+                            conta.ordem_servico_id
+                              ? "cursor-pointer hover:bg-sakura-pink-soft/30"
+                              : ""
+                          }`}
+                        >
                           <td className="px-4 py-3">
                             {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
                           </td>
@@ -136,7 +151,10 @@ export function ContasReceberPage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <button
-                              onClick={() => setContaRecebendo(conta)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setContaRecebendo(conta);
+                              }}
                               className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
                             >
                               Marcar como recebido

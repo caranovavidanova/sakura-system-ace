@@ -9,10 +9,12 @@ import { listarFuncionarios } from "@/lib/funcionarios";
 import {
   adicionarItensOrdem,
   atualizarOrdem,
+  concluirOrdem,
   criarOrdem,
   faturarOrdem,
   listarOrdens,
 } from "@/lib/ordensServico";
+import type { PagamentoOrdem } from "@/lib/ordensServico";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -25,7 +27,7 @@ import type {
   OrdemServico,
   PatchOrdemServico,
 } from "@/types/os";
-import { STATUS_COR, STATUS_LABEL, totalOrdem, totalPorTipo } from "@/types/os";
+import { STATUS_COR, STATUS_LABEL, nomeOrdem, totalOrdem, totalPorTipo } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { FaturamentoCard } from "./FaturamentoCard";
@@ -172,21 +174,28 @@ export function OrdensServicoPage() {
   ) {
     if (!operador || !lojaAtual) return;
     await atualizarOrdem(id, patch, operador.id);
-    if (novosItens.length > 0) {
-      await adicionarItensOrdem(id, novosItens, operador.id, lojaAtual.id);
+    if (novosItens.length > 0 && ordemEmEdicao) {
+      await adicionarItensOrdem(id, ordemEmEdicao.numero, novosItens, operador.id, lojaAtual.id);
     }
     setOrdemEmEdicao(null);
     await carregar();
   }
 
+  async function handleEncerrar(ordem: OrdemServico) {
+    if (!operador) return;
+    await concluirOrdem(ordem.id, operador.id);
+    setOrdemEmEdicao(null);
+    setOrdemFaturando({ ...ordem, status: "concluida" });
+    await carregar();
+  }
+
   async function confirmarFaturamento(
-    formaPagamento: string,
+    pagamentos: PagamentoOrdem[],
     parcelas: number,
-    valorCobrado: number,
     previsaoRecebimento: string | null,
   ) {
     if (!ordemFaturando) return;
-    await faturarOrdem(ordemFaturando, formaPagamento, parcelas, valorCobrado, previsaoRecebimento);
+    await faturarOrdem(ordemFaturando, pagamentos, parcelas, previsaoRecebimento);
     setOrdemFaturando(null);
     await carregar();
   }
@@ -244,6 +253,7 @@ export function OrdensServicoPage() {
           funcionarioAtualId={funcionarioAtualId}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
+          onEncerrar={handleEncerrar}
           onCancelar={() => setMostrarFormulario(false)}
         />
       )}
@@ -258,6 +268,7 @@ export function OrdensServicoPage() {
           ordemExistente={ordemEmEdicao}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
+          onEncerrar={handleEncerrar}
           onCancelar={() => setOrdemEmEdicao(null)}
         />
       )}
@@ -332,6 +343,7 @@ export function OrdensServicoPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
+                <th className="px-4 py-3 font-medium">Nº</th>
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-4 py-3 font-medium">Veículo</th>
                 <th className="px-4 py-3 font-medium">Aberta em</th>
@@ -353,6 +365,7 @@ export function OrdensServicoPage() {
                   }}
                   className="cursor-pointer border-t border-sakura-gray/20 hover:bg-sakura-pink-soft/30"
                 >
+                  <td className="px-4 py-3 text-sakura-muted">{nomeOrdem(ordem.numero)}</td>
                   <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
                   <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
                   <td className="px-4 py-3">

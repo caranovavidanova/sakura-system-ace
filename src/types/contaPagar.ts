@@ -2,6 +2,7 @@ export type StatusContaPagar = "pendente" | "paga";
 
 export interface ContaPagar {
   id: string;
+  loja_id: string;
   descricao: string;
   valor: number;
   vencimento: string;

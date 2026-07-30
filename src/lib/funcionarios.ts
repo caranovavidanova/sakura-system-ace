@@ -8,10 +8,11 @@ import type {
 const SELECT_FUNCIONARIO =
   "*, operador:operadores(usuario), filhos:funcionario_filhos(*)";
 
-export async function listarFuncionarios(): Promise<Funcionario[]> {
+export async function listarFuncionarios(lojaId: string): Promise<Funcionario[]> {
   const { data, error } = await supabase
     .from("funcionarios")
     .select(SELECT_FUNCIONARIO)
+    .eq("loja_id", lojaId)
     .order("nome", { ascending: true });
 
   if (error) throw error;
@@ -20,11 +21,12 @@ export async function listarFuncionarios(): Promise<Funcionario[]> {
 
 export async function criarFuncionario(
   funcionario: NovoFuncionario,
+  lojaId: string,
   filhos: NovoFuncionarioFilho[] = [],
 ): Promise<Funcionario> {
   const { data, error } = await supabase
     .from("funcionarios")
-    .insert(funcionario)
+    .insert({ ...funcionario, loja_id: lojaId })
     .select()
     .single();
 

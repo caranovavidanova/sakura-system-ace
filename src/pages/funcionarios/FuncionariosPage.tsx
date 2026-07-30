@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useAuth } from "@/contexts/AuthContext";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   atualizarFuncionario,
@@ -11,20 +12,21 @@ import type { Funcionario, NovoFuncionario, NovoFuncionarioFilho } from "@/types
 import { FuncionarioForm } from "./FuncionarioForm";
 
 export function FuncionariosPage() {
+  const { lojaAtual } = useAuth();
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Funcionario | null>(null);
 
   async function carregar() {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
       return;
     }
     setCarregando(true);
     setErro(null);
     try {
-      setFuncionarios(await listarFuncionarios());
+      setFuncionarios(await listarFuncionarios(lojaAtual.id));
     } catch (err) {
       console.error("Erro ao carregar funcionários:", err);
       setErro(mensagemDeErro(err));
@@ -35,13 +37,15 @@ export function FuncionariosPage() {
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
   async function handleSalvar(funcionario: NovoFuncionario, filhos: NovoFuncionarioFilho[]) {
+    if (!lojaAtual) return;
     if (formulario && formulario !== "novo") {
       await atualizarFuncionario(formulario.id, funcionario, filhos);
     } else {
-      await criarFuncionario(funcionario, filhos);
+      await criarFuncionario(funcionario, lojaAtual.id, filhos);
     }
     setFormulario(null);
     await carregar();

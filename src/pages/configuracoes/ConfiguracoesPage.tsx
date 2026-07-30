@@ -12,12 +12,14 @@ import {
   listarJurosParcelas,
 } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
+import { definirLojasDoOperador, listarLojas, listarLojasDoOperador } from "@/lib/lojas";
 import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operadores";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { CategoriaServico } from "@/types/categoriaServico";
 import type { CartaoMetrica, ConfiguracaoFiscalLoja, JurosParcela } from "@/types/configuracao";
+import type { Loja } from "@/types/loja";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
 import { CartoesInicioSection } from "./CartoesInicioSection";
@@ -26,12 +28,14 @@ import { CategoriasSection } from "./CategoriasSection";
 import { CategoriasServicoSection } from "./CategoriasServicoSection";
 import { DadosFiscaisSection } from "./DadosFiscaisSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
+import { LojasSection } from "./LojasSection";
 import { OperadorForm } from "./OperadorForm";
 import { TextoGarantiaSection } from "./TextoGarantiaSection";
 
 export function ConfiguracoesPage() {
-  const { operador: operadorLogado } = useAuth();
+  const { operador: operadorLogado, lojaAtual } = useAuth();
   const [operadores, setOperadores] = useState<Operador[]>([]);
+  const [lojas, setLojas] = useState<Loja[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriasCaixa, setCategoriasCaixa] = useState<CategoriaCaixa[]>([]);
@@ -44,9 +48,10 @@ export function ConfiguracoesPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
+  const [lojaIdsFormulario, setLojaIdsFormulario] = useState<string[]>([]);
 
   async function carregar() {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
       return;
     }
@@ -55,6 +60,7 @@ export function ConfiguracoesPage() {
     try {
       const [
         operadoresCarregados,
+        lojasCarregadas,
         jurosCarregados,
         categoriasCarregadas,
         categoriasCaixaCarregadas,
@@ -64,15 +70,17 @@ export function ConfiguracoesPage() {
         cartoesInicioCarregados,
       ] = await Promise.all([
         listarOperadores(),
-        listarJurosParcelas(),
+        listarLojas(),
+        listarJurosParcelas(lojaAtual.id),
         listarCategorias(),
         listarCategoriasCaixa(),
         listarCategoriasServico(),
-        buscarTextoGarantia(),
-        buscarConfiguracaoFiscal(),
-        buscarConfiguracaoPainelInicio(),
+        buscarTextoGarantia(lojaAtual.id),
+        buscarConfiguracaoFiscal(lojaAtual.id),
+        buscarConfiguracaoPainelInicio(lojaAtual.id),
       ]);
       setOperadores(operadoresCarregados);
+      setLojas(lojasCarregadas);
       setJurosParcelas(jurosCarregados);
       setCategorias(categoriasCarregadas);
       setCategoriasCaixa(categoriasCaixaCarregadas);
@@ -90,9 +98,26 @@ export function ConfiguracoesPage() {
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
-  async function handleSalvar(operador: NovoOperador, senha: string) {
+  async function abrirFormulario(alvo: "novo" | Operador) {
+    if (alvo === "novo") {
+      setLojaIdsFormulario(lojaAtual ? [lojaAtual.id] : []);
+    } else {
+      try {
+        const lojasDoOperador = await listarLojasDoOperador(alvo.id);
+        setLojaIdsFormulario(lojasDoOperador.map((loja) => loja.id));
+      } catch (err) {
+        console.error("Erro ao carregar lojas do operador:", err);
+        setErro(mensagemDeErro(err));
+        setLojaIdsFormulario([]);
+      }
+    }
+    setFormulario(alvo);
+  }
+
+  async function handleSalvar(operador: NovoOperador, senha: string, lojaIds: string[]) {
     if (formulario && formulario !== "novo") {
       await atualizarOperador(formulario.id, {
         nome: operador.nome,
@@ -100,8 +125,9 @@ export function ConfiguracoesPage() {
         permissoes: operador.permissoes,
         ativo: operador.ativo,
       });
+      await definirLojasDoOperador(formulario.id, lojaIds);
     } else {
-      await criarOperador(operador, senha);
+      await criarOperador(operador, senha, lojaIds);
     }
     setFormulario(null);
     await carregar();
@@ -155,7 +181,7 @@ export function ConfiguracoesPage() {
           </div>
           {!formulario && (
             <button
-              onClick={() => setFormulario("novo")}
+              onClick={() => abrirFormulario("novo")}
               className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
             >
               + Novo operador
@@ -167,6 +193,8 @@ export function ConfiguracoesPage() {
           <div className="mt-4">
             <OperadorForm
               operadorExistente={formulario === "novo" ? undefined : formulario}
+              lojasDisponiveis={lojas}
+              lojaIdsExistente={lojaIdsFormulario}
               onSalvar={handleSalvar}
               onCancelar={() => setFormulario(null)}
             />
@@ -222,7 +250,7 @@ export function ConfiguracoesPage() {
 
                 <div className="mt-4 flex justify-end gap-3">
                   <button
-                    onClick={() => setFormulario(op)}
+                    onClick={() => abrirFormulario(op)}
                     className="text-xs font-medium text-sakura-purple hover:underline"
                   >
                     Editar
@@ -242,13 +270,32 @@ export function ConfiguracoesPage() {
         )}
       </div>
 
-      {!carregando && (
+      {!carregando && lojaAtual && operadorLogado && (
+        <div className="sakura-card p-6">
+          <h2 className="text-sm font-semibold text-sakura-purple-dark">Lojas</h2>
+          <p className="mt-1 text-xs text-sakura-muted">
+            Cada loja tem seu próprio estoque, caixa, ordens de serviço e configurações — clientes,
+            peças, serviços e categorias continuam compartilhados entre todas.
+          </p>
+          <LojasSection
+            lojas={lojas}
+            operadorCriadorId={operadorLogado.id}
+            onSalvo={carregar}
+          />
+        </div>
+      )}
+
+      {!carregando && lojaAtual && (
         <>
           <SecaoRecolhivel
             titulo="Juros de parcelamento"
             descricao='% de juros cobrado sobre o total quando o cliente parcela no cartão de crédito, na hora de faturar uma Ordem de Serviço. 1x é sempre à vista, sem juros.'
           >
-            <JurosParcelasSection jurosParcelas={jurosParcelas} onSalvo={carregar} />
+            <JurosParcelasSection
+              jurosParcelas={jurosParcelas}
+              lojaId={lojaAtual.id}
+              onSalvo={carregar}
+            />
           </SecaoRecolhivel>
 
           <SecaoRecolhivel
@@ -283,21 +330,33 @@ export function ConfiguracoesPage() {
               </>
             }
           >
-            <TextoGarantiaSection texto={textoGarantia} onSalvo={carregar} />
+            <TextoGarantiaSection
+              texto={textoGarantia}
+              lojaId={lojaAtual.id}
+              onSalvo={carregar}
+            />
           </SecaoRecolhivel>
 
           <SecaoRecolhivel
             titulo="Dados fiscais da loja"
             descricao="Usados na emissão de nota fiscal (NFC-e/NFS-e). O token do Focus NFe fica vazio até a assinatura de um plano — sem ele, a emissão automática continua indisponível."
           >
-            <DadosFiscaisSection configuracao={configuracaoFiscal} onSalvo={carregar} />
+            <DadosFiscaisSection
+              configuracao={configuracaoFiscal}
+              lojaId={lojaAtual.id}
+              onSalvo={carregar}
+            />
           </SecaoRecolhivel>
 
           <SecaoRecolhivel
             titulo="Cartões do Início"
             descricao="Escolha até 3 indicadores pra aparecer nos cartões de tendência da tela Início. Vale pra todo mundo que usa o sistema."
           >
-            <CartoesInicioSection cartoes={cartoesInicio} onSalvo={carregar} />
+            <CartoesInicioSection
+              cartoes={cartoesInicio}
+              lojaId={lojaAtual.id}
+              onSalvo={carregar}
+            />
           </SecaoRecolhivel>
         </>
       )}

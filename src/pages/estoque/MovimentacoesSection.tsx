@@ -7,6 +7,7 @@ import { MovimentoForm } from "./MovimentoForm";
 interface MovimentacoesSectionProps {
   pecas: Peca[];
   movimentos: MovimentoEstoque[];
+  lojaId: string;
   onRecarregar: () => Promise<void>;
 }
 
@@ -20,13 +21,14 @@ const motivoLabel: Record<string, string> = {
 export function MovimentacoesSection({
   pecas,
   movimentos,
+  lojaId,
   onRecarregar,
 }: MovimentacoesSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [filtroPecaId, setFiltroPecaId] = useState("");
 
   async function handleSalvar(movimento: NovoMovimentoEstoque) {
-    await criarMovimento(movimento);
+    await criarMovimento(movimento, lojaId);
     await onRecarregar();
   }
 

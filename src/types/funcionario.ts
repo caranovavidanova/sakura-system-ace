@@ -10,6 +10,7 @@ export type NovoFuncionarioFilho = Pick<FuncionarioFilho, "nome" | "data_nascime
 
 export interface Funcionario {
   id: string;
+  loja_id: string | null;
   nome: string;
   cargo: string | null;
   operador_id: string | null;
@@ -63,7 +64,7 @@ export interface Funcionario {
 
 export type NovoFuncionario = Omit<
   Funcionario,
-  "id" | "operador_id" | "ativo" | "criado_em" | "operador" | "filhos"
+  "id" | "loja_id" | "operador_id" | "ativo" | "criado_em" | "operador" | "filhos"
 >;
 
 export const ESTADOS_CIVIS = [

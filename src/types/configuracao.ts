@@ -1,10 +1,11 @@
 export interface JurosParcela {
+  loja_id: string;
   numero_parcelas: number;
   juros_percentual: number;
 }
 
 export interface ConfiguracaoGarantia {
-  id: 1;
+  loja_id: string;
   texto: string;
 }
 
@@ -12,7 +13,7 @@ export type RegimeTributario = "simples_nacional" | "lucro_presumido" | "lucro_r
 export type AmbienteFocusNfe = "homologacao" | "producao";
 
 export interface ConfiguracaoFiscalLoja {
-  id: 1;
+  loja_id: string;
   cnpj: string | null;
   razao_social: string | null;
   nome_fantasia: string | null;
@@ -63,6 +64,6 @@ export const CARTOES_INICIO_PADRAO: CartaoMetrica[] = [
 ];
 
 export interface ConfiguracaoPainelInicio {
-  id: 1;
+  loja_id: string;
   cartoes: CartaoMetrica[];
 }

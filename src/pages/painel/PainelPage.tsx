@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MiniCalendario } from "@/components/MiniCalendario";
 import { VeiculoIcone } from "@/components/VeiculoIcone";
+import { useAuth } from "@/contexts/AuthContext";
 import { feriadosNacionais } from "@/lib/feriados";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarMovimentosCaixa } from "@/lib/caixa";
@@ -45,6 +46,7 @@ const COR_CARTAO: Record<CartaoMetrica, string> = {
 };
 
 export function PainelPage() {
+  const { lojaAtual } = useAuth();
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -55,18 +57,18 @@ export function PainelPage() {
 
   useEffect(() => {
     async function carregar() {
-      if (!isSupabaseConfigured) {
+      if (!isSupabaseConfigured || !lojaAtual) {
         setCarregando(false);
         return;
       }
       try {
         const [movimentosCarregados, ordensCarregadas, clientesCarregados, contasCarregadas, cartoesCarregados] =
           await Promise.all([
-            listarMovimentosCaixa(),
-            listarOrdens(),
+            listarMovimentosCaixa(lojaAtual.id),
+            listarOrdens(lojaAtual.id),
             listarClientes(),
-            listarContasPagar(),
-            buscarConfiguracaoPainelInicio(),
+            listarContasPagar(lojaAtual.id),
+            buscarConfiguracaoPainelInicio(lojaAtual.id),
           ]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
@@ -81,7 +83,7 @@ export function PainelPage() {
       }
     }
     carregar();
-  }, []);
+  }, [lojaAtual]);
 
   const hoje = new Date();
   const ano = hoje.getFullYear();

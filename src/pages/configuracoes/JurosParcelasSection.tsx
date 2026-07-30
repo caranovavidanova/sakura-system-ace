@@ -5,12 +5,17 @@ import type { JurosParcela } from "@/types/configuracao";
 
 interface JurosParcelasSectionProps {
   jurosParcelas: JurosParcela[];
+  lojaId: string;
   onSalvo: () => Promise<void>;
 }
 
 const NUMEROS_PARCELA = Array.from({ length: 11 }, (_, i) => i + 2);
 
-export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSectionProps) {
+export function JurosParcelasSection({
+  jurosParcelas,
+  lojaId,
+  onSalvo,
+}: JurosParcelasSectionProps) {
   const [valores, setValores] = useState<Record<number, string>>(() => {
     const mapa: Record<number, string> = {};
     for (const n of NUMEROS_PARCELA) {
@@ -29,11 +34,11 @@ export function JurosParcelasSection({ jurosParcelas, onSalvo }: JurosParcelasSe
     setSalvo(false);
     setSalvando(true);
     try {
-      const lista: JurosParcela[] = NUMEROS_PARCELA.map((n) => ({
+      const lista: Omit<JurosParcela, "loja_id">[] = NUMEROS_PARCELA.map((n) => ({
         numero_parcelas: n,
         juros_percentual: Number(valores[n]) || 0,
       }));
-      await salvarJurosParcelas(lista);
+      await salvarJurosParcelas(lojaId, lista);
       await onSalvo();
       setSalvo(true);
     } catch (err) {

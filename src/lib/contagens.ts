@@ -2,10 +2,11 @@ import { criarMovimento } from "./estoque";
 import { supabase } from "./supabase";
 import type { ContagemEstoque } from "@/types/contagem";
 
-export async function listarContagens(): Promise<ContagemEstoque[]> {
+export async function listarContagens(lojaId: string): Promise<ContagemEstoque[]> {
   const { data, error } = await supabase
     .from("contagens_estoque")
     .select("*")
+    .eq("loja_id", lojaId)
     .order("criado_em", { ascending: false });
 
   if (error) throw error;
@@ -18,6 +19,7 @@ export async function registrarContagem(
   saldoSistema: number,
   observacao: string | null,
   operadorId: string | null,
+  lojaId: string,
 ): Promise<void> {
   const diferenca = quantidadeContada - saldoSistema;
 
@@ -28,16 +30,20 @@ export async function registrarContagem(
     diferenca,
     observacao,
     operador_id: operadorId,
+    loja_id: lojaId,
   });
   if (error) throw error;
 
   if (diferenca !== 0) {
-    await criarMovimento({
-      peca_id: pecaId,
-      tipo: diferenca > 0 ? "entrada" : "saida",
-      quantidade: Math.abs(diferenca),
-      motivo: "ajuste",
-      referencia: "Ajuste por contagem de estoque",
-    });
+    await criarMovimento(
+      {
+        peca_id: pecaId,
+        tipo: diferenca > 0 ? "entrada" : "saida",
+        quantidade: Math.abs(diferenca),
+        motivo: "ajuste",
+        referencia: "Ajuste por contagem de estoque",
+      },
+      lojaId,
+    );
   }
 }

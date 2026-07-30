@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AreaRolavel } from "./components/AreaRolavel";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
 import { Sidebar } from "./components/Sidebar";
+import { VersaoApp } from "./components/VersaoApp";
 import { useAuth } from "./contexts/AuthContext";
 import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
@@ -53,16 +54,23 @@ export default function App() {
     return (
       <div className="sakura-shell-bg flex h-screen items-center justify-center">
         <p className="text-sm text-sakura-purple-dark/90">Carregando...</p>
+        <VersaoApp />
       </div>
     );
   }
 
   if (!session) {
-    return <LoginPage />;
+    return (
+      <>
+        <LoginPage />
+        <VersaoApp />
+      </>
+    );
   }
 
   return (
     <div className="sakura-shell-bg flex h-screen gap-4 overflow-hidden p-4">
+      <VersaoApp />
       <Sidebar />
       <main className="min-h-0 flex-1">
         <AreaRolavel className="p-4">

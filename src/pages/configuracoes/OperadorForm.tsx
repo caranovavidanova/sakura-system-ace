@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
+import type { Loja } from "@/types/loja";
 import { MODULOS } from "@/types/operador";
 import type { ModuloChave, NovoOperador, Operador } from "@/types/operador";
 
 interface OperadorFormProps {
   operadorExistente?: Operador;
-  onSalvar: (operador: NovoOperador, senha: string) => Promise<void>;
+  lojasDisponiveis: Loja[];
+  lojaIdsExistente?: string[];
+  onSalvar: (operador: NovoOperador, senha: string, lojaIds: string[]) => Promise<void>;
   onCancelar: () => void;
 }
 
 export function OperadorForm({
   operadorExistente,
+  lojasDisponiveis,
+  lojaIdsExistente,
   onSalvar,
   onCancelar,
 }: OperadorFormProps) {
@@ -25,6 +30,7 @@ export function OperadorForm({
     operadorExistente?.permissoes ?? [],
   );
   const [ativo, setAtivo] = useState(operadorExistente?.ativo ?? true);
+  const [lojaIds, setLojaIds] = useState<string[]>(lojaIdsExistente ?? []);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -36,6 +42,12 @@ export function OperadorForm({
     );
   }
 
+  function alternarLoja(lojaId: string) {
+    setLojaIds((atual) =>
+      atual.includes(lojaId) ? atual.filter((id) => id !== lojaId) : [...atual, lojaId],
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
@@ -44,6 +56,7 @@ export function OperadorForm({
       await onSalvar(
         { usuario: usuario.trim().toLowerCase(), nome, admin, permissoes, ativo },
         senha,
+        lojaIds,
       );
     } catch (err) {
       console.error("Erro ao salvar operador:", err);
@@ -164,6 +177,27 @@ export function OperadorForm({
           </div>
         )}
       </section>
+
+      {lojasDisponiveis.length > 1 && (
+        <section>
+          <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+            Lojas com acesso
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {lojasDisponiveis.map((loja) => (
+              <label key={loja.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={lojaIds.includes(loja.id)}
+                  onChange={() => alternarLoja(loja.id)}
+                  className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
+                />
+                <span className="text-sakura-purple-dark/80">{loja.nome}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="flex justify-end gap-3">
         <button

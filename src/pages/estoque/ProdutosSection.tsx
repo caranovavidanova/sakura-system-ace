@@ -28,6 +28,7 @@ interface ProdutosSectionProps {
   pecas: Peca[];
   categorias: Categoria[];
   saldos: Map<string, number>;
+  lojaId: string;
   onRecarregar: () => Promise<void>;
 }
 
@@ -40,6 +41,7 @@ export function ProdutosSection({
   pecas,
   categorias,
   saldos,
+  lojaId,
   onRecarregar,
 }: ProdutosSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -49,13 +51,16 @@ export function ProdutosSection({
   async function handleSalvar(peca: NovaPeca, quantidadeInicial: number | null) {
     const pecaCriada = await criarPeca(peca);
     if (quantidadeInicial && quantidadeInicial > 0) {
-      await criarMovimento({
-        peca_id: pecaCriada.id,
-        tipo: "entrada",
-        quantidade: quantidadeInicial,
-        motivo: "ajuste",
-        referencia: "Estoque inicial (cadastro do produto)",
-      });
+      await criarMovimento(
+        {
+          peca_id: pecaCriada.id,
+          tipo: "entrada",
+          quantidade: quantidadeInicial,
+          motivo: "ajuste",
+          referencia: "Estoque inicial (cadastro do produto)",
+        },
+        lojaId,
+      );
     }
     setMostrarFormulario(false);
     await onRecarregar();
@@ -113,6 +118,7 @@ export function ProdutosSection({
       {mostrarImportar && (
         <ImportarNotasFiscaisModal
           categorias={categorias}
+          lojaId={lojaId}
           onFechar={() => setMostrarImportar(false)}
           onImportado={onRecarregar}
         />

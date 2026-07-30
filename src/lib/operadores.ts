@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { emailInterno } from "./auth";
+import { definirLojasDoOperador } from "./lojas";
 import { supabase } from "./supabase";
 import type { NovoOperador, Operador } from "@/types/operador";
 
@@ -16,6 +17,7 @@ export async function listarOperadores(): Promise<Operador[]> {
 export async function criarOperador(
   operador: NovoOperador,
   senha: string,
+  lojaIds: string[],
 ): Promise<void> {
   // Um client isolado (sem persistir sessão) evita que criar um operador novo
   // troque a sessão de quem está logado agora (o supabase-js loga
@@ -42,6 +44,19 @@ export async function criarOperador(
     ativo: operador.ativo,
   });
   if (erroPerfil) throw erroPerfil;
+
+  if (lojaIds.length > 0) {
+    await definirLojasDoOperador(data.user.id, lojaIds);
+
+    // O gatilho que espelha o operador em `funcionarios` (migration 0019)
+    // roda no INSERT acima, antes de operador_lojas existir — por isso ainda
+    // não sabe a loja. Preenche agora que já temos o vínculo.
+    const { error: erroFuncionario } = await supabase
+      .from("funcionarios")
+      .update({ loja_id: lojaIds[0] })
+      .eq("operador_id", data.user.id);
+    if (erroFuncionario) throw erroFuncionario;
+  }
 }
 
 export async function atualizarOperador(

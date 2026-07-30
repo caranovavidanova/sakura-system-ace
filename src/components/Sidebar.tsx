@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { MODULOS } from "@/types/operador";
 import { AreaRolavel } from "./AreaRolavel";
 import { Logo } from "./Logo";
+import { LojaSwitcher } from "./LojaSwitcher";
 
 function IconeEngrenagem({ className = "" }: { className?: string }) {
   return (
@@ -88,6 +89,7 @@ export function Sidebar() {
               </NavLink>
             )}
           </div>
+          <LojaSwitcher />
           <button
             onClick={() => logout()}
             className="mt-2 text-xs font-medium text-sakura-purple hover:underline"

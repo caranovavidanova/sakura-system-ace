@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
 import { mensagemDeErro } from "@/lib/errors";
 import { calcularSaldoPorPeca, listarMovimentos } from "@/lib/estoque";
@@ -16,6 +17,7 @@ import { RelatoriosEstoqueSection } from "./RelatoriosEstoqueSection";
 type Aba = "produtos" | "movimentacoes" | "contagem" | "relatorios";
 
 export function EstoquePage() {
+  const { lojaAtual } = useAuth();
   const [aba, setAba] = useState<Aba>("produtos");
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [movimentos, setMovimentos] = useState<MovimentoEstoque[]>([]);
@@ -24,7 +26,7 @@ export function EstoquePage() {
   const [erro, setErro] = useState<string | null>(null);
 
   async function carregar() {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
       return;
     }
@@ -33,7 +35,7 @@ export function EstoquePage() {
     try {
       const [pecasCarregadas, movimentosCarregados, categoriasCarregadas] = await Promise.all([
         listarPecas(),
-        listarMovimentos(),
+        listarMovimentos(lojaAtual.id),
         listarCategorias(),
       ]);
       setPecas(pecasCarregadas);
@@ -49,7 +51,8 @@ export function EstoquePage() {
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
   const saldos = calcularSaldoPorPeca(movimentos);
 
@@ -102,21 +105,32 @@ export function EstoquePage() {
 
       {carregando ? (
         <p className="text-sm text-sakura-muted">Carregando...</p>
+      ) : !lojaAtual ? (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Seu usuário não tem loja atribuída. Fale com o administrador.
+        </p>
       ) : aba === "produtos" ? (
         <ProdutosSection
           pecas={pecas}
           categorias={categorias}
           saldos={saldos}
+          lojaId={lojaAtual.id}
           onRecarregar={carregar}
         />
       ) : aba === "movimentacoes" ? (
         <MovimentacoesSection
           pecas={pecas}
           movimentos={movimentos}
+          lojaId={lojaAtual.id}
           onRecarregar={carregar}
         />
       ) : aba === "contagem" ? (
-        <ContagemSection pecas={pecas} saldos={saldos} onRecarregar={carregar} />
+        <ContagemSection
+          pecas={pecas}
+          saldos={saldos}
+          lojaId={lojaAtual.id}
+          onRecarregar={carregar}
+        />
       ) : (
         <RelatoriosEstoqueSection
           pecas={pecas}

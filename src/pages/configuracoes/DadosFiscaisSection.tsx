@@ -10,10 +10,11 @@ import type {
 
 interface DadosFiscaisSectionProps {
   configuracao: ConfiguracaoFiscalLoja | null;
+  lojaId: string;
   onSalvo: () => Promise<void>;
 }
 
-type FormularioFiscal = Omit<ConfiguracaoFiscalLoja, "id" | "atualizado_em">;
+type FormularioFiscal = Omit<ConfiguracaoFiscalLoja, "loja_id" | "atualizado_em">;
 
 function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFiscal {
   return {
@@ -39,7 +40,11 @@ function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFi
 const campoClasse =
   "w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm text-sakura-purple-dark outline-none focus:border-sakura-purple";
 
-export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSectionProps) {
+export function DadosFiscaisSection({
+  configuracao,
+  lojaId,
+  onSalvo,
+}: DadosFiscaisSectionProps) {
   const [valores, setValores] = useState<FormularioFiscal>(() => valorInicial(configuracao));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -54,7 +59,7 @@ export function DadosFiscaisSection({ configuracao, onSalvo }: DadosFiscaisSecti
     setSalvo(false);
     setSalvando(true);
     try {
-      await salvarConfiguracaoFiscal({
+      await salvarConfiguracaoFiscal(lojaId, {
         ...valores,
         cnpj: valores.cnpj || null,
         razao_social: valores.razao_social || null,

@@ -1,0 +1,203 @@
+import { useEffect, useState } from "react";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useAuth } from "@/contexts/AuthContext";
+import { listarContasReceber, receberConta } from "@/lib/contasReceber";
+import { mensagemDeErro } from "@/lib/errors";
+import type { ContaReceber } from "@/types/contaReceber";
+import { ReceberContaModal } from "./ReceberContaModal";
+
+function formatarMoeda(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function hojeIso(): string {
+  const hoje = new Date();
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(
+    hoje.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+export function ContasReceberPage() {
+  const { operador, lojaAtual } = useAuth();
+  const [contas, setContas] = useState<ContaReceber[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [contaRecebendo, setContaRecebendo] = useState<ContaReceber | null>(null);
+
+  async function carregar() {
+    if (!lojaAtual) {
+      setCarregando(false);
+      return;
+    }
+    setCarregando(true);
+    setErro(null);
+    try {
+      setContas(await listarContasReceber(lojaAtual.id));
+    } catch (err) {
+      console.error("Erro ao carregar contas a receber:", err);
+      setErro(mensagemDeErro(err));
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
+
+  async function handleConfirmarRecebimento(valorRecebido: number, formaPagamento: string) {
+    if (!contaRecebendo || !operador) return;
+    await receberConta({
+      conta: contaRecebendo,
+      valorRecebido,
+      formaPagamento,
+      operadorId: operador.id,
+    });
+    setContaRecebendo(null);
+    await carregar();
+  }
+
+  const hoje = hojeIso();
+  const pendentes = contas
+    .filter((c) => c.status === "pendente")
+    .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+  const recebidas = contas
+    .filter((c) => c.status === "recebido")
+    .sort((a, b) => b.vencimento.localeCompare(a.vencimento));
+  const totalPendente = pendentes.reduce((soma, c) => soma + c.valor, 0);
+
+  return (
+    <div className="space-y-6">
+      <header className="flex items-center gap-3">
+        <BotaoVoltar />
+        <div>
+          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Contas a Receber</h1>
+          <p className="text-sm text-sakura-muted">
+            OS faturadas escolhendo "a receber" em vez de recebido na hora — criadas
+            automaticamente ao faturar
+          </p>
+        </div>
+      </header>
+
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+
+      {!carregando && (
+        <div className="sakura-card p-4">
+          <p className="text-xs text-sakura-muted">Total pendente</p>
+          <p className="text-xl font-semibold text-sakura-purple-dark">
+            {formatarMoeda(totalPendente)}
+          </p>
+        </div>
+      )}
+
+      {carregando ? (
+        <p className="text-sm text-sakura-muted">Carregando...</p>
+      ) : (
+        <>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Pendentes</h2>
+            {pendentes.length === 0 ? (
+              <p className="text-sm text-sakura-muted">Nenhuma conta a receber pendente.</p>
+            ) : (
+              <div className="overflow-hidden sakura-card">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Previsão</th>
+                      <th className="px-4 py-3 font-medium">Cliente</th>
+                      <th className="px-4 py-3 font-medium">Descrição</th>
+                      <th className="px-4 py-3 font-medium">Valor</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendentes.map((conta) => {
+                      const vencida = conta.vencimento < hoje;
+                      return (
+                        <tr key={conta.id} className="border-t border-sakura-gray/20">
+                          <td className="px-4 py-3">
+                            {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
+                          </td>
+                          <td className="px-4 py-3">{conta.cliente?.nome ?? "—"}</td>
+                          <td className="px-4 py-3">{conta.descricao}</td>
+                          <td className="px-4 py-3 font-medium">{formatarMoeda(conta.valor)}</td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                vencida
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-amber-50 text-amber-700"
+                              }`}
+                            >
+                              {vencida ? "Vencida" : "Pendente"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={() => setContaRecebendo(conta)}
+                              className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+                            >
+                              Marcar como recebido
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {recebidas.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+                Recebidas recentemente
+              </h2>
+              <div className="overflow-hidden sakura-card">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Previsão</th>
+                      <th className="px-4 py-3 font-medium">Cliente</th>
+                      <th className="px-4 py-3 font-medium">Descrição</th>
+                      <th className="px-4 py-3 font-medium">Valor</th>
+                      <th className="px-4 py-3 font-medium">Recebido em</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recebidas.map((conta) => (
+                      <tr key={conta.id} className="border-t border-sakura-gray/20">
+                        <td className="px-4 py-3">
+                          {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
+                        </td>
+                        <td className="px-4 py-3">{conta.cliente?.nome ?? "—"}</td>
+                        <td className="px-4 py-3">{conta.descricao}</td>
+                        <td className="px-4 py-3 font-medium">{formatarMoeda(conta.valor)}</td>
+                        <td className="px-4 py-3">
+                          {conta.data_recebimento
+                            ? new Date(conta.data_recebimento).toLocaleDateString("pt-BR")
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {contaRecebendo && (
+        <ReceberContaModal
+          conta={contaRecebendo}
+          onConfirmar={handleConfirmarRecebimento}
+          onFechar={() => setContaRecebendo(null)}
+        />
+      )}
+    </div>
+  );
+}

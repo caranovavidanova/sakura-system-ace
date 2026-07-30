@@ -189,16 +189,19 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │   notas-fiscais/  # NotasFiscaisPage.tsx com abas NFe/NFS-e + ArquivosSection.tsx +
 │   │                   # NotaFiscalVisualModal.tsx (recibo "versão para o cliente")
 │   │   contas-pagar/   # ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx
+│   │   contas-receber/ # ContasReceberPage.tsx + ReceberContaModal.tsx (sem form de criação manual
+│   │                   # — só nasce automaticamente ao faturar uma OS escolhendo "a receber")
 │   │   relatorios/     # RelatoriosPage.tsx (orquestrador de abas) + GraficosSection.tsx (barras +
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
-│   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado)
+│   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado, agora conta o
+│   │                   # custo de serviço também, não só de peça)
 │   ├── styles/globals.css       # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                    # um arquivo por entidade + loja.ts (Loja, NovaLoja) +
 │                                  # configuracao.ts (JurosParcela, ConfiguracaoGarantia,
 │                                  # ConfiguracaoFiscalLoja — todas com `loja_id` no lugar do antigo
 │                                  # `id: 1`, ver seção 5) + itemNotaFiscal.ts (item extraído da
 │                                  # leitura por IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0033), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5)
@@ -235,11 +238,13 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0030` em `supabase/migrations/` já estão confirmadas rodando sem erro no
-projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`). **`0031` a `0033` foram criadas e
-validadas nesta sessão (Postgres local via Docker/`pg_ctlcluster`, rodadas duas vezes seguidas pra
-provar idempotência) mas AINDA NÃO foram rodadas no Supabase real dela** — isso é o primeiro passo
-da próxima sessão, ver seção 8. Resumo das últimas:
+Migrations `0001` a `0033` em `supabase/migrations/` já estão confirmadas rodando sem erro no
+projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a fundação multi-loja
+(`0031`-`0033`), que ela já rodou e testou de verdade (criou uma 2ª loja, viu o bug de RLS descrito
+no `0034` abaixo). **`0034` a `0036` foram criadas e validadas nesta sessão (Postgres local,
+`service postgresql start` + `sudo -u postgres psql`, rodando a sequência inteira do zero e
+confirmando idempotência) mas AINDA NÃO foram rodadas no Supabase real dela** — isso é o primeiro
+passo da próxima sessão, ver seção 8. Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -250,6 +255,13 @@ da próxima sessão, ver seção 8. Resumo das últimas:
   operacionais; converte as 4 tabelas de configuração de singleton pra "1 linha por loja"; reescreve
   toda a RLS pra checar acesso à loja (não só login). A loja real dela vira "Loja 1" via backfill
   automático — nenhum dado existente é perdido.
+- `0034`: corrige um bug real de RLS que impedia criar uma loja nova pelo app (a policy de
+  `operador_lojas` exigia já ser admin da loja alvo pra se vincular a ela — impossível pra uma loja
+  recém-criada, que ainda não tem ninguém vinculado). Também reconecta automaticamente qualquer
+  loja que tenha ficado "órfã" (criada, mas sem ninguém vinculado) por causa desse bug.
+- `0035`: adiciona `custo` a `servicos` (mesmo padrão de `pecas.preco_custo`) — sem isso, a aba
+  Lucratividade sempre considerava o custo de serviço como zero.
+- `0036`: cria `contas_receber` — ver módulo "Contas a Receber" na seção 7.
 
 Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
 (não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
@@ -398,6 +410,15 @@ outro projeto Supabase do zero (ver seção 9).
   (FK operadores), criado_em. Marcar como paga gera automaticamente uma Saída em
   `caixa_movimentos` e, se `recorrente`, cria a próxima ocorrência (mesmo valor, +1 mês) sozinha.
   **Sem "desfazer pagamento"** pelo app ainda.
+- **`contas_receber`**: id, loja_id (FK lojas), cliente_id (FK clientes), ordem_servico_id (FK
+  ordens_servico, opcional e único — 1 conta a receber por OS faturada), descricao, valor,
+  vencimento (date, aqui é "previsão de recebimento"), status (`pendente`/`recebido`),
+  data_recebimento (opcional), caixa_movimento_id (FK, opcional — a Entrada gerada ao marcar como
+  recebido), operador_id (FK operadores), criado_em. **Nasce só automaticamente**: ao faturar uma OS
+  (`FaturamentoCard.tsx`) escolhendo "A receber depois" em vez de "Recebido agora", não lança Entrada
+  no Caixa na hora — cria uma linha aqui, pendente; marcar como recebido (`ReceberContaModal.tsx`)
+  é que gera a Entrada. **Sem cadastro manual** pelo app ainda (diferente de Contas a Pagar, que tem
+  "+ Nova conta") — se um dia precisar de conta a receber sem OS por trás, adicionar isso é aditivo.
 - **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
   (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
   Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
@@ -541,20 +562,26 @@ normal (quebra de linha).
   da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
   cadastra em lote (`ImportarNotasFiscaisModal.tsx`). Chave da Anthropic fica só como secret da
   Edge Function.
-- **Serviços**: catálogo simples (descrição, código opcional, preço padrão, categoria de serviço
-  opcional), sem estoque/fiscal. Vem semeado com ~17 serviços padrão sem preço (organizados por
-  categoria: Pneus, Suspensão, Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa
-  ficha de orçamento de referência do ramo — ponto de partida, não os preços/serviços reais dela.
+- **Serviços**: catálogo simples (descrição, código opcional, preço padrão, **custo** — ex: mão de
+  obra, usado pela aba Lucratividade —, categoria de serviço opcional), sem estoque/fiscal. Vem
+  semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
+  Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa ficha de orçamento de
+  referência do ramo — ponto de partida, não os preços/serviços reais dela.
 - **Ordens de Serviço**: form em duas colunas, reabre pra editar (só permite acrescentar itens,
   não editar/remover item já lançado — evita desfazer baixa de estoque). Técnico por item +
-  vendedor/atendente da OS (ambos listam `funcionarios`, não só operadores). Faturamento
-  (`FaturamentoCard.tsx`) calcula parcelas automaticamente conforme os juros configurados em
-  Configurações; o valor lançado no Caixa já inclui os juros. Aba "Fechamento" (só aparece com
-  status concluída/faturada): botões "Emitir NFC-e"/"Emitir NFS-e" (ainda placeholder, com
-  preview do rascunho — emissão de verdade depende do Focus NFe, ver seção 8) e "Ver garantia"
-  (abre preview do documento completo — cabeçalho da loja, dados de cliente/veículo, itens,
-  totais, forma de pagamento com parcelas reais, assinaturas — com opção de baixar HTML/imprimir
-  via `iframe`).
+  vendedor/atendente da OS (ambos listam `funcionarios`, não só operadores). Lista de OS tem filtro
+  de período (De/Até) e busca por cliente/placa — OS em aberto sempre aparecem, não importa a data
+  (só o histórico já faturado é filtrado por período, pra lista não crescer sem controle); colunas
+  de Peças/Serviços/Total/Lucro por ordem; status com cor por etapa (Concluída em laranja, de
+  propósito, pra chamar atenção de que falta faturar) — mesma cor no card "OS abertas" do Início.
+  Faturamento (`FaturamentoCard.tsx`) calcula parcelas automaticamente conforme os juros
+  configurados em Configurações, e deixa escolher entre "Recebido agora" (lança a Entrada no Caixa
+  na hora, como sempre foi) ou "A receber depois" (não lança nada no Caixa ainda, cria uma pendência
+  em Contas a Receber — ver módulo abaixo). Aba "Fechamento" (só aparece com status
+  concluída/faturada): botões "Emitir NFC-e"/"Emitir NFS-e" (ainda placeholder, com preview do
+  rascunho — emissão de verdade depende do Focus NFe, ver seção 8) e "Ver garantia" (abre preview do
+  documento completo — cabeçalho da loja, dados de cliente/veículo, itens, totais, forma de
+  pagamento com parcelas reais, assinaturas — com opção de baixar HTML/imprimir via `iframe`).
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
   abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
 - **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
@@ -563,6 +590,11 @@ normal (quebra de linha).
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
   já cria a próxima ocorrência sozinha. Sem "desfazer pagamento" pelo app ainda.
+- **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
+  cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
+  vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
+  Contas a Pagar). Pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o
+  cliente ter pago tudo na hora.
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
   (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
   e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code).
@@ -653,16 +685,15 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: primeiro, **aplicar a fundação multi-loja no Supabase real dela**
-(migrations `0031` a `0033`, construídas e validadas localmente nesta sessão mas ainda não rodadas
-lá — ver seção 5 pro desenho completo e seção 9 pro passo a passo/roteiro de teste). Depois disso
-confirmado funcionando, ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta
-seção) — foi o que ela combinou explicitamente nesta sessão ("na outra sessão eu faço a inclusão
-da emissão de nota fiscal"). Ela só publica a próxima versão do instalador quando isso estiver
-pronto (ver aviso na seção 7, "Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter
-criado a conta/token de homologação do Focus NFe (ver item 1) — confirmar isso no início da sessão.
-A fundação multi-loja já deixa `configuracoes_fiscais_loja` pronta como "1 linha por loja" — a
-emissão fiscal pode ser construída direto em cima disso, sem retrabalho.
+**Prioridade da próxima sessão**: primeiro, **aplicar as migrations `0034` a `0036` no Supabase
+real dela** (corrige o bug de criar loja nova + custo de serviço + Contas a Receber — construídas e
+validadas localmente nesta sessão, ver seção 5, mas ainda não rodadas lá). Depois disso confirmado
+funcionando (testar criar uma loja nova de verdade, cadastrar custo de um serviço, e faturar uma OS
+escolhendo "A receber depois"), ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1
+desta seção) — combinado numa sessão anterior ("na outra sessão eu faço a inclusão da emissão de
+nota fiscal"). Ela só publica a próxima versão do instalador quando isso estiver pronto (ver aviso
+na seção 7, "Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter criado a
+conta/token de homologação do Focus NFe (ver item 1) — confirmar isso no início da sessão.
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -675,29 +706,27 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0030` já foram confirmadas
-rodando sem erro nesse projeto. **`0031` a `0033` (fundação multi-loja) ainda precisam ser
-rodadas lá** — ver subseção logo abaixo.
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0033` já foram confirmadas
+rodando sem erro nesse projeto (incluindo a fundação multi-loja, que ela já testou de verdade).
+**`0034` a `0036` ainda precisam ser rodadas lá** — ver subseção logo abaixo.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0033`. Todas são idempotentes.
+até `0036`. Todas são idempotentes.
 
-### Rodar a fundação multi-loja (migrations 0031-0033) no projeto real dela
+### Rodar as migrations 0034 a 0036 no projeto real dela
 
-Mesmo passo a passo acima (SQL Editor, colar e rodar cada arquivo, na ordem), só que agora nos 3
-arquivos novos: `0031_lojas_e_operador_lojas.sql` → `0032_loja_id_tabelas_por_loja.sql` →
-`0033_configuracoes_por_loja.sql`. A ordem entre os três importa (documentado no topo de cada
-arquivo). Depois de rodar, checar (roteiro completo desenhado nesta sessão, ver seção 5):
-1. Login com o operador de sempre — precisa continuar vendo todos os dados de hoje (prova que o
-   backfill pra "Loja 1" funcionou, sem perder nada).
-2. Configurações → "Lojas" → criar uma 2ª loja de teste, e no form de um operador de teste marcar
-   só essa loja nova — confirmar que esse operador **não** vê nada da Loja 1.
-3. Testar um "admin só da loja B": confirmar que ele não consegue editar/desativar um operador da
-   Loja A (nem pela interface, nem tentando forçar via API) — é o teste que valida o ponto central
-   do pedido dela original (dono vê as duas lojas, balconista só a dele).
+Mesmo passo a passo acima (SQL Editor, colar e rodar cada arquivo, na ordem): primeiro
+`0034_corrige_rls_criacao_loja.sql`, depois `0035_custo_servico.sql`, depois
+`0036_contas_receber.sql`. A ordem importa só entre `0034` e as outras duas (`0035`/`0036` são
+independentes entre si). Depois de rodar, checar:
+1. Configurações → "Lojas" → criar uma loja nova de verdade — antes dava erro, agora deve
+   funcionar e o vínculo já aparecer sozinho.
+2. Serviços → editar um serviço existente e preencher o campo "Custo" novo.
+3. Ordens de Serviço → faturar uma OS escolhendo "A receber depois" — deve aparecer em Contas a
+   Receber, pendente, sem lançar nada no Caixa ainda; marcar como recebido aí sim lança a Entrada.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):

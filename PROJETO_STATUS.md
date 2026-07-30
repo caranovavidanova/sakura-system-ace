@@ -2,157 +2,117 @@
 
 > Este arquivo existe para que qualquer sessão futura (eu, sem memória da conversa) consiga
 > entender o projeto e continuar exatamente de onde parou. Sempre que uma funcionalidade nova
-> for concluída e validada pelo usuário, **atualize este arquivo** (não deixe ele ficar desatualizado).
+> for concluída e validada pela usuária, **atualize este arquivo** (não deixe ele ficar
+> desatualizado) — e de vez em quando **limpe o que não serve mais** (tutoriais de migration já
+> confirmada, narrativa de sessão que virou só histórico sem lição nenhuma). Prefira reescrever a
+> seção 7 como "estado atual por módulo" em vez de empilhar mais um parágrafo por PR — o que
+> importa pra uma sessão nova é o que está pronto **hoje**, não a arqueologia de como chegou lá.
 
-## 1. Quem é o usuário e como trabalhar com ele
+## 1. Quem é a usuária e como trabalhar com ela
 
 - Sem experiência prévia em programação. **Explicar decisões técnicas em linguagem simples**, sem
   assumir conhecimento de jargão.
 - Antes de decisões estruturais importantes (arquitetura, bibliotecas, modelagem de dados),
   **apresentar opções + recomendação e esperar confirmação** — não decidir sozinho.
 - Construir em **etapas pequenas e testáveis**. Mostrar funcionando antes de avançar.
-- O usuário testa em uma máquina Windows local (terminal integrado do VS Code / PowerShell). Ele
-  copia e cola os comandos que eu forneço — eu não tenho acesso à máquina dele.
-- **Instalador Windows**: a usuária baixa e instala primeiro na **própria máquina dela** (não a da
-  borracharia) pra testar antes de levar pra loja de verdade — bom lembrar disso ao dar instruções
-  de instalação/teste, não assumir que ela já está testando no ambiente de produção.
+- A usuária testa em uma máquina Windows local (terminal integrado do VS Code / PowerShell). Ela
+  copia e cola os comandos que eu forneço — eu não tenho acesso à máquina dela.
+- **Instalador Windows**: ela baixa e instala primeiro na **própria máquina dela** (não a da
+  borracharia) pra testar antes de levar pra loja de verdade — bom lembrar disso ao dar
+  instruções de instalação/teste, não assumir que já está testando no ambiente de produção.
 - E-mail: caranovavidanova@gmail.com.
-- **A organização atual de módulos/abas no menu lateral e dentro de cada tela (ex: Caixa com abas
-  Diário/Entradas/Saídas, "Contas a Pagar" como módulo próprio) é provisória** — a usuária disse
-  explicitamente (sessão de 2026-07-29) que pretende repensar essa organização melhor no futuro.
-  **Não tratar a posição/formato atual de nenhum módulo como definitivo** nem resistir a reorganizar
-  quando ela pedir — é esperado que isso mude.
-- **Sempre que eu aprender uma preferência de trabalho nova** (pedida explicitamente ou percebida ao
-  longo da conversa), **documentar aqui no PROJETO_STATUS.md** — não só nas decisões técnicas da
-  seção 3, mas qualquer coisa sobre *como* o usuário quer que eu trabalhe. Sessões futuras não têm
-  memória da conversa, só deste arquivo.
+- **A organização atual de módulos/abas no menu lateral e dentro de cada tela** (ex: Caixa com
+  abas Diário/Entradas/Saídas, "Contas a Pagar" como módulo próprio) **é provisória** — a usuária
+  disse explicitamente que pretende repensar essa organização melhor no futuro. Não tratar a
+  posição/formato atual de nenhum módulo como definitivo nem resistir a reorganizar quando ela
+  pedir — é esperado que isso mude.
+- **Fluxo de configuração de serviços externos**: quando um recurso novo depende de uma conta
+  paga de terceiro (Anthropic, Focus NFe), a usuária cria a própria conta/chave e cola no lugar
+  certo — ela mesma paga o próprio uso, sem exigir que eu tenha acesso a nada disso. Ela pede
+  ajuda passo a passo com prints de tela (ver seção 9).
+- Quando ela manda um print de uma tela de configuração (Supabase, GitHub etc.) e pergunta "qual
+  desses" ou "assim?", ela geralmente já está no meio do passo a passo que eu dei — vale conferir
+  o print com atenção antes de responder, às vezes tem um detalhe (nome errado, campo a mais) que
+  muda o resultado.
+- **Sempre que eu aprender uma preferência de trabalho nova**, documentar aqui — não só nas
+  decisões técnicas da seção 3, mas qualquer coisa sobre *como* ela quer que eu trabalhe. Sessões
+  futuras não têm memória da conversa, só deste arquivo.
 - **Este arquivo carrega sozinho em toda sessão nova** — `CLAUDE.md` importa `AGENTS.md` e
-  `PROJETO_STATUS.md` (`@AGENTS.md` / `@PROJETO_STATUS.md`), então não é preciso o usuário colar ou
-  anexar este arquivo de novo pra eu ter esse contexto. Basta abrir uma sessão nova apontando pro
-  repositório `caranovavidanova/amigao` (ex: Claude Code on the web, `claude` no terminal dentro da
-  pasta do projeto, etc).
+  `PROJETO_STATUS.md` (`@AGENTS.md` / `@PROJETO_STATUS.md`), então não é preciso a usuária colar
+  ou anexar este arquivo de novo pra eu ter esse contexto. Basta abrir uma sessão nova apontando
+  pro repositório `caranovavidanova/amigao`.
 
 ## 2. O que é o projeto
 
-**Sakura System** é uma linha de sistemas de gestão empresarial por nicho. Esta é a primeira edição:
-**SSACE — Sakura System AutoCenter Edition**, para autocenters/borracharias. Referência de mercado:
-S3Auto (Comsis) — um ERP tradicional e funcional, mas com UX densa/datada. O diferencial do SSACE é
-UX simples e moderna, mantendo as funções essenciais de um ERP de autocenter.
+**Sakura System** é uma linha de sistemas de gestão empresarial por nicho. Esta é a primeira
+edição: **SSACE — Sakura System AutoCenter Edition**, para autocenters/borracharias. Referência de
+mercado: S3Auto (Comsis) — um ERP tradicional e funcional, mas com UX densa/datada. O diferencial
+do SSACE é UX simples e moderna, mantendo as funções essenciais de um ERP de autocenter. Depois do
+SSACE validado, a ideia é criar outras edições (ex: Supermarket Edition), reaproveitando a base
+arquitetural.
 
-Depois do SSACE validado, a ideia é criar outras edições (ex: Supermarket Edition), reaproveitando a
-base arquitetural.
+### Identidade visual — como está hoje
 
-### Identidade visual
-
-- Paleta: rosa `#FFC9F3`, roxo `#B38DAC`, cinza `#C7C7C7` (implementada em
-  `src/styles/globals.css` como `--color-sakura-*`, com variantes de contraste
-  `sakura-purple-dark` e `sakura-pink-soft` criadas para acessibilidade).
-- Estilo: painel visual e acolhedor, navegação lateral por módulos, bastante espaçamento (oposto
-  da densidade de ERP tradicional). Os indicadores tipo velocímetro/gauge do rascunho inicial não
-  vingaram — foram trocados por cartões de tendência com sparkline (redesenho do Início, PR #8),
-  e **os cartões do Início voltaram a mudar nesta sessão**: a sparkline saiu de novo (a usuária
-  mandou uma referência do Figma de um cartão "Total earnings" só com valor grande + seta `›`,
-  sem gráfico nenhum) — ver seção 7 pro redesenho mais recente.
-- **`sakura-muted` (nesta sessão)**: token de texto novo em `globals.css` (`#6b5d68`), substituindo
-  `text-sakura-gray` (`#c7c7c7`) em todo o app (88 usos) — o cinza claro tinha contraste real baixo
-  como texto (~1.5:1 sobre os cards claros, reprovava WCAG), servia bem só como borda/fundo sutil.
-  Também os textos que usavam `text-sakura-purple-dark/40..70` (opacidade baixa) tiveram a opacidade
-  aumentada (`/65..90`) pelo mesmo motivo — a usuária relatou "coisas difíceis de ler" e pediu mais
-  contraste. **Se algum texto novo usar `text-sakura-gray` ou opacidade `/60` ou menor em cima de
-  `sakura-card`, é provável que fique com contraste ruim — usar `text-sakura-muted` (secundário) ou
-  `text-sakura-purple-dark` (primário) em vez disso.**
-- **Barra de rolagem 100% customizada (nesta sessão)**: a usuária reclamou que a barra de rolagem
-  nativa do Windows/Chromium destoava da estética do app. A primeira tentativa (`::-webkit-scrollbar`
-  + `scrollbar-color` no CSS, mais arredondada, sem as setinhas, com respiro do topo/base) melhorou
-  mas **não resolveu de verdade** — ela apontou que ainda "parecia algo externo ao software" e que a
-  barra "vazava" pra fora da quina arredondada dos blocos (`sakura-card`). Motivo: uma barra de
-  rolagem nativa é desenhada pelo motor do navegador numa camada própria que **não respeita
-  `border-radius`** do elemento, então nunca fica de verdade "dentro" do card de vidro, não importa
-  quanto CSS se jogue nela. **Solução**: `src/components/AreaRolavel.tsx`, um componente novo que
-  esconde a barra nativa por completo (`scrollbar-width: none` + `::-webkit-scrollbar { display:
-  none }` só dentro dele) e desenha o próprio "polegar" como uma div comum (arredondada, na cor
-  `sakura-purple-dark`, translúcida), posicionada por cima do conteúdo e calculada via
-  `scroll`/`ResizeObserver` — como é uma div normal dentro do card, ela **respeita o `overflow-hidden`
-  arredondado do próprio card**, nunca vaza pra fora, e dá pra arrastar com o mouse (`pointerdown`/
-  `pointermove`/`pointerup`) igual uma barra de verdade. Aplicado nos dois lugares que mais rolam:
-  `<main>` (App.tsx, todo o conteúdo das páginas) e a barra lateral (`Sidebar.tsx`, lista de módulos).
-  **Não aplicado no `Modal.tsx`** de propósito — ele já tem `max-h-[85vh]` fixo e só rola quando o
-  conteúdo realmente excede isso (caso bem mais raro que as duas áreas principais), então manter a
-  barra nativa (já estilizada) ali evitou uma complexidade extra sem ganho perceptível.
-- **Outros controles nativos "com cara de sistema" (mesma sessão)**: a usuária pediu uma varredura
-  geral por outras coisas visuais "deslocadas" depois do caso da barra de rolagem. Checkbox/rádio
-  (`input[type=checkbox]`/`type=radio`) ganharam `accent-color` na paleta do app (antes usavam o azul
-  padrão do Windows/Chromium) e o ícone do calendário em campos de data (`input[type=date]`) ganhou um
-  filtro de cor pra ficar no tom roxo do app (o resto do campo já respeitava a paleta, só esse ícone
-  que o navegador desenha sozinho não). **Não mexido**: o menu suspenso de `<select>` continua com a
-  seta nativa do sistema — dá pra trocar via `appearance: none` + seta customizada, mas os ~15 selects
-  do app têm paddings variados; arriscaria desalinhar texto/seta em vários lugares sem look-and-feel
-  visual pra conferir cada um. Fica como próximo passo se a usuária achar que ainda vale a pena.
-- **Estilo "glassmorphism" (nesta sessão)**: o app inteiro passou a usar blocos arredondados e
-  translúcidos (`sakura-card` em `src/styles/globals.css`, com `backdrop-filter: blur`) flutuando
-  sobre um fundo rosa com brilho difuso (`sakura-shell-bg`) — a pedido do usuário, que mandou prints
-  de referência (cartões de vidro fosco tipo iOS/dashboard "bento grid"). O tom dos blocos é bem mais
-  branco/claro que o rosa saturado do fundo **de propósito** — pra se destacar por cor, não só pelo
-  efeito de blur. Ver seção 7 pro detalhe de onde foi aplicado.
-- **Logo**: `public/sakura-icon.svg` (flor sozinha, usada como favicon/ícone da janela — continua
-  com a flor) e `public/sakura-logo.svg` (usado no menu lateral via `src/components/Logo.tsx`).
-  **A pedido do usuário, `sakura-logo.svg` NÃO tem mais a flor** — só o wordmark "Sakura System" /
-  "by Sakura Corp" em itálico serifado, com fonte maior aproveitando o espaço que a flor ocupava
-  (viewBox `0 0 620 170`, texto começando perto da margem esquerda). A flor só aparece no ícone da
-  janela/favicon (`sakura-icon.svg`), não mais no menu lateral. Ambos os arquivos foram desenhados
-  à mão em SVG (gradientes + `<text>`/`<path>` de verdade), **não** são a arte oficial do usuário.
-  - **`sakura-icon.svg` redesenhado nesta sessão** (mergeado via PR
-    [#35](https://github.com/caranovavidanova/amigao/pull/35), aprovado pela usuária — "isso,
-    gostei"): a flor antiga tinha pétalas estreitas/pontudas; a nova tem **5 pétalas arredondadas +
-    estames marrons ao centro** (`radialGradient` + `<path>` com `Q`/`C` bezier, sem biblioteca de
-    ícones), inspirada numa foto de aquarela de flor de cerejeira que a usuária mandou como
-    referência (ver pendência de upload abaixo — a foto em si não deu pra usar direto, só de
-    referência visual). `build/icon.png` (ícone do instalador Windows, usado pelo
-    `electron-builder`) foi regenerado a partir do SVG novo, 1024×1024 com fundo transparente, via
-    Playwright/Chromium (sem ferramenta de conversão SVG→PNG instalada no sandbox — `rsvg-convert`/
-    `inkscape`/`cairosvg` não disponíveis; renderizar a página com o `<img>` do SVG e printar a tela
-    do Chromium funcionou bem como alternativa).
-  - **Pendência**: o usuário tem um arquivo SVG "oficial" da logo (gerado por um traçador de
-    imagem, tipo VTracer) com a flor + texto desenhados como ~200 `<path>` vetoriais em vez de
-    `<text>`. Ele tentou colar esse arquivo direto no chat duas vezes; na primeira veio cortado
-    (arquivo grande demais pro limite de uma mensagem), na segunda veio completo mas **copiar à
-    mão path por path não é confiável nessa escala** — numa tentativa antiga, sumiram pedaços de
-    letras ("Sakura System" virou "Sal u a System"). **Não tente transcrever esse SVG via chat de
-    novo.**
-  - **Atualização desta sessão sobre o problema de anexo**: a orientação de sempre pedir "arquivo
-    anexado (upload/drag-and-drop) em vez de colar" **não é garantia de que vai funcionar** — a
-    usuária mandou duas fotos de flor (uma lótus, depois uma aquarela de sakura) explicitamente
-    pelo botão "+" de anexar (não colou), e **nenhuma das duas chegou como arquivo acessível**
-    (`/root/.claude/uploads/<session>/` não recebeu nada, mesmo checando repetidas vezes depois de
-    cada tentativa) — só a imagem renderizada na conversa, sem arquivo de verdade por trás. Do lado
-    dela, o envio **pareceu funcionar normalmente, sem nenhum erro visível**. Isso é diferente do
-    que aconteceu nesta mesma sessão com as 3 fotos do formulário de funcionário (ver seção 7), que
-    vieram certinho como arquivo pelo mesmo tipo de anexo — então não é 100% do tempo que falha, mas
-    também não é raro. **Se isso acontecer nas próximas sessões**: confirmar com `find
-    /root/.claude/uploads -type f` (ou o path equivalente do ambiente) se o arquivo realmente
-    chegou antes de tentar processá-lo; se não chegou, a saída que funcionou bem desta vez foi
-    **recriar a imagem à mão em SVG** a partir do que dá pra ver na conversa (mesma tática já usada
-    pro fundo da tela de Login), mostrando um preview renderizado (Playwright + Chromium, screenshot
-    de um HTML com o SVG embutido) antes de aplicar de vez.
+- Paleta: rosa `#FFC9F3`, roxo `#B38DAC`, cinza `#C7C7C7` (`src/styles/globals.css`, tokens
+  `--color-sakura-*`). `sakura-purple-dark` e `sakura-muted` (`#6b5d68`) são as variantes de
+  contraste usadas em texto — **nunca usar `text-sakura-gray` como texto** (contraste ~1.5:1,
+  reprova WCAG; serve só como borda/fundo sutil) **nem opacidade `/60` ou menor** em cima de
+  `sakura-card` — usar `sakura-muted` (secundário) ou `sakura-purple-dark` (primário).
+- Estilo "glassmorphism": blocos arredondados translúcidos (`sakura-card`, com
+  `backdrop-filter: blur`) flutuando sobre um fundo rosa com brilho difuso (`sakura-shell-bg`),
+  aplicado em praticamente toda tela do app (exceto Login, que tem seu próprio vidro fosco sobre
+  fundo floral). Cartões de tendência do Início não usam mais gráfico/sparkline — só valor grande
+  + seta `›`, com um leve glow interno por métrica (ver seção 7).
+- **Barra de rolagem 100% customizada** (`src/components/AreaRolavel.tsx`): a barra nativa do
+  Windows/Chromium não respeita `border-radius`, então nunca fica "dentro" de um card de vidro —
+  a solução foi esconder a nativa por completo (`scrollbar-width: none` +
+  `::-webkit-scrollbar { display: none }`) e desenhar o próprio "polegar" como uma div comum
+  (arredondada, arrastável via `pointerdown`/`pointermove`). Aplicado em `<main>` (App.tsx) e na
+  `Sidebar`; **não** no `Modal.tsx` (já tem `max-h-[85vh]`, caso raro, manter simples). **Cuidado
+  de cascata CSS aprendido aqui** (ver item 14 da seção 6): qualquer CSS "puro" escrito direto em
+  `globals.css`, fora de `@layer`, tem prioridade **maior** que classes do Tailwind (que ficam
+  dentro de `@layer`), não importa a especificidade — reset globais (`*`, seletores soltos)
+  precisam ficar dentro de `@layer base`.
+- Checkbox/rádio usam `accent-color` na paleta do app; ícone do calendário em `input[type=date]`
+  tem filtro de cor pro tom roxo. **Não mexido de propósito**: a seta do `<select>` continua
+  nativa (os ~15 selects do app têm paddings variados, arriscaria desalinhar sem conferir cada um
+  visualmente).
+- **Logo**: `public/sakura-icon.svg` (flor de 5 pétalas arredondadas + estames, favicon/ícone da
+  janela) e `public/sakura-logo.svg` (só o wordmark "Sakura System" / "by Sakura Corp" em itálico
+  serifado, sem a flor — usado no menu lateral via `Logo.tsx`). Ambos desenhados à mão em SVG,
+  **não** são a arte oficial da usuária.
+  - **Pendência em aberto**: a usuária tem um SVG "oficial" da logo (gerado por um traçador de
+    imagem tipo VTracer, ~200 `<path>` vetoriais). **Não tentar transcrever esse SVG via chat** —
+    já se perdeu conteúdo numa tentativa antiga ("Sakura System" virou "Sal u a System") e o
+    arquivo é grande demais pra colar inteiro com segurança.
+  - **Pendência de upload de imagem**: pedir "arquivo anexado em vez de colado" não é garantia de
+    que o arquivo chega de verdade neste ambiente — já aconteceu de a usuária anexar pelo botão
+    "+" (não colar) e mesmo assim o arquivo não aparecer em `/root/.claude/uploads/<session>/`, só
+    a imagem renderizada na conversa, sem erro visível do lado dela. Não é 100% das vezes (fotos
+    do formulário de funcionário chegaram certinho pelo mesmo tipo de anexo), mas não é raro. **Se
+    acontecer de novo**: confirmar com `find /root/.claude/uploads -type f` se o arquivo chegou
+    antes de processar; se não chegou, recriar a imagem à mão em SVG a partir do que dá pra ver na
+    conversa, mostrando um preview renderizado (Playwright + Chromium) antes de aplicar de vez.
 
 ## 3. Decisões técnicas já tomadas (não reabrir sem motivo forte)
 
 | Decisão | Escolha | Por quê |
 |---|---|---|
-| Tipo de app | Desktop (Windows) via Electron | Definido pelo usuário desde o início |
-| Frontend | React + Vite + TypeScript (não Next.js) | Perguntado ao usuário explicitamente — Next.js é para apps com servidor; Electron não precisa disso |
+| Tipo de app | Desktop (Windows) via Electron | Definido pela usuária desde o início |
+| Frontend | React + Vite + TypeScript (não Next.js) | Next.js é para apps com servidor; Electron não precisa disso |
 | Empacotamento Electron | `vite-plugin-electron` + `vite-plugin-electron-renderer` | Um único `vite.config.ts` builda renderer + main + preload com hot reload |
 | Estilo | Tailwind CSS v4 (`@tailwindcss/vite`, config via `@theme` no CSS) | Rapidez para manter a paleta consistente |
-| Dados | Supabase (Postgres em nuvem) | Decisão do usuário — pensando em app mobile futuro, multi-loja, e emissão fiscal (que exige internet de qualquer forma) |
+| Dados | Supabase (Postgres em nuvem) | Pensando em app mobile futuro, multi-loja, e emissão fiscal (que exige internet de qualquer forma) |
 | Roteamento | `react-router-dom` com `HashRouter` | Electron carrega arquivo local (`file://`); `HashRouter` evita problemas de rota que `BrowserRouter` teria |
-| Versionamento | SemVer + `CHANGELOG.md` | Pedido explícito do usuário — só "lançar" versão quando testado e funcionando |
-| Lint | ESLint 9 flat config (`eslint.config.js`) só com `rules-of-hooks` + `exhaustive-deps` | `eslint-plugin-react-hooks` v7 traz um conjunto de regras experimentais (derivadas do React Compiler) que reprovariam o padrão "fetch on mount" usado em todas as páginas; optamos por só as duas regras clássicas |
-| Autenticação | Supabase Auth (e-mail/senha), mas o operador só digita **usuário** — o app monta `usuario@sakura.local` por baixo dos panos | Pedido explícito do usuário (login rápido, sem digitar e-mail). Ver seção 6 pra detalhes/limitações |
-| Permissões por módulo | Checadas **na interface do app**, não reforçadas em RLS por categoria | Decisão explícita do usuário nesta sessão — mais rápido de construir, resolve o problema real (organizar telas por operador); ver seção 6 pro trade-off de segurança |
-| RLS das tabelas de negócio | Exige **login** (`auth.uid() is not null`), mas não reforça permissão por módulo | Usuário escolheu entre 3 opções apresentadas (só login / login + por módulo / deixar como estava) — ver item 1 da seção 6. Fecha o buraco de acesso sem login; reforço por módulo fica pra depois se o risco mudar |
-| Fluxo de Git **enquanto não existir uma v1.0 oficial publicada** | Sempre mergear as mudanças **direto em `main`** ao final de cada tarefa (não deixar PR aberto esperando aprovação manual) | Pedido explícito do usuário ("sempre já inclui tudo na main... já que não tem uma versão oficial publicada ainda"). Ainda assim abrir PR faz parte do processo — só que ele já é mergeado pela própria sessão em vez de ficar esperando. **Sempre informar no chat, em português simples, os comandos exatos e onde rodar cada um** (terminal do Windows vs. SQL Editor do Supabase) depois do merge. Revisitar essa decisão quando existir uma v1.0 publicada de verdade. |
-| Ir pra produção sem emissão fiscal pronta | Usuária pode instalar e usar o sistema na borracharia **agora** (cadastro, OS, estoque, caixa) e continuar emitindo nota fiscal por fora até a emissão automática ficar pronta | Escolhida entre 2 opções apresentadas nesta sessão — desbloqueia o uso real na loja sem esperar o projeto de integração fiscal (grande, depende de escolher provedor + certificado digital) |
-| Empacotamento do instalador Windows | Instalador simples (NSIS) + **atualização automática via GitHub Releases** (`electron-builder` + `electron-updater`, já preparados nesta sessão) | Escolhida entre 2 opções apresentadas nesta sessão — evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
+| Versionamento | SemVer + `CHANGELOG.md` | Só "lançar" versão quando testado e funcionando |
+| Lint | ESLint 9 flat config só com `rules-of-hooks` + `exhaustive-deps` | `eslint-plugin-react-hooks` v7 traz regras experimentais que reprovariam o padrão "fetch on mount" usado em todas as páginas |
+| Autenticação | Supabase Auth (e-mail/senha), operador só digita **usuário** — o app monta `usuario@sakura.local` por baixo dos panos | Login rápido, sem digitar e-mail. Ver seção 6 pra limitações |
+| Permissões por módulo | Checadas **na interface do app**, não reforçadas em RLS por categoria | Mais rápido de construir; ver seção 6 pro trade-off de segurança |
+| RLS das tabelas de negócio | Exige **login** (`auth.uid() is not null`), mas não reforça permissão por módulo | Fecha o buraco de acesso sem login; reforço por módulo fica pra depois se o risco mudar (ex: sistema vendido pra terceiros) |
+| Fluxo de Git **enquanto não existir uma v1.0 oficial publicada** | Criar/reusar uma branch de trabalho, commitar, abrir PR e **já mergear direto em `main`** ao final de cada tarefa — nunca deixar PR esperando aprovação manual | Pedido explícito da usuária. **Sempre informar no chat, em português simples, os comandos exatos e onde rodar cada um** depois do merge. Revisitar quando existir uma v1.0 publicada de verdade |
+| Ir pra produção sem emissão fiscal pronta | A usuária já usa o sistema na borracharia (cadastro, OS, estoque, caixa) e continua emitindo nota fiscal por fora até a emissão automática ficar pronta | Desbloqueia o uso real sem esperar o projeto de integração fiscal (depende de escolher provedor + certificado digital) |
+| Empacotamento do instalador Windows | Instalador simples (NSIS) + atualização automática via GitHub Releases (`electron-builder` + `electron-updater`) | Evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
+| Chave da IA (leitura de nota fiscal por foto) | Fica só como secret de uma Supabase Edge Function — nunca no app Electron instalado | Cada loja (projeto Supabase próprio) paga pela própria conta Anthropic, sem expor a chave a quem tem acesso ao computador. Ver seção 7 e item 8 da seção 8 |
 
 ## 4. Estrutura de pastas
 
@@ -163,46 +123,69 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 ├── src/
 │   ├── main.tsx, App.tsx       # entrada React + rotas (App.tsx decide Login vs. app conforme sessão)
 │   ├── contexts/AuthContext.tsx # sessão do Supabase Auth + perfil do operador logado (hook useAuth)
-│   ├── components/             # Sidebar.tsx, Logo.tsx, MiniCalendario.tsx, PermissaoRoute.tsx (guarda de rota por permissão), Modal.tsx (modal genérico reutilizável, usado pelos previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx (sem onClick vira ícone de casinha e navega pro Início; com onClick vira seta, ver seção 7), SecaoRecolhivel.tsx (bloco "acordeão" recolhível, usado em Configurações), GraficoBarras.tsx e GraficoRadar.tsx (gráficos SVG puros, sem lib externa, usados em Relações — ver seção 7), VeiculoIcone.tsx (ícone SVG por tipo de veículo/hatch/sedã/SUV/picape/moto, pintado com a cor cadastrada — ver seção 7; **Sparkline.tsx foi removido nesta sessão** por ter ficado sem uso depois do redesenho dos cartões do Início), AreaRolavel.tsx (barra de rolagem 100% customizada — esconde a nativa e desenha o próprio "polegar", ver seção 2)
-│   ├── lib/                    # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts, servicos.ts, estoque.ts, ordensServico.ts, caixa.ts, operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts, errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados nacionais, com Páscoa calculada) + configuracoes.ts (juros de parcelamento + texto de garantia + dados fiscais da loja) + garantiaTexto.ts (substitui {cliente}/{veiculo}/{itens}/{data} no template de garantia por dados reais da OS) + garantiaDocumento.ts (monta o HTML estruturado da garantia, ver seção 7) + notaFiscalXml.ts (interpreta XML de NFe/NFCe/NFS-e e monta o recibo HTML "versão para o cliente", ver seção 7) + focusNfe.ts (casca da integração com a API do Focus NFe — auth + URLs por ambiente, emissão em si ainda não implementada, ver seção 7 e 8) + corVeiculo.ts (mapeia nome de cor em português, ex: "Prata"/"Vermelho", pro hex aproximado usado no ícone do veículo — fallback cinza pra cor não reconhecida, ver seção 7)
-│   ├── pages/<modulo>/          # uma pasta por módulo: painel, clientes, estoque, servicos, ordens-servico, funcionarios, caixa, contas-pagar, relatorios, lucratividade, garantias, notas-fiscais, login, configuracoes
-│   │   └── cada pasta tem: <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário)
-│   │       — exceção: pages/estoque/ não tem mais "Peças" como módulo separado (ver seção 7);
-│   │       EstoquePage.tsx tem 4 abas: "Produtos" (ProdutosSection.tsx + PecaForm.tsx),
-│   │       "Movimentações" (MovimentacoesSection.tsx + MovimentoForm.tsx), "Contagem"
-│   │       (ContagemSection.tsx — inventário físico, ver seção 7) e "Relatórios"
-│   │       (RelatoriosEstoqueSection.tsx — estoque físico-financeiro/saldo por situação/sem
-│   │       movimentação, ver seção 7). pages/garantias/GarantiasPage.tsx é só lista (sem form —
-│   │       lê ordens_servico_itens + pecas.prazo_garantia_dias, não tem tabela própria).
-│   │       pages/servicos/ é o catálogo de serviços (só lista + form, sem abas). pages/ordens-servico/
-│   │       ganhou FaturamentoCard.tsx (tela de faturamento com forma de pagamento + parcelas
-│   │       calculadas, ver seção 7 — SimulacaoParcelas.tsx existiu por uma sessão e foi removido, não
-│   │       vingou). pages/configuracoes/ ganhou JurosParcelasSection.tsx (config de juros por
-│   │       parcela), CategoriasSection.tsx (CRUD de categorias de produto, ver seção 7),
-│   │       CategoriasCaixaSection.tsx (CRUD de categorias de entrada/saída do Caixa, ver seção 7) e
-│       TextoGarantiaSection.tsx (template do texto de garantia, ver seção 7). pages/funcionarios/
-│       é um módulo novo (FuncionariosPage.tsx + FuncionarioForm.tsx com abas "Dados gerais"
-│       (documentos/CNH, endereço, contato, cargo/admissão) e "Família" (filiação, cônjuge, filhos —
-│       ver seção 7), padrão Editar/Inativar). pages/caixa/ ganhou abas: CaixaPage.tsx virou só o
-│       orquestrador (abas + carregamento), com DiarioSection.tsx (comportamento antigo, agora
-│       isolado), EntradaSaidaSection.tsx (reusado tanto pra aba "Entradas" quanto "Saídas",
-│       parametrizado por `tipo`). pages/notas-fiscais/ é um módulo novo (NotasFiscaisPage.tsx com
-│       abas "NFe"/"NFS-e" + ArquivosSection.tsx, reusado pelas duas abas — arquivos XML agrupados
-│       por mês, upload manual, vínculo opcional com uma OS, botão "Versão para o cliente" que abre
-│       `NotaFiscalVisualModal.tsx` com um recibo HTML gerado do XML — ver seção 7). pages/contas-pagar/
-│       é um módulo novo (ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx — contas
-│       mensais com vencimento, diferente das Entradas/Saídas manuais do Caixa, ver seção 7).
-│       pages/ordens-servico/ ganhou GarantiaVisualModal.tsx (documento de garantia estruturado em
-│       HTML, ver seção 7). pages/configuracoes/ ganhou DadosFiscaisSection.tsx (CNPJ/razão social/
-│       endereço da loja + token do Focus NFe, ver seção 7)
-│   ├── styles/globals.css      # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                  # um arquivo por entidade (cliente.ts, peca.ts, servico.ts, estoque.ts, os.ts, caixa.ts, operador.ts, funcionario.ts, categoria.ts, categoriaCaixa.ts, contagem.ts, notaFiscal.ts, contaPagar.ts) + configuracao.ts (JurosParcela, ConfiguracaoGarantia, ConfiguracaoFiscalLoja)
-├── supabase/migrations/         # SQL numerado sequencialmente (0001 a 0025), todas idempotentes (seguro rodar de novo)
-├── build/icon.png               # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg) usado pelo electron-builder
-├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada (ver seção 9)
-├── eslint.config.js             # flat config do ESLint 9
-├── CHANGELOG.md                 # ainda tudo em "[Não lançado]" — v1.0.0 NÃO foi tagueada (usuário pediu pra esperar)
-└── .env (local, não commitado)  # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
+│   ├── components/              # Sidebar.tsx, Logo.tsx, MiniCalendario.tsx, PermissaoRoute.tsx
+│   │                             # (guarda de rota por permissão), Modal.tsx (modal genérico,
+│   │                             # usado por previews de NFe/NFS-e/Garantia), BotaoVoltar.tsx
+│   │                             # (sem onClick vira ícone de casinha e navega pro Início; com
+│   │                             # onClick vira seta), SecaoRecolhivel.tsx (acordeão, usado em
+│   │                             # Configurações), GraficoBarras.tsx / GraficoRadar.tsx (SVG puro,
+│   │                             # usados em Relações), VeiculoIcone.tsx (ícone por tipo de
+│   │                             # veículo, pintado com a cor cadastrada), AreaRolavel.tsx (barra
+│   │                             # de rolagem 100% customizada, ver seção 2)
+│   ├── lib/                     # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts,
+│   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
+│   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
+│   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts,
+│   │                             # garantias.ts, contasPagar.ts) + feriados.ts (feriados
+│   │                             # nacionais, Páscoa calculada) + configuracoes.ts (juros de
+│   │                             # parcelamento + texto de garantia + dados fiscais da loja) +
+│   │                             # garantiaTexto.ts + garantiaDocumento.ts (HTML da garantia) +
+│   │                             # notaFiscalXml.ts (recibo HTML "versão para o cliente" a partir
+│   │                             # do XML) + focusNfe.ts (casca da integração Focus NFe, emissão
+│   │                             # ainda não implementada) + corVeiculo.ts (nome de cor em
+│   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
+│   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
+│   │                             # (chama a Edge Function de leitura de nota fiscal por foto)
+│   ├── pages/<modulo>/           # uma pasta por módulo: painel, clientes, estoque, servicos,
+│   │                             # ordens-servico, funcionarios, caixa, contas-pagar, relatorios
+│   │                             # (rota /relatorios, label "Relações"), lucratividade, garantias,
+│   │                             # notas-fiscais, login, configuracoes. Cada pasta tem
+│   │                             # <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário), com
+│   │                             # exceções:
+│   │   estoque/       # EstoquePage.tsx com 4 abas: Produtos (ProdutosSection.tsx + PecaForm.tsx +
+│   │                   # ImportarNotasFiscaisModal.tsx — leitura por foto), Movimentações
+│   │                   # (MovimentacoesSection.tsx + MovimentoForm.tsx), Contagem
+│   │                   # (ContagemSection.tsx — inventário físico), Relatórios
+│   │                   # (RelatoriosEstoqueSection.tsx). Sem módulo "Peças" separado.
+│   │   garantias/      # GarantiasPage.tsx é só lista (deriva de ordens_servico_itens +
+│   │                   # pecas.prazo_garantia_dias, sem tabela própria)
+│   │   servicos/       # catálogo de serviços, só lista + form, sem abas
+│   │   ordens-servico/ # OrdemServicoForm.tsx (form principal) + FaturamentoCard.tsx (faturamento
+│   │                   # com parcelas calculadas) + FechamentoTab.tsx (NFC-e/NFS-e + garantia,
+│   │                   # só aparece com status concluída/faturada) + GarantiaVisualModal.tsx
+│   │   configuracoes/  # JurosParcelasSection.tsx, CategoriasSection.tsx, CategoriasCaixaSection.tsx,
+│   │                   # TextoGarantiaSection.tsx, DadosFiscaisSection.tsx, CartoesInicioSection.tsx
+│   │                   # (todas dentro de SecaoRecolhivel, exceto Operadores que é sempre visível)
+│   │   funcionarios/   # FuncionarioForm.tsx com abas "Dados gerais" e "Família"
+│   │   caixa/          # CaixaPage.tsx (orquestrador de abas) + DiarioSection.tsx +
+│   │                   # EntradaSaidaSection.tsx (reusado por Entradas/Saídas, parametrizado por tipo)
+│   │   notas-fiscais/  # NotasFiscaisPage.tsx com abas NFe/NFS-e + ArquivosSection.tsx +
+│   │                   # NotaFiscalVisualModal.tsx (recibo "versão para o cliente")
+│   │   contas-pagar/   # ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx
+│   ├── styles/globals.css       # paleta Sakura System (Tailwind v4 @theme)
+│   └── types/                    # um arquivo por entidade + configuracao.ts (JurosParcela,
+│                                  # ConfiguracaoGarantia, ConfiguracaoFiscalLoja) +
+│                                  # itemNotaFiscal.ts (item extraído da leitura por IA)
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0027), todas idempotentes
+├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts (única até
+│                                  # agora): lê fotos de nota fiscal via Claude/Anthropic e devolve
+│                                  # os produtos estruturados. A ANTHROPIC_API_KEY fica só como
+│                                  # secret dessa função no Supabase, nunca no app instalado.
+├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
+├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
+├── eslint.config.js              # flat config do ESLint 9
+├── CHANGELOG.md                  # fechado até [0.1.3] - 2026-07-29; segue tudo em v1.0.0 não tagueada
+└── .env (local, não commitado)   # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
 ```
 
 **Padrão de código estabelecido** (seguir em módulos novos):
@@ -211,1564 +194,425 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
   (funções `listar`, `criar`, `excluir` usando o client `supabase`), `pages/<modulo>/<Modulo>Page.tsx`
   (lista + estado de carregamento/erro) e `<Modulo>Form.tsx` (formulário controlado).
 - Erros do Supabase **não são `instanceof Error`** — sempre usar `mensagemDeErro()` de
-  `src/lib/errors.ts` para exibir a mensagem real (não o `instanceof Error ? ... : "erro genérico"`).
+  `src/lib/errors.ts` para exibir a mensagem real.
 - **Nunca usar `window.prompt()`** — Electron não suporta. `alert()` e `confirm()` funcionam bem.
 - Toda tabela nova precisa de RLS + policy (ver seção 6 sobre a dívida técnica de segurança).
 - Ao criar valores default a partir de variáveis de ambiente (`import.meta.env.VITE_*`), usar `||`
-  e não `??` para o fallback — o Vite injeta variáveis ausentes como **string vazia**, não
-  `undefined`, e `??` só substitui `null`/`undefined` (ver bug corrigido na seção 6).
+  e não `??` — o Vite injeta variáveis ausentes como **string vazia**, não `undefined`, e `??` só
+  substitui `null`/`undefined` (ver bug corrigido na seção 6, item 8).
+- Toda migration que se diz "idempotente" precisa dropar o nome **final** da policy/objeto antes
+  de criar (não só o nome antigo que está substituindo) — ver item 13 da seção 6.
 
-**Skill `/gerar-modulo`** (`.claude/skills/gerar-modulo/SKILL.md`, criada nesta sessão): automatiza a
-criação de um módulo novo inteiro (migration + types + lib + página + form + registro em `MODULOS`/
-`App.tsx`) seguindo esse padrão de código. Uso: digitar `/gerar-modulo <Nome do módulo>` (ex:
-`/gerar-modulo Fornecedores`). Ela pergunta os campos da entidade antes de codar se o usuário não
-detalhar. Preferir essa skill a fazer o andaime manualmente sempre que o pedido for "módulo/cadastro
-novo" — é mais rápido e não esquece nenhum passo (RLS, permissão, rota).
+**Skill `/gerar-modulo`** (`.claude/skills/gerar-modulo/SKILL.md`): automatiza a criação de um
+módulo novo inteiro (migration + types + lib + página + form + registro em `MODULOS`/`App.tsx`)
+seguindo esse padrão de código. Uso: `/gerar-modulo <Nome do módulo>`. Preferir essa skill a fazer
+o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-- **`clientes`**: id, nome (rótulo na tela vira "Razão social" quando `tipo_pessoa` é jurídica, mesmo
-  campo), tipo_pessoa (`fisica`/`juridica`, default `fisica` — migration 0021; rótulo do campo
-  cpf_cnpj também muda pra "CPF" ou "CNPJ" na tela conforme esse valor), cpf_cnpj, telefone, email,
-  cep, rua, numero, bairro, cidade, uf, data_nascimento (migration 0009 — usada pro calendário do
-  Início marcar aniversário do mês), criado_em
-- **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, **tipo** (`hatch`/`sedan`/`suv`/
-  `picape`/`moto`, opcional — migration 0027, usado só pra escolher o ícone certo na seção "Veículos
-  no pátio" do Início, ver seção 7), km_atual, criado_em
-- **`pecas`**: id, codigo_interno (exibido como "Referência" na tela), codigo_barras, descricao,
-  marca, modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
-  cst_ou_csosn, aliquota_icms, categoria_id (FK categorias, opcional — migration 0016),
-  prazo_garantia_dias (int, opcional — migration 0016, usado pelo módulo Garantias), ativo, criado_em
-  (campos codigo_barras/marca/modelo/aplicacao/cest/origem são da migration 0010). **Margem % não é
-  salva no banco** — é só calculada na tela a partir de `preco_custo`/`preco_venda`, pra não duplicar
-  um dado que já dá pra derivar dos outros dois.
-- **`categorias`** (migration 0016): id, nome (único), criado_em. Gerenciada em Configurações
-  (`CategoriasSection.tsx`, admin), selecionável no cadastro de produto. Simples de propósito — não
-  tem hierarquia nem campos extras.
-- **`servicos`** (migration 0011 — catálogo de serviços, análogo a `pecas` mas sem estoque): id,
-  codigo_interno (opcional), descricao, preco_padrao, ativo, criado_em
+Migrations `0001` a `0027` em `supabase/migrations/`, todas confirmadas rodando sem erro no
+projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`). Todas idempotentes — seguro rodar de
+novo caso precise reconectar ou montar outro projeto Supabase do zero (ver seção 9).
+
+- **`clientes`**: id, nome (vira "Razão social" na tela quando `tipo_pessoa` é jurídica, mesmo
+  campo), tipo_pessoa (`fisica`/`juridica`, default `fisica`), cpf_cnpj (rótulo muda pra "CPF" ou
+  "CNPJ" conforme o tipo), telefone, email, cep, rua, numero, bairro, cidade, uf,
+  data_nascimento (usada pro calendário do Início marcar aniversário do mês), criado_em
+- **`veiculos`**: id, cliente_id (FK), placa, marca, modelo, ano, cor, **tipo**
+  (`hatch`/`sedan`/`suv`/`picape`/`moto`, opcional — usado só pra escolher o ícone certo na seção
+  "Veículos no pátio" do Início), km_atual, criado_em
+- **`pecas`**: id, codigo_interno (exibido como "Referência"), codigo_barras, descricao, marca,
+  modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
+  cst_ou_csosn, aliquota_icms, categoria_id (FK categorias, opcional), prazo_garantia_dias (int,
+  opcional, usado pelo módulo Garantias), ativo, criado_em. **Margem % não é salva no banco** — é
+  só calculada na tela a partir de `preco_custo`/`preco_venda`.
+- **`categorias`**: id, nome (único), criado_em. Gerenciada em Configurações (admin), selecionável
+  no cadastro de produto. Sem hierarquia nem campos extras, de propósito.
+- **`servicos`** (catálogo de serviços, análogo a `pecas` mas sem estoque): id, codigo_interno
+  (opcional), descricao, preco_padrao, ativo, criado_em
 - **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
   (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
 - **`ordens_servico`**: id, cliente_id (FK), veiculo_id (FK, opcional), status
-  (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema (rótulo na tela é
-  "Observação", mesmo campo), forma_pagamento, parcelas (int, default 1 — migration 0013, preenchido
-  no faturamento), data_abertura, data_fechamento. Campos da migration 0012: previsao_entrega,
-  data_retorno (timestamptz, opcionais — "Prazos" na tela), vendedor_id (FK **funcionarios**, desde a
-  migration 0019 — era FK operadores antes, ver item novo abaixo)/criado_por_id/atualizado_por_id
-  (FK operadores — autoria de sistema, isso continua). **Os três campos de checklist do veículo
-  (direção hidráulica/ar condicionado/direção elétrica) da migration 0012 foram removidos na migration
-  0013** — o usuário pediu pra tirar, não vingou.
-- **`ordens_servico_itens`**: id, ordem_servico_id (FK), tipo (`peca`/`servico`), peca_id (FK opcional,
-  só para tipo peça), servico_id (FK opcional, só para tipo serviço — migration 0012; item de serviço
-  pode ficar sem servico_id quando for "avulso", digitado na hora em vez de vir do catálogo),
-  tecnico_id (FK **funcionarios**, opcional — migration 0013 criou apontando pra operadores, migration
-  0019 repontou pra funcionarios, técnico responsável por aquele item especificamente, diferente do
-  vendedor/atendente que é da OS toda), descricao, quantidade, preco_unitario, desconto
-- **`configuracoes_juros_parcelas`** (migration 0013): numero_parcelas (PK, 2 a 12), juros_percentual.
-  Editável só pelo admin em Configurações — define quanto de juros (% sobre o total) é cobrado quando
-  o cliente parcela no cartão de crédito ao faturar uma OS. 1x é sempre à vista, sem juros, não tem
-  linha aqui.
+  (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema (rótulo
+  "Observação"), forma_pagamento, parcelas (int, default 1, preenchido no faturamento),
+  data_abertura, data_fechamento, vendedor_id (FK **funcionarios**)/criado_por_id/atualizado_por_id
+  (FK operadores — autoria de sistema).
+- **`ordens_servico_itens`**: id, ordem_servico_id (FK), tipo (`peca`/`servico`), peca_id (FK
+  opcional, só tipo peça), servico_id (FK opcional, só tipo serviço — item de serviço pode ficar
+  sem servico_id quando for "avulso"), tecnico_id (FK **funcionarios**, opcional — técnico
+  responsável por aquele item, diferente do vendedor/atendente que é da OS toda), descricao,
+  quantidade, preco_unitario, desconto
+- **`configuracoes_juros_parcelas`**: numero_parcelas (PK, 2 a 12), juros_percentual. Editável só
+  pelo admin — define o juro (% sobre o total) cobrado quando o cliente parcela no cartão ao
+  faturar uma OS. 1x é sempre à vista, sem juros.
 - **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
   faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao, categoria_id (FK
-  categorias_caixa, opcional — migration 0020, usado pelas abas "Entradas"/"Saídas" do Caixa)
-- **`categorias_caixa`** (migration 0020): id, nome, tipo (`entrada`/`saida`), criado_em. Gerenciada
-  em Configurações (`CategoriasCaixaSection.tsx`, admin), selecionável ao lançar um movimento manual
-  no Caixa. Ex: "Aluguel"/"Mercado"/"Limpeza" (saída) ou "Sucata" (entrada). Não tem relação com
-  `categorias` (que é só pra produtos) — tabela separada porque o conceito é diferente (tipo
-  entrada/saída em vez de agrupar produto).
-- **`funcionarios`** (migration 0019, ampliada na 0022): id, nome, cargo (texto livre, opcional),
-  operador_id (FK operadores, opcional e único — presente quando esse funcionário também tem login
-  no sistema), ativo, criado_em. Cadastro leve pra gente que não precisa logar no sistema mas
-  precisa ser selecionável como técnico (peça/serviço na OS) ou vendedor/atendente (OS toda). **Todo
-  operador criado em Configurações ganha automaticamente um `funcionarios` espelhado** (nome/status
-  sincronizados via trigger `sincroniza_funcionario_operador`), então o seletor de técnico/vendedor
-  sempre junta quem loga e quem não loga sem exigir cadastro duplicado. Gerenciado no módulo
-  "Funcionários" (`FuncionariosPage.tsx`, padrão Editar/Inativar — sem excluir de verdade, porque
-  pode estar referenciado em OS antigas). **Migration 0022** (ver seção 7) ampliou bastante os campos,
-  pedido da usuária depois de mandar prints de um cadastro de RH de um sistema de referência —
-  documentos (cpf, rg, cnh_categoria, cnh_numero, data_nascimento, estado_civil, tipo_sanguineo),
-  endereço/contato (cep, endereco, numero, bairro, cidade, estado, complemento, telefone, celular,
-  email), cargo/admissão (pis, codigo_registro, cbo, salario, comissao, admissao, data_ferias) e
-  família/filiação (pai, mae, naturalidade, sexo, conjuge_nome, conjuge_nascimento, data_casamento,
-  conjuge_telefone, conjuge_celular). Dados de saúde (enfermidades/medicamentos) ficaram de fora por
-  escolha explícita da usuária (dado sensível, mais cuidado de LGPD).
-- **`funcionario_filhos`** (migration 0022): id, funcionario_id (FK, `on delete cascade`), nome,
-  data_nascimento (opcional), criado_em. Lista de filhos de um funcionário — editada junto com o
-  formulário (`FuncionarioForm.tsx` salva a lista inteira de uma vez, substituindo — apaga tudo e
-  reinsere — mais simples que calcular diff, e nada mais referencia o id de um filho).
-- **`contagens_estoque`** (migration 0017): id, peca_id (FK), quantidade_contada, saldo_sistema
-  (o que o sistema calculava no momento), diferenca, observacao, operador_id (FK operadores),
-  criado_em. Histórico de contagens de inventário físico — ao salvar uma contagem com diferença, o
-  app gera automaticamente um lançamento de ajuste em `estoque_movimentos` (mesmo padrão do "Qtde.
-  estoque inicial" do cadastro de produto).
-- **`configuracoes_garantia`** (migration 0018): tabela "singleton" (1 linha só, `id` fixo em 1) com
-  `texto` — template do texto de garantia usado pelos botões "Imprimir garantia"/"Baixar garantia" na
-  aba Fechamento da OS, com placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na
-  hora (`lib/garantiaTexto.ts`). Editável só pelo admin em Configurações
-  (`TextoGarantiaSection.tsx`).
-- **`notas_fiscais_arquivos`** (migration 0023, ampliada na 0024): id, tipo (`nfe`/`nfse`), competencia
-  (date, primeiro dia do mês — usado só pra agrupar/ordenar por mês na tela), nome_arquivo,
-  storage_path (caminho dentro do bucket), ordem_servico_id (FK ordens_servico, opcional — vínculo
-  com a OS relacionada), operador_id (FK operadores, quem enviou), criado_em, **origem**
-  (`manual`/`automatica`, default `manual` — migration 0024, preparação pra quando a emissão via
-  Focus NFe gravar direto aqui em vez de só upload manual), **numero**, **chave_acesso**, **status**
-  (todos opcionais, migration 0024 — preenchidos só quando `origem = automatica`, ainda sem uso real
-  porque a emissão automática não está pronta). O arquivo XML em si **não fica no Postgres** — fica
-  no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path` segue o padrão
-  `<tipo>/<ano>-<mes>/<uuid>-<nome original>`). **Primeira vez que o projeto usa Supabase Storage**
-  (não só tabelas Postgres) — o bucket também tem uma policy exigindo login (mesmo padrão das
-  tabelas). Gerenciado no módulo "Notas Fiscais" (upload manual — a emissão fiscal automática ainda
-  não existe, ver seção 8). Cada arquivo tem um botão **"Versão para o cliente"** que interpreta o
-  XML (`lib/notaFiscalXml.ts`) e monta um recibo em HTML pra imprimir/baixar (ver seção 7) — **não é
-  o DANFE oficial** (sem código de barras/QR code), só uma versão legível dos mesmos dados.
-- **`configuracoes_fiscais_loja`** (migration 0024): tabela "singleton" (1 linha só, `id` fixo em 1)
-  com os dados fiscais da loja — cnpj, razao_social, nome_fantasia, inscricao_estadual,
-  inscricao_municipal, regime_tributario (`simples_nacional`/`lucro_presumido`/`lucro_real`), cep,
-  rua, numero, bairro, cidade, uf, telefone, email, mais **focus_nfe_token** e **focus_nfe_ambiente**
-  (`homologacao`/`producao`) — token de acesso da API do Focus NFe, provedor escolhido pela usuária
-  (plano básico, ainda não assinado). Editável em Configurações → "Dados fiscais da loja"
-  (`DadosFiscaisSection.tsx`). Reaproveitada pelo documento de garantia (`GarantiaVisualModal.tsx`)
-  pro cabeçalho com nome/endereço/telefone da loja.
+  categorias_caixa, opcional)
+- **`categorias_caixa`**: id, nome, tipo (`entrada`/`saida`), criado_em. Gerenciada em
+  Configurações (admin), selecionável ao lançar um movimento manual no Caixa (ex: "Aluguel",
+  "Sucata"). Tabela separada de `categorias` (que é só pra produtos) — o conceito é diferente.
+- **`funcionarios`**: id, nome, cargo (texto livre, opcional), operador_id (FK operadores,
+  opcional e único — presente quando esse funcionário também loga no sistema), ativo, criado_em.
+  Cadastro leve pra quem não precisa logar mas precisa ser selecionável como técnico/vendedor.
+  **Todo operador criado em Configurações ganha automaticamente um `funcionarios` espelhado**
+  (trigger `sincroniza_funcionario_operador`). Campos ampliados (RH completo): documentos (cpf,
+  rg, cnh_categoria, cnh_numero, data_nascimento, estado_civil, tipo_sanguineo), endereço/contato
+  (cep, endereco, numero, bairro, cidade, estado, complemento, telefone, celular, email),
+  cargo/admissão (pis, codigo_registro, cbo, salario, comissao, admissao, data_ferias) e
+  família/filiação (pai, mae, naturalidade, sexo, conjuge_nome, conjuge_nascimento,
+  data_casamento, conjuge_telefone, conjuge_celular). **Dados de saúde ficaram de fora** por
+  escolha explícita (dado sensível, cuidado de LGPD).
+- **`funcionario_filhos`**: id, funcionario_id (FK, `on delete cascade`), nome, data_nascimento
+  (opcional), criado_em. `FuncionarioForm.tsx` salva a lista inteira de uma vez (substitui tudo).
+- **`contagens_estoque`**: id, peca_id (FK), quantidade_contada, saldo_sistema, diferenca,
+  observacao, operador_id (FK operadores), criado_em. Ao salvar com diferença, gera
+  automaticamente um ajuste em `estoque_movimentos`.
+- **`configuracoes_garantia`**: "singleton" (1 linha, `id` fixo em 1) com `texto` — template do
+  texto de garantia, placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na hora
+  (`lib/garantiaTexto.ts`). Editável só pelo admin.
+- **`notas_fiscais_arquivos`**: id, tipo (`nfe`/`nfse`), competencia (date, 1º dia do mês),
+  nome_arquivo, storage_path, ordem_servico_id (FK opcional), operador_id (FK operadores),
+  criado_em, origem (`manual`/`automatica`, default `manual`), numero/chave_acesso/status
+  (opcionais, preenchidos só quando `origem = automatica`, sem uso real ainda). O XML em si fica
+  no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path`:
+  `<tipo>/<ano>-<mes>/<uuid>-<nome original>`).
+- **`configuracoes_fiscais_loja`**: "singleton" com cnpj, razao_social, nome_fantasia,
+  inscricao_estadual, inscricao_municipal, regime_tributario, endereço da loja, telefone, email,
+  focus_nfe_token, focus_nfe_ambiente (`homologacao`/`producao`). Reaproveitada pelo cabeçalho do
+  documento de garantia.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
-  permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`: painel, clientes,
-  ordens_servico, estoque, servicos, funcionarios, caixa, contas_pagar, relatorios, lucratividade,
-  garantias, notas_fiscais), ativo, criado_em. Única tabela com RLS de verdade (baseada em login) —
-  ver seção 6.
-- **`contas_pagar`** (migration 0025): id, descricao, valor, vencimento (date), categoria_id (FK
-  **categorias_caixa**, opcional — reaproveita as mesmas categorias de saída do Caixa, ex:
-  "Aluguel"), recorrente (bool), status (`pendente`/`paga`), data_pagamento (timestamptz, opcional),
-  caixa_movimento_id (FK caixa_movimentos, opcional — o lançamento de Saída gerado ao marcar como
-  paga), operador_id (FK operadores, quem marcou como paga), criado_em. Diferente das abas
-  Entradas/Saídas do Caixa (que só registram dinheiro que **já saiu**): uma conta a pagar existe
-  **antes** de ser paga, com vencimento — pensada pra contas mensais como aluguel. Gerenciado no
-  módulo "Contas a Pagar" (`lib/contasPagar.ts`). Regra de negócio: marcar uma conta como paga
-  (`PagarContaModal.tsx`) gera automaticamente uma Saída em `caixa_movimentos` (mesmo padrão do
-  faturamento de OS gerando Entrada) e, se a conta for `recorrente`, já cria a próxima ocorrência
-  (mesmo valor, vencimento um mês depois) sozinha. **Sem "desfazer pagamento"** pelo app ainda — se
-  marcar uma conta como paga por engano, precisa corrigir direto no Supabase (excluir a Saída em
-  `caixa_movimentos` e voltar o `status` da conta pra `pendente` manualmente).
-- **`configuracoes_painel_inicio`** (migration 0026): tabela "singleton" (1 linha só, `id` fixo em 1)
-  com `cartoes` (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência
-  da tela Início (ex: `vendas_mes`, `ticket_medio_mes`, `contas_pagar_vencendo`). Ajuste único pra
-  loja inteira (não por operador), editável só pelo admin em Configurações → "Cartões do Início"
-  (`CartoesInicioSection.tsx`). As 5 chaves possíveis e seus rótulos ficam em
-  `CARTAO_METRICA_LABEL` (`types/configuracao.ts`).
+  permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`), ativo, criado_em.
+  Única tabela com RLS de verdade baseada em login (ver seção 6).
+- **`contas_pagar`**: id, descricao, valor, vencimento (date), categoria_id (FK
+  categorias_caixa, opcional), recorrente (bool), status (`pendente`/`paga`), data_pagamento
+  (opcional), caixa_movimento_id (FK, opcional — a Saída gerada ao marcar como paga), operador_id
+  (FK operadores), criado_em. Marcar como paga gera automaticamente uma Saída em
+  `caixa_movimentos` e, se `recorrente`, cria a próxima ocorrência (mesmo valor, +1 mês) sozinha.
+  **Sem "desfazer pagamento"** pelo app ainda.
+- **`configuracoes_painel_inicio`**: "singleton" com `cartoes` (`text[]`, até 3 chaves) — define
+  quais indicadores aparecem nos cartões de tendência da tela Início. Ajuste único pra loja
+  inteira, editável só pelo admin. As 5 chaves possíveis ficam em `CARTAO_METRICA_LABEL`
+  (`types/configuracao.ts`): vendas_mes, custos_mes, lucros_mes, ticket_medio_mes,
+  contas_pagar_vencendo. Padrão atual: Vendas/Lucro/Ticket médio (Custos saiu do padrão por não
+  ser legal mostrar "algo negativo" logo de cara).
 
-Regra de negócio já implementada: ao criar uma OS com item tipo peça, gera automaticamente uma
+Regras de negócio já implementadas: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
-entrada em `caixa_movimentos` com o valor total da OS. Garantia dada ao cliente na venda (módulo
-"Garantias") **não tem tabela própria** — é calculada juntando `ordens_servico_itens` (tipo peça) +
-`pecas.prazo_garantia_dias` + `ordens_servico.data_fechamento` (vencimento = fechamento + prazo).
+entrada em `caixa_movimentos` com o valor total (já incluindo juros, se parcelado). Garantia dada
+ao cliente (módulo "Garantias") **não tem tabela própria** — deriva de `ordens_servico_itens` +
+`pecas.prazo_garantia_dias` + `ordens_servico.data_fechamento`.
+
+**Fora do Postgres** (Supabase Storage): bucket `notas-fiscais` (XMLs enviados manualmente).
+**Fora do Postgres/Storage** (Edge Function): `ler-notas-fiscais`, ver seção 4 — não tem tabela
+própria, o resultado só passa pela tela de revisão em memória antes de salvar em `pecas`.
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
-1. ~~RLS aberto nas tabelas de negócio~~ — **corrigido nesta sessão** (migration `0015_rls_exige_login.sql`):
-   todas as tabelas de negócio (clientes, veículos, peças, estoque, serviços, OS, caixa, juros de
-   parcelamento) agora exigem uma sessão autenticada (`auth.uid() is not null`) pra ler ou escrever —
-   sem estar logado, nem com a chave `anon` dá mais pra acessar os dados direto pela API. **Permissão
-   por módulo continua checada só na interface** (não no banco) — decisão explícita do usuário nesta
-   sessão, ao escolher entre três opções apresentadas: (a) só exigir login [escolhida], (b) exigir
-   login + reforçar por módulo no banco também, (c) deixar como estava. A opção (b) ficou pra uma
-   etapa futura se o risco mudar (ex: sistema vendido pra terceiros, não só famílias de confiança) —
-   um operador logado com permissão só de "Caixa", por exemplo, hoje ainda consegue chamar a API do
-   Supabase direto pra mexer em "Clientes" se tentar de propósito; o que já não é mais possível é
-   fazer isso **sem estar logado**.
-2. **Autenticação implementada nesta sessão** (Supabase Auth, login com usuário/senha — ver seção 3 e
-   7 pros detalhes). Ainda faltam: (a) **redefinir senha de operador esquecida** — hoje não tem como
-   o admin resetar a senha de outro operador pelo app (só criar; `supabase.auth.signUp` não permite
-   isso do lado cliente sem expor a chave secreta) — precisaria de uma Supabase Edge Function com a
-   service role key, ainda não construída; (b) **multi-loja** — arquitetura continua de loja única
-   (ver decisão na seção 3 dessa mesma conversa/sessão).
-3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pelo usuário em algum
+1. **Permissão por módulo checada só na interface, não em RLS por categoria** — um operador
+   logado com permissão só de "Caixa", por exemplo, ainda consegue chamar a API do Supabase
+   direto pra mexer em "Clientes" se tentar de propósito. RLS exige **login** pra tudo (fecha o
+   acesso sem estar logado), mas não reforça por módulo. Fica pra uma etapa futura se o risco
+   mudar (ex: sistema vendido pra terceiros, não só a própria loja).
+2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). Ainda faltam: (a)
+   **redefinir senha de operador esquecida** — hoje não tem como o admin resetar a senha de outro
+   operador pelo app (precisaria de uma Edge Function com a service role key, ainda não
+   construída); (b) **multi-loja** — arquitetura continua de loja única (cada loja = 1 projeto
+   Supabase próprio).
+3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pela usuária em algum
    momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
-   código em nenhuma sessão. Vale considerar sugerir ao usuário que rotacione essa chave em
-   Settings → API Keys do Supabase, se isso ainda não tiver sido feito. (Nesta sessão o usuário só
-   colou a chave `anon`, que é pública por design — sem problema.)
+   código. Vale sugerir que ela rotacione essa chave em Settings → API Keys do Supabase, se ainda
+   não tiver feito.
 4. **Sem testes automatizados** (nenhum framework de teste configurado ainda).
-5. ~~App nunca foi empacotado de verdade~~ — **configurado nesta sessão** (ver seção 7): `package.json`
-   ganhou a seção `"build"` (ícone, `appId`, instalador NSIS) e um workflow do GitHub Actions
-   (`.github/workflows/release.yml`) builda e publica o instalador automaticamente quando uma tag
-   `v*` é enviada. **Ainda falta**: assinatura de código (o Windows/SmartScreen vai avisar "editor
-   desconhecido" no instalador — normal pra quem não tem um certificado de assinatura pago; não
-   impede a instalação, só exige clicar em "Mais informações → Executar assim mesmo"). Rotacionar essa
-   decisão se algum dia quiserem distribuir pra muitas lojas de terceiros (aí vale considerar comprar
-   um certificado de assinatura de código).
-6. ~~`electron-updater` sem servidor de atualização configurado~~ — **resolvido nesta sessão**: o
-   `publish` do `electron-builder` aponta pro GitHub Releases deste repositório, então toda vez que uma
-   tag nova é publicada (ver tutorial na seção 9), os apps já instalados nas lojas baixam e aplicam a
-   atualização sozinhos (`autoUpdater.checkForUpdatesAndNotify()`, já chamado em `electron/main.ts`
-   desde antes, agora com um feed de verdade pra consultar).
-7. **Ambiente de sandbox onde o Claude roda (nuvem) não consegue acessar `*.supabase.co`** — política
-   de rede bloqueia (confirmado, erro 403 do proxy da própria plataforma). Isso significa que testes
-   de ponta a ponta contra o Supabase real **só podem ser feitos pelo usuário, na máquina dele**. Do
-   lado do sandbox, a validação possível é: `tsc --noEmit`, `vite build`, `npm run lint`, e
-   screenshots via Playwright + `xvfb-run` (Electron real, headless) renderizando a UI — com dados
-   mockados via `page.route()` interceptando as chamadas REST do Supabase, ou com `.env` ausente
-   para ver os estados vazios/aviso. **Pra bugs de caminho de asset (imagens, ícones)**, testar servindo
-   o `dist/` por HTTP (`python3 -m http.server`) não é suficiente — mascara problemas de caminho
-   absoluto que só aparecem de verdade com `file://` (ver item 10 abaixo). Preferir sempre validar
+5. **Assinatura de código do instalador**: o Windows/SmartScreen avisa "editor desconhecido" no
+   instalador (normal sem certificado pago; não impede instalar, só exige "Mais informações →
+   Executar assim mesmo"). Reconsiderar comprar um certificado se algum dia distribuir pra muitas
+   lojas de terceiros.
+6. **Ambiente de sandbox onde o Claude roda (nuvem) não consegue acessar `*.supabase.co`**
+   (política de rede bloqueia, erro 403 do proxy). Testes de ponta a ponta contra o Supabase real
+   **só podem ser feitos pela usuária, na máquina dela**. Do lado do sandbox, a validação possível
+   é: `tsc -b`, `vite build`, `npm run lint`, e screenshots via Playwright + `xvfb-run` (Electron
+   real, headless) com dados mockados via `page.route()` interceptando as chamadas REST do
+   Supabase. **Pra bugs de caminho de asset**, servir o `dist/` por HTTP não é suficiente — mascara
+   problemas de caminho absoluto que só aparecem de verdade com `file://`. Preferir sempre validar
    com o Electron real via `playwright._electron.launch({ executablePath:
-   "node_modules/.bin/electron", args: ["dist-electron/main.js"] })` sob `xvfb-run -a`.
-8. **Havia um bug real de tela em branco**: `src/lib/supabase.ts` usava `??` para dar fallback num
-   endereço de teste quando as variáveis de ambiente não estivessem definidas — mas um `.env`
-   copiado de `.env.example` define as variáveis como **string vazia**, não ausente, e `??` não
-   troca strings vazias. Resultado: `createClient("")` lançava `supabaseUrl is required` antes do
-   React desenhar qualquer coisa. **Corrigido** trocando para `||`. Se esse erro voltar a aparecer
-   em qualquer lugar do código, é o mesmo padrão de bug.
-9. **Vercel**: o repositório tem uma integração de deploy automático na Vercel conectada (deixada de
-   quando este repo era um site, antes da reescrita como app Electron). Isso faz o PR #2 (GitHub)
-   mostrar um check falhando que **não tem relação com o código** — um app desktop Electron não
-   roda hospedado numa plataforma de deploy web. Não dá pra desconectar isso pelo código; só pelo
-   painel da Vercel. Perguntei ao usuário se quer que eu oriente a remoção; ainda sem resposta.
-10. **Havia um bug real de logo/imagens quebradas só no instalador de verdade** (não aparecia no
-    `npm run dev`): imagens referenciadas com caminho absoluto (`/sakura-logo.svg`,
-    `/sakura-login-bg.svg`) funcionam em modo dev porque o Vite serve tudo a partir de `/`, mas
-    quebram no app empacotado porque o Electron carrega o `index.html` via `file://`, onde um caminho
-    começando com `/` tenta ler a partir da **raiz do disco**, não da pasta do app. Só foi descoberto
-    testando o instalador de verdade (v0.1.0) — o sandbox não tinha pego, porque os testes anteriores
-    rodavam com um servidor HTTP local, que mascara esse problema. **Corrigido**: `vite.config.ts`
-    ganhou `base: "./"` (caminhos relativos no build) e as referências em `Logo.tsx`/`LoginPage.tsx`
-    passaram a usar `import.meta.env.BASE_URL` em vez do caminho absoluto direto. Validado rodando o
-    Electron de verdade (não só o navegador) via `xvfb-run` + `playwright._electron`. **Se aparecer
-    imagem quebrada só no instalador (nunca no `npm run dev`), é esse mesmo padrão de bug** — procurar
-    por `src="/` ou `url(/` direto no código (fora de `import`/`public/`) em vez de
-    `import.meta.env.BASE_URL`.
-11. **Havia um bug real de campos de formulário "sem digitar"**: nenhum lugar do código declarava
-    `color-scheme`, então o Chromium/Electron usava o tema do **Windows** (claro/escuro) pra decidir a
-    cor padrão do texto dentro de `<input>`/`<select>`/`<textarea>` — com o Windows em modo escuro, o
-    texto digitado saía **branco sobre fundo claro** (invisível, mas era digitado normalmente; parecia
-    que o campo não aceitava nada). Só foi descoberto testando no instalador de verdade da v0.1.1 — o
-    sandbox roda em modo claro, não reproduzia. **Corrigido**: `globals.css` ganhou `color-scheme:
-    light` no `:root` (impede o navegador de re-temizar os campos pro escuro) e uma regra `color`
-    explícita pra `input`/`select`/`textarea`, como reforço. Validado simulando `colorScheme: 'dark'`
-    no Playwright. **Se algum campo "não aceitar digitação" de novo, é provável que seja o mesmo
-    padrão** (texto sendo digitado mas invisível) — confirmar selecionando o texto do campo com o
-    mouse antes de investigar outra coisa.
-12. **Bug real de "Excluir" sem efeito visível em Clientes**: `handleExcluir` em `ClientesPage.tsx`
-    chamava `excluirCliente()` sem `try/catch` — quando a exclusão falhava (ex: cliente com Ordem de
-    Serviço vinculada, que a migration 0005 bloqueia com `on delete restrict` de propósito, pra não
-    perder histórico), o erro não aparecia em lugar nenhum, dando a impressão de que o botão não fazia
-    nada. `ProdutosSection.tsx` e `ServicosPage.tsx` já tratavam isso certinho — só Clientes tinha
-    ficado pra trás. **Corrigido**: adicionado `try/catch` com `setErro()`, igual ao padrão das outras
-    duas telas, mais uma mensagem amigável específica pro caso de OS vinculada (em vez do erro cru do
-    Postgres). **Se um botão de "Excluir"/ação parecer não fazer nada em alguma tela nova, confirmar
-    que a função tem `try/catch` chamando `setErro(mensagemDeErro(err))` — é fácil esquecer.**
-13. **Bug real de migration não idempotente, achado pela usuária rodando de verdade**: a migration
-    `0015_rls_exige_login.sql` dropava a policy **antiga** (`..._acesso_temporario`) antes de criar a
-    nova (`..._acesso_autenticados`), mas nunca dropava a policy **nova** antes de recriá-la. Rodar a
-    migration uma segunda vez (ex: depois de uma tentativa que falhou no meio, ou por engano) dava
-    `ERROR: 42710: policy "..._acesso_autenticados" for table "..." already exists` a partir da
-    primeira tabela cuja policy nova já existia — travando o resto do script. **Corrigido**
-    adicionando `drop policy if exists "..._acesso_autenticados" on ...` antes de cada `create policy`
-    nas 9 tabelas do arquivo. **Esse é o padrão a seguir em toda migration que reafirma "idempotente,
-    seguro rodar de novo" no comentário**: sempre dropar o nome **final** da policy antes de criar,
-    não só o nome antigo que ela está substituindo (as migrations 0016/0017, escritas do zero já
-    seguindo esse padrão, não tinham esse problema).
-14. **Bug real de barra de rolagem duplicada** (achado pela usuária no PR #49, corrigido no PR
-    [#50](https://github.com/caranovavidanova/amigao/pull/50)): o reset de scrollbar nativo em
-    `globals.css` (a barra fina/quadrada, reforço pros lugares que ainda não usam `AreaRolavel`)
-    ficava **fora de qualquer `@layer`** — CSS assim ("sem camada") tem prioridade **maior** que
-    CSS dentro de uma `@layer` (como as classes que o Tailwind gera), **não importa a
-    especificidade**. Isso fazia a regra `scrollbar-width: thin` do reset global vencer a
-    `scrollbar-width: none` que a `AreaRolavel` usa pra esconder a barra nativa — confirmado
-    programaticamente comparando o `getComputedStyle` do container antes/depois (`thin` → `none`).
-    Resultado: a barra nativa (fina) ainda aparecia sobreposta à barra customizada (arredondada).
-    **Corrigido** envolvendo o bloco de reset de scrollbar em `@layer base` (`src/styles/
-    globals.css`) — assim ele entra na mesma camada que o Tailwind usa pro próprio reset, e a
-    camada de utilitários (mais "forte" na ordem das camadas) consegue vencer de novo. Aproveitado
-    pra também dar uma margem no topo/base do polegar desenhado (`AreaRolavel.tsx`,
-    `MARGEM_TRILHO`), que antes encostava na quina arredondada do `sakura-card` e parecia cortado.
-    **Se algum elemento novo com CSS "puro" (fora de qualquer `@layer`) parecer não ser
-    sobrescrito por uma classe do Tailwind que deveria vencer, é esse mesmo padrão** — o CSS puro
-    escrito direto em `globals.css` (não dentro de `@layer`) sempre vence classes do Tailwind
-    (que ficam dentro de `@layer utilities`/`base`/etc.), então regras de reset "globais" (`*`,
-    `body`, seletores soltos) precisam ficar dentro de `@layer base` pra não atropelar utilitários
-    mais específicos.
+   "node_modules/.bin/electron", args: ["dist-electron/main.js"] })` sob `xvfb-run -a`. **Chamadas
+   a outros domínios reais também não funcionam no sandbox** (nem simulando um domínio "fake" via
+   `.env` — o proxy do ambiente bloqueia a tentativa de tunnel) — pra validar telas que dependem de
+   login/dados reais sem essa rede, uma alternativa que funcionou bem foi recriar a estrutura HTML
+   isolada (sem app inteiro) reaproveitando o CSS já compilado do `dist/`, pra testes puramente
+   visuais/CSS que não dependem de dado real.
+7. **Vercel**: o repositório tem uma integração de deploy automático na Vercel conectada (de
+   quando este repo era um site em Next.js, antes da reescrita como app Electron) — isso faz
+   alguns PRs mostrarem um check falhando sem relação com o código. Não dá pra desconectar pelo
+   código, só pelo painel da Vercel.
+8. **Padrão de bug: fallback com `??` em vez de `||`** — `src/lib/supabase.ts` já teve um bug real
+   assim (tela em branco: `.env` copiado do `.env.example` define variáveis como **string vazia**,
+   não ausente, e `??` só troca `null`/`undefined`). Sempre usar `||` pra fallback de
+   `import.meta.env.VITE_*`.
+9. **Padrão de bug: caminho absoluto de asset quebra só no instalador** — `src="/..."` ou
+   `url(/...)` funciona em `npm run dev` (Vite serve a partir de `/`) mas quebra no app empacotado
+   (Electron carrega via `file://`, onde `/` tenta ler a raiz do disco). Usar sempre
+   `import.meta.env.BASE_URL` em vez de caminho absoluto direto. Só aparece testando o instalador
+   de verdade, o sandbox com servidor HTTP local não pega esse tipo de bug.
+10. **Padrão de bug: campo de formulário "sem digitar"** — sem `color-scheme: light` declarado, o
+    Chromium/Electron usa o tema do Windows pra decidir a cor do texto dentro de
+    `input`/`select`/`textarea`; com Windows em modo escuro, o texto digitado fica branco sobre
+    fundo claro (invisível, mas é digitado normalmente). Corrigido com `color-scheme: light` no
+    `:root` de `globals.css`. Se um campo "não aceitar digitação" de novo, confirmar selecionando
+    o texto com o mouse antes de investigar outra coisa.
+11. **Padrão de bug: ação sem efeito visível (ex: "Excluir")** — sempre confirmar que a função tem
+    `try/catch` chamando `setErro(mensagemDeErro(err))`. Sem isso, uma exclusão que falha (ex:
+    registro com FK vinculada, bloqueada de propósito) parece "não fazer nada" — o erro real
+    nunca aparece em lugar nenhum.
+12. **Padrão de bug: migration "idempotente" que não é** — toda migration que reafirma
+    "idempotente, seguro rodar de novo" precisa dropar o nome **final** do objeto (policy, etc.)
+    antes de criar, não só o nome antigo que está substituindo. Sem isso, rodar a migration uma
+    segunda vez trava com "already exists" a partir do primeiro objeto cuja versão nova já existia.
+13. **Padrão de bug: `infinite recursion detected in policy` (`42P17`)** — sempre que uma RLS
+    policy precisa checar uma condição na mesma tabela que ela protege (ex: "é admin?" consultando
+    `operadores` dentro de uma policy de `operadores`), usar uma função `security definer`
+    (roda com privilégio do dono da função, não reaciona a mesma policy), nunca uma subconsulta
+    direta.
+14. **Padrão de bug: CSS "sem camada" vence classe do Tailwind, mesmo com especificidade menor** —
+    CSS puro escrito direto em `globals.css`, fora de qualquer `@layer`, tem prioridade **maior**
+    que qualquer classe do Tailwind (que fica dentro de `@layer utilities`/`base`/etc.), **não
+    importa a especificidade**. Reset "globais" (`*`, `body`, seletores soltos) precisam ficar
+    dentro de `@layer base` pra não atropelar utilitários mais específicos — foi assim que a barra
+    de rolagem customizada (ver seção 2) ficou duplicada com a nativa por uma sessão inteira.
 
-## 7. O que já está pronto e validado (pelo usuário, rodando de verdade)
+## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
-Todos os itens abaixo foram testados pelo usuário na máquina dele e confirmados funcionando:
+**Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
+completos), Estoque (entrada/saída, saldo), Ordens de Serviço, Caixa Diário, Relatórios,
+Lucratividade, Painel/Início.
 
-1. ✅ Cadastro de Clientes (+ veículo)
-2. ✅ Cadastro de Peças/Produtos (com campos fiscais NCM/CFOP/CST-CSOSN/ICMS)
-3. ✅ Estoque (entrada/saída, saldo calculado)
-4. ✅ Ordens de Serviço (cliente + veículo + itens de peça/serviço, baixa automática de estoque)
-5. ✅ Caixa Diário (manual + automático via faturamento de OS) — **reorganizado** nesta sessão:
-   agora mostra um card de "Lucro do dia", um resumo de totais por forma de recebimento (dinheiro,
-   cartão, PIX...) e a tabela principal ganhou colunas de Origem (OS ou lançamento manual), Cliente
-   e Lucro por lançamento, sem repetir informação — inspirado numa tela de um sistema concorrente
-   que o usuário mostrou (que tinha a informação certa, mas espalhada e repetitiva).
-6. ✅ Relatórios (comparativo diário/semanal/mensal)
-7. ✅ Lucratividade (margem por peça/serviço, período filtrável)
-8. ✅ Painel de Controle (gauges de faturamento e margem, fila de atendimento)
-
-**Isso fecha 100% do escopo da v1 definido pelo usuário no início do projeto.** A v1.0.0 ainda não
-foi formalmente "lançada" (tag/versão) — o usuário preferiu continuar em desenvolvimento antes de
-fechar a versão.
-
-**✅ Confirmado pelo usuário nesta sessão, rodando de verdade:**
-
-- **Conexão real com o Supabase funcionando** — Painel de Controle mostrando dados reais (não mais
-  o aviso "não configurado"), sem erros no console. Levou algumas idas e vindas por causa de erros
-  de digitação no `.env` (ver dica de suporte abaixo) — no fim funcionou com a URL
-  `https://rlgdjiowvnfzsedehyga.supabase.co` + chave anon/publishable.
-- Correção da tela em branco (item 8 da seção 6).
-- DevTools abre automaticamente em modo dev (`mainWindow.webContents.openDevTools()` quando há
-  `VITE_DEV_SERVER_URL`) — facilita o usuário mandar prints de erro daqui pra frente. **Foi essa
-  ferramenta que permitiu diagnosticar tanto o bug da tela branca quanto os erros de `.env` abaixo.**
-- `npm run lint` funcionando (estava completamente quebrado — faltava `eslint.config.js` e os
-  pacotes de lint do React nunca tinham sido instalados).
-- Reorganização do Caixa Diário (item 5 acima).
-- Logo do menu lateral sem a flor (só o wordmark, maior) — ver seção 2.
-
-**Dica de suporte para a próxima vez que o usuário mexer no `.env`:** ele erra na edição manual com
-uma certa frequência (não é falta de atenção, é só a curva de aprendizado normal de quem não
-programa). Dois erros já vistos: (1) editar o `.env` errado porque o VS Code estava com uma pasta
-"container" aberta e havia uma pasta `amigao` duplicada dentro dela — sempre confirme o caminho
-com `pwd`/o prompt do terminal antes de editar; (2) colar o valor por cima do nome da variável sem
-apagar o que já estava lá, duplicando o `VITE_SUPABASE_URL=VITE_SUPABASE_URL=...`. **A forma mais
-confiável de corrigir remotamente (sem depender do editor)** é pedir pra rodar no mesmo terminal
-que roda `npm run dev`:
-```powershell
-@"
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-"@ | Set-Content .env -Encoding utf8
-```
-e sempre confirmar com `Get-Content .env` antes de reiniciar o app — o Vite só lê o `.env` quando o
-servidor inicia, não recarrega sozinho, então depois de editar sempre precisa `Ctrl+C` + `npm run dev`
-de novo.
-- Migrations idempotentes (`drop policy if exists` antes de cada `create policy`).
-
-**⏳ Implementado e mergeado em `main` nesta sessão (PR [#4](https://github.com/caranovavidanova/amigao/pull/4)), ainda sem confirmação do usuário rodando com Supabase real** — validado no sandbox via `npm run build`, `npm run lint` e screenshots Playwright com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **Múltiplos veículos por cliente**: `ClienteForm.tsx` agora tem uma lista de veículos (não mais
-  um único), com botão "+ Adicionar veículo" e "Remover" por item. Só salva os que tiverem placa.
-- **Correção de bug de rolagem**: o container raiz (`App.tsx`) não tinha altura travada na tela
-  (`min-h-screen` sem `overflow-hidden`), então a página inteira rolava junto — inclusive o menu
-  lateral e a logo, que sumiam da tela ao rolar um formulário grande. Corrigido travando a altura
-  em `h-screen overflow-hidden` no container e deixando só o `<main>` rolar
-  (`overflow-y-auto`); a `<Sidebar>` ficou `h-full shrink-0`. Se esse tipo de bug voltar em algum
-  lugar novo do app (nova tela cheia, modal etc.), é o mesmo padrão: cheque se o elemento que
-  deveria ficar fixo está dentro de um container sem altura travada.
-- **"Estoque" virou uma categoria única**, absorvendo o que antes era o módulo separado "Peças" — a
-  pedido do usuário, inspirado nos menus de um sistema de referência (S3Auto/Comsis) que ele usa
-  na borracharia da família. O menu lateral só tem "Estoque"; dentro, duas abas:
-  - **Produtos** (era a página "Peças"): cadastro de peças/produtos, agora com coluna de **estoque
-    atual** (saldo calculado a partir de `estoque_movimentos`) e coluna de **Status** (Ativo/Inativo,
-    com botão Inativar/Reativar — usa o campo `ativo` que já existia na tabela `pecas` desde o
-    início, só não tinha UI pra ele ainda).
-  - **Movimentações** (era a página "Estoque"): registrar entrada/saída + histórico, agora com um
-    filtro "Produto" no histórico (mostra todas ou só as movimentações de um produto específico).
-  - Do menu de referência (prints que o usuário mandou), **cherry-picked** só o que cabia sem mudar
-    o modelo de dados. **Não implementado ainda** (fica pra próxima decisão, ver seção 8): Cadastro
-    de Depósito (múltiplos locais de estoque), Entrada via NFe (importação de XML), Pedido de
-    Compra / Cotações de fornecedor, Peças em Garantia, atualização de preço em massa por grupo,
-    conceito de "grupo/categoria de produto" (o "Transferir produtos de categoria" do menu de
-    referência) — todos exigiriam tabelas novas ou mudanças de schema, então precisam ser decididos
-    com o usuário antes (ver seção 1: decisões estruturais não se decide sozinho).
-
-**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (login + permissões):**
-
-- **Login com usuário e senha** (não e-mail — ver decisão na seção 3): tela nova (`LoginPage.tsx`),
-  usa Supabase Auth por baixo (e-mail interno `usuario@sakura.local`, nunca exibido).
-  **Sessão NÃO persiste entre aberturas do app** (`persistSession: false` em `src/lib/supabase.ts`)
-  — a pedido explícito do usuário: o programa fica aberto o dia todo, então cada abertura deve pedir
-  login de novo (diferente do padrão comum de "lembrar login"). Continua logado normalmente enquanto
-  o app está aberto e em uso; só some ao fechar/reabrir ou clicar em "Sair".
-- **Tabela `operadores`** (migration `0007_operadores.sql`) guarda nome, usuário, se é admin, e quais
-  módulos cada um acessa (`permissoes`, um array com as chaves de `MODULOS`).
-- **Tela "Configurações"** (só aparece pra quem é admin): lista de operadores em cards (com badges
-  dos módulos liberados), botão "+ Novo operador" (usuário, nome, senha, admin ou checkboxes por
-  módulo) e "Editar"/"Inativar" por operador. Criar um operador novo usa um client Supabase **isolado**
-  (`persistSession: false`) só pra não trocar a sessão de quem está logado no momento — sem isso, o
-  `supabase.auth.signUp()` do operador novo derrubaria a sessão do admin que está cadastrando.
-- **Menu lateral filtrado por permissão**: só aparecem os módulos que o operador tem acesso (admin vê
-  tudo); operador sem nenhum módulo liberado vê um aviso em vez de menu vazio. Cada rota (`App.tsx`)
-  é protegida por um componente `PermissaoRoute`/`AdminRoute` que bloqueia navegação direta por URL
-  pra um módulo sem permissão (mostra aviso, não deixa passar). Testado com um operador de permissão
-  limitada (só Clientes + Caixa): menu e rotas batem certinho com o que foi liberado.
-- **Achado e corrigido durante os próprios testes desta sessão**: um operador sem permissão de
-  "Painel de Controle" caía numa tela de "sem permissão" logo depois de logar (porque `/` exigia a
-  permissão `painel`). Corrigido: `/` agora redireciona pro primeiro módulo que o operador realmente
-  acessa.
-
-**🐛 Bug real encontrado e corrigido testando com o Supabase de verdade do usuário**: a policy de
-escrita de `operadores` (migration 0007) checava se quem estava logado era admin consultando a
-própria tabela `operadores` dentro da policy — isso faz o Postgres reavaliar a mesma policy dentro
-da subconsulta, entrando em loop (`infinite recursion detected in policy for relation "operadores"`,
-erro 500 em qualquer select/insert na tabela — foi isso que fez o login "funcionar" mas o app não
-carregar as permissões, mostrando "nenhum módulo liberado" mesmo com o operador cadastrado certo).
-**Corrigido** na migration `0008_operadores_fix_rls_recursiva.sql`: a verificação de admin agora
-passa por uma função `security definer` (`operador_atual_e_admin()`), que roda com privilégio do
-dono da função e não reaciona a mesma policy — padrão recomendado do Postgres/Supabase pra esse
-caso. **Se esse erro (`42P17`, "infinite recursion detected in policy") aparecer de novo em alguma
-tabela nova que tenha RLS consultando a própria tabela, é o mesmo padrão de bug** — sempre que uma
-policy precisar checar uma condição na mesma tabela que ela protege, usar uma função
-`security definer`, nunca uma subconsulta direta.
-
-**Passos manuais únicos no painel do Supabase pra ligar o login** (documentados também dentro da
-migration `0007_operadores.sql` — útil de repetir quando conectarem outra loja num projeto Supabase
-novo):
-
-1. Rodar as migrations `0007_operadores.sql` e `0008_operadores_fix_rls_recursiva.sql` (SQL Editor
-   do Supabase, nessa ordem).
-2. **Desligar a confirmação por e-mail**: Authentication → Sign In / Providers → **duas opções
-   diferentes, as duas precisam estar do jeito certo**: "Enable email provider" **ligado** (senão dá
-   erro "Email logins are disabled") e "Confirm email" **desligado** (senão ninguém consegue entrar
-   depois de criado, porque os e-mails são inventados e não existe caixa de entrada pra confirmar).
-3. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
-   exemplo que está comentado no final da migration 0007, colando o "User UID" gerado.
-
-**⏳ Implementado e mergeado em `main` nesta sessão (PR [#8](https://github.com/caranovavidanova/amigao/pull/8)), ainda sem
-confirmação do usuário rodando com Supabase real** — o usuário mandou um rascunho desenhado à mão
-em cima de uma screenshot do "Painel de Controle" pedindo esse redesenho, e duas imagens de
-referência de estilo (dashboard escuro "Helios Investments" e um card de login em vidro fosco sobre
-foto de paisagem). Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots
-Playwright com dados simulados via `page.route()` interceptando as chamadas REST/Auth do Supabase
-(sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **"Painel de Controle" virou "Início"** — só o texto exibido (label em `MODULOS`, título da
-  página); a chave interna de permissão continua `painel`, então operadores já cadastrados não
-  precisam ser reconfigurados.
-- **Página Início redesenhada**: os dois gauges (velocímetro) deram lugar a três cartões de
-  tendência do mês — **Vendas mês**, **Custos mês** e **Lucros mês** — cada um com um mini-gráfico
-  de linha (`components/Sparkline.tsx`, SVG puro, sem biblioteca de gráficos) somando os lançamentos
-  de `caixa_movimentos` por dia (entradas = vendas, saídas = custos — decisão explícita do usuário
-  nesta sessão de manter simples, sem tentar separar custo de peça vendida) e um link "Ver mais"
-  pra Relatórios. A antiga "Fila de atendimento" virou a seção **"OS abertas"** (mesma tabela,
-  só renomeada). O componente `Gauge.tsx` foi removido por ter ficado sem nenhum uso.
-- **Calendário do mês no Início** (`components/MiniCalendario.tsx`): mostra o mês atual com
-  marcação de **feriados nacionais** (`lib/feriados.ts` — datas fixas + as três móveis calculadas a
-  partir do domingo de Páscoa via algoritmo de Meeus/Jones/Butcher: Carnaval, Sexta-feira Santa,
-  Corpus Christi; conferido manualmente pros feriados de 2026) e de **aniversário de cliente no
-  mês** (compara mês/dia de `clientes.data_nascimento` com o mês corrente, ignora o ano). Isso
-  exigiu um campo novo: `data_nascimento` (date, opcional) em `clientes` — migration
-  `0009_clientes_data_nascimento.sql` — e um campo de data no `ClienteForm.tsx`.
-- **Tela de Login redesenhada**: cartão em vidro fosco (`backdrop-blur`, fundo semitransparente,
-  cantos bem arredondados) sobre uma imagem de fundo floral, no estilo do card de login de
-  referência que o usuário mandou. **A foto de flor de cerejeira que o usuário queria usar de fundo
-  veio colada direto no chat (não como arquivo anexado)** — pelo mesmo motivo já documentado na
-  seção 2 sobre a logo oficial (risco real de não reproduzir o arquivo original com fidelidade a
-  partir do que é só colado/renderizado na conversa), não dava pra salvar essa foto como um asset
-  de verdade. O usuário topou, como alternativa, um fundo recriado à mão: `public/sakura-login-bg.svg`
-  (ilustração vetorial de galho de sakura com flores, gerada por script Python embutindo os
-  `<ellipse>`/`<circle>` das pétalas, não é a foto real). **Pendência**: se o usuário mandar a foto
-  de verdade como anexo/drag-and-drop (não colada), é só trocar a `background-image` do
-  `LoginPage.tsx` pra apontar pro arquivo real dentro de `public/`.
-- **Cadastro de Produto (aba Estoque → Produtos) ampliado**, a pedido do usuário depois de mandar
-  um print do cadastro de peça de um sistema de referência (S3Auto/Comsis): novos campos **Código
-  de barras, Marca, Modelo, Aplicação, C.E.S.T. e Origem da mercadoria** (migration
-  `0010_pecas_campos_cadastro_completo.sql`); "Código interno" passou a ser exibido como
-  **"Referência"** (mesmo campo, só o rótulo mudou). Viraram **obrigatórios** no formulário (mas
-  não em nível de banco, mesmo padrão dos campos fiscais que já existiam): Descrição, NCM, C.E.S.T,
-  CFOP, Origem, CST/CSOSN e Unidade — `CST` e `CSOSN` continuam sendo **um campo só** (decisão
-  explícita do usuário nesta sessão: na prática só um se aplica dependendo do regime tributário da
-  loja). **Margem % com cálculo nos dois sentidos**: preencher a margem calcula automaticamente o
-  Preço final (markup sobre o custo — decisão explícita do usuário: preço = custo × (1 +
-  margem/100)); editar o Preço final direto também funciona e recalcula a margem exibida pra manter
-  os dois campos coerentes. A margem em si **não é salva no banco** (é derivada de
-  `preco_custo`/`preco_venda` só na tela). Um novo campo **"Qtde. estoque inicial"** no cadastro
-  cria automaticamente um lançamento de entrada em `estoque_movimentos` (motivo `ajuste`) junto com
-  o produto, decisão explícita do usuário pra não precisar ir na aba Movimentações lançar o estoque
-  inicial manualmente depois.
-
-**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (catálogo de Serviços + primeira versão
-do redesenho da OS)** — PR [#10](https://github.com/caranovavidanova/amigao/pull/10), mergeado em
-`main` depois de o usuário rodar as migrations 0011/0012 e testar. O usuário mandou um print da tela
-de OS de um sistema de referência (S3Auto/Comsis) pedindo (1) um catálogo de Serviços e (2) a tela de
-OS reorganizada nesse estilo mais denso/tudo-em-uma-tela, porém com a cara do Sakura System:
-
-- **Módulo "Serviços"** (`servicos` — migration 0011): catálogo de serviços com descrição, código
-  opcional e preço padrão — mesmo padrão de tela de Produtos, só que sem estoque/campos fiscais.
-  Permissão própria (`servicos` em `MODULOS`) e item no menu lateral, entre Estoque e Ordens de Serviço.
-- **Item de OS tipo "serviço" escolhe do catálogo** (`ItemOSRow.tsx`) — autopreenche descrição e preço,
-  igual peça já fazia. Mantido um "Serviço avulso (digitar abaixo)" pra lançar algo que não está
-  cadastrado.
-- **Tela de Ordem de Serviço redesenhada** (`OrdemServicoForm.tsx`) em duas colunas, estilo Sakura. O
-  mesmo componente serve tanto pra abrir uma OS nova quanto pra reabrir/editar uma já existente
-  (clicando na linha da tabela) — antes só dava pra criar e faturar.
-  - **Simplificação que continua valendo**: editar uma OS existente só permite alterar os campos do
-    cabeçalho e **acrescentar** itens novos — não dá pra editar ou remover um item já lançado (evita
-    ter que desfazer a baixa de estoque que o item já gerou).
-  - **"Visualizado por" da referência não foi implementado** (exigiria rastrear presença em tempo
-    real) — só "criado por"/"alterado por" (autoria real) foram feitos, com vendedor_id/criado_por_id/
-    atualizado_por_id (FK operadores, migration 0012).
-  - **Botões "Emitir NFe"/"Emitir NFS-e"**: placeholder (mostram aviso que falta escolher o provedor
-    fiscal — pendência do item 1 da seção 8) — não emitem nada de verdade ainda.
-
-**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (migration 0013)** — mergeado
-**direto em `main`** por decisão de fluxo desta sessão (ver seção 3: sem deixar PR aberto enquanto não
-existir uma v1.0 publicada). Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e
-screenshots Playwright com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **Checklist do veículo removido** — não vingou, tirado da tela e do banco (migration 0013 derruba as
-  3 colunas que a 0012 tinha criado).
-- **"Problema relatado" virou "Observação"** — só o rótulo mudou (mesmo campo `descricao_problema`).
-- **Técnico por item**: cada linha de peça/serviço na OS agora tem um seletor de **Técnico**
-  (`tecnico_id` em `ordens_servico_itens`, FK operadores) — diferente do "Vendedor/atendente" que é da
-  OS inteira; um mecânico específico pode ser atribuído a cada serviço.
-- **Simulação de parcelas removida** (`SimulacaoParcelas.tsx` apagado) — substituída pelo item abaixo.
-- **Tela de faturamento nova** (`FaturamentoCard.tsx`, abre ao clicar "Faturar" na lista de OS):
-  escolhe forma de pagamento e, se for cartão de crédito, quantidade de parcelas (1x a 12x). As
-  parcelas (vencimento mensal + valor) são **calculadas automaticamente** a partir dos juros
-  configurados pelo admin — não tem mais campo de juros digitado na hora. **O valor efetivamente
-  lançado no Caixa Diário já inclui os juros** quando parcelado (não é só informativo como a simulação
-  antiga era) — decisão desta sessão: se o juro é cobrado do cliente, o Caixa precisa refletir o valor
-  real recebido, não o valor "de tabela" da OS.
-- **Configurações → "Juros de parcelamento"** (`JurosParcelasSection.tsx`, tabela nova
-  `configuracoes_juros_parcelas`): admin define um % de juros **por quantidade de parcelas** (2x a
-  12x, 1x é sempre à vista sem juros) — decisão explícita do usuário nesta sessão (perguntei se seria
-  uma taxa mensal única ou uma taxa por quantidade de parcelas; ele escolheu a segunda, mais fiel ao
-  que maquininha de cartão costuma oferecer).
-
-**✅ Confirmado pelo usuário nesta sessão, rodando de verdade (migration 0014)** — mergeado via PR
-[#11](https://github.com/caranovavidanova/amigao/pull/11), a pedido do usuário em cima de um print da
-tela de OS. Validado no sandbox via `npm run build`, `npm run lint`, `tsc -b` e screenshots Playwright
-com dados simulados (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **Card "Prazos" removido** (não vingou) — os campos `previsao_entrega`/`data_retorno` foram tirados
-  da tela **e do banco** (migration 0014, `drop column`) a pedido explícito do usuário ("remova os
-  campos completamente").
-- **Botões "Emitir NFe"/"Emitir NFS-e" saíram do formulário principal da OS** e foram pra uma aba nova,
-  **"Fechamento"** (`FechamentoTab.tsx`), que só aparece quando a OS abre já com status **Concluída ou
-  Faturada** (`STATUS_COM_FECHAMENTO` em `OrdemServicoForm.tsx`) — decisão desta sessão diante de duas
-  opções apresentadas ao usuário (ele não respondeu explicitamente, então segui com a mais permissiva:
-  aparece assim que o serviço termina, não só depois de faturar; fácil de restringir só pra "Faturada"
-  depois se ele preferir). A aba "Detalhes" (formulário de sempre) só aparece ao lado dela quando a OS
-  já tem fechamento disponível — OS aberta/em andamento continua com uma tela só, sem abas.
-  - A aba de Fechamento mostra um resumo (cliente, veículo, datas de abertura/fechamento, itens e
-    total) + os botões de nota fiscal + dois botões novos, **"Imprimir garantia"** e **"Baixar
-    garantia"** — por enquanto **placeholder** (mesmo padrão do NFe/NFS-e: mostram aviso de "ainda não
-    disponível"), porque o texto/modelo da garantia ainda não foi definido.
-
-**⏳ Implementado e mergeado direto em `main` nesta sessão (redesenho visual "glassmorphism" do app
-inteiro), ainda sem confirmação do usuário rodando de verdade** — pedido do usuário, que mandou prints
-de referência (cartões de vidro fosco flutuando, estilo iOS/dashboard "bento grid") e screenshots do
-próprio app indicando quais partes deveriam virar "blocos". Validado no sandbox via `npm run build`,
-`npm run lint`, `tsc -b` e screenshots Playwright com dados simulados (sandbox não acessa
-`*.supabase.co`, ver item 7 da seção 6). Mudança é **só CSS/classes React, nenhuma migration**:
-
-- **Duas classes novas em `src/styles/globals.css`** (Tailwind v4 `@utility`, então funcionam como
-  qualquer classe utilitária): `sakura-shell-bg` (fundo rosa com brilho difuso, `background-attachment:
-  fixed`, aplicado no container raiz do app em `App.tsx`) e `sakura-card` (bloco arredondado —
-  `border-radius` grande, gradiente quase branco com um toque de roxo no canto, `backdrop-filter: blur`,
-  sombra suave). O tom do bloco é **bem mais claro** que o fundo rosa saturado de propósito — o usuário
-  pediu explicitamente que o bloco se destacasse do fundo **por cor**, não só pelo efeito de blur.
-- **`sakura-card` aplicado em todo o app** — substituiu o antigo padrão `rounded-2xl border
-  border-sakura-gray/30 bg-white` (e variantes) em praticamente todas as telas: Sidebar, os três
-  cartões de tendência do Início, a tabela "OS abertas", o `MiniCalendario`, e todos os cards/formulários/
-  tabelas de Clientes, Estoque, Serviços, Ordens de Serviço (form + `FechamentoTab`), Caixa, Relatórios,
-  Lucratividade e Configurações. A tela de Login **não foi mexida** — já tinha seu próprio estilo de
-  vidro fosco com fundo floral próprio, feito numa sessão anterior, e não fazia parte dos prints que o
-  usuário mandou.
-- **Sidebar** (`src/components/Sidebar.tsx`): virou ela mesma um bloco flutuante (`sakura-card`), com
-  espaço/gap em volta em vez de ficar colada nas bordas da janela (`App.tsx` ganhou `gap-4 p-4` no
-  container raiz). O item de menu **"Configurações" (texto) virou um ícone de engrenagem** ao lado do
-  nome do operador, no rodapé da barra lateral — só aparece pra quem é admin (mesma regra de antes,
-  só mudou de lugar/formato). O ícone é um SVG desenhado à mão (sem adicionar biblioteca de ícones
-  nova como dependência), inspirado no ícone "settings" do Feather Icons.
-- **"Ver mais" consolidado**: os três cartões de tendência do Início (Vendas/Custos/Lucros mês) tinham
-  cada um seu próprio link "Ver mais →", todos indo pro mesmo lugar (Relatórios) — virou **um único
-  botão** ("Ver relatórios completos →") centralizado abaixo dos três cartões, em vez de repetir o link
-  três vezes.
-- **Pendências que ficaram de fora de propósito** (nenhuma foi pedida pelo usuário, mas valem nota
-  pra próxima sessão): a cor dos **botões** (ex: "+ Novo cliente", que usa `bg-sakura-purple` sólido)
-  não foi ajustada — como é uma cor da mesma família do novo fundo rosa, o contraste ficou um pouco
-  mais fraco do que era sobre o fundo branco antigo; se o usuário achar os botões "sumindo" no fundo
-  novo, é candidato a ajuste futuro. A tela de Login também poderia ganhar o mesmo tom de `sakura-card`
-  se o usuário quiser unificar tudo, mas não foi pedido.
-
-**✅ Decidido nesta sessão: a usuária pode começar a usar o sistema na borracharia AGORA**, mesmo sem
-a emissão automática de nota fiscal pronta — ela continua emitindo nota por fora (do jeito que já faz
-hoje) até essa parte ficar pronta. Isso desbloqueou dois passos que só faziam sentido com essa decisão
-tomada:
-
-- **Ordem do menu lateral ajustada**: "Ordens de Serviço" subiu pra logo depois de "Clientes" (era
-  depois de "Estoque"/"Serviços") — reflete melhor o fluxo real de atendimento (cliente chega → abre
-  OS), em vez de ordem alfabética/técnica. Mudança de uma linha em `MODULOS`
-  (`src/types/operador.ts`) — fácil de reordenar de novo se o usuário não gostar, ele disse que "dá
-  pra decidir uma ordem depois".
-- **Empacotamento e atualização automática configurados** (ver seção 6, itens 5 e 6, e tutorial na
-  seção 9): `package.json` ganhou a seção `"build"` do `electron-builder` (ícone gerado a partir de
-  `public/sakura-icon.svg`, instalador NSIS do Windows) e `.github/workflows/release.yml` builda e
-  publica automaticamente no GitHub Releases quando uma tag `v*` é enviada — os apps instalados nas
-  lojas se atualizam sozinhos depois (`electron-updater`, que já estava chamado no código mas sem
-  destino configurado). **Ainda falta o usuário fazer os dois passos únicos no site do GitHub**
-  (secrets do repositório + permissão de escrita das Actions) **e publicar a primeira tag** pra gerar
-  o primeiro instalador de verdade — tutorial completo na seção 9. Não dá pra testar esse fluxo
-  completo no sandbox (build de instalador Windows precisa rodar num runner Windows de verdade, que é
-  exatamente o que o GitHub Actions fornece) — só validei que `package.json`/`release.yml` estão com
-  sintaxe correta e que `npm run build`/`lint`/`tsc -b` continuam passando.
-
-**⏳ Implementado e mergeado direto em `main` nesta sessão (correções pós-instalador v0.1.1 + botão
-"voltar"), ainda sem confirmação do usuário rodando de verdade**. Validado no sandbox via `npm run
-build`, `npm run lint`, `tsc -b` e screenshots Playwright (sandbox não acessa `*.supabase.co`, ver
-item 7 da seção 6):
-
-- **Dois bugs reais achados testando o instalador v0.1.1 de verdade** — ver itens 11 e 12 da seção 6
-  pro detalhe técnico completo:
-  - Campos de formulário "sem digitar": era texto **invisível** (branco sobre fundo claro) quando o
-    Windows está em modo escuro, por falta de `color-scheme: light` declarado. Corrigido em
-    `globals.css`.
-  - Botão "Excluir" de Clientes sem efeito nenhum: a exclusão **estava falhando de verdade** (cliente
-    com Ordem de Serviço vinculada, bloqueado de propósito pra não perder histórico), mas o erro não
-    aparecia em lugar nenhum. Corrigido com `try/catch` + mensagem amigável, igual ao padrão já usado
-    em Estoque/Serviços.
-- **Botão "voltar" (seta pra esquerda, estilo vidro)** — pedido do usuário, com prints de referência
-  do próprio estilo do app. Componente novo `src/components/BotaoVoltar.tsx` (SVG desenhado à mão,
-  sem biblioteca de ícones) + classe nova `sakura-icon-button` em `globals.css` (círculo de vidro com
-  efeito de hover — levanta e aumenta levemente ao passar o mouse). Aplicado em:
-  - **Todas as telas de lista** (Clientes, Estoque, Serviços, Ordens de Serviço, Caixa, Relatórios,
-    Lucratividade, Configurações — Início ficou de fora, por ser a tela inicial) — nesse caso o botão
-    volta pra rota anterior no histórico do navegador (`navigate(-1)`).
-  - **Todos os formulários de cadastro** (Cliente, Peça/Produto, Movimentação de estoque, Serviço,
-    Lançamento de caixa, Operador, Ordem de Serviço, Faturamento) — nesse caso o botão chama o mesmo
-    callback do botão "Cancelar" que já existia (fecha o formulário e volta pra lista, em vez de mudar
-    de rota) — por isso `BotaoVoltar` aceita uma prop `onClick` opcional pra sobrescrever o padrão.
-
-**⏳ Implementado e mergeado em `main` nesta sessão (PR [#22](https://github.com/caranovavidanova/amigao/pull/22)), ainda sem confirmação do usuário rodando com Supabase real** — 4 dos itens do menu de Estoque do sistema de referência (S3Auto/Comsis) que estavam na lista de "ainda não avaliados" (ver seção 8, antiga lista do item 5), escolhidos pelo usuário entre os que não dependem de Fornecedores/Depósito. Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots Playwright com dados simulados via `page.route()` (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **Categorias de produto** (migration 0016, tabela `categorias`): usuário escolheu **tabela própria**
-  em vez de campo de texto livre (evita duplicar categoria por erro de digitação, permite renomear em
-  massa). Gerenciada em Configurações (`CategoriasSection.tsx`, admin-only, mesmo padrão visual do
-  `JurosParcelasSection.tsx`) e selecionável no cadastro de produto (`PecaForm.tsx`); coluna
-  "Categoria" nova na lista de produtos (`ProdutosSection.tsx`).
-- **Relatórios de estoque**: 4ª aba "Relatórios" em `EstoquePage.tsx`
-  (`RelatoriosEstoqueSection.tsx`) — estoque físico-financeiro (soma de saldo × preço de custo),
-  saldo por situação (positivo/negativo/zerado, com filtro) e produtos ativos sem nenhuma
-  movimentação registrada. Tudo derivado de `pecas` + `estoque_movimentos` na tela, **sem tabela
-  nova**.
-- **Garantias**: usuário escolheu rastrear a **garantia dada ao cliente na venda** (não a garantia do
-  fornecedor na compra, já que o módulo de Fornecedores ainda não existe). Campo novo "Garantia
-  (dias)" no cadastro de produto (`prazo_garantia_dias`, migration 0016) + módulo novo "Garantias"
-  (`garantias` em `MODULOS`, rota `/garantias`, item no menu lateral) que lista peças vendidas com
-  prazo de garantia definido, calculando o vencimento a partir da data de fechamento da OS e
-  classificando "Dentro do prazo"/"Vencida". **Sem tabela nova** — deriva de `ordens_servico_itens`
-  join `pecas`/`ordens_servico` (`lib/garantias.ts`).
-- **Contagem/Inventário físico** (migration 0017, tabela `contagens_estoque`): 3ª aba "Contagem" em
-  `EstoquePage.tsx` (`ContagemSection.tsx`) — escolhe um produto, mostra o saldo que o sistema
-  calcula, o operador digita a quantidade contada fisicamente, e a diferença (se houver) gera
-  automaticamente um lançamento de ajuste em `estoque_movimentos` (mesmo padrão do "Qtde. estoque
-  inicial" do cadastro de produto). Histórico de contagens listado abaixo do formulário.
-- **Itens do mesmo menu que o usuário optou por NÃO fazer agora** (continuam na lista do item 5 da
-  seção 8): Fornecedores/Pedido de Compra, Entrada via NFe, Cadastro de Depósito.
-
-**⏳ Implementado e mergeado em `main` nesta sessão (PR [#27](https://github.com/caranovavidanova/amigao/pull/27)), ainda sem confirmação da usuária rodando com Supabase real** — texto de garantia configurável, resolvendo o item 3 da seção 8.1 (confirmado nesta mesma sessão: texto configurável, não multi-loja). Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots Playwright com dados simulados, incluindo clicar de verdade em "Baixar garantia" e conferir que não lança erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **Tabela `configuracoes_garantia`** (migration 0018) — "singleton" (1 linha só), com um texto
-  padrão semeado na própria migration. Editável em Configurações → "Texto de garantia"
-  (`TextoGarantiaSection.tsx`, admin-only, mesmo padrão visual das outras seções de config).
-- **Placeholders substituídos automaticamente** (`lib/garantiaTexto.ts`): `{cliente}`, `{veiculo}`,
-  `{itens}` (lista de peças/serviços da OS) e `{data}` (data de fechamento).
-- **Botões "Imprimir garantia"/"Baixar garantia" na aba Fechamento da OS** (`FechamentoTab.tsx`) —
-  deixaram de ser placeholder:
-  - **Baixar**: gera um arquivo `.txt` na hora (via `Blob` + link temporário), sem precisar de
-    biblioteca de PDF nem de nenhuma dependência nova.
-  - **Imprimir**: chama `window.print()` do próprio Electron. Pra imprimir só o texto da garantia (e
-    não a tela inteira do app), o texto renderizado fica numa área escondida
-    (`.apenas-impressao` em `globals.css`) que só aparece via `@media print` — o CSS esconde todo o
-    resto da página (`body * { visibility: hidden }`) e revela só essa área durante a impressão.
-    **Esse é o padrão a seguir se algum dia precisar imprimir outra coisa** (ex: OS, orçamento):
-    reaproveitar a classe `.apenas-impressao` em vez de abrir uma janela nova (`window.open` não tem
-    handler configurado no `electron/main.ts`, então ficaria bloqueado por padrão).
-  - Se o admin ainda não configurou nenhum texto (ex: migration 0018 não rodada ainda), os botões
-    mostram um aviso pedindo pra configurar em Configurações, em vez de travar.
-
-**⏳ Implementado e mergeado em `main` nesta sessão (PR [#28](https://github.com/caranovavidanova/amigao/pull/28)), ainda sem confirmação da usuária rodando com Supabase real** — pré-visualização antes de emitir NFe/NFS-e ou baixar/imprimir a garantia, a pedido explícito da usuária ("queria que as telas de NF e garantia tivesse um preview antes de baixar emitir"). Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots Playwright, incluindo clicar de verdade em "Baixar .txt" dentro do preview sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **`src/components/Modal.tsx`** — modal genérico novo (fundo escurecido, `sakura-card` centralizado, fecha
-  clicando fora ou no ✕), reutilizável por qualquer tela que precisar de um popup no futuro.
-- **Nota fiscal**: os botões "Emitir NFe"/"Emitir NFS-e" agora abrem um preview com cliente, veículo,
-  itens e total (mesmos dados já mostrados na aba, só reorganizados como um "rascunho" de nota) mais um
-  aviso de que a emissão de verdade ainda depende de escolher o provedor fiscal e cadastrar os dados
-  fiscais da loja — não há mais o `alert()` cru de antes.
-- **Garantia**: os dois botões "Imprimir garantia"/"Baixar garantia" viraram **um botão só** ("Ver
-  garantia") que abre o preview com o texto já formatado (placeholders substituídos); os botões
-  "Baixar .txt" e "Imprimir" ficam dentro do preview, então a usuária sempre vê o texto antes de agir.
-
-**⏳ Implementado nesta sessão (módulo Funcionários + abas Entradas/Saídas no Caixa), ainda sem
-confirmação da usuária rodando com Supabase real** — pedido direto da usuária: (1) vincular técnicos
-a peças/serviços na OS e cadastrar "outros funcionários", (2) lançar saídas não convencionais (aluguel,
-mercado, limpeza) e (3) lançar entradas não convencionais (ex: venda de sucata). Duas decisões
-estruturais foram apresentadas com opções + recomendação antes de codar (ver seção 1) — a usuária
-escolheu as duas opções recomendadas. Validado no sandbox via `npx tsc -b`, `npm run build`,
-`npm run lint` e screenshots Playwright com dados simulados via `page.route()` interceptando as
-chamadas REST/Auth do Supabase, incluindo abrir os três formulários novos e navegar pelas três abas
-do Caixa sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **Módulo "Funcionários" novo** (migration 0019, tabela `funcionarios` — ver seção 5 pro modelo
-  completo): cadastro leve (nome + cargo, sem usuário/senha) pra gente que não precisa logar no
-  sistema mas precisa aparecer como técnico ou vendedor/atendente numa OS. Todo operador (quem loga)
-  ganha automaticamente um `funcionarios` espelhado por um gatilho no banco — o cadastro de operador
-  em Configurações não mudou em nada, o espelho é automático e invisível pra usuária.
-- **Seletores de "Técnico" (por item da OS) e "Vendedor/atendente" (da OS toda) passaram a listar
-  funcionários, não mais só operadores** — `ItemOSRow.tsx` e `OrdemServicoForm.tsx` trocaram a prop
-  `operadores` por `funcionarios`. `tecnico_id` (em `ordens_servico_itens`) e `vendedor_id` (em
-  `ordens_servico`) foram repontados de `operadores(id)` pra `funcionarios(id)` pela migration 0019,
-  com backfill automático dos dados já existentes (nenhuma OS antiga perde a informação de quem foi o
-  técnico/vendedor). `criado_por_id`/`atualizado_por_id` continuam apontando pra `operadores` —
-  esses são sobre quem mexeu no sistema (auditoria), não sobre quem prestou o serviço.
-- **Categorias de caixa novas** (migration 0020, tabela `categorias_caixa` — ver seção 5): admin
-  cadastra categorias de entrada (ex: Sucata) ou saída (ex: Aluguel, Mercado, Limpeza) em
-  Configurações (`CategoriasCaixaSection.tsx`), e qualquer lançamento manual do Caixa pode escolher
-  uma (opcional).
-- **Caixa Diário ganhou abas**: "Diário" (comportamento de sempre, sem mudança nenhuma pra usuária),
-  "Entradas" e "Saídas" (novas) — mostram só os lançamentos manuais (não inclui faturamento de OS,
-  que já aparece na aba Diário) daquele tipo, com total por categoria e um formulário de "+ Nova
-  entrada"/"+ Nova saída" com o tipo já travado. Essas duas abas ficam **dentro** do Caixa Diário, não
-  viraram módulos separados — decisão explícita da usuária entre duas opções apresentadas, pra não
-  duplicar onde o dinheiro é controlado (ver seção 1).
-
-**⏳ Implementado nesta sessão (pessoa física/jurídica no cadastro de Cliente), ainda sem confirmação
-da usuária rodando com Supabase real** — pedido direto da usuária. Migration `0021_clientes_tipo_pessoa.sql`
-adiciona `tipo_pessoa` (`fisica`/`juridica`, default `fisica` pra não quebrar clientes já cadastrados).
-`ClienteForm.tsx` ganhou dois rádios "Pessoa física"/"Pessoa jurídica" no topo do cadastro — trocar a
-opção muda o rótulo dos campos "Nome completo"/"CPF" para "Razão social"/"CNPJ" (mesmos campos por
-trás, só o rótulo e o `tipo_pessoa` mudam). Não mexeu na lista de clientes nem no cadastro de edição
-(esse módulo não tem edição, só criar/excluir, ver `ClientesPage.tsx`). Validado via `npx tsc -b`,
-`npm run build`, `npm run lint` e screenshot Playwright alternando entre as duas opções (sandbox não
-acessa `*.supabase.co`, ver item 7 da seção 6).
-
-**⏳ Implementado nesta sessão (cadastro de Funcionário ampliado — RH completo — e ícone de casinha no
-botão voltar), mergeado em `main` via PR
-[#32](https://github.com/caranovavidanova/amigao/pull/32), ainda sem confirmação da usuária rodando
-com Supabase real** — a usuária mandou 3 prints do cadastro de funcionário de um sistema de
-referência (S3Auto/Comsis) pedindo pra ter essas informações pra preencher. Antes de codar,
-apresentei os grupos de campo em opções (documentos/CNH, endereço/contato, cargo/admissão, família,
-e separadamente "dados de saúde") — ela escolheu tudo, exceto dados de saúde (enfermidades/
-medicamentos), por serem dado sensível/LGPD. Migration `0022_funcionarios_dados_completos.sql` (ver
-seção 5 pro detalhe dos campos). `FuncionarioForm.tsx` ganhou duas abas: **"Dados gerais"**
-(identificação, documentos, endereço, contato, cargo e admissão) e **"Família"** (filiação, cônjuge,
-lista de filhos com botão "+ Adicionar filho(a)"). Além disso, o `BotaoVoltar` (`src/components/
-BotaoVoltar.tsx`) sem `onClick` — usado nas telas de lista, que sempre levam pro Início — passou a
-mostrar um **ícone de casinha** em vez de seta, e a navegar direto pra `/` (em vez de
-`navigate(-1)`, que dependia do histórico do navegador e nem sempre batia com "Início" depois de
-navegar por vários módulos pelo menu lateral); o botão com `onClick` (usado nos formulários, que
-volta pra lista/cancela) continua com a seta. Validado via `npx tsc -b`, `npm run build`,
-`npm run lint` e screenshots Playwright com dados simulados via `page.route()` (sandbox não acessa
-`*.supabase.co`, ver item 7 da seção 6), incluindo preencher/exibir os campos novos nas duas abas.
-
-**⏳ Implementado nesta sessão (módulo "Notas Fiscais" — arquivos XML de NFe/NFS-e), mergeado em
-`main` via PR [#33](https://github.com/caranovavidanova/amigao/pull/33), ainda sem confirmação da
-usuária rodando com Supabase real** — pedido da usuária: mesmo sem o sistema de emissão fiscal
-pronto (ver item 1 da seção 8), ela quis já deixar um lugar pra guardar os XMLs das notas que emite
-por fora, organizados por mês. Duas decisões estruturais foram apresentadas com opções +
-recomendação antes de codar — ela escolheu as duas recomendadas: (a) módulo próprio no menu lateral
-(em vez de escondido em Configurações ou preso dentro da OS) e (b) cada arquivo pode
-**opcionalmente** ser vinculado a uma Ordem de Serviço específica. Migration
-`0023_notas_fiscais_xml.sql` (ver seção 5) — **primeira vez que o projeto usa Supabase Storage**
-além de tabelas Postgres: cria o bucket privado `notas-fiscais` (policy exigindo login, mesmo padrão
-das tabelas) e a tabela de metadados `notas_fiscais_arquivos`. Tela nova
-(`pages/notas-fiscais/NotasFiscaisPage.tsx`) com abas **NFe**/**NFS-e**, cada uma listando os
-arquivos **agrupados por mês de competência** (mais recente primeiro), botão "+ Enviar XML" (arquivo
-+ mês de competência + Ordem de Serviço relacionada opcional) e "Baixar"/"Excluir" por arquivo
-(`lib/notasFiscais.ts` usa `supabase.storage` pra upload/download/remoção, junto com a tabela de
-metadados). Quando a emissão fiscal automática for construída futuramente, ela pode gravar direto
-nessa mesma tabela/bucket em vez de depender do upload manual. Validado via `npx tsc -b`,
-`npm run build`, `npm run lint` e screenshots Playwright com dados simulados via `page.route()`
-(sandbox não acessa `*.supabase.co`, ver item 7 da seção 6), incluindo lista agrupada por mês, aba
-vazia e o formulário de envio com o seletor de OS carregado.
-
-**✅ Confirmado pelo usuária nesta sessão (ícone da flor redesenhado)** — PR
-[#35](https://github.com/caranovavidanova/amigao/pull/35), mergeado depois de aprovação explícita
-("isso, gostei"). Ver detalhe técnico completo na seção 2. Resumo: `public/sakura-icon.svg`
-(favicon/ícone da janela) trocou o desenho de pétalas estreitas por uma flor de 5 pétalas
-arredondadas + estames, inspirada numa referência que a usuária mandou; `build/icon.png`
-(ícone do instalador) regenerado a partir do SVG novo. Duas fotos de referência que ela tentou
-mandar (uma flor de lótus, depois uma aquarela de sakura) não chegaram como arquivo utilizável
-neste ambiente apesar de enviadas como anexo de verdade (não coladas) — documentado como
-atualização da pendência de upload na seção 2, útil pra sessões futuras que esbarrarem no mesmo
-problema.
-
-**⏳ Versão 0.1.3 fechada nesta sessão (PR [#36](https://github.com/caranovavidanova/amigao/pull/36)),
-tag ainda não publicada** — a pedido explícito da usuária ("lança e pa", depois "a 0.1.3" quando
-perguntei o número). `package.json`/`package-lock.json` subiram de `0.1.2` (nunca chegou a ser
-publicado como release de verdade) pra `0.1.3`, e `CHANGELOG.md` teve a seção `[Não lançado]`
-fechada como `[0.1.3] - 2026-07-29`, consolidando tudo que entrou desde a v0.1.1: Funcionários (RH
-completo), Entradas/Saídas do Caixa, tipo de pessoa no cadastro de Cliente, Notas Fiscais, ícone da
-flor novo, botão voltar com casinha — mais a correção de duas linhas do changelog que não refletiam
-mais a realidade (uma citava uma "logo oficial" que nunca foi aplicada de fato; outra descrevia a
-RLS temporária, já substituída por login obrigatório desde a migration 0015). **Cuidado registrado
-pra próximas sessões**: ao trocar a versão no `package-lock.json` com `Edit`/`replace_all`, o texto
-`"version": "0.1.2"` também aparece em pacotes de terceiros do lockfile por coincidência
-(`compare-version`, `universalify`, que **são** a versão `0.1.2` de verdade — não relacionados ao
-projeto) — o `replace_all` trocou esses também da primeira vez, o que corrompe o lockfile
-(quebraria `npm ci`/instalação limpa). Corrigido revertendo essas duas entradas manualmente e
-validando com `npm install` (sem alterar o lockfile) antes de commitar. **Sempre conferir com
-`grep -n '"version": "X.Y.Z"'` quantas ocorrências existem e o contexto de cada uma antes de usar
-`replace_all` num lockfile.** Falta só a usuária publicar a tag (ver seção 9 e comandos no fim da
-seção 10) — o sandbox não tem permissão de `git push` de tags/direto em `main`.
-
-**⏳ Implementado nesta sessão (2026-07-29, sessão longa — preparação do Focus NFe, recibo visual de
-nota fiscal, garantia redesenhada e módulo Contas a Pagar), mergeado em `main` via PRs
-[#39](https://github.com/caranovavidanova/amigao/pull/39),
-[#40](https://github.com/caranovavidanova/amigao/pull/40),
-[#41](https://github.com/caranovavidanova/amigao/pull/41) e
-[#42](https://github.com/caranovavidanova/amigao/pull/42), ainda sem confirmação da usuária rodando
-com Supabase real**:
-
-- **Escolha do provedor fiscal: Focus NFe, plano básico** — a usuária decidiu depois de eu pesquisar
-  preços/modelo dos concorrentes (Focus NFe, eNotas, PlugNotas — ver comparação nesta conversa;
-  planos giram em torno de R$89 a R$347/mês dependendo da franquia de notas). **Ainda não assinou** —
-  pediu pra deixar o código "semi pronto" antes de assinar. Confirmado com ela: pra peça vendida
-  presencialmente (balcão), o documento certo é **NFC-e** (não NFe, que é pra venda não presencial/
-  B2B) — os botões da aba Fechamento da OS foram renomeados de "Emitir NFe" pra "Emitir NFC-e".
-  - `configuracoes_fiscais_loja` (migration 0024) + `DadosFiscaisSection.tsx` em Configurações — CNPJ,
-    razão social, IE/IM, regime tributário, endereço da loja, e o campo do token do Focus NFe
-    (ambiente homologação/produção).
-  - `lib/focusNfe.ts` — só a "casca" da integração (autenticação Basic com o token, URLs por ambiente,
-    função HTTP genérica). **A emissão de NFC-e em si (`emitirNFCe()`) ainda lança erro de propósito,
-    não implementa nada** — não foi possível acessar `doc.focusnfe.com.br` a partir deste ambiente
-    (bloqueou acesso automatizado, 403) pra confirmar os nomes exatos dos campos do pedido (CFOP, NCM,
-    situação tributária do ICMS por item). **Não "chutar" esses campos** — só implementar de verdade
-    quando tiver um token real (ambiente de homologação) pra testar contra a API de verdade. Ver
-    pendência atualizada no item 1 da seção 8.
-- **Recibo visual da nota fiscal** (`lib/notaFiscalXml.ts` + `NotaFiscalVisualModal.tsx`, módulo Notas
-  Fiscais): botão novo "Versão para o cliente" ao lado do "Baixar XML" — interpreta o XML já enviado
-  e monta um recibo em HTML (imprimir ou baixar), pra dar pro cliente em mãos. NFe/NFCe usam o layout
-  nacional da SEFAZ (estável, interpretação confiável); NFS-e usa o modelo nacional obrigatório desde
-  jan/2026 (mais recente, interpretação "melhor esforço" — se não reconhecer os campos esperados,
-  mostra aviso em vez de dado incompleto/errado). **Não é uma cópia do DANFE oficial** (sem código de
-  barras/QR code da chave de acesso) — deixado claro no próprio recibo gerado.
-- **Garantia da OS redesenhada** (`lib/garantiaDocumento.ts` + `GarantiaVisualModal.tsx`, substitui o
-  texto corrido de antes): a usuária mandou uma **foto do papel de garantia que a Pneus Amigão (sistema
-  antigo) já usa hoje na loja de verdade** e pediu pra aplicar um layout parecido. Documento novo tem:
-  cabeçalho com dados da loja (reaproveita `configuracoes_fiscais_loja`), dados do cliente e do
-  veículo (busca o cadastro completo via `buscarClientePorId`/`buscarVeiculoPorId`, novas em
-  `lib/clientes.ts` — a OS só trazia nome/placa resumidos), tabela de peças/serviços com técnico,
-  totalização (produtos/serviços/subtotal/descontos), forma de pagamento (com tabela de parcelas se
-  faturada parcelada, usando o valor **realmente cobrado com juros**, buscado do lançamento de Caixa
-  via `buscarMovimentoCaixaPorOrdem()` nova em `lib/caixa.ts`) e linhas de assinatura (cliente/
-  técnico/gerente). **Decisão confirmada com a usuária**: os campos de veículo do papel de referência
-  (direção elétrica/ar condicionado/direção hidráulica) **não foram trazidos de volta** — ela mesma já
-  tinha tirado esses campos do sistema numa sessão anterior por não terem "vingado" (ver seção 5, OS).
-  O texto de garantia configurável (Configurações → "Texto de garantia") continua existindo, agora
-  **embutido dentro** desse documento maior em vez de ser o documento inteiro — se a usuária quiser
-  reaproveitar o texto fixo de garantias por categoria (pneu/suspensão/amortecedor/etc.) que via no
-  papel antigo, é só colar esse texto lá. A antiga classe CSS `.apenas-impressao` (truque de "esconder
-  a tela inteira" pra imprimir) **foi removida** — o recibo de nota fiscal e a garantia agora imprimem
-  via `iframe.contentWindow.print()` (documento isolado dentro de um `<iframe>`), mais simples e sem
-  depender de esconder o resto do app.
-- **Módulo "Contas a Pagar"** (`lib/contasPagar.ts`, tabela `contas_pagar` — migration 0025, ver seção
-  5): pedido da usuária pra controlar contas mensais (aluguel, etc.) com vencimento — diferente das
-  Entradas/Saídas manuais do Caixa, que só registram dinheiro que **já saiu**. Três decisões
-  confirmadas com opções + recomendação antes de codar (ela escolheu as três recomendadas): (a)
-  marcar como paga gera Saída automática no Caixa, (b) contas recorrentes já criam a próxima ocorrência
-  sozinhas ao pagar, (c) módulo próprio no menu lateral (não uma aba dentro do Caixa) — permissão
-  dedicada `contas_pagar` em `MODULOS`. **Sistema de notificação de conta a vencer** (ideia que a
-  usuária mencionou) **não foi implementado** — fica pra uma sessão futura, ver item novo na seção 8.
-- **Migrations 0024 e 0025 ainda não foram rodadas pela usuária** — ver tutorial novo na seção 9.
-
-**✅ Implementado nesta sessão (reorganização da tela de Configurações), mergeado em `main` via PR
-[#44](https://github.com/caranovavidanova/amigao/pull/44), confirmado pela usuária rodando
-com Supabase real** — a usuária mandou um print reclamando que todas as seções de configuração
-apareciam abertas ao mesmo tempo e que o botão "+ Novo operador" ficava solto no cabeçalho da
-página, separado da própria lista de operadores. Mudança só de JSX/CSS, **sem migration**:
-
-- **Componente novo `src/components/SecaoRecolhivel.tsx`**: bloco `sakura-card` com cabeçalho
-  clicável (título + descrição + seta que gira) que expande/recolhe o conteúdo — reutilizável por
-  qualquer tela futura que precisar do mesmo padrão de "acordeão".
-- **Juros de parcelamento, Categorias de produto, Categorias de caixa, Texto de garantia e Dados
-  fiscais da loja** agora começam **fechados** e abrem só ao clicar no título (antes ficavam todos
-  abertos ao carregar a página).
-- **"Operadores" virou sua própria seção** (sempre visível, não recolhível — é o conteúdo principal
-  da página), com o botão "+ Novo operador" dentro dela, ao lado do título — antes ele ficava sozinho
-  no cabeçalho da página, sem ligação visual com a lista de operadores logo abaixo.
-- Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshot do Electron real
-  (`xvfb-run` + Playwright `_electron.launch`) com as chamadas REST/Auth do Supabase interceptadas via
-  `page.route()` — confirmado visualmente que as seções abrem/fecham certinho e que "Operadores" ficou
-  como bloco próprio com o botão junto, sem erro no console (sandbox não acessa `*.supabase.co`, ver
-  item 7 da seção 6).
-
-**✅ Implementado nesta sessão (módulo "Relatórios" virou "Relações" com gráficos, e cartões do
-Início personalizáveis), mergeado em `main` via PR [#46](https://github.com/caranovavidanova/amigao/pull/46), confirmado pela
-usuária rodando com Supabase real (migration 0026 rodada)** — pedido da usuária: renomear "Relatórios" pra "Relações",
-mostrar gráficos comparando vendas/custos/lucro (ela pediu algo "estilo estatísticas de League of
-Legends"), tornar os 3 cartões de tendência do Início personalizáveis, e mostrar contas a pagar
-vencendo no calendário do Início. Antes de codar, apresentei 4 perguntas de escopo (estilo de
-gráfico, quais métricas comparar, se a personalização dos cartões é por operador ou única pra loja,
-quais indicadores ficam disponíveis) — ela escolheu: **barras + radar** (os dois estilos), só
-**Vendas x Custos x Lucro** como comparação, cartões **únicos pra loja inteira** (não por
-operador), e o pool de métricas **Vendas/Custos/Lucro (já existentes) + Ticket médio + Contas a
-pagar vencendo**. Validado no sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e
-screenshots do Electron real (`xvfb-run` + Playwright `_electron.launch`) com dados simulados via
-`page.route()`, incluindo hover nos tooltips do gráfico de barras e do radar, troca de período
-(Diário/Semanal/Mensal), e a seção nova de Configurações com métricas não-padrão selecionadas — tudo
-sem erro no console (sandbox não acessa `*.supabase.co`, ver item 7 da seção 6):
-
-- **"Relatórios" virou "Relações"** — só o label em `MODULOS` (`src/types/operador.ts`) mudou; a
-  chave interna continua `relatorios` e a rota `/relatorios`, então operadores já cadastrados não
-  precisam ser reconfigurados.
-- **Componentes novos de gráfico, sem biblioteca externa** (mesmo padrão do `Sparkline.tsx` — SVG
-  puro): `src/components/GraficoBarras.tsx` (barras agrupadas por período, com legenda e tooltip ao
-  passar o mouse) e `src/components/GraficoRadar.tsx` (radar/teia com N eixos, comparando "este
-  período" vs. "período anterior", também com tooltip). Antes de escrever os gráficos, consultei a
-  skill `dataviz` do projeto e validei a paleta categórica com o script de validação dela — as cores
-  antigas do Início (`#B38DAC`/`#C7C7C7`/`#6E4D68`) não passavam como paleta categórica de 3 séries
-  simultâneas (falha de contraste/croma), então os gráficos de Relações usam uma paleta nova
-  validada (verde `#1baf7a` Vendas, laranja `#eb6834` Custos, violeta `#4a3aa7` Lucro) — os cartões
-  do Início continuam com as cores antigas, que funcionam bem porque cada cartão mostra uma série
-  sozinha (não precisa de distinção categórica).
-- **`RelatoriosPage.tsx`**: seletor de período (Diário/Semanal/Mensal) controlando os agrupamentos
-  do gráfico de barras (Vendas x Custos x Lucro, evolução no tempo) e do radar (comparando o último
-  período com o anterior — ex: hoje vs. ontem, esta semana vs. a passada, este mês vs. o passado).
-  Mantidos os 3 cards de resumo (Vendas hoje/semana/mês) e a tabela "Vendas por dia" de antes.
-- **Cartões do Início personalizáveis** (migration `0026_configuracoes_painel_inicio.sql` — tabela
-  "singleton", mesmo padrão de `configuracoes_garantia`): admin escolhe em Configurações → "Cartões
-  do Início" (`CartoesInicioSection.tsx`, 3 selects) quais 3 indicadores aparecem nos cartões de
-  tendência — pool de 5 opções: Vendas/Custos/Lucro do mês (os 3 de sempre), **Ticket médio do mês**
-  (faturamento de OS ÷ número de OS faturadas, novo) e **Contas a pagar vencendo** (soma das contas
-  pendentes com vencimento no mês, novo — usa `contas_pagar`). Ajuste único pra loja inteira, não por
-  operador (decisão explícita da usuária). `PainelPage.tsx` renderiza os 3 cartões conforme essa
-  configuração, com fallback pros 3 de sempre se a tabela ainda não tiver sido criada/configurada.
-- **Calendário do Início mostra contas a pagar vencendo** (`MiniCalendario.tsx` ganhou dois tipos de
-  evento novos: `conta_a_vencer` — bolinha laranja — e `conta_vencida` — bolinha vermelha, pra contas
-  ainda pendentes cujo vencimento já passou). `PainelPage.tsx` busca as contas pendentes do mês e
-  inclui no calendário junto com feriados/aniversários, com texto "Vence: ..." ou "Venceu: ..." na
-  lista abaixo do calendário.
-- Migration **0026 ainda não foi rodada pela usuária** — ver tutorial novo na seção 9.
-
-**✅ Implementado nesta sessão (PR [#47](https://github.com/caranovavidanova/amigao/pull/47) — ícone
-de veículo no pátio, cartões do Início sem sparkline, scrollbar e contraste), confirmado pela
-usuária rodando com Supabase real (migration 0027 rodada)** — a usuária perguntou se dava pra mostrar um "carrinho 3D" do
-veículo exato de cada cliente; expliquei 3 níveis (3D exato = caro/não cobre carro raro; 3D genérico
-único = pouco fiel; ícone 2D por tipo de veículo, pintado com a cor cadastrada = bom custo-benefício,
-sem depender de serviço pago) e recomendei o terceiro — ela topou ("do jeitinho 2D que você disse").
-Ela também pediu, na mesma mensagem: tirar o gráfico dos cartões do Início (só valor, como um print
-do Figma que mandou), decidir se "Custos" devia continuar aparecendo por padrão (achou estranho
-mostrar algo "negativo" logo de cara — pedi pra eu mesma sugerir), trocar a barra de rolagem (nativa
-do Windows, destoava do resto) e aumentar o contraste geral (tinha texto difícil de ler). Validado no
-sandbox via `npx tsc -b`, `npm run build`, `npm run lint` e screenshots do Electron real (`xvfb-run` +
-Playwright `_electron.launch`) com dados simulados via `page.route()`, incluindo os 5 tipos de
-veículo/cor renderizados na seção nova, o seletor "Tipo" no cadastro de veículo, e a barra de rolagem
-customizada visível ao rolar o formulário de Cliente — tudo sem erro no console (sandbox não acessa
-`*.supabase.co`, ver item 7 da seção 6):
-
-- **Tipo de veículo + ícone** (migration `0027_veiculos_tipo.sql`): campo `tipo` em `veiculos`
-  (opcional, 5 valores: hatch/sedã/SUV/picape/moto — moto é um ícone só de propósito, a usuária
-  confirmou que quase não aparece moto na borracharia, não vale detalhar tipos). Seletor "Tipo" novo
-  no cadastro de veículo (`ClienteForm.tsx`, dentro do bloco de cada veículo). `VeiculoIcone.tsx`
-  desenha o ícone certo em SVG puro (sem lib externa, mesmo padrão de todo ícone do app) e pinta a
-  carroceria com a cor real cadastrada — `lib/corVeiculo.ts` traduz nomes de cor em português
-  ("Prata", "Vermelho"...) pro hex aproximado, com cinza como fallback pra cor não reconhecida/texto
-  livre. **Não é o carro exato do cliente** (não existe banco de modelo 3D nem foto real por
-  trás) — é um ícone por categoria de carroceria, pintado com a cor certa.
-- **Seção "Veículos no pátio" no Início**: nova seção abaixo de "OS abertas"/calendário, listando
-  (com o ícone) todo veículo vinculado a uma OS `aberta`/`em_andamento` — mesma definição de "está na
-  loja agora" que a fila de atendimento já usava, só que reaproveitada aqui em formato de cartão com
-  ícone em vez de linha de tabela. `lib/ordensServico.ts` ampliou o `select` de `listarOrdens()` pra
-  trazer `marca`/`modelo`/`cor`/`tipo` do veículo junto (antes só trazia a placa).
-- **Cartões do Início sem sparkline**: a pedido da usuária, que mandou uma referência do Figma (cartão
-  "Total earnings" só com rótulo + seta `›` + valor grande, sem gráfico). `Sparkline.tsx` foi
-  removido (ficou sem uso). Os cartões ganharam uma sombra interna colorida por métrica (glow sutil no
-  canto, mesma cor que já identificava cada métrica) pra dar profundidade sem reintroduzir gráfico —
-  inspirado na técnica de inner shadow + drop shadow do print que a usuária mandou (um card em vidro
-  escuro do Figma), adaptada pra dentro da paleta clara do Sakura System (não copiamos o visual escuro/
-  laranja do print, só a técnica de sombra/profundidade).
-- **"Custos" saiu do padrão dos cartões do Início** (sugestão minha, que a usuária pediu explicitamente
-  — "acho que não é legal mostrar algo negativo ali"): o padrão agora é Vendas/Lucro/Ticket médio;
-  Custos continua disponível pra quem quiser escolher em Configurações → "Cartões do Início". Migration
-  0026 (ainda não rodada pela usuária) já foi ajustada com esse novo padrão antes de publicar.
-- Scrollbar e contraste: ver detalhe técnico completo na seção 2 (Identidade visual).
-
-**✅ Confirmado pela usuária nesta sessão, rodando de verdade (importar produto por foto da nota
-fiscal, com IA)** — pedido direto da usuária: hoje ela tira foto da
-nota fiscal, manda pro Gemini pedir os tributos prováveis (NCM/CFOP/CST-CSOSN/ICMS/CEST) e digita
-tudo na mão; ela queria isso automatizado dentro do próprio sistema, com um botão na tela de
-cadastro de peça. Antes de codar, apresentei 2 decisões estruturais com opções + recomendação (ver
-seção 1) — ela escolheu, pra guardar a chave da IA: **um "servidor" intermediário (Supabase Edge
-Function) escondendo a chave por completo** (em vez de guardar a chave da IA no próprio app
-Electron, que seria mais simples mas deixaria a chave exposta pra qualquer um com acesso ao
-computador) — e, pro escopo, **nota inteira com vários itens, várias notas de uma vez** (ela
-confirmou que já faz isso hoje no Gemini, colocando duas notas lado a lado numa foto só, e funciona
-bem):
-
-- **Primeira Edge Function do projeto** (`supabase/functions/ler-notas-fiscais/index.ts`) — até
-  agora o projeto só usava tabelas Postgres e Storage (bucket de notas fiscais), nunca uma função
-  de servidor de verdade. Essa função roda no Supabase (Deno), recebe uma ou mais fotos em base64,
-  chama a API do Claude (Anthropic, modelo `claude-sonnet-5`, com "saída estruturada" — a IA é
-  obrigada a responder num formato JSON fixo, sem risco de vir bagunçado) e devolve a lista de
-  itens já com os campos fiscais preenchidos. **A chave da Anthropic (`ANTHROPIC_API_KEY`) fica só
-  como "secret" dessa função no Supabase — nunca é enviada nem guardada no app instalado no
-  computador da loja.** Isso é o "servidor intermediário" que a usuária escolheu.
-- **Botão "📷 Importar por foto"** em Estoque → Produtos, ao lado de "+ Novo produto"
-  (`ImportarNotasFiscaisModal.tsx`): abre um popup onde a usuária escolhe várias fotos de uma vez
-  (`<input type="file" multiple>`), clica "Ler fotos", e o sistema mostra uma tabela com **todos os
-  produtos identificados em todas as fotos** (descrição, categoria, NCM, CEST, CFOP, origem,
-  CST/CSOSN, alíquota de ICMS, unidade, custo, quantidade) — cada célula é editável e cada linha tem
-  uma caixinha pra incluir ou não. Ao clicar em "Cadastrar N produtos", cria todas as peças
-  selecionadas de uma vez (reaproveitando `criarPeca()` e o mesmo padrão de "Qtde. estoque inicial"
-  que já existe no cadastro manual, só que em lote — motivo do movimento de estoque é `compra` em
-  vez de `ajuste`, já que veio de uma nota fiscal de verdade, não de um ajuste manual).
-- **Sem tabela nova nem migration** — o resultado da leitura só passa pela tela de revisão em
-  memória; o que fica salvo de fato é só em `pecas`/`estoque_movimentos`, do jeito que já existia.
-- **Configuração manual feita pela usuária** (ver tutorial na seção 9): criou a chave de API na
-  Anthropic (console.anthropic.com), publicou a Edge Function pelo painel do Supabase — **"Via
-  Editor"** (escrever/colar o código direto no navegador; existem também "Via CLI" e "Via AI
-  Assistant" como opções, não usadas) — e configurou o secret `ANTHROPIC_API_KEY`. **Achado
-  durante essa configuração**: o campo "Name" da tela de configurações da função **é só um apelido
-  visual — não muda o endereço/slug real** (o aviso "Your slug and endpoint URL will remain the
-  same" avisa isso). Da primeira vez, a usuária deployou com o nome de exemplo (`smooth-api`) e só
-  tentou renomear depois, o que deixou a função com endereço `smooth-api` mas nome de exibição
-  `ler-notas-fiscais` — descasado do nome que o app chama via `supabase.functions.invoke(...)`.
-  **Correção**: apagar a função e recriar do zero, digitando `ler-notas-fiscais` no campo
-  "Function name" **antes** de clicar em "Deploy function" (não dá pra corrigir só renomeando
-  depois). **Se isso acontecer de novo ao criar outra Edge Function**: conferir se o endereço nos
-  exemplos de `curl`/CLI da tela de configurações bate com o nome esperado, não confiar só no campo
-  "Name".
-- Validado no sandbox via `npx tsc -b`, `npm run build` e `npm run lint` — sem erro. **Confirmado
-  pela usuária rodando de verdade**: importou produtos por foto de nota fiscal com sucesso.
-
-## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
-
-As 3 perguntas abaixo (que bloqueavam avançar na parte fiscal e na garantia) **já foram respondidas
-pela usuária nesta sessão**:
-
-1. **Cidade/UF da borracharia**: **Araraquara** (assumindo SP — é a Araraquara mais conhecida do
-   Brasil; ainda não confirmado explicitamente pela usuária, vale confirmar se aparecer alguma
-   Araraquara de outro estado). Com isso já dá pra pesquisar/recomendar provedor de NFS-e (Focus NFe,
-   eNotas, PlugNotas etc.) — **pesquisa ainda não feita**, é o próximo passo antes de codar a emissão
-   fiscal (ver item 1 da seção 8).
-2. **Certificado digital A1 no CNPJ**: usuária respondeu **"não sei"** — precisa verificar isso antes
-   de a emissão fiscal funcionar de verdade (é pré-requisito pra qualquer provedor). Perguntar de novo
-   quando for a hora de configurar o provedor escolhido.
-3. **Escopo do "modelo de garantia editável"**: **confirmado** — é um texto configurável (editável em
-   Configurações, com campos tipo {cliente}/{veículo}/{itens}/{data}), não multi-loja. **Implementado
-   nesta mesma sessão** (ver seção 7, PR #27) — os botões "Imprimir garantia"/"Baixar garantia" na
-   aba Fechamento da OS não são mais placeholder.
-
-**Instalador Windows**: ver seção 10 pro status atual (`package.json` em `0.1.3`, `CHANGELOG.md`
-fechado, tag ainda não publicada — falta só a usuária rodar os comandos de tag/push).
+- **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
+  do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
+  novo). Menu lateral e rotas filtrados por permissão (`PermissaoRoute`/`AdminRoute`). Tela
+  Configurações (admin) gerencia operadores com checkboxes de módulo.
+- **Clientes**: CRUD + múltiplos veículos por cliente, pessoa física/jurídica (rótulos de
+  campo mudam conforme o tipo), aniversário do cliente no calendário do Início, tipo de veículo
+  (ícone 2D por carroceria, pintado com a cor cadastrada) exibido na seção "Veículos no pátio".
+- **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
+  categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
+  produto), Contagem (inventário físico, gera ajuste automático na diferença), Relatórios (estoque
+  físico-financeiro, saldo por situação, produtos sem movimentação). **Importar por foto**: botão
+  "📷 Importar por foto" ao lado de "+ Novo produto" — lê uma ou mais fotos de nota fiscal (pode
+  ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através da Edge Function
+  `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e cadastra em lote
+  (`ImportarNotasFiscaisModal.tsx`). Chave da Anthropic fica só como secret da Edge Function.
+- **Serviços**: catálogo simples (descrição, código opcional, preço padrão), sem estoque/fiscal.
+- **Ordens de Serviço**: form em duas colunas, reabre pra editar (só permite acrescentar itens,
+  não editar/remover item já lançado — evita desfazer baixa de estoque). Técnico por item +
+  vendedor/atendente da OS (ambos listam `funcionarios`, não só operadores). Faturamento
+  (`FaturamentoCard.tsx`) calcula parcelas automaticamente conforme os juros configurados em
+  Configurações; o valor lançado no Caixa já inclui os juros. Aba "Fechamento" (só aparece com
+  status concluída/faturada): botões "Emitir NFC-e"/"Emitir NFS-e" (ainda placeholder, com
+  preview do rascunho — emissão de verdade depende do Focus NFe, ver seção 8) e "Ver garantia"
+  (abre preview do documento completo — cabeçalho da loja, dados de cliente/veículo, itens,
+  totais, forma de pagamento com parcelas reais, assinaturas — com opção de baixar HTML/imprimir
+  via `iframe`).
+- **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
+  abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
+- **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
+  lançamentos manuais, com categoria opcional via `categorias_caixa`). Card de "Lucro do dia" +
+  resumo por forma de recebimento.
+- **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
+  registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
+  já cria a próxima ocorrência sozinha. Sem "desfazer pagamento" pelo app ainda.
+- **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
+  (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
+  e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code).
+- **Relações** (ex-"Relatórios", só o label mudou): gráfico de barras (Vendas x Custos x Lucro,
+  Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca externa
+  de gráficos. Paleta categórica própria (verde/laranja/violeta), diferente das cores do Início.
+- **Lucratividade**: margem por peça/serviço, período filtrável.
+- **Início**: 3 cartões de tendência personalizáveis (Configurações → "Cartões do Início", padrão
+  Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta), calendário do mês com feriados
+  nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
+  "Veículos no pátio" (com ícone por tipo/cor).
+- **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador"), e seções
+  recolhíveis — Juros de parcelamento, Categorias de produto, Categorias de caixa, Texto de
+  garantia, Dados fiscais da loja, Cartões do Início.
+- **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
+  `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
+  enviada. **Versão atual: `0.1.3`** (tag publicada e instalador baixado pela usuária) — **mas
+  muita coisa foi implementada depois da v0.1.3** (Funcionários RH completo, Contas a Pagar,
+  Notas Fiscais, Relações com gráficos, cartões personalizáveis, veículos no pátio, scrollbar
+  customizada, Importar por foto...) **sem nenhuma tag nova publicada ainda** — se a próxima
+  sessão for sobre lançar uma versão nova, é bom já avisar que tem bastante coisa acumulada desde
+  a 0.1.3.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
-**Prioridade da próxima sessão ainda em aberto** — perguntei explicitamente no fim desta sessão e a
-usuária respondeu "ainda não sei, decido na hora". Não presumir qual item abaixo vem primeiro;
-perguntar no início da próxima sessão (as opções que apresentei foram: testar tudo que ainda não
-foi validado com Supabase real, avançar na parte fiscal, ou fechar a logo oficial).
-
-Ordem de prioridade sugerida pelo próprio documento inicial do usuário:
-
-1. **Parte fiscal (prioridade alta, NÃO bloqueia o uso na loja — ver decisão na seção 7)**: emissão
-   de NFC-e (peças, padrão estadual/SEFAZ) e NFS-e (serviço, padrão municipal — varia por cidade).
-   **Provedor escolhido: Focus NFe, plano básico** (ver seção 7) — usuária ainda não assinou, pediu
-   pra deixar o código "semi pronto" antes. **Já feito**: modelagem dos dados fiscais da loja
-   (`configuracoes_fiscais_loja`, migration 0024) + tela em Configurações + a "casca" da integração
-   HTTP com o Focus NFe (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a função de
-   emissão de verdade (`emitirNFCe()`) — não foi possível confirmar o formato exato do corpo da
-   requisição (campos de CFOP/NCM/ICMS por item) contra a documentação oficial do Focus NFe a partir
-   deste ambiente (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real
-   de teste (ambiente de homologação) pra validar contra a API de verdade antes de codar isso —
-   **não implementar chutando os nomes dos campos**. Os botões da aba Fechamento da OS já foram
-   renomeados de "Emitir NFe" pra "Emitir NFC-e" (documento certo pra venda presencial de balcão,
-   confirmado com a usuária).
-2. ~~Autenticação / login de usuário~~ — **construído nesta sessão** (ver seção 7): login com
-   usuário/senha + permissões por módulo, checadas na interface. O que ficou de fora e ainda é
-   próximo passo possível: reforçar em RLS por categoria (trade-off aceito por ora, ver seção 6.1),
-   admin redefinir senha de operador esquecida (precisaria de Edge Function), e o **site externo de
-   assinatura** que cria a primeira conta de cada loja automaticamente (hoje isso é manual, pelo
-   painel do Supabase — ver seção 7) — combinado que fica pra quando pensarem na versão comercial.
-3. **Logo oficial** — pegar o arquivo `.svg` real do usuário como **anexo** (não colado no chat) e
-   aplicar no lugar dos SVGs feitos à mão (ver seção 2).
-4. Refinamentos possíveis no Painel de Controle e demais módulos, conforme feedback do usuário.
-5. **Itens do menu de estoque do sistema de referência (S3Auto/Comsis) ainda não avaliados/decididos**
-   — usuário mandou prints do menu "Estoque" e "Relações" de um sistema básico que a família usa na
-   borracharia. A categoria em si (seção 7), Categorias de produto, Relatórios adicionais, Garantia
-   (dada ao cliente) e Contagem/Inventário físico **já foram implementados** (PR #22, ver seção 7).
-   Restam os itens que dependem de Fornecedores/multi-local, ainda **precisam de decisão do usuário
-   antes de codar** (apresentar opções + recomendação, não decidir sozinho — ver seção 1):
+1. **Parte fiscal (prioridade alta, NÃO bloqueia o uso na loja)**: emissão de NFC-e (peças) e
+   NFS-e (serviço). **Provedor escolhido: Focus NFe, plano básico** — usuária ainda não assinou,
+   pediu pra deixar o código "semi pronto" antes. Já feito: modelagem dos dados fiscais da loja
+   (`configuracoes_fiscais_loja`) + tela em Configurações + a "casca" da integração HTTP
+   (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a função de emissão de verdade
+   (`emitirNFCe()`) — não foi possível confirmar o formato exato do corpo da requisição (CFOP/NCM/
+   ICMS por item) contra a documentação oficial do Focus NFe a partir deste ambiente
+   (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
+   homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
+   campos**.
+2. **Redefinir senha de operador esquecida** (precisaria de Edge Function com service role key) e
+   **site externo de assinatura** que cria a primeira conta de cada loja automaticamente (hoje é
+   manual, pelo painel do Supabase) — combinado que fica pra quando pensarem na versão comercial.
+3. **Logo oficial** — pegar o arquivo `.svg` real da usuária como **anexo** (não colado no chat) e
+   aplicar no lugar dos SVGs feitos à mão (ver seção 2 pras duas pendências de upload já vistas).
+4. Refinamentos possíveis no Início e demais módulos, conforme feedback da usuária.
+5. **Itens do menu de estoque de um sistema de referência (S3Auto/Comsis) ainda não avaliados** —
+   dependem de Fornecedores/multi-local, precisam de decisão da usuária antes de codar (opções +
+   recomendação, ver seção 1):
    - Pedido de Compra / Cotações de Peças por fornecedor (implica cadastro de Fornecedor)
-   - Entrada de Produtos via NFe (importação de XML de nota fiscal do fornecedor)
+   - Entrada de Produtos via NFe (importação de XML de nota fiscal do **fornecedor**, diferente do
+     "Importar por foto" que já existe — aquele é leitura de foto por IA, esse seria importação de
+     um XML estruturado de verdade)
    - Cadastro de Depósito (múltiplos locais físicos de estoque)
-   - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já implementada
-     — essa depende do módulo de Fornecedores ainda não construído)
-
-6. **Sistema de notificação de conta a vencer** — a usuária mencionou a ideia ao pedir o módulo
-   "Contas a Pagar" (ver seção 7), mas confirmou que é pra depois, não pra essa sessão. `contas_pagar`
-   já tem o campo `vencimento` pronto pra isso quando for construído. Nenhuma decisão de como
-   notificar (dentro do app ao abrir? e-mail? Windows notification?) foi tomada ainda — apresentar
-   opções antes de codar.
-7. **"Desfazer pagamento" de uma conta paga** (módulo Contas a Pagar) — hoje não existe pelo app; se
-   marcar uma conta como paga por engano, precisa corrigir direto no Supabase (ver seção 5).
+   - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
+     implementada — depende do módulo de Fornecedores ainda não construído)
+6. **Sistema de notificação de conta a vencer** — a usuária mencionou a ideia, mas confirmou que é
+   pra depois. `contas_pagar` já tem o campo `vencimento` pronto pra isso. Nenhuma decisão de como
+   notificar (dentro do app? e-mail? Windows notification?) foi tomada — apresentar opções antes
+   de codar.
+7. **"Desfazer pagamento" de uma conta paga** (módulo Contas a Pagar) — hoje não existe pelo app;
+   se marcar uma conta como paga por engano, precisa corrigir direto no Supabase.
 8. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
-   configurar o "Importar por foto" (ver seção 7), se ela pagaria pelas leituras de todas as
-   lojas que um dia usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu
-   próprio projeto Supabase, a Edge Function `ler-notas-fiscais` e o secret
-   `ANTHROPIC_API_KEY` ficam dentro do projeto de cada loja, então cada uma cria sua própria
-   conta na Anthropic e paga pelo próprio uso (mesmo modelo já aceito pro Focus NFe). **Mas isso
-   cria fricção**: pedir pra cada dono de autocenter (sem experiência técnica) criar conta na
-   Anthropic e publicar uma Edge Function é um trabalho manual chato de repetir por loja.
-   Quando a usuária estiver mais perto de vender pra outras lojas de verdade, vale reconsiderar
-   um modelo de backend central (ela paga uma conta só, cobra o uso de IA dentro da assinatura
-   do sistema) — mas isso é uma mudança de arquitetura maior, decidir com calma nessa hora, não
-   agora que só a loja dela usa o sistema.
+   configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas que um dia
+   usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio projeto
+   Supabase, a Edge Function e o secret `ANTHROPIC_API_KEY` ficam dentro do projeto de cada loja,
+   então cada uma cria sua própria conta na Anthropic e paga pelo próprio uso (mesmo modelo já
+   aceito pro Focus NFe). **Mas isso cria fricção**: pedir pra cada dono de autocenter (sem
+   experiência técnica) criar conta na Anthropic e publicar uma Edge Function é um trabalho manual
+   chato de repetir por loja. Quando a usuária estiver mais perto de vender pra outras lojas de
+   verdade, vale reconsiderar um backend central (ela paga uma conta só, cobra o uso de IA dentro
+   da assinatura do sistema) — decidir com calma nessa hora, não agora que só a loja dela usa.
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-## 9. Como rodar localmente (resumo)
+**Prioridade da próxima sessão**: em aberto — a usuária ainda não decidiu se prefere avançar na
+parte fiscal, fechar a logo oficial, ou outra coisa. Perguntar no início da sessão em vez de
+presumir.
+
+## 9. Como rodar / configurar (resumo)
 
 ```bash
+git clone https://github.com/caranovavidanova/amigao.git
+cd amigao
 npm install
 cp .env.example .env   # preencher com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave anon/publishable)
 npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
-Projeto Supabase do usuário: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo.
-URL do projeto: `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations em
-`supabase/migrations/*.sql` (0001 a 0025) — as de 0001 a 0023 já foram confirmadas rodando sem erro
-pela usuária nesse projeto (a 0015 precisou de uma correção — ver item 13 da seção 6 — antes de
-rodar limpo; a 0024 ela confirmou ter rodado nesta sessão, ver abaixo). **A migration 0025 ainda
-precisa ser rodada** — ver tutorial novo abaixo. Todas são seguras de rodar de novo (idempotentes)
-caso precise reconectar ou usar outro projeto Supabase do zero.
+Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Todas as migrations `0001` a `0027` já foram
+confirmadas rodando sem erro nesse projeto.
 
-*(O tutorial de como pegar e testar as versões dos PRs #4/#6/#8/#10/#11 — múltiplos veículos, login,
-redesenho do Início/Login, cadastro de produto completo, Serviços + redesenho da OS, migrations
-0013/0014 — foi removido daqui porque já está tudo confirmado funcionando pelo usuário, ver seção 7.
-Sessões passadas ficam registradas na seção 10.)*
+### Montar um projeto Supabase do zero (loja nova / outro computador)
 
-### Tutorial: pegar a versão nova (migrations 0015 a 0018) e rodar
+Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
+Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
+até `0027`. Todas são idempotentes.
 
-1. Feche o app se estiver aberto.
-2. No terminal, dentro da pasta `sakura-system-autocenter`:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
-   arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
-   - `supabase/migrations/0015_rls_exige_login.sql` — fecha o acesso sem login nas tabelas de
-     negócio (ver item 1 da seção 6). **Se já rodou essa antes e deu erro de "política já existe",
-     já foi corrigido — é só rodar de novo, o arquivo atual já está certo.**
-   - `supabase/migrations/0016_categorias_e_garantia.sql` — cria a tabela `categorias` e os campos
-     `categoria_id`/`prazo_garantia_dias` em `pecas` (usados pelas telas novas de Categorias e
-     Garantias).
-   - `supabase/migrations/0017_contagens_estoque.sql` — cria a tabela `contagens_estoque` (usada
-     pela aba nova "Contagem" em Estoque).
-   - `supabase/migrations/0018_configuracoes_garantia.sql` — cria a tabela `configuracoes_garantia`
-     (texto de garantia editável, usado pelos botões "Imprimir garantia"/"Baixar garantia" na aba
-     Fechamento da OS).
-4. `npm install && npm run dev`.
-5. O que testar:
-   - Tudo deve continuar funcionando **normalmente enquanto você estiver logado** (Clientes, Estoque,
-     OS, Caixa etc.) — a migration 0015 só bloqueia quem tenta acessar os dados **sem** estar logado.
-   - **Estoque → Produtos**: cadastrar/editar um produto agora tem um campo "Categoria" (crie
-     categorias em Configurações → "Categorias de produto" primeiro) e um campo "Garantia (dias)".
-   - **Estoque → Contagem** (aba nova): escolher um produto, digitar a quantidade contada e salvar —
-     confira que o saldo do produto em "Produtos" muda quando há diferença.
-   - **Estoque → Relatórios** (aba nova): confira os números de estoque físico-financeiro e os
-     filtros de saldo positivo/negativo/zerado.
-   - **Garantias** (item novo no menu lateral): só aparece depois de vender (faturar uma OS) uma
-     peça que tenha "Garantia (dias)" preenchida no cadastro.
-   - **Configurações → "Texto de garantia"**: edite o texto e salve.
-   - **Ordem de Serviço concluída/faturada → aba Fechamento**: clique em "Baixar garantia" (deve
-     baixar um `.txt`) e "Imprimir garantia" (deve abrir a caixa de impressão do Windows só com o
-     texto da garantia, não a tela inteira do app).
+Passos manuais únicos de configuração de Auth (documentados também dentro da migration
+`0007_operadores.sql`):
 
-Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+1. **Desligar a confirmação por e-mail**: Authentication → Sign In / Providers — "Enable email
+   provider" **ligado** (senão dá erro "Email logins are disabled") e "Confirm email"
+   **desligado** (senão ninguém consegue entrar depois de criado, porque os e-mails são
+   inventados e não existe caixa de entrada pra confirmar).
+2. Criar o primeiro admin manualmente (Authentication → Users → Add user) e rodar o `insert` de
+   exemplo comentado no final da migration `0007_operadores.sql`, colando o "User UID" gerado.
 
-### Tutorial: pegar a versão nova (migrations 0019 a 0021 — Funcionários, Entradas/Saídas e tipo de cliente) e rodar
+### Ativar o "Importar por foto" (leitura de nota fiscal por IA)
 
-1. Feche o app se estiver aberto.
-2. No terminal, dentro da pasta `sakura-system-autocenter`:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
-   arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
-   - `supabase/migrations/0019_funcionarios.sql` — cria a tabela `funcionarios` e move os campos
-     de técnico (na peça/serviço da OS) e vendedor/atendente (da OS) pra apontar pra ela em vez de
-     `operadores`. **Não perde nenhum dado**: a migration copia automaticamente o técnico/vendedor
-     que já estava preenchido nas OS existentes.
-   - `supabase/migrations/0020_categorias_caixa.sql` — cria a tabela `categorias_caixa` (categorias
-     de entrada/saída do Caixa) e o campo `categoria_id` em `caixa_movimentos`.
-   - `supabase/migrations/0021_clientes_tipo_pessoa.sql` — cria o campo `tipo_pessoa` em `clientes`
-     (default `fisica`, não muda nenhum cliente já cadastrado).
-4. `npm install && npm run dev`.
-5. O que testar:
-   - **Funcionários** (item novo no menu lateral): cadastre um funcionário sem marcar nada de
-     login (ex: "João, Mecânico") e confira que ele aparece na lista junto com os operadores que já
-     existiam (esses aparecem automaticamente, com a coluna "Login" preenchida).
-   - **Ordens de Serviço → Nova OS**: no seletor "Técnico" de cada peça/serviço e no "Vendedor/
-     atendente", confira que aparecem tanto os operadores quanto os funcionários novos sem login.
-   - **Configurações → "Categorias de caixa"**: cadastre uma categoria de saída (ex: "Aluguel") e
-     uma de entrada (ex: "Sucata").
-   - **Caixa Diário → aba "Saídas"**: clique em "+ Nova saída", escolha a categoria "Aluguel" e
-     salve — confira que aparece na lista da aba e não aparece misturada na aba "Diário" fora do dia
-     de hoje.
-   - **Caixa Diário → aba "Entradas"**: mesma coisa, com a categoria "Sucata".
-   - **Caixa Diário → aba "Diário"**: confira que continua mostrando tudo (OS faturadas + lançamentos
-     manuais) igual antes, sem nada quebrado.
-   - **Clientes → Novo cliente**: confira os rádios "Pessoa física"/"Pessoa jurídica" no topo do
-     formulário — ao trocar para jurídica, os campos "Nome completo"/"CPF" viram "Razão social"/"CNPJ".
+Não depende de migration — depende de publicar uma **Edge Function** no Supabase e configurar uma
+chave de API. Feito pelo painel do Supabase, sem instalar nada no computador:
 
-Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+1. **Criar uma chave de API na Anthropic**: `console.anthropic.com` → conta própria (ela mesma
+   paga o próprio uso — pra essa leitura, fica em torno de 1 a 3 centavos por peça lida) →
+   Settings → API Keys → Create Key (copia a chave, começa com `sk-ant-...`).
+2. **Publicar a função no Supabase**: painel do projeto → **Edge Functions** → **"Deploy a new
+   function"** → **"Via Editor"** (não "Via CLI" nem "Via AI Assistant") → digitar o nome
+   `ler-notas-fiscais` **no campo "Function name" antes de clicar em Deploy** (renomear depois
+   **não** muda o endereço real — ver pegadinha abaixo) → apagar o código de exemplo que vem no
+   editor e colar todo o conteúdo de `supabase/functions/ler-notas-fiscais/index.ts` → **Deploy
+   function**.
+3. **Configurar o secret**: na função criada, aba **Secrets** (ou Project Settings → Edge
+   Functions → "Add new secret") → nome `ANTHROPIC_API_KEY`, valor a chave do passo 1.
+4. Testar: **Estoque → Produtos → "📷 Importar por foto"**.
 
-### Tutorial: pegar a versão nova (migrations 0022 e 0023 — RH completo de Funcionários e Notas Fiscais) e rodar
+**Pegadinha real encontrada configurando isso**: o campo "Name" da tela de configuração da função
+**é só um apelido visual** — o aviso "Your slug and endpoint URL will remain the same" avisa que
+renomear ali **não muda o endereço real** da função. Se deployar com um nome de exemplo (ex:
+`smooth-api`) e só depois tentar renomear pra `ler-notas-fiscais`, a função fica com endereço
+`smooth-api` mas nome de exibição `ler-notas-fiscais` — descasado do que o app chama via
+`supabase.functions.invoke("ler-notas-fiscais", ...)`. **Correção**: apagar e recriar do zero,
+digitando o nome certo **antes** do Deploy. Se acontecer de novo criando outra Edge Function,
+conferir se o endereço nos exemplos de `curl`/CLI da tela de configurações bate com o nome
+esperado, não confiar só no campo "Name".
 
-1. Feche o app se estiver aberto.
-2. No terminal, dentro da pasta `sakura-system-autocenter`:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada
-   arquivo no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
-   - `supabase/migrations/0022_funcionarios_dados_completos.sql` — amplia a tabela `funcionarios`
-     (documentos, endereço, contato, cargo/admissão, família) e cria `funcionario_filhos`.
-   - `supabase/migrations/0023_notas_fiscais_xml.sql` — cria o bucket de arquivos `notas-fiscais`
-     (Supabase Storage) e a tabela `notas_fiscais_arquivos`. **Primeira migration do projeto que
-     mexe em Storage, não só em tabelas** — se der algum erro incomum (ex: "bucket already exists"
-     é normal e inofensivo, a migration é idempotente), me manda o print que eu ajudo.
-4. `npm install && npm run dev`.
-5. O que testar:
-   - **Funcionários → Editar um funcionário existente**: confira as duas abas novas do formulário —
-     "Dados gerais" (documentos, CNH, endereço, contato, cargo e admissão) e "Família" (filiação,
-     cônjuge, e a lista de filhos com "+ Adicionar filho(a)"). Preencha alguns campos, salve, edite
-     de novo e confirme que os dados voltam certinho.
-   - **Notas Fiscais** (item novo no menu lateral): clique em "+ Enviar XML" na aba "NFe", escolha
-     qualquer arquivo (pode ser um `.xml` de teste, ou até outro tipo de arquivo pra testar o botão),
-     escolha o mês e, opcionalmente, uma Ordem de Serviço — salve e confira que o arquivo aparece
-     agrupado no mês certo. Teste "Baixar" (deve baixar o arquivo de volta) e "Excluir". Repita na
-     aba "NFS-e".
-   - Confira que todo o resto continua funcionando normalmente (nada nas outras telas deveria ter
-     mudado, fora o ícone de casinha no botão "voltar" das telas de lista, no lugar da seta antiga).
+### Gerar o instalador Windows e publicar uma versão nova
 
-Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
+Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar — os apps já
+instalados se atualizam sozinhos quando sai uma versão nova.
 
-### Tutorial: pegar a versão nova (migration 0025 — Contas a Pagar) e rodar
+**Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/amigao` → Settings →
+Secrets and variables → Actions → criar `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; e Settings
+→ Actions → General → "Workflow permissions" → "Read and write permissions".
 
-A migration 0024 (dados fiscais da loja) **já foi rodada** pela usuária nesta sessão — só falta a
-0025.
+**Toda vez que quiser publicar uma versão nova**:
 
-1. Feche o app se estiver aberto.
-2. No terminal, dentro da pasta `sakura-system-autocenter`:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-3. **Rode a migration nova no Supabase** (SQL Editor do Supabase — abra o arquivo no VS Code, copie
-   todo o conteúdo, cole numa "New query" e clique em "Run"):
-   - `supabase/migrations/0025_contas_pagar.sql` — cria a tabela `contas_pagar`.
-4. `npm install && npm run dev`.
-5. O que testar:
-   - **Configurações → "Dados fiscais da loja"** (se ainda não testou): preencher CNPJ, razão
-     social, endereço etc. e salvar.
-   - **Contas a Pagar** (item novo no menu lateral): cadastre uma conta recorrente (ex: "Aluguel",
-     valor, vencimento, marcar "recorrente") e clique em "Marcar como paga" — confira que aparece uma
-     Saída em Caixa Diário → aba "Saídas" e que uma nova conta pendente aparece automaticamente com
-     vencimento um mês depois.
-   - **Notas Fiscais**: em qualquer arquivo já enviado, clique em "Versão para o cliente" — deve
-     abrir um preview em HTML com os dados da nota; teste "Baixar HTML" e "Imprimir".
-   - **Ordem de Serviço concluída/faturada → aba Fechamento**: clique em "Ver garantia" — o documento
-     deve vir com cabeçalho da loja, dados do cliente/veículo, tabela de itens e assinaturas (layout
-     novo, parecido com o papel da Pneus Amigão). Teste "Baixar HTML" e "Imprimir".
-
-Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
-
-### Tutorial: pegar a versão nova (migrations 0026 e 0027 — Cartões do Início e tipo de veículo) e rodar
-
-1. Feche o app se estiver aberto.
-2. No terminal, dentro da pasta `sakura-system-autocenter`:
-   ```powershell
-   git checkout main
-   git pull origin main
-   ```
-3. **Rode as migrations novas no Supabase, nessa ordem** (SQL Editor do Supabase — abra cada arquivo
-   no VS Code, copie todo o conteúdo, cole numa "New query" e clique em "Run"):
-   - `supabase/migrations/0026_configuracoes_painel_inicio.sql` — cria a tabela
-     `configuracoes_painel_inicio`.
-   - `supabase/migrations/0027_veiculos_tipo.sql` — cria o campo `tipo` em `veiculos`.
-4. `npm install && npm run dev`.
-5. O que testar:
-   - **Menu lateral**: o item que era "Relatórios" agora aparece como "Relações".
-   - **Relações**: confira o gráfico de barras "Vendas x Custos x Lucro" (alterne entre
-     Diário/Semanal/Mensal) e o gráfico de radar logo abaixo ("Comparativo do período"). Passe o
-     mouse sobre uma barra ou um ponto do radar pra ver o valor exato.
-   - **Configurações → "Cartões do Início"**: escolha indicadores diferentes pros 3 cartões (ex:
-     troque "Lucro mês" por "Custos mês") e salve — confira que a tela Início reflete a escolha.
-   - **Início**: confira o calendário do mês — se você tiver alguma conta a pagar pendente com
-     vencimento nesse mês, deve aparecer uma bolinha laranja (ainda não venceu) ou vermelha (já
-     venceu) no dia certo, com o nome da conta na lista abaixo do calendário. Os 3 cartões do topo
-     não devem ter mais gráfico, só o valor grande com uma seta `›` no canto.
-   - **Clientes → Novo cliente → dentro do bloco de um veículo**: escolha um "Tipo" (Hatch, Sedã,
-     SUV, Picape ou Moto) e preencha uma "Cor" (ex: Prata, Vermelho, Azul, Preto, Branco — nomes
-     comuns em português funcionam melhor; cor não reconhecida cai num cinza neutro).
-   - **Início → "Veículos no pátio"**: abra uma Ordem de Serviço nova (ou deixe uma já aberta/em
-     andamento) vinculada a um veículo com tipo/cor preenchidos — o ícone do carro/moto deve aparecer
-     nessa seção, pintado com a cor cadastrada.
-   - **Barra de rolagem**: em qualquer tela com scroll (ex: o próprio formulário de Cliente), confira
-     que a barra é fina e discreta, na paleta do app — não mais a barra grossa cinza do Windows.
-
-Se der algum erro, me manda o print do DevTools que eu ajudo a resolver.
-
-### Tutorial: ativar o "Importar por foto" (leitura de nota fiscal por IA)
-
-Diferente das outras funcionalidades, essa não depende de rodar uma migration — depende de
-publicar uma **Edge Function** no Supabase (a primeira do projeto) e configurar uma chave de
-API. São dois passos únicos, feitos pelo painel do Supabase (não precisa instalar nada no
-computador):
-
-1. **Criar uma chave de API na Anthropic** (empresa do Claude): entre em
-   `console.anthropic.com`, crie uma conta se ainda não tiver, vá em "Settings" → "API Keys" →
-   "Create Key", e copie a chave gerada (começa com `sk-ant-...`). Essa conta é sua/da loja —
-   você mesma acompanha o gasto lá (pra essa leitura de nota, deve ficar em torno de 1 a 3
-   centavos por peça lida, bem barato pro volume que você usa).
-2. **Publicar a função no Supabase**: no painel do seu projeto Supabase, vá em **Edge
-   Functions** → **"Deploy a new function"** (ou "Create a new function") → dê o nome
-   `ler-notas-fiscais` → cole todo o conteúdo do arquivo
-   `supabase/functions/ler-notas-fiscais/index.ts` (abra no VS Code, copie tudo) → clique em
-   **Deploy**.
-3. **Configurar o secret**: ainda em Edge Functions (geralmente uma aba "Secrets" da função, ou
-   em Project Settings → Edge Functions → "Add new secret") crie um secret chamado
-   `ANTHROPIC_API_KEY` com o valor sendo a chave que você copiou no passo 1.
-4. `git checkout main && git pull origin main && npm install && npm run dev`.
-5. O que testar: **Estoque → Produtos → "📷 Importar por foto"** — escolha uma ou mais fotos de
-   nota fiscal (pode ser mais de uma nota na mesma leitura, do jeito que você já faz no Gemini),
-   clique em "Ler fotos", confira a tabela de produtos identificados (dá pra editar qualquer
-   campo antes de salvar, e desmarcar o que não quiser importar), e clique em "Cadastrar N
-   produtos".
-
-Se der erro na leitura (ex: "ANTHROPIC_API_KEY não configurada"), confira se o secret do passo 3
-foi salvo certinho. Qualquer outro erro, me manda o print do DevTools que eu ajudo a resolver.
-
-### Tutorial: gerar o instalador Windows e publicar uma versão (pra usar na borracharia)
-
-Configurado nesta sessão: builda automaticamente no GitHub (não precisa instalar nada extra no seu
-PC) e publica o instalador `.exe` pronto pra baixar — os apps já instalados em cada loja se atualizam
-sozinhos quando sai uma versão nova.
-
-**Passo único (só na primeira vez, configuração do repositório no site do GitHub):**
-
-1. Em `github.com/caranovavidanova/amigao` → **Settings** → **Secrets and variables** → **Actions** →
-   botão **"New repository secret"** — criar duas:
-   - Nome `VITE_SUPABASE_URL`, valor `https://rlgdjiowvnfzsedehyga.supabase.co`
-   - Nome `VITE_SUPABASE_ANON_KEY`, valor a chave anon/publishable do Supabase (a mesma do seu `.env`)
-2. Ainda em **Settings** → **Actions** → **General** → seção **"Workflow permissions"** → marcar
-   **"Read and write permissions"** → **Save**.
-
-**Toda vez que quiser publicar uma versão nova** (inclusive a primeira, pra já ter um instalador pra
-levar pro PC da borracharia):
-
-1. **Peça pra mim (Claude) atualizar o campo `"version"` do `package.json`** pro número da versão
-   nova primeiro, numa mensagem separada — ex: "atualiza a versão pra 0.1.2 e publica". Isso é
-   importante: o nome da release no GitHub vem desse campo, **não** da tag do Git — se esquecer
-   desse passo, o `electron-builder` continua achando que está construindo a versão anterior e
-   atualiza a release errada em vez de criar uma nova (foi exatamente isso que aconteceu tentando a
-   v0.1.1 nesta sessão — ver bug documentado abaixo).
+1. Peça pra eu atualizar o campo `"version"` do `package.json` pro número novo primeiro, numa
+   mensagem separada — ex: "atualiza a versão pra 0.1.4 e publica". **Importante**: o nome da
+   release no GitHub vem desse campo, **não** da tag do Git — sem esse passo, o `electron-builder`
+   atualiza a release errada em vez de criar uma nova.
 2. Depois que eu confirmar que atualizei e mergeei, no terminal:
    ```powershell
    git checkout main
    git pull origin main
-   git tag v0.1.2
-   git push origin v0.1.2
+   git tag v0.1.4
+   git push origin v0.1.4
    ```
-   (o número da tag precisa ser **exatamente igual** ao que ficou em `"version"` no `package.json`.)
+   (o número da tag precisa ser **exatamente igual** ao `"version"` do `package.json`.)
 
-Isso dispara o build automaticamente no GitHub — demora uns 5 a 10 minutos. Quando terminar, o
-instalador aparece em `github.com/caranovavidanova/amigao/releases` — baixe o arquivo `.exe` de lá e
-rode no PC da borracharia (o Windows/SmartScreen deve avisar "editor desconhecido"; é normal sem
-certificado de assinatura pago — clique em "Mais informações" → "Executar assim mesmo"). Da próxima
-vez que você publicar uma tag nova, esse mesmo PC vai se atualizar sozinho, sem precisar reinstalar.
+Isso dispara o build automaticamente no GitHub — demora uns 5 a 10 minutos. O instalador aparece
+em `github.com/caranovavidanova/amigao/releases`. O Windows/SmartScreen deve avisar "editor
+desconhecido" (normal sem certificado pago — "Mais informações → Executar assim mesmo"). PCs já
+atualizados se atualizam sozinhos na próxima tag.
 
-**🐛 Achado e corrigido testando a v0.1.0 de verdade nesta sessão**: por padrão o `electron-builder`
-publica a release do GitHub como **rascunho (Draft)** — ela builda certinho, mas fica invisível/
-indisponível até alguém clicar manualmente em "Publish release" no site do GitHub. Isso quebraria a
-atualização automática (o `electron-updater` só enxerga releases publicadas, não rascunhos).
-**Corrigido** adicionando `"releaseType": "release"` na configuração `publish` do `package.json` — a
-partir da tag seguinte (a v0.1.0 precisou ser publicada manualmente essa vez só), as próximas já saem
-publicadas direto, sem esse passo manual.
-
-**🐛 Segundo bug achado testando a v0.1.1 nesta mesma sessão**: publicar uma tag `v0.1.1` sem antes
-atualizar o campo `"version"` do `package.json` (que continuava `"0.1.0"`) fez o `electron-builder`
-**atualizar a release "0.1.0" já existente** (trocando os arquivos internamente) em vez de criar uma
-release "0.1.1" nova — porque o nome da release que ele publica no GitHub vem do `"version"` do
-`package.json`, não da tag do Git que disparou o build. Isso confundiu bastante o processo (a tag
-`v0.1.1` existia e apontava pro commit certo, mas nenhuma release "0.1.1" aparecia). **Regra daqui pra
-frente**: sempre atualizar `"version"` no `package.json` pro mesmo número da tag **antes** de publicar
-— documentado no tutorial acima como passo 1.
+**Duas pegadinhas já corrigidas** (não devem mais acontecer, mas documentado caso reapareçam): (a)
+por padrão o `electron-builder` publica a release como rascunho invisível — corrigido com
+`"releaseType": "release"` no `publish` do `package.json`; (b) publicar uma tag sem antes
+atualizar `"version"` no `package.json` faz o build atualizar a release **anterior** em vez de
+criar uma nova (o nome da release vem do `package.json`, não da tag) — por isso o passo 1 acima é
+sempre antes da tag, nunca depois.
 
 ## 10. Estado do Git
 
-- Repositório: `caranovavidanova/amigao` (era um projeto antigo chamado "Pneus Amigão" em Next.js —
-  foi **completamente substituído** a pedido explícito do usuário; ver commit `853a8cc`).
-- **`main` agora É o Sakura System** — nesta sessão, a branch `claude/sakura-autocenter-status-m6sio5`
-  (histórico completo do Sakura System + fix do `AGENTS.md` + este arquivo atualizado) foi mergeada
-  em `main` a pedido do usuário, especificamente para permitir clonar o projeto em outro computador
-  (ex: PC do trabalho) sem precisar trocar de branch — um `git clone` simples já traz a versão
-  certa. O PR [#2](https://github.com/caranovavidanova/amigao/pull/2) (`qjzqab` → `main`) foi
-  fechado por já estar contido nesse merge.
-- Branches antigas que **não** precisam mais ser usadas (mantidas só por histórico, seguro ignorar
-  ou apagar): `claude/sakura-system-autocenter-qjzqab`, `claude/sakura-system-autocenter-cyfuwh`,
-  `claude/software-visual-identity-cjr8f6` (essa mantinha a marca "Pneus Amigão", PR #1 fechado sem
-  merge).
-- **Sessões futuras**: pode trabalhar direto a partir de `main` — não é mais necessário conferir
-  divergência entre branches antes de começar.
-- `package.json` ainda em `"version": "0.1.0"`, sem tags Git de release.
-- PR [#4](https://github.com/caranovavidanova/amigao/pull/4) (múltiplos veículos + fix de rolagem +
-  Estoque como categoria única, ver seção 7) foi mergeado em `main` nesta sessão, a pedido explícito
-  do usuário ("pode deixar pra por na main quando terminar a categoria do estoque") — autorização
-  dada *antes* de o usuário rodar essas mudanças na máquina dele. Ele ainda não confirmou rodando de
-  verdade; se aparecer algum problema ao testar, é código já em `main`, não numa branch separada.
-- PR [#6](https://github.com/caranovavidanova/amigao/pull/6) (login com usuário/senha + permissões
-  por operador, ver seção 7) foi mergeado em `main` nesta sessão, **depois** de o usuário testar de
-  verdade com o Supabase dele (criar admin, logar, cadastrar operador limitado, conferir sidebar
-  filtrada, confirmar que reabrir o app pede login de novo) e pedir explicitamente pra abrir e
-  mergear o PR.
-- PR [#8](https://github.com/caranovavidanova/amigao/pull/8) (`claude/sakura-autocenter-status-4pek1l`
-  → `main`): redesenho do Início (cartões de tendência + calendário), do Login (vidro fosco + fundo
-  floral) e cadastro de produto completo (campos novos + margem automática), ver seção 7. **Mergeado
-  em `main` nesta sessão, a pedido explícito do usuário** ("faz tudinho na main"), *antes* de o
-  usuário rodar essas mudanças com o Supabase dele — inclui duas migrations (0009 e 0010) que ainda
-  precisam ser rodadas manualmente no Supabase, ver o tutorial na seção 9. Se aparecer algum
-  problema ao testar, é código já em `main`, não numa branch separada.
-- PR [#10](https://github.com/caranovavidanova/amigao/pull/10) (`claude/new-session-mufqk9` → `main`):
-  módulo Serviços + redesenho da tela de Ordem de Serviço, ver seção 7. **Mergeado nesta sessão**,
-  depois de o usuário rodar as migrations 0011/0012 e testar de verdade.
-- **Mudança de fluxo a partir daqui** (ver decisão na seção 3): o usuário pediu pra, enquanto não
-  existir uma v1.0 publicada, sempre mergear direto em `main` sem deixar PR aberto esperando
-  aprovação. O commit dos ajustes seguintes (checklist removido, técnico por item, faturamento com
-  parcelas calculadas, config de juros — migration 0013, ver seção 7) foi **mergeado direto em `main`
-  nesta mesma sessão**, sem passar por PR. Se precisar achar esse commit específico depois, procurar
-  por "técnico" ou "parcelas" no `git log` de `main`.
-- PR [#11](https://github.com/caranovavidanova/amigao/pull/11) (`claude/caranovavidanova-amigao-kad1fu`
-  → `main`): card "Prazos" removido, nota fiscal + garantia movidos pra aba "Fechamento", migration
-  0014 — ver seção 7. Desenvolvida numa branch nomeada (este ambiente de sessão exige um branch antes
-  do merge, diferente das sessões anteriores que commitavam direto em `main`) e **mergeada nesta mesma
-  sessão**, seguindo a decisão da seção 3 de não deixar PR esperando aprovação manual. Confirmada pelo
-  usuário rodando de verdade (migration 0014 executada no Supabase).
-- **A partir daqui, sessões neste ambiente devem seguir o mesmo padrão**: criar/reusar a branch
-  `claude/caranovavidanova-amigao-kad1fu`, commitar, abrir PR e mergear direto — sem deixar PR
-  esperando aprovação manual (mesma decisão da seção 3), só que passando por PR em vez de commit
-  direto em `main` (restrição do orquestrador desta sessão, não uma mudança de decisão do usuário).
-- **Sessão longa nesta mesma branch, PRs #12 a #20** (todos mergeados nesta sessão, mesmo padrão de
-  branch → PR → merge direto, ver seção 7 pro detalhe de cada um): RLS exigindo login (migration 0015,
-  PR #13), redesenho "glassmorphism" do app inteiro (PR #14), empacotamento do instalador Windows +
-  atualização automática configurados (PR #15), correção de release ficando como rascunho (PR #16),
-  correção de logo/imagens quebradas no instalador de verdade — caminho relativo (PR #17), correção de
-  `"version"` do `package.json` fora de sincronia com a tag publicada (PR #18), correção de texto
-  invisível em modo escuro do Windows + exclusão de cliente silenciosa (PR #19), botão "voltar" em
-  vidro em todas as telas/formulários (PR #20). **v0.1.1 foi a única versão do instalador publicada e
-  testada de verdade pela usuária até agora** — os PRs #19 e #20 (correções + botão voltar) ainda não
-  viraram uma versão nova de propósito, a pedido dela antes de trocar de sessão (ver seção 8.1).
-- PR [#22](https://github.com/caranovavidanova/amigao/pull/22) (`claude/project-context-pk6m3h` →
-  `main`): Categorias de produto, Relatórios de estoque, Garantias e Contagem/Inventário físico —
-  4 itens do menu de Estoque do sistema de referência escolhidos pelo usuário nesta sessão, ver
-  seção 7. Migrations 0016 e 0017. Mergeado nesta mesma sessão.
-- PR [#23](https://github.com/caranovavidanova/amigao/pull/23): atualização de documentação
-  (PROJETO_STATUS.md) referente ao PR #22.
-- PR [#24](https://github.com/caranovavidanova/amigao/pull/24): correção da migration 0015 não
-  idempotente — achado pela usuária rodando de verdade (erro "política já existe" ao repetir a
-  execução), ver item 13 da seção 6.
-- PR [#25](https://github.com/caranovavidanova/amigao/pull/25): documentação — registra as 3
-  respostas fiscais/garantia da usuária (seção 8.1) e a confirmação de que a 0015 corrigida rodou
-  sem erro.
-- PR [#26](https://github.com/caranovavidanova/amigao/pull/26): `"version"` do `package.json` subiu
-  pra `0.1.2` + `CHANGELOG.md` atualizado, a pedido da usuária pra publicar o próximo instalador.
-- PR [#27](https://github.com/caranovavidanova/amigao/pull/27): texto de garantia configurável
-  (migration 0018, `TextoGarantiaSection.tsx`, botões "Imprimir/Baixar garantia" na aba Fechamento
-  da OS deixaram de ser placeholder) — ver seção 7. Mergeado nesta mesma sessão, ainda sem
-  confirmação da usuária rodando com Supabase real (migrations 0016/0017/0018 pendentes de rodar —
-  ver tutorial na seção 9).
-- PR [#28](https://github.com/caranovavidanova/amigao/pull/28): preview antes de emitir NFe/NFS-e
-  ou baixar/imprimir garantia (`Modal.tsx` novo, `FechamentoTab.tsx`) — ver seção 7. Mergeado nesta
-  mesma sessão, sem mudança de schema.
-- PR [#29](https://github.com/caranovavidanova/amigao/pull/29): documentação — corrige o registro
-  incorreto de que a tag `v0.1.2` já tinha sido publicada (na real, o `git push` da tag deu 403).
-- PR [#30](https://github.com/caranovavidanova/amigao/pull/30) (nova sessão, branch
-  `claude/project-context-dmiarx`): módulo Funcionários + abas Entradas/Saídas do Caixa (migrations
-  0019/0020) — ver seção 7.
-- PR [#31](https://github.com/caranovavidanova/amigao/pull/31): tipo de pessoa (física/jurídica) no
-  cadastro de Cliente (migration 0021) — ver seção 7.
-- PR [#32](https://github.com/caranovavidanova/amigao/pull/32): cadastro de Funcionário ampliado
-  (RH completo — documentos, endereço, cargo/admissão, família — migration 0022) + ícone de casinha
-  no botão voltar das telas de lista — ver seção 7.
-- PR [#33](https://github.com/caranovavidanova/amigao/pull/33): módulo Notas Fiscais, arquivos XML
-  de NFe/NFS-e organizados por mês (migration 0023, primeiro uso de Supabase Storage no projeto) —
-  ver seção 7.
-- PR [#34](https://github.com/caranovavidanova/amigao/pull/34): documentação — atualiza o
-  `PROJETO_STATUS.md` com os PRs #32 e #33.
-- PR [#35](https://github.com/caranovavidanova/amigao/pull/35): ícone da flor (favicon + ícone do
-  instalador) redesenhado — ver seção 2 e seção 7.
-- PR [#36](https://github.com/caranovavidanova/amigao/pull/36): versão `0.1.3` +
-  `CHANGELOG.md` fechado — ver seção 7.
-- **A partir do PR #30, a branch de trabalho deste ambiente passou a ser
-  `claude/project-context-dmiarx`** (a antiga `claude/caranovavidanova-amigao-kad1fu`, usada nos PRs
-  #12 a #28, não precisa mais ser reutilizada — mesmo padrão de sempre, branch → PR → merge direto
-  sem esperar aprovação manual, ver seção 3).
-- **✅ Tag `v0.1.3` publicada pela usuária e instalador baixado com sucesso** — ela rodou os
-  comandos (`git tag v0.1.3 && git push origin v0.1.3`) e confirmou que o build do GitHub Actions
-  gerou o instalador certinho e que já baixou na própria máquina dela (ainda não levou pra
-  borracharia, ver seção 1). **Ainda não confirmado**: se ela já abriu o instalador e testou o app
-  rodando de verdade (login, telas, o ícone novo aparecendo) — só confirmou que o download/instalador
-  em si funcionou. Perguntar/confirmar isso antes de marcar qualquer item da seção 7 como "testado
-  rodando de verdade" só com base nisso.
-- **Nova sessão (2026-07-29, continuação), mesma branch `claude/ssace-context-ruolmh`** (branch
-  designada pelo orquestrador desta sessão — diferente de `claude/project-context-dmiarx` usada nos
-  PRs #30 a #38; mesmo padrão de sempre, branch → PR → merge direto sem esperar aprovação manual, ver
-  seção 3):
-  - PR [#39](https://github.com/caranovavidanova/amigao/pull/39): dados fiscais da loja
-    (`configuracoes_fiscais_loja`, migration 0024) + casca da integração Focus NFe (`lib/focusNfe.ts`)
-    — ver seção 7.
-  - PR [#40](https://github.com/caranovavidanova/amigao/pull/40): recibo visual (HTML) pros XMLs de
-    nota fiscal, botão "Versão para o cliente" — ver seção 7.
-  - PR [#41](https://github.com/caranovavidanova/amigao/pull/41): garantia da OS redesenhada num
-    layout estruturado (HTML), inspirada no modelo de papel que a usuária já usa na Pneus Amigão —
-    ver seção 7.
-  - PR [#42](https://github.com/caranovavidanova/amigao/pull/42): módulo novo "Contas a Pagar"
-    (migration 0025) — ver seção 7.
-  - **Confirmado pela usuária nesta sessão**: migration 0024 rodada com sucesso no Supabase dela.
-- PR [#44](https://github.com/caranovavidanova/amigao/pull/44) (branch `claude/ssace-3y3p8y`):
-  reorganização da tela de Configurações (seções recolhíveis + "Operadores" em bloco próprio) — ver
-  seção 7. Mergeado nesta mesma sessão, sem mudança de schema.
-- PR [#46](https://github.com/caranovavidanova/amigao/pull/46): "Relatórios" virou "Relações" com
-  gráficos de barras/radar, cartões do Início personalizáveis (migration 0026) — ver seção 7.
-  Mergeado nesta mesma sessão.
-- PR [#47](https://github.com/caranovavidanova/amigao/pull/47): tipo de veículo + ícone por
-  carroceria (migration 0027), seção "Veículos no pátio" no Início, cartões do Início sem sparkline,
-  scrollbar customizada e passe de contraste (`sakura-muted`) — ver seção 2 e 7. Mergeado nesta mesma
-  sessão.
-- PR [#49](https://github.com/caranovavidanova/amigao/pull/49): barra de rolagem 100% customizada
-  (`AreaRolavel.tsx`, substitui de vez a tentativa só-CSS do PR #47 que a usuária achou que ainda
-  parecia nativa) + accent-color em checkbox/rádio + cor do ícone de calendário — ver seção 2.
-  Mergeado nesta mesma sessão, sem mudança de schema.
-- **Nova sessão (2026-07-29, continuação), branch `claude/1-0-quase-pronta-fcqe6d`** (branch
-  designada pelo orquestrador desta sessão — diferente de `claude/ssace-3y3p8y` usada no PR #49;
-  mesmo padrão de sempre, branch → PR → merge direto sem esperar aprovação manual, ver seção 3):
-  - PR [#50](https://github.com/caranovavidanova/amigao/pull/50): corrige a barra de rolagem
-    aparecendo duplicada (nativa + customizada sobrepostas) e cortada no topo — ver item 14 da
-    seção 6. Mergeado nesta mesma sessão, sem mudança de schema.
+- Repositório: `caranovavidanova/amigao` (era um projeto antigo "Pneus Amigão" em Next.js,
+  completamente substituído). `main` é o Sakura System — um `git clone` simples já traz a versão
+  certa, não precisa trocar de branch.
+- **Fluxo de trabalho** (ver decisão na seção 3): cada sessão cria/reusa uma branch de trabalho
+  designada pelo ambiente, commita, abre PR contra `main` e **já mergeia direto**, sem esperar
+  aprovação manual — enquanto não existir uma v1.0 publicada. O histórico completo de PRs
+  (descrição, o que mudou, quando foi confirmado) já fica registrado no próprio GitHub — não
+  precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
+  está na seção 7.
+- **Branch de trabalho atual desta sessão**: `claude/1-0-quase-pronta-fcqe6d`.
+- `package.json` em `"version": "0.1.3"` — tag `v0.1.3` publicada e instalador baixado pela
+  usuária, mas **sem confirmação de ter rodado/testado o instalador de verdade** (só o
+  download/build funcionou). Bastante coisa foi implementada depois dessa tag sem nova versão
+  publicada ainda (ver aviso no fim da seção 7).
 
-## 11. Ambiente local do usuário (Windows) — pasta reorganizada e limpa nesta sessão
+## 11. Trabalhando de outro computador
 
-O usuário tinha (no Windows, em `Desktop`) uma pasta `amigao` (clone antigo do "Pneus Amigão",
-branch `main`, com `.git` próprio) contendo **dentro dela** uma segunda pasta também chamada
-`amigao` (clone separado, com o Sakura System de verdade). Isso causava confusão de qual `.env`
-editar (mesmo problema já registrado na dica de suporte da seção 7). **Totalmente resolvido nesta
-sessão** — não precisa repetir esse processo em sessões futuras:
-
-- A pasta interna (com o Sakura System) foi renomeada para `sakura-system-autocenter` e movida pra
-  `C:\Users\usuario\Desktop\sakura-system-autocenter` — **essa é a pasta certa a partir de agora**,
-  com `.env` configurado e funcionando (testado pelo usuário, Painel de Controle mostrando dados
-  reais).
-- A pasta antiga (clone do `main` desatualizado) foi renomeada para `amigao_ANTIGO_apagar` como
-  backup, confirmado que não tinha nenhuma alteração não salva (`git status` limpo, tudo já no
-  GitHub) e **já foi excluída pelo usuário**.
-- **Achado à parte, já corrigido**: o `.env.local` da pasta antiga tinha credenciais de um projeto
-  Supabase totalmente diferente (`nahbbhewpqmedzorhtgo`, prefixo `NEXT_PUBLIC_`, resquício do
-  Next.js antigo) e uma `GEMINI_API_KEY`. Nunca foi commitado (está no `.gitignore`), mas ficou
-  exposto no chat desta sessão — **o usuário já rotacionou essa chave do Gemini**, não precisa
-  avisar de novo.
-
-## 12. Trabalhando de outro computador
-
-O código (tudo que está commitado e no GitHub) e o banco de dados (Supabase) já são 100% na nuvem —
-dá pra continuar em qualquer computador com internet. Dois passos manuais em cada computador novo,
-porque nunca ficam salvos no Git (por segurança):
+O código (tudo commitado no GitHub) e o banco de dados (Supabase) já são 100% na nuvem — dá pra
+continuar em qualquer computador com internet. Dois passos manuais em cada computador novo, porque
+nunca ficam salvos no Git (por segurança):
 
 ```bash
 git clone https://github.com/caranovavidanova/amigao.git

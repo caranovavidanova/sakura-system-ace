@@ -3,6 +3,7 @@ import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { listarCategoriasServico } from "@/lib/categoriasServico";
 import { mensagemDeErro } from "@/lib/errors";
 import {
+  atualizarServico,
   atualizarStatusServico,
   criarServico,
   excluirServico,
@@ -24,6 +25,7 @@ export function ServicosPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [servicoEditando, setServicoEditando] = useState<Servico | null>(null);
 
   async function carregar() {
     if (!isSupabaseConfigured) {
@@ -54,6 +56,12 @@ export function ServicosPage() {
   async function handleSalvar(servico: NovoServico) {
     await criarServico(servico);
     setMostrarFormulario(false);
+    await carregar();
+  }
+
+  async function handleSalvarEdicao(id: string, servico: NovoServico) {
+    await atualizarServico(id, servico);
+    setServicoEditando(null);
     await carregar();
   }
 
@@ -92,7 +100,7 @@ export function ServicosPage() {
             </p>
           </div>
         </div>
-        {!mostrarFormulario && (
+        {!mostrarFormulario && !servicoEditando && (
           <button
             onClick={() => setMostrarFormulario(true)}
             className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
@@ -118,6 +126,16 @@ export function ServicosPage() {
         />
       )}
 
+      {servicoEditando && (
+        <ServicoForm
+          categorias={categorias}
+          servicoExistente={servicoEditando}
+          onSalvar={handleSalvar}
+          onSalvarEdicao={handleSalvarEdicao}
+          onCancelar={() => setServicoEditando(null)}
+        />
+      )}
+
       {erro && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           {erro}
@@ -139,6 +157,7 @@ export function ServicosPage() {
                 <th className="px-4 py-3 font-medium">Categoria</th>
                 <th className="px-4 py-3 font-medium">Código</th>
                 <th className="px-4 py-3 font-medium">Preço padrão</th>
+                <th className="px-4 py-3 font-medium">Custo</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -152,6 +171,7 @@ export function ServicosPage() {
                   </td>
                   <td className="px-4 py-3">{servico.codigo_interno || "—"}</td>
                   <td className="px-4 py-3">{formatarPreco(servico.preco_padrao)}</td>
+                  <td className="px-4 py-3">{formatarPreco(servico.custo)}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -165,6 +185,12 @@ export function ServicosPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => setServicoEditando(servico)}
+                        className="text-xs font-medium text-sakura-purple hover:underline"
+                      >
+                        Editar
+                      </button>
                       <button
                         onClick={() => handleAlternarStatus(servico)}
                         className="text-xs font-medium text-sakura-purple hover:underline"

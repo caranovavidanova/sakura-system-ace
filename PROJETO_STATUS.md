@@ -1172,8 +1172,8 @@ customizada visível ao rolar o formulário de Cliente — tudo sem erro no cons
   0026 (ainda não rodada pela usuária) já foi ajustada com esse novo padrão antes de publicar.
 - Scrollbar e contraste: ver detalhe técnico completo na seção 2 (Identidade visual).
 
-**⏳ Implementado nesta sessão (importar produto por foto da nota fiscal, com IA), ainda sem
-confirmação da usuária rodando de verdade** — pedido direto da usuária: hoje ela tira foto da
+**✅ Confirmado pela usuária nesta sessão, rodando de verdade (importar produto por foto da nota
+fiscal, com IA)** — pedido direto da usuária: hoje ela tira foto da
 nota fiscal, manda pro Gemini pedir os tributos prováveis (NCM/CFOP/CST-CSOSN/ICMS/CEST) e digita
 tudo na mão; ela queria isso automatizado dentro do próprio sistema, com um botão na tela de
 cadastro de peça. Antes de codar, apresentei 2 decisões estruturais com opções + recomendação (ver
@@ -1203,16 +1203,22 @@ bem):
   vez de `ajuste`, já que veio de uma nota fiscal de verdade, não de um ajuste manual).
 - **Sem tabela nova nem migration** — o resultado da leitura só passa pela tela de revisão em
   memória; o que fica salvo de fato é só em `pecas`/`estoque_movimentos`, do jeito que já existia.
-- **Pendência de configuração manual da usuária** (ver tutorial na seção 9): ela precisa (1) criar
-  uma chave de API na Anthropic (console.anthropic.com) e (2) publicar essa Edge Function no painel
-  do Supabase (Edge Functions → criar função → colar o código → Deploy) e configurar o secret
-  `ANTHROPIC_API_KEY` lá. **O sandbox não consegue fazer esse deploy** (mesma limitação de sempre —
-  não alcança `*.supabase.co`, ver item 7 da seção 6) — por isso ficou como passo manual dela,
-  documentado no tutorial.
-- Validado no sandbox via `npx tsc -b`, `npm run build` e `npm run lint` — sem erro. **Não deu pra
-  testar rodando de verdade** (nem a Edge Function contra o Supabase real, nem a leitura de uma foto
-  de nota real contra a API da Anthropic) porque o sandbox não alcança `*.supabase.co` nem tem uma
-  foto de nota fiscal de verdade pra testar — depende da usuária rodar isso na loja.
+- **Configuração manual feita pela usuária** (ver tutorial na seção 9): criou a chave de API na
+  Anthropic (console.anthropic.com), publicou a Edge Function pelo painel do Supabase — **"Via
+  Editor"** (escrever/colar o código direto no navegador; existem também "Via CLI" e "Via AI
+  Assistant" como opções, não usadas) — e configurou o secret `ANTHROPIC_API_KEY`. **Achado
+  durante essa configuração**: o campo "Name" da tela de configurações da função **é só um apelido
+  visual — não muda o endereço/slug real** (o aviso "Your slug and endpoint URL will remain the
+  same" avisa isso). Da primeira vez, a usuária deployou com o nome de exemplo (`smooth-api`) e só
+  tentou renomear depois, o que deixou a função com endereço `smooth-api` mas nome de exibição
+  `ler-notas-fiscais` — descasado do nome que o app chama via `supabase.functions.invoke(...)`.
+  **Correção**: apagar a função e recriar do zero, digitando `ler-notas-fiscais` no campo
+  "Function name" **antes** de clicar em "Deploy function" (não dá pra corrigir só renomeando
+  depois). **Se isso acontecer de novo ao criar outra Edge Function**: conferir se o endereço nos
+  exemplos de `curl`/CLI da tela de configurações bate com o nome esperado, não confiar só no campo
+  "Name".
+- Validado no sandbox via `npx tsc -b`, `npm run build` e `npm run lint` — sem erro. **Confirmado
+  pela usuária rodando de verdade**: importou produtos por foto de nota fiscal com sucesso.
 
 ## 8.1 Respondido nesta sessão — 3 perguntas fiscais/garantia da sessão anterior
 

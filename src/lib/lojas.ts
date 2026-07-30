@@ -49,6 +49,14 @@ export async function atualizarStatusLoja(id: string, ativo: boolean): Promise<v
   if (error) throw error;
 }
 
+export async function atualizarLoja(
+  id: string,
+  patch: { nome: string; cidade: string | null; uf: string | null },
+): Promise<void> {
+  const { error } = await supabase.from("lojas").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 export async function definirLojasDoOperador(
   operadorId: string,
   lojaIds: string[],

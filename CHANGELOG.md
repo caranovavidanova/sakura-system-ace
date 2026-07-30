@@ -3,7 +3,19 @@
 Todas as mudanças notáveis do Sakura System — AutoCenter Edition são registradas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto usa [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [0.9.1] - 2026-07-30
+
+### Corrigido
+- Configurações → Lojas: corrigido um bug real de permissão (RLS) no Supabase que impedia criar uma loja nova pelo app — o segundo passo (vincular o operador que criou a loja a ela) sempre falhava. Lojas que ficaram "órfãs" (criadas, mas sem ninguém vinculado) por causa desse bug já são reconectadas automaticamente na migration de correção.
+- Início: clicar numa linha de "OS abertas" agora leva direto para aquela ordem de serviço em Ordens de Serviço, em vez de só mostrar os dados sem atalho nenhum.
+
+### Adicionado
+- Configurações → Lojas: agora dá para editar nome/cidade/UF de uma loja já cadastrada (antes só dava para criar e inativar, o que deixava a "Loja 1" padrão sem jeito de virar o nome real da loja).
+
+### Alterado
+- Cadastro de Cliente: título da seção de veículos passa de "Veículos (opcional)" para só "Veículos"; o botão "+ Adicionar veículo" foi movido para baixo da lista de veículos (antes ficava em cima, antes de qualquer veículo existir).
+
+## [0.9.0] - 2026-07-30
 
 ### Adicionado
 - Configurações → "Dados fiscais da loja": CNPJ, razão social, IE/IM, regime tributário, endereço e token de integração com o Focus NFe (ambiente de homologação/produção) — preparação para a emissão automática de NFC-e, ainda não habilitada.

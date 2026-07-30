@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MiniCalendario } from "@/components/MiniCalendario";
 import { VeiculoIcone } from "@/components/VeiculoIcone";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +47,7 @@ const COR_CARTAO: Record<CartaoMetrica, string> = {
 
 export function PainelPage() {
   const { lojaAtual } = useAuth();
+  const navigate = useNavigate();
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -252,7 +253,13 @@ export function PainelPage() {
                     </thead>
                     <tbody>
                       {filaDeAtendimento.map((ordem) => (
-                        <tr key={ordem.id} className="border-t border-white/40">
+                        <tr
+                          key={ordem.id}
+                          onClick={() =>
+                            navigate("/ordens-servico", { state: { abrirOrdemId: ordem.id } })
+                          }
+                          className="cursor-pointer border-t border-white/40 hover:bg-white/30"
+                        >
                           <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
                           <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
                           <td className="px-4 py-3">

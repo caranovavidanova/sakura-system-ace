@@ -188,18 +188,9 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-sakura-purple-dark">
-            Veículos (opcional)
-          </h3>
-          <button
-            type="button"
-            onClick={adicionarVeiculo}
-            className="text-xs font-medium text-sakura-purple hover:underline"
-          >
-            + Adicionar veículo
-          </button>
-        </div>
+        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+          Veículos
+        </h3>
 
         <div className="space-y-4">
           {veiculos.map((veiculo, index) => (
@@ -281,6 +272,14 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
             </div>
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={adicionarVeiculo}
+          className="mt-4 text-xs font-medium text-sakura-purple hover:underline"
+        >
+          + Adicionar veículo
+        </button>
       </section>
 
       <div className="flex justify-end gap-3">

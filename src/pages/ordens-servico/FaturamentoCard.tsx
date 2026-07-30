@@ -8,8 +8,20 @@ import { totalOrdem } from "@/types/os";
 interface FaturamentoCardProps {
   ordem: OrdemServico;
   jurosParcelas: JurosParcela[];
-  onConfirmar: (formaPagamento: string, parcelas: number, valorCobrado: number) => Promise<void>;
+  onConfirmar: (
+    formaPagamento: string,
+    parcelas: number,
+    valorCobrado: number,
+    previsaoRecebimento: string | null,
+  ) => Promise<void>;
   onCancelar: () => void;
+}
+
+function hojeIso(): string {
+  const hoje = new Date();
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(
+    hoje.getDate(),
+  ).padStart(2, "0")}`;
 }
 
 const FORMAS_PAGAMENTO = [
@@ -37,6 +49,8 @@ export function FaturamentoCard({
 }: FaturamentoCardProps) {
   const [formaPagamento, setFormaPagamento] = useState("pix");
   const [parcelas, setParcelas] = useState(1);
+  const [recebidoAgora, setRecebidoAgora] = useState(true);
+  const [previsaoRecebimento, setPrevisaoRecebimento] = useState(hojeIso());
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -64,7 +78,12 @@ export function FaturamentoCard({
     setErro(null);
     setConfirmando(true);
     try {
-      await onConfirmar(formaPagamento, parcelas, valorCobrado);
+      await onConfirmar(
+        formaPagamento,
+        parcelas,
+        valorCobrado,
+        recebidoAgora ? null : previsaoRecebimento,
+      );
     } catch (err) {
       console.error("Erro ao faturar ordem de serviço:", err);
       setErro(mensagemDeErro(err));
@@ -125,6 +144,53 @@ export function FaturamentoCard({
             })}
           </select>
         </label>
+      </div>
+
+      <div className="rounded-xl border border-sakura-gray/30 p-4">
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="recebimento"
+              checked={recebidoAgora}
+              onChange={() => setRecebidoAgora(true)}
+              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
+            />
+            <span className="text-sakura-purple-dark/80">Recebido agora</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="recebimento"
+              checked={!recebidoAgora}
+              onChange={() => setRecebidoAgora(false)}
+              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
+            />
+            <span className="text-sakura-purple-dark/80">A receber depois</span>
+          </label>
+        </div>
+
+        {recebidoAgora ? (
+          <p className="mt-2 text-xs text-sakura-muted">
+            Lança o valor como Entrada no Caixa agora mesmo.
+          </p>
+        ) : (
+          <>
+            <p className="mt-2 text-xs text-sakura-muted">
+              Não lança nada no Caixa ainda — cria uma pendência em "Contas a Receber", que só vira
+              Entrada quando você marcar como recebido de verdade.
+            </p>
+            <label className="mt-2 flex items-center gap-2 text-sm">
+              <span className="text-sakura-purple-dark/80">Previsão de recebimento</span>
+              <input
+                type="date"
+                value={previsaoRecebimento}
+                onChange={(e) => setPrevisaoRecebimento(e.target.value)}
+                className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 outline-none focus:border-sakura-purple"
+              />
+            </label>
+          </>
+        )}
       </div>
 
       {parcelas === 1 ? (

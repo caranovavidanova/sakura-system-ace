@@ -9,6 +9,7 @@ import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
 import { ContasPagarPage } from "./pages/contas-pagar/ContasPagarPage";
+import { ContasReceberPage } from "./pages/contas-receber/ContasReceberPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
 import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
@@ -121,6 +122,14 @@ export default function App() {
               element={
                 <PermissaoRoute modulo="contas_pagar">
                   <ContasPagarPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/contas-receber"
+              element={
+                <PermissaoRoute modulo="contas_receber">
+                  <ContasReceberPage />
                 </PermissaoRoute>
               }
             />

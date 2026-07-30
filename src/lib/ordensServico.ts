@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { criarMovimentoCaixa } from "./caixa";
+import { criarContaReceber } from "./contasReceber";
 import type {
   NovaOrdemServico,
   NovoItemOS,
@@ -109,6 +110,7 @@ export async function faturarOrdem(
   formaPagamento: string,
   parcelas: number,
   valorCobrado: number,
+  previsaoRecebimento: string | null,
 ): Promise<void> {
   const { error: erroOrdem } = await supabase
     .from("ordens_servico")
@@ -122,15 +124,33 @@ export async function faturarOrdem(
 
   if (erroOrdem) throw erroOrdem;
 
-  await criarMovimentoCaixa(
-    {
-      ordem_servico_id: ordem.id,
-      tipo: "entrada",
-      forma_pagamento: formaPagamento,
-      valor: valorCobrado,
-      descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
-      categoria_id: null,
-    },
-    ordem.loja_id,
-  );
+  // Sem previsão de recebimento = cliente já pagou na hora, lança a Entrada
+  // no Caixa direto (comportamento de sempre). Com previsão = cliente ainda
+  // vai pagar depois; em vez de lançar a Entrada agora, cria uma conta a
+  // receber pendente — o Caixa só recebe o lançamento quando ela for
+  // marcada como recebida de verdade (Contas a Receber).
+  if (!previsaoRecebimento) {
+    await criarMovimentoCaixa(
+      {
+        ordem_servico_id: ordem.id,
+        tipo: "entrada",
+        forma_pagamento: formaPagamento,
+        valor: valorCobrado,
+        descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
+        categoria_id: null,
+      },
+      ordem.loja_id,
+    );
+  } else {
+    await criarContaReceber(
+      {
+        cliente_id: ordem.cliente_id,
+        ordem_servico_id: ordem.id,
+        descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
+        valor: valorCobrado,
+        vencimento: previsaoRecebimento,
+      },
+      ordem.loja_id,
+    );
+  }
 }

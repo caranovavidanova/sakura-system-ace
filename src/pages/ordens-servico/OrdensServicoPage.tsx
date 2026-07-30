@@ -183,9 +183,10 @@ export function OrdensServicoPage() {
     formaPagamento: string,
     parcelas: number,
     valorCobrado: number,
+    previsaoRecebimento: string | null,
   ) {
     if (!ordemFaturando) return;
-    await faturarOrdem(ordemFaturando, formaPagamento, parcelas, valorCobrado);
+    await faturarOrdem(ordemFaturando, formaPagamento, parcelas, valorCobrado, previsaoRecebimento);
     setOrdemFaturando(null);
     await carregar();
   }

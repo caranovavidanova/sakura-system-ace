@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { OrdemServico } from "@/types/os";
 import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -26,9 +27,10 @@ interface LinhaLucro {
 interface LucratividadeSectionProps {
   ordens: OrdemServico[];
   pecas: Peca[];
+  servicos: Servico[];
 }
 
-export function LucratividadeSection({ ordens, pecas }: LucratividadeSectionProps) {
+export function LucratividadeSection({ ordens, pecas, servicos }: LucratividadeSectionProps) {
   const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes());
   const [dataFim, setDataFim] = useState(hojeStr());
 
@@ -37,6 +39,12 @@ export function LucratividadeSection({ ordens, pecas }: LucratividadeSectionProp
     for (const peca of pecas) mapa.set(peca.id, peca.preco_custo ?? 0);
     return mapa;
   }, [pecas]);
+
+  const custoPorServico = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const servico of servicos) mapa.set(servico.id, servico.custo ?? 0);
+    return mapa;
+  }, [servicos]);
 
   const linhas = useMemo(() => {
     const mapa = new Map<string, LinhaLucro>();
@@ -47,7 +55,10 @@ export function LucratividadeSection({ ordens, pecas }: LucratividadeSectionProp
 
       for (const item of ordem.itens ?? []) {
         const receita = item.quantidade * item.preco_unitario - item.desconto;
-        const custoUnitario = item.tipo === "peca" ? custoPorPeca.get(item.peca_id ?? "") ?? 0 : 0;
+        const custoUnitario =
+          item.tipo === "peca"
+            ? custoPorPeca.get(item.peca_id ?? "") ?? 0
+            : custoPorServico.get(item.servico_id ?? "") ?? 0;
         const custo = item.quantidade * custoUnitario;
 
         const existente = mapa.get(item.descricao) ?? {
@@ -66,7 +77,7 @@ export function LucratividadeSection({ ordens, pecas }: LucratividadeSectionProp
     }
 
     return [...mapa.values()].sort((a, b) => b.margem - a.margem);
-  }, [ordens, custoPorPeca, dataInicio, dataFim]);
+  }, [ordens, custoPorPeca, custoPorServico, dataInicio, dataFim]);
 
   const totalReceita = linhas.reduce((total, l) => total + l.receita, 0);
   const totalCusto = linhas.reduce((total, l) => total + l.custo, 0);

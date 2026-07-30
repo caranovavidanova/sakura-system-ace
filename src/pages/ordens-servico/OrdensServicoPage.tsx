@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,11 +25,24 @@ import type {
   OrdemServico,
   PatchOrdemServico,
 } from "@/types/os";
-import { STATUS_LABEL, totalOrdem } from "@/types/os";
+import { STATUS_COR, STATUS_LABEL, totalOrdem, totalPorTipo } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { FaturamentoCard } from "./FaturamentoCard";
 import { OrdemServicoForm } from "./OrdemServicoForm";
+
+function primeiroDiaDoMes(): string {
+  const hoje = new Date();
+  return new Date(hoje.getFullYear(), hoje.getMonth(), 1).toLocaleDateString("sv-SE");
+}
+
+function hojeStr(): string {
+  return new Date().toLocaleDateString("sv-SE");
+}
+
+function formatarMoeda(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 export function OrdensServicoPage() {
   const { operador, lojaAtual } = useAuth();
@@ -46,8 +59,55 @@ export function OrdensServicoPage() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [ordemEmEdicao, setOrdemEmEdicao] = useState<OrdemServico | null>(null);
   const [ordemFaturando, setOrdemFaturando] = useState<OrdemServico | null>(null);
+  const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes());
+  const [dataFim, setDataFim] = useState(hojeStr());
+  const [busca, setBusca] = useState("");
   const funcionarioAtualId =
     funcionarios.find((f) => f.operador_id === operador?.id)?.id ?? "";
+
+  const custoPorPeca = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const peca of pecas) mapa.set(peca.id, peca.preco_custo ?? 0);
+    return mapa;
+  }, [pecas]);
+
+  const custoPorServico = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const servico of servicos) mapa.set(servico.id, servico.custo ?? 0);
+    return mapa;
+  }, [servicos]);
+
+  function lucroOrdem(ordem: OrdemServico): number {
+    let lucro = 0;
+    for (const item of ordem.itens ?? []) {
+      const receita = item.quantidade * item.preco_unitario - item.desconto;
+      const custoUnitario =
+        item.tipo === "peca"
+          ? custoPorPeca.get(item.peca_id ?? "") ?? 0
+          : custoPorServico.get(item.servico_id ?? "") ?? 0;
+      lucro += receita - item.quantidade * custoUnitario;
+    }
+    return lucro;
+  }
+
+  // Ordens em aberto (ainda não faturadas) sempre aparecem, não importa a
+  // data — senão uma OS esquecida do mês passado sumiria da lista sem
+  // ninguém perceber. O filtro de período só afasta o histórico já faturado,
+  // que é o que realmente cresce sem parar. Buscando por cliente/placa, o
+  // período é ignorado (a busca vale pra qualquer época).
+  const ordensFiltradas = useMemo(() => {
+    const buscaNormalizada = busca.trim().toLowerCase();
+    return ordens.filter((ordem) => {
+      if (buscaNormalizada) {
+        const nomeCliente = ordem.cliente?.nome?.toLowerCase() ?? "";
+        const placa = ordem.veiculo?.placa?.toLowerCase() ?? "";
+        return nomeCliente.includes(buscaNormalizada) || placa.includes(buscaNormalizada);
+      }
+      if (ordem.status !== "faturada") return true;
+      const dia = ordem.data_abertura.slice(0, 10);
+      return dia >= dataInicio && dia <= dataFim;
+    });
+  }, [ordens, busca, dataInicio, dataFim]);
 
   async function carregar() {
     if (!isSupabaseConfigured || !lojaAtual) {
@@ -216,11 +276,55 @@ export function OrdensServicoPage() {
         </p>
       )}
 
+      {!carregando && ordens.length > 0 && (
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">Buscar por cliente ou placa</span>
+            <input
+              type="text"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Ex: João ou ABC1D23"
+              className="w-56 rounded-lg border border-sakura-gray/40 px-3 py-1.5 text-sm outline-none focus:border-sakura-purple"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+            De:
+            <input
+              type="date"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+              disabled={!!busca.trim()}
+              className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 disabled:opacity-40"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+            Até:
+            <input
+              type="date"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+              disabled={!!busca.trim()}
+              className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 disabled:opacity-40"
+            />
+          </label>
+          <p className="text-xs text-sakura-muted">
+            {busca.trim()
+              ? "Buscando em todo o histórico, sem limite de data."
+              : "OS em aberto sempre aparecem, não importa a data — o período filtra só o histórico já faturado."}
+          </p>
+        </div>
+      )}
+
       {carregando ? (
         <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : ordens.length === 0 ? (
         <p className="text-sm text-sakura-muted">
           Nenhuma ordem de serviço aberta ainda.
+        </p>
+      ) : ordensFiltradas.length === 0 ? (
+        <p className="text-sm text-sakura-muted">
+          Nenhuma ordem de serviço encontrada com esse filtro.
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
@@ -231,12 +335,15 @@ export function OrdensServicoPage() {
                 <th className="px-4 py-3 font-medium">Veículo</th>
                 <th className="px-4 py-3 font-medium">Aberta em</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Peças</th>
+                <th className="px-4 py-3 font-medium">Serviços</th>
                 <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium">Lucro</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
-              {ordens.map((ordem) => (
+              {ordensFiltradas.map((ordem) => (
                 <tr
                   key={ordem.id}
                   onClick={() => {
@@ -250,13 +357,19 @@ export function OrdensServicoPage() {
                   <td className="px-4 py-3">
                     {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
                   </td>
-                  <td className="px-4 py-3">{STATUS_LABEL[ordem.status]}</td>
                   <td className="px-4 py-3">
-                    {totalOrdem(ordem.itens ?? []).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COR[ordem.status]}`}
+                    >
+                      {STATUS_LABEL[ordem.status]}
+                    </span>
                   </td>
+                  <td className="px-4 py-3">{formatarMoeda(totalPorTipo(ordem.itens ?? [], "peca"))}</td>
+                  <td className="px-4 py-3">
+                    {formatarMoeda(totalPorTipo(ordem.itens ?? [], "servico"))}
+                  </td>
+                  <td className="px-4 py-3">{formatarMoeda(totalOrdem(ordem.itens ?? []))}</td>
+                  <td className="px-4 py-3">{formatarMoeda(lucroOrdem(ordem))}</td>
                   <td className="px-4 py-3 text-right">
                     {ordem.status !== "faturada" && (
                       <button
@@ -264,7 +377,7 @@ export function OrdensServicoPage() {
                           e.stopPropagation();
                           setOrdemFaturando(ordem);
                         }}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
+                        className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
                       >
                         Faturar
                       </button>

@@ -76,9 +76,25 @@ export const STATUS_LABEL: Record<StatusOS, string> = {
   faturada: "Faturada",
 };
 
+// Cores por status pra bater o olho rápido numa lista grande — "concluída"
+// (esperando faturar) usa laranja de propósito, pra chamar mais atenção que
+// as outras: é o estado que ainda exige uma ação (faturar).
+export const STATUS_COR: Record<StatusOS, string> = {
+  aberta: "bg-sky-50 text-sky-700",
+  em_andamento: "bg-amber-50 text-amber-800",
+  concluida: "bg-orange-100 text-orange-800",
+  faturada: "bg-emerald-50 text-emerald-700",
+};
+
 export function totalOrdem(itens: ItemOS[]): number {
   return itens.reduce(
     (total, item) => total + item.quantidade * item.preco_unitario - item.desconto,
     0,
   );
+}
+
+export function totalPorTipo(itens: ItemOS[], tipo: TipoItemOS): number {
+  return itens
+    .filter((item) => item.tipo === tipo)
+    .reduce((total, item) => total + item.quantidade * item.preco_unitario - item.desconto, 0);
 }

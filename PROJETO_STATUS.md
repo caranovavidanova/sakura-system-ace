@@ -222,10 +222,8 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0030` em `supabase/migrations/`. `0001` a `0027` já confirmadas rodando sem
-erro no projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`); **`0028`, `0029` e `0030` ainda
-não foram rodadas por ela** — precisa aplicar essas três, **nessa ordem**, antes de usar o módulo
-"Relações" reorganizado e as categorias/serviços padrão:
+Migrations `0001` a `0030` em `supabase/migrations/`, todas já confirmadas rodando sem erro no
+projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`). As três últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -477,9 +475,7 @@ normal (quebra de linha).
   "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
   Lucro, Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca
   externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba "Lucratividade" —
-  margem por peça/serviço, período filtrável. **Atenção**: quem tinha só a permissão
-  "Lucratividade" liberada (sem "Relações") precisa rodar a migration `0028` pra não perder acesso
-  (ver seção 5).
+  margem por peça/serviço, período filtrável.
 - **Início**: 3 cartões de tendência personalizáveis (Configurações → "Cartões do Início", padrão
   Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta), calendário do mês com feriados
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
@@ -565,14 +561,14 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0027` já foram confirmadas
-rodando sem erro nesse projeto; falta rodar a `0028` (ver seção 5).
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0030` já foram confirmadas
+rodando sem erro nesse projeto.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0027`. Todas são idempotentes.
+até `0030`. Todas são idempotentes.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):
@@ -666,7 +662,7 @@ sempre antes da tag, nunca depois.
   (descrição, o que mudou, quando foi confirmado) já fica registrado no próprio GitHub — não
   precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
   está na seção 7.
-- **Branch de trabalho atual desta sessão**: `claude/ajustes-finais-v1-q1knzk`.
+- **Branch de trabalho atual desta sessão**: `claude/ultimos-passos-v1-0-vmrzht`.
 - `package.json` em `"version": "0.1.3"` — tag `v0.1.3` publicada e instalador baixado pela
   usuária, mas **sem confirmação de ter rodado/testado o instalador de verdade** (só o
   download/build funcionou). Bastante coisa foi implementada depois dessa tag sem nova versão

@@ -22,6 +22,7 @@ export type NovoItemOS = Omit<ItemOS, "id" | "ordem_servico_id" | "tecnico">;
 
 export interface OrdemServico {
   id: string;
+  loja_id: string;
   cliente_id: string;
   veiculo_id: string | null;
   status: StatusOS;

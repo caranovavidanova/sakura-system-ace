@@ -14,17 +14,22 @@ const SELECT_ORDEM =
   "atualizado_por:operadores!ordens_servico_atualizado_por_id_fkey(nome), " +
   "itens:ordens_servico_itens(*, tecnico:funcionarios(nome))";
 
-export async function listarOrdens(): Promise<OrdemServico[]> {
+export async function listarOrdens(lojaId: string): Promise<OrdemServico[]> {
   const { data, error } = await supabase
     .from("ordens_servico")
     .select(SELECT_ORDEM)
+    .eq("loja_id", lojaId)
     .order("data_abertura", { ascending: false });
 
   if (error) throw error;
   return data as unknown as OrdemServico[];
 }
 
-async function inserirItens(ordemId: string, itens: NovoItemOS[]): Promise<void> {
+async function inserirItens(
+  ordemId: string,
+  itens: NovoItemOS[],
+  lojaId: string,
+): Promise<void> {
   if (itens.length === 0) return;
 
   const { error: erroItens } = await supabase.from("ordens_servico_itens").insert(
@@ -41,6 +46,7 @@ async function inserirItens(ordemId: string, itens: NovoItemOS[]): Promise<void>
         quantidade: item.quantidade,
         motivo: "uso_em_os" as const,
         referencia: `OS ${ordemId.slice(0, 8)}`,
+        loja_id: lojaId,
       })),
     );
     if (erroEstoque) throw erroEstoque;
@@ -51,6 +57,7 @@ export async function criarOrdem(
   ordem: NovaOrdemServico,
   itens: NovoItemOS[],
   operadorId: string,
+  lojaId: string,
 ): Promise<OrdemServico> {
   const { data: ordemCriada, error: erroOrdem } = await supabase
     .from("ordens_servico")
@@ -59,13 +66,14 @@ export async function criarOrdem(
       criado_por_id: operadorId,
       atualizado_por_id: operadorId,
       status: "aberta",
+      loja_id: lojaId,
     })
     .select()
     .single();
 
   if (erroOrdem) throw erroOrdem;
 
-  await inserirItens(ordemCriada.id, itens);
+  await inserirItens(ordemCriada.id, itens, lojaId);
 
   return ordemCriada as OrdemServico;
 }
@@ -90,8 +98,9 @@ export async function adicionarItensOrdem(
   ordemId: string,
   itens: NovoItemOS[],
   operadorId: string,
+  lojaId: string,
 ): Promise<void> {
-  await inserirItens(ordemId, itens);
+  await inserirItens(ordemId, itens, lojaId);
   await atualizarOrdem(ordemId, {}, operadorId);
 }
 
@@ -113,12 +122,15 @@ export async function faturarOrdem(
 
   if (erroOrdem) throw erroOrdem;
 
-  await criarMovimentoCaixa({
-    ordem_servico_id: ordem.id,
-    tipo: "entrada",
-    forma_pagamento: formaPagamento,
-    valor: valorCobrado,
-    descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
-    categoria_id: null,
-  });
+  await criarMovimentoCaixa(
+    {
+      ordem_servico_id: ordem.id,
+      tipo: "entrada",
+      forma_pagamento: formaPagamento,
+      valor: valorCobrado,
+      descricao: `Faturamento da OS ${ordem.id.slice(0, 8)}`,
+      categoria_id: null,
+    },
+    ordem.loja_id,
+  );
 }

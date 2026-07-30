@@ -24,7 +24,7 @@ function formatarCompetencia(competencia: string): string {
 }
 
 export function ArquivosSection({ tipo }: ArquivosSectionProps) {
-  const { operador } = useAuth();
+  const { operador, lojaAtual } = useAuth();
   const [arquivos, setArquivos] = useState<NotaFiscalArquivo[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -37,12 +37,16 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   const [arquivoVisualizando, setArquivoVisualizando] = useState<NotaFiscalArquivo | null>(null);
 
   async function carregar() {
+    if (!lojaAtual) {
+      setCarregando(false);
+      return;
+    }
     setCarregando(true);
     setErro(null);
     try {
       const [listaArquivos, listaOrdens] = await Promise.all([
-        listarArquivos(tipo),
-        listarOrdens(),
+        listarArquivos(tipo, lojaAtual.id),
+        listarOrdens(lojaAtual.id),
       ]);
       setArquivos(listaArquivos);
       setOrdens(listaOrdens);
@@ -58,11 +62,11 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
     carregar();
     setMostrarFormulario(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tipo]);
+  }, [tipo, lojaAtual?.id]);
 
   async function handleEnviar(e: React.FormEvent) {
     e.preventDefault();
-    if (!arquivoSelecionado || !operador) return;
+    if (!arquivoSelecionado || !operador || !lojaAtual) return;
     setErro(null);
     setEnviando(true);
     try {
@@ -72,6 +76,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
         arquivo: arquivoSelecionado,
         ordemServicoId: ordemServicoId || null,
         operadorId: operador.id,
+        lojaId: lojaAtual.id,
       });
       setMostrarFormulario(false);
       setArquivoSelecionado(null);

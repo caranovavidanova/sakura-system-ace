@@ -1,10 +1,11 @@
 import { supabase } from "./supabase";
 import type { MovimentoEstoque, NovoMovimentoEstoque } from "@/types/estoque";
 
-export async function listarMovimentos(): Promise<MovimentoEstoque[]> {
+export async function listarMovimentos(lojaId: string): Promise<MovimentoEstoque[]> {
   const { data, error } = await supabase
     .from("estoque_movimentos")
     .select("*")
+    .eq("loja_id", lojaId)
     .order("criado_em", { ascending: false });
 
   if (error) throw error;
@@ -13,10 +14,11 @@ export async function listarMovimentos(): Promise<MovimentoEstoque[]> {
 
 export async function criarMovimento(
   movimento: NovoMovimentoEstoque,
+  lojaId: string,
 ): Promise<MovimentoEstoque> {
   const { data, error } = await supabase
     .from("estoque_movimentos")
-    .insert(movimento)
+    .insert({ ...movimento, loja_id: lojaId })
     .select()
     .single();
 

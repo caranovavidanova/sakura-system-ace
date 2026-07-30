@@ -2,13 +2,20 @@ import type { Session } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { buscarOperadorAtual, entrar, sair } from "@/lib/auth";
+import { listarLojasDoOperador } from "@/lib/lojas";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import type { Loja } from "@/types/loja";
 import type { Operador } from "@/types/operador";
+
+const CHAVE_LOJA_ATIVA = "sakura_loja_ativa_id";
 
 interface AuthContextValue {
   carregando: boolean;
   session: Session | null;
   operador: Operador | null;
+  lojaAtual: Loja | null;
+  lojasDisponiveis: Loja[];
+  definirLojaAtual: (lojaId: string) => void;
   login: (usuario: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -19,6 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [operador, setOperador] = useState<Operador | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [lojasDisponiveis, setLojasDisponiveis] = useState<Loja[]>([]);
+  const [lojaAtual, setLojaAtual] = useState<Loja | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -30,23 +39,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Cobre tanto a sessão inicial (ao abrir o app) quanto qualquer mudança
     // depois (login, logout, token renovado) com o mesmo fluxo, sempre
-    // mantendo "carregando" até o perfil do operador estar pronto — evita um
-    // instante em que a sessão já existe mas o perfil (e as permissões) ainda
-    // não, o que faria as telas piscarem "sem permissão" por um instante.
+    // mantendo "carregando" até o perfil do operador (e as lojas dele)
+    // estarem prontos — evita um instante em que a sessão já existe mas o
+    // perfil ainda não, o que faria as telas piscarem "sem permissão" por um
+    // instante.
     async function processarSessao(novaSessao: Session | null) {
       setSession(novaSessao);
       if (!novaSessao) {
         setOperador(null);
+        setLojasDisponiveis([]);
+        setLojaAtual(null);
         setCarregando(false);
         return;
       }
       setCarregando(true);
       try {
         const perfil = await buscarOperadorAtual(novaSessao.user.id);
-        if (ativo) setOperador(perfil);
+        if (!ativo) return;
+        setOperador(perfil);
+
+        const lojas = perfil ? await listarLojasDoOperador(perfil.id) : [];
+        if (!ativo) return;
+        setLojasDisponiveis(lojas);
+
+        const idSalvo = window.localStorage.getItem(CHAVE_LOJA_ATIVA);
+        const lojaSalva = lojas.find((loja) => loja.id === idSalvo);
+        setLojaAtual(lojaSalva ?? lojas[0] ?? null);
       } catch (err) {
         console.error("Erro ao carregar perfil do operador:", err);
-        if (ativo) setOperador(null);
+        if (ativo) {
+          setOperador(null);
+          setLojasDisponiveis([]);
+          setLojaAtual(null);
+        }
       } finally {
         if (ativo) setCarregando(false);
       }
@@ -68,6 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  function definirLojaAtual(lojaId: string) {
+    const loja = lojasDisponiveis.find((l) => l.id === lojaId);
+    if (!loja) return;
+    setLojaAtual(loja);
+    window.localStorage.setItem(CHAVE_LOJA_ATIVA, loja.id);
+  }
+
   async function login(usuario: string, senha: string) {
     await entrar(usuario, senha);
   }
@@ -77,7 +109,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ carregando, session, operador, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        carregando,
+        session,
+        operador,
+        lojaAtual,
+        lojasDisponiveis,
+        definirLojaAtual,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

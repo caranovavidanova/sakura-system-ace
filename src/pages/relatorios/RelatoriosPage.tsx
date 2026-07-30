@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useAuth } from "@/contexts/AuthContext";
 import { listarMovimentosCaixa } from "@/lib/caixa";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarOrdens } from "@/lib/ordensServico";
@@ -14,6 +15,7 @@ import { LucratividadeSection } from "./LucratividadeSection";
 type Aba = "graficos" | "lucratividade";
 
 export function RelatoriosPage() {
+  const { lojaAtual } = useAuth();
   const [aba, setAba] = useState<Aba>("graficos");
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
@@ -23,14 +25,14 @@ export function RelatoriosPage() {
 
   useEffect(() => {
     async function carregar() {
-      if (!isSupabaseConfigured) {
+      if (!isSupabaseConfigured || !lojaAtual) {
         setCarregando(false);
         return;
       }
       try {
         const [movimentosCarregados, ordensCarregadas, pecasCarregadas] = await Promise.all([
-          listarMovimentosCaixa(),
-          listarOrdens(),
+          listarMovimentosCaixa(lojaAtual.id),
+          listarOrdens(lojaAtual.id),
           listarPecas(),
         ]);
         setMovimentos(movimentosCarregados);
@@ -44,7 +46,7 @@ export function RelatoriosPage() {
       }
     }
     carregar();
-  }, []);
+  }, [lojaAtual]);
 
   return (
     <div className="space-y-6">

@@ -6,12 +6,17 @@ import type { CartaoMetrica } from "@/types/configuracao";
 
 interface CartoesInicioSectionProps {
   cartoes: CartaoMetrica[];
+  lojaId: string;
   onSalvo: () => Promise<void>;
 }
 
 const OPCOES = Object.keys(CARTAO_METRICA_LABEL) as CartaoMetrica[];
 
-export function CartoesInicioSection({ cartoes, onSalvo }: CartoesInicioSectionProps) {
+export function CartoesInicioSection({
+  cartoes,
+  lojaId,
+  onSalvo,
+}: CartoesInicioSectionProps) {
   const [valores, setValores] = useState<CartaoMetrica[]>(() => {
     const base = [...cartoes];
     while (base.length < 3) base.push(CARTOES_INICIO_PADRAO[base.length] ?? OPCOES[0]);
@@ -30,7 +35,7 @@ export function CartoesInicioSection({ cartoes, onSalvo }: CartoesInicioSectionP
     setSalvo(false);
     setSalvando(true);
     try {
-      await salvarConfiguracaoPainelInicio(valores);
+      await salvarConfiguracaoPainelInicio(lojaId, valores);
       await onSalvo();
       setSalvo(true);
     } catch (err) {

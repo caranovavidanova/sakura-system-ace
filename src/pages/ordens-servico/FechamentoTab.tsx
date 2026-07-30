@@ -40,20 +40,20 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
   useEffect(() => {
     async function carregar() {
       try {
-        setTemplateGarantia(await buscarTextoGarantia());
+        setTemplateGarantia(await buscarTextoGarantia(ordem.loja_id));
       } catch (err) {
         console.error("Erro ao carregar texto de garantia:", err);
         setErro(mensagemDeErro(err));
       }
       try {
-        setConfiguracaoFiscal(await buscarConfiguracaoFiscal());
+        setConfiguracaoFiscal(await buscarConfiguracaoFiscal(ordem.loja_id));
       } catch (err) {
         console.error("Erro ao carregar dados fiscais da loja:", err);
         setErro(mensagemDeErro(err));
       }
     }
     carregar();
-  }, []);
+  }, [ordem.loja_id]);
 
   const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_token);
 

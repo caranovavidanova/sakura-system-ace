@@ -20,9 +20,13 @@ testáveis, com opções + recomendação antes de decisões estruturais.
 
 1. **Leia `PROJETO_STATUS.md` inteiro (ou pelo menos as seções 1, 3, 4, 5 e 6)** — é onde estão as
    decisões técnicas já tomadas, o padrão de pastas, a modelagem de dados atual e as dívidas técnicas
-   conhecidas (RLS aberta, sem testes automatizados, etc). Não repita decisões que já foram tomadas
-   (ex: não proponha multi-tenant, não proponha Prisma/ORM — este projeto usa o client `supabase-js`
-   direto).
+   conhecidas (sem testes automatizados, etc). Não repita decisões que já foram tomadas (ex: não
+   proponha Prisma/ORM — este projeto usa o client `supabase-js` direto). O projeto **já é
+   multi-loja** (fundação construída — ver seção 5 do `PROJETO_STATUS.md`, subseção "Multi-loja"):
+   decida com o usuário se o módulo novo é **compartilhado** entre lojas (catálogo, tipo
+   `pecas`/`servicos`/`categorias`/`clientes`) ou **por loja** (a maioria — tipo
+   `estoque_movimentos`/`ordens_servico`/`contas_pagar`). Não assuma sozinho; pergunte, do mesmo
+   jeito que pergunta os campos.
 2. **Leia os arquivos de referência mais próximos como molde**, não invente um estilo novo:
    - `src/types/servico.ts` e `src/types/peca.ts` — como ficam os tipos.
    - `src/lib/servicos.ts` — como ficam as funções de acesso ao banco.
@@ -71,10 +75,15 @@ aqui pra não esquecer):
   `mensagemDeErro()` de `src/lib/errors.ts`, nunca um `instanceof Error ? ... : "erro genérico"` na mão.
 - **Fallback de variável de ambiente sempre com `||`, nunca `??`** — o Vite injeta variável ausente
   como string vazia, não `undefined`, e `??` não substitui string vazia.
-- **Toda tabela nova precisa de RLS habilitada + uma policy** — mesmo que seja a policy temporária
-  aberta (`for all using (true) with check (true)`) que todas as tabelas de negócio têm hoje. Copie o
-  comentário que explica que é temporário (aparece em todas as migrations existentes).
-- Migration idempotente: `create table if not exists`, `add column if not exists`.
+- **Toda tabela nova precisa de RLS habilitada + uma policy.** Se o módulo é **compartilhado** entre
+  lojas: `for all using (auth.uid() is not null) with check (auth.uid() is not null)` — mesma policy
+  de `pecas`/`clientes`/`categorias` hoje. Se é **por loja**: a tabela ganha coluna
+  `loja_id uuid not null references lojas (id)` e a policy vira
+  `for all using (operador_tem_acesso_loja(loja_id)) with check (operador_tem_acesso_loja(loja_id))`
+  — reaproveite a função `operador_tem_acesso_loja()` já criada na migration `0031`, não recrie.
+- Migration idempotente: `create table if not exists`, `add column if not exists`, e **sempre** um
+  `drop policy if exists` cobrindo o nome **final** da policy antes de criar (não só um nome antigo
+  que esteja sendo substituído) — ver item 12 da seção 6 do `PROJETO_STATUS.md`.
 
 ### 1. Migration SQL (`supabase/migrations/00XX_<descricao>.sql`)
 
@@ -84,19 +93,28 @@ migrations existentes (comentário com nome do projeto + número + descrição c
 ### 2. `src/types/<entidade>.ts`
 
 Interface principal (id, campos, `criado_em`) + `type Novo<Entidade> = Omit<Entidade, "id" | "criado_em">`.
+Se o módulo é **por loja**, a interface ganha `loja_id: string` e o `Novo<Entidade>` também omite
+`loja_id` (segue `src/types/estoque.ts` como molde: `Omit<Entidade, "id" | "loja_id" | "criado_em">`)
+— quem grava o `loja_id` é a função `criar<Entidade>()` do lib, não o formulário.
 
 ### 3. `src/lib/<entidade>.ts`
 
 Funções `listar<Entidade>s`, `criar<Entidade>`, `excluir<Entidade>` (e `atualizarStatus<Entidade>` se
 tiver campo `ativo`), usando o client `supabase` de `src/lib/supabase.ts`. Mesma assinatura/estilo de
-`src/lib/servicos.ts`.
+`src/lib/servicos.ts` (compartilhado) ou `src/lib/estoque.ts` (por loja — `listar*` recebe
+`lojaId: string` e filtra com `.eq("loja_id", lojaId)`; `criar*` recebe `lojaId` e grava
+`{ ...dados, loja_id: lojaId }`).
 
 ### 4. `src/pages/<modulo>/<Modulo>Page.tsx` + `<Modulo>Form.tsx`
 
 Lista com estado de carregamento/erro e aviso de "Supabase não configurado" (`isSupabaseConfigured`)
 igual todo módulo já tem. Formulário controlado. Classes Tailwind do design system (`sakura-purple`,
 `sakura-purple-dark`, `sakura-pink-soft`, `sakura-gray`, cards `rounded-2xl border border-sakura-gray/30
-bg-white`) — copie o visual de `ServicosPage.tsx`/`ServicoForm.tsx`, não invente um estilo novo.
+bg-white`) — copie o visual de `ServicosPage.tsx`/`ServicoForm.tsx`, não invente um estilo novo. Se o
+módulo é **por loja**: a página lê `lojaAtual` de `useAuth()` (`src/contexts/AuthContext.tsx`),
+recarrega quando `lojaAtual?.id` muda, e mostra um aviso amigável ("seu usuário não tem loja
+atribuída, fale com o administrador") quando `lojaAtual` é `null` — copie o padrão de
+`EstoquePage.tsx`/`OrdensServicoPage.tsx`.
 
 ### 5. Registrar o módulo
 
@@ -127,6 +145,8 @@ bg-white`) — copie o visual de `ServicosPage.tsx`/`ServicoForm.tsx`, não inve
   um padrão mais complexo; se o pedido parecer precisar disso, pergunte e trate como um passo separado.
 - Não decide sozinho sobre **relacionamentos com outras tabelas** (FKs) além do óbvio — confirme com o
   usuário antes.
-- Não mexe em RLS "de verdade" por categoria de operador — a tabela nova recebe o mesmo RLS aberto
-  temporário que todas as outras tabelas de negócio têm hoje (ver dívida técnica na seção 6 do
-  `PROJETO_STATUS.md`). Isso é consistente com o resto do projeto, não é um bug da skill.
+- Não mexe em RLS "de verdade" por permissão de módulo (ex: bloquear quem só tem acesso a "Caixa" de
+  chamar a API de "Clientes" direto) — a tabela nova recebe RLS por login + loja (se for por loja),
+  igual todas as outras tabelas de negócio têm hoje, mas permissão por módulo continua checada só na
+  interface (ver dívida técnica item 1 da seção 6 do `PROJETO_STATUS.md`). Isso é consistente com o
+  resto do projeto, não é um bug da skill.

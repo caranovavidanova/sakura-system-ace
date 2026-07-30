@@ -27,7 +27,7 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
         const [cliente, veiculo, loja, movimento] = await Promise.all([
           buscarClientePorId(ordem.cliente_id).catch(() => null),
           ordem.veiculo_id ? buscarVeiculoPorId(ordem.veiculo_id).catch(() => null) : null,
-          buscarConfiguracaoFiscal().catch(() => null),
+          buscarConfiguracaoFiscal(ordem.loja_id).catch(() => null),
           ordem.status === "faturada"
             ? buscarMovimentoCaixaPorOrdem(ordem.id).catch(() => null)
             : null,

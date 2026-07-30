@@ -3,6 +3,7 @@ export type OrigemNotaFiscal = "manual" | "automatica";
 
 export interface NotaFiscalArquivo {
   id: string;
+  loja_id: string;
   tipo: TipoNotaFiscal;
   competencia: string;
   nome_arquivo: string;

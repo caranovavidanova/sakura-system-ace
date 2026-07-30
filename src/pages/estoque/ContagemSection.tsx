@@ -8,10 +8,16 @@ import type { Peca } from "@/types/peca";
 interface ContagemSectionProps {
   pecas: Peca[];
   saldos: Map<string, number>;
+  lojaId: string;
   onRecarregar: () => Promise<void>;
 }
 
-export function ContagemSection({ pecas, saldos, onRecarregar }: ContagemSectionProps) {
+export function ContagemSection({
+  pecas,
+  saldos,
+  lojaId,
+  onRecarregar,
+}: ContagemSectionProps) {
   const { operador } = useAuth();
   const [pecaId, setPecaId] = useState(pecas[0]?.id ?? "");
   const [quantidadeContada, setQuantidadeContada] = useState("");
@@ -25,7 +31,7 @@ export function ContagemSection({ pecas, saldos, onRecarregar }: ContagemSection
   async function carregarHistorico() {
     setCarregandoHistorico(true);
     try {
-      setContagens(await listarContagens());
+      setContagens(await listarContagens(lojaId));
     } catch (err) {
       console.error("Erro ao carregar histórico de contagens:", err);
       setErro(mensagemDeErro(err));
@@ -36,7 +42,8 @@ export function ContagemSection({ pecas, saldos, onRecarregar }: ContagemSection
 
   useEffect(() => {
     carregarHistorico();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaId]);
 
   const saldoSistema = saldos.get(pecaId) ?? 0;
   const quantidadeNumero = Number(quantidadeContada);
@@ -67,6 +74,7 @@ export function ContagemSection({ pecas, saldos, onRecarregar }: ContagemSection
         saldoSistema,
         observacao.trim() || null,
         operador?.id ?? null,
+        lojaId,
       );
       setQuantidadeContada("");
       setObservacao("");

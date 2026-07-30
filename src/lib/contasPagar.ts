@@ -4,18 +4,24 @@ import type { ContaPagar, NovaContaPagar } from "@/types/contaPagar";
 
 const SELECT_CONTA = "*, categoria:categorias_caixa(nome)";
 
-export async function listarContasPagar(): Promise<ContaPagar[]> {
+export async function listarContasPagar(lojaId: string): Promise<ContaPagar[]> {
   const { data, error } = await supabase
     .from("contas_pagar")
     .select(SELECT_CONTA)
+    .eq("loja_id", lojaId)
     .order("vencimento", { ascending: true });
 
   if (error) throw error;
   return data as unknown as ContaPagar[];
 }
 
-export async function criarContaPagar(conta: NovaContaPagar): Promise<void> {
-  const { error } = await supabase.from("contas_pagar").insert(conta);
+export async function criarContaPagar(
+  conta: NovaContaPagar,
+  lojaId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("contas_pagar")
+    .insert({ ...conta, loja_id: lojaId });
   if (error) throw error;
 }
 
@@ -48,14 +54,17 @@ export async function pagarConta({
   formaPagamento,
   operadorId,
 }: PagarContaParams): Promise<void> {
-  const movimento = await criarMovimentoCaixa({
-    ordem_servico_id: null,
-    tipo: "saida",
-    forma_pagamento: formaPagamento || null,
-    valor: valorPago,
-    descricao: conta.descricao,
-    categoria_id: conta.categoria_id,
-  });
+  const movimento = await criarMovimentoCaixa(
+    {
+      ordem_servico_id: null,
+      tipo: "saida",
+      forma_pagamento: formaPagamento || null,
+      valor: valorPago,
+      descricao: conta.descricao,
+      categoria_id: conta.categoria_id,
+    },
+    conta.loja_id,
+  );
 
   const { error: erroConta } = await supabase
     .from("contas_pagar")
@@ -75,6 +84,7 @@ export async function pagarConta({
       vencimento: proximoVencimento(conta.vencimento),
       categoria_id: conta.categoria_id,
       recorrente: true,
+      loja_id: conta.loja_id,
     });
     if (erroProxima) throw erroProxima;
   }

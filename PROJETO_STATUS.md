@@ -113,6 +113,8 @@ arquitetural.
 | Ir pra produção sem emissão fiscal pronta | A usuária já usa o sistema na borracharia (cadastro, OS, estoque, caixa) e continua emitindo nota fiscal por fora até a emissão automática ficar pronta | Desbloqueia o uso real sem esperar o projeto de integração fiscal (depende de escolher provedor + certificado digital) |
 | Empacotamento do instalador Windows | Instalador simples (NSIS) + atualização automática via GitHub Releases (`electron-builder` + `electron-updater`) | Evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
 | Chave da IA (leitura de nota fiscal por foto) | Fica só como secret de uma Supabase Edge Function — nunca no app Electron instalado | Cada loja (projeto Supabase próprio) paga pela própria conta Anthropic, sem expor a chave a quem tem acesso ao computador. Ver seção 7 e item 8 da seção 8 |
+| Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
+| Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
 
 ## 4. Estrutura de pastas
 
@@ -131,7 +133,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # Configurações), GraficoBarras.tsx / GraficoRadar.tsx (SVG puro,
 │   │                             # usados em Relações), VeiculoIcone.tsx (ícone por tipo de
 │   │                             # veículo, pintado com a cor cadastrada), AreaRolavel.tsx (barra
-│   │                             # de rolagem 100% customizada, ver seção 2)
+│   │                             # de rolagem 100% customizada, ver seção 2), LojaSwitcher.tsx
+│   │                             # (seletor de loja ativa, só aparece com 2+ lojas — fica no
+│   │                             # rodapé da Sidebar), VersaoApp.tsx (mostra a versão do app,
+│   │                             # pequena, no canto inferior direito, lendo
+│   │                             # window.sakuraApp.version exposto pelo preload)
 │   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
 │   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
 │   │                             # globalmente, em App.tsx
@@ -139,9 +145,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
 │   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
-│   │                             # contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados
+│   │                             # contagens.ts, garantias.ts, contasPagar.ts, lojas.ts — lojas.ts
+│   │                             # e todo lib de tabela per-loja recebem `lojaId` explícito nas
+│   │                             # funções de listar/criar, ver seção 5) + feriados.ts (feriados
 │   │                             # nacionais, Páscoa calculada) + configuracoes.ts (juros de
-│   │                             # parcelamento + texto de garantia + dados fiscais da loja) +
+│   │                             # parcelamento + texto de garantia + dados fiscais da loja, agora
+│   │                             # uma linha por loja, filtradas por `lojaId`) +
 │   │                             # garantiaTexto.ts + garantiaDocumento.ts (HTML da garantia) +
 │   │                             # notaFiscalXml.ts (recibo HTML "versão para o cliente" a partir
 │   │                             # do XML) + focusNfe.ts (casca da integração Focus NFe, emissão
@@ -171,7 +180,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │   configuracoes/  # JurosParcelasSection.tsx, CategoriasSection.tsx, CategoriasCaixaSection.tsx,
 │   │                   # CategoriasServicoSection.tsx, TextoGarantiaSection.tsx,
 │   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
-│   │                   # SecaoRecolhivel, exceto Operadores que é sempre visível)
+│   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora); LojasSection.tsx
+│   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
+│   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas)
 │   │   funcionarios/   # FuncionarioForm.tsx com abas "Dados gerais" e "Família"
 │   │   caixa/          # CaixaPage.tsx (orquestrador de abas) + DiarioSection.tsx +
 │   │                   # EntradaSaidaSection.tsx (reusado por Entradas/Saídas, parametrizado por tipo)
@@ -182,10 +193,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
 │   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado)
 │   ├── styles/globals.css       # paleta Sakura System (Tailwind v4 @theme)
-│   └── types/                    # um arquivo por entidade + configuracao.ts (JurosParcela,
-│                                  # ConfiguracaoGarantia, ConfiguracaoFiscalLoja) +
-│                                  # itemNotaFiscal.ts (item extraído da leitura por IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0030), todas idempotentes
+│   └── types/                    # um arquivo por entidade + loja.ts (Loja, NovaLoja) +
+│                                  # configuracao.ts (JurosParcela, ConfiguracaoGarantia,
+│                                  # ConfiguracaoFiscalLoja — todas com `loja_id` no lugar do antigo
+│                                  # `id: 1`, ver seção 5) + itemNotaFiscal.ts (item extraído da
+│                                  # leitura por IA)
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0033), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5)
@@ -222,15 +235,23 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0030` em `supabase/migrations/`, todas já confirmadas rodando sem erro no
-projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`). As três últimas:
+Migrations `0001` a `0030` em `supabase/migrations/` já estão confirmadas rodando sem erro no
+projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`). **`0031` a `0033` foram criadas e
+validadas nesta sessão (Postgres local via Docker/`pg_ctlcluster`, rodadas duas vezes seguidas pra
+provar idempotência) mas AINDA NÃO foram rodadas no Supabase real dela** — isso é o primeiro passo
+da próxima sessão, ver seção 8. Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
   numa ficha de orçamento de referência do ramo — nenhuma "peça" é criada (exigiria dado fiscal
   real, que não dá pra inventar com segurança).
+- `0031`/`0032`/`0033`: **fundação multi-loja** — ver subseção "Multi-loja" logo abaixo pro
+  desenho completo. Resumo: cria `lojas` + `operador_lojas`; adiciona `loja_id` nas tabelas
+  operacionais; converte as 4 tabelas de configuração de singleton pra "1 linha por loja"; reescreve
+  toda a RLS pra checar acesso à loja (não só login). A loja real dela vira "Loja 1" via backfill
+  automático — nenhum dado existente é perdido.
 
-Depois dessas três, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
+Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
 (não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
 apagar os dados de negócio de teste (clientes, veículos, peças, serviços, OS, caixa, estoque,
 contas a pagar) mantendo o login de operador e as configurações da loja. Ver comentário no topo
@@ -238,6 +259,60 @@ do próprio arquivo pra ordem exata de execução.
 
 Todas as migrations são idempotentes — seguro rodar de novo caso precise reconectar ou montar
 outro projeto Supabase do zero (ver seção 9).
+
+### Multi-loja: como o acesso por loja funciona (migrations 0031-0033)
+
+- **`lojas`**: id (uuid), nome, cidade, uf, ativo, criado_em. A loja real da usuária virou a "Loja
+  1", com um **UUID fixo** (`00000000-0000-0000-0000-000000000001`, não gerado na hora) — é assim
+  que o backfill das outras migrations sabe pra qual loja apontar os dados já existentes. Sem
+  exclusão pelo app, só `ativo = false` (mesmo padrão de `pecas`/`servicos`/`funcionarios`).
+- **`operador_lojas`**: tabela de junção many-to-many (`operador_id`, `loja_id`, PK composta) —
+  **não** existe coluna `loja_id` em `operadores`. Um operador comum tem 1 linha (acesso só à
+  própria loja); o dono/gerente que administra 2+ lojas tem 2+ linhas. `operadores.admin` continua
+  1 boolean só — o que muda é que seu efeito passa a ser sempre escopado pelas lojas em que esse
+  operador tem uma linha em `operador_lojas` (um "admin só da loja A" e o "dono admin das duas" são
+  a mesma flag `admin=true`, a diferença é só quantas linhas eles têm aqui).
+- **Quais tabelas ganharam `loja_id`** (`not null`, exceto a exceção abaixo): `estoque_movimentos`,
+  `contagens_estoque`, `ordens_servico`, `caixa_movimentos`, `contas_pagar`,
+  `notas_fiscais_arquivos`, e as 4 tabelas de configuração (viraram singleton **por loja**, ver
+  próximo item). `ordens_servico_itens` e `funcionario_filhos` **não** ganharam `loja_id` próprio —
+  herdam via FK (RLS consulta a tabela-pai). `clientes`/`veiculos`, `pecas`, `servicos`,
+  `categorias`/`categorias_servicos`/`categorias_caixa` **continuam compartilhados**, sem
+  `loja_id` — decisão explícita da usuária (catálogo único pra empresa toda).
+- **`configuracoes_garantia`, `configuracoes_fiscais_loja`, `configuracoes_painel_inicio`**: eram
+  "singleton" (`id smallint` fixo em 1) e viraram **1 linha por loja** — a PK trocou de `id` pra
+  `loja_id uuid`. `configuracoes_juros_parcelas` (que já era multi-linha, 1 por `numero_parcelas`)
+  ganhou `loja_id` na PK composta (`loja_id, numero_parcelas`). Os tipos TS correspondentes
+  (`src/types/configuracao.ts`) trocaram o campo `id: 1` por `loja_id: string`.
+- **`funcionarios.loja_id` é a única exceção `nullable`**: o gatilho que espelha um `operador` novo
+  em `funcionarios` (migration 0019) dispara no `insert` de `operadores`, **antes** do app inserir
+  as linhas em `operador_lojas` — nesse instante ainda não dá pra saber a loja. `src/lib/
+  operadores.ts` → `criarOperador()` preenche esse campo logo em seguida, via `update`, assim que
+  `operador_lojas` é populada. Enquanto `loja_id` está nulo (janela de milissegundos), o registro
+  fica invisível pra todo mundo via RLS — comportamento seguro por padrão, não é bug.
+- **RLS**: 4 funções `security definer` novas (mesmo padrão de `operador_atual_e_admin()`, migration
+  0008, pra evitar `infinite recursion`): `operador_tem_acesso_loja(loja_id)`,
+  `operador_e_admin_da_loja(loja_id)`, `operador_atual_e_admin_de_alguma_loja()` (usada só no
+  INSERT de `operadores`/`lojas`, quando ainda não existe vínculo com o alvo) e
+  `operador_administra(operador_alvo_id)` (usada no UPDATE/DELETE de `operadores`, pra impedir que
+  um admin da loja A edite um operador da loja B). Tabelas compartilhadas continuam com a policy de
+  sempre (`auth.uid() is not null`); tabelas per-loja passam a exigir
+  `operador_tem_acesso_loja(loja_id)`. A leitura de `operadores` (lista completa, todas as lojas)
+  **continua aberta pra qualquer logado** — decisão deliberada, dado exposto é baixo risco
+  (nome/permissões, não financeiro), documentado como endurecimento futuro possível.
+- **Bucket de Storage `notas-fiscais` NÃO foi segmentado por loja** — decisão de escopo deliberada
+  (reescrever `storage_path` exigiria migrar objetos já existentes via API, não dá por SQL; a
+  tabela `notas_fiscais_arquivos`, por onde o app sempre lê, já fica isolada por `loja_id`/RLS
+  corretamente). Risco residual aceito, documentado, endurecimento futuro opcional.
+- **Login continua igual**: `operadores.usuario` continua único **globalmente** (não por loja), tela
+  de login não mudou, `src/lib/auth.ts` não mudou. "Qual loja estou vendo" é escolhido **depois**
+  do login, via `LojaSwitcher.tsx` na Sidebar (só aparece pra quem tem acesso a 2+ lojas — some por
+  completo pra quem usa 1 loja só, como ela hoje). Guardado em `localStorage` (`sakura_loja_ativa_id`)
+  — é só estado de UI, o limite de segurança real é sempre a RLS no banco.
+- **Fora de escopo desta fase** (não construído, mas arquitetura não trava pra depois): relatórios
+  consolidando 2+ lojas numa visão só (cada `listar*()` per-loja recebe 1 `lojaId`, não uma lista);
+  preço por peça/serviço variando por loja (extensão puramente aditiva se um dia precisar — ver
+  comentário na migration 0031/PROJETO_STATUS anterior a esta sessão).
 
 - **`clientes`**: id, nome (vira "Razão social" na tela quando `tipo_pessoa` é jurídica, mesmo
   campo), tipo_pessoa (`fisica`/`juridica`, default `fisica`), cpf_cnpj (rótulo muda pra "CPF" ou
@@ -261,9 +336,9 @@ outro projeto Supabase do zero (ver seção 9).
 - **`servicos`** (catálogo de serviços, análogo a `pecas` mas sem estoque/fiscal): id,
   codigo_interno (opcional), descricao, preco_padrao, categoria_id (FK categorias_servicos,
   opcional), ativo, criado_em. Vem semeado com ~17 serviços padrão sem preço (migration `0030`).
-- **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
-  (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
-- **`ordens_servico`**: id, cliente_id (FK), veiculo_id (FK, opcional), status
+- **`estoque_movimentos`**: id, loja_id (FK lojas), peca_id (FK), tipo (`entrada`/`saida`),
+  quantidade, motivo (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
+- **`ordens_servico`**: id, loja_id (FK lojas), cliente_id (FK), veiculo_id (FK, opcional), status
   (`aberta`/`em_andamento`/`concluida`/`faturada`), km_entrada, descricao_problema (rótulo
   "Observação"), forma_pagamento, parcelas (int, default 1, preenchido no faturamento),
   data_abertura, data_fechamento, vendedor_id (FK **funcionarios**)/criado_por_id/atualizado_por_id
@@ -273,16 +348,17 @@ outro projeto Supabase do zero (ver seção 9).
   sem servico_id quando for "avulso"), tecnico_id (FK **funcionarios**, opcional — técnico
   responsável por aquele item, diferente do vendedor/atendente que é da OS toda), descricao,
   quantidade, preco_unitario, desconto
-- **`configuracoes_juros_parcelas`**: numero_parcelas (PK, 2 a 12), juros_percentual. Editável só
-  pelo admin — define o juro (% sobre o total) cobrado quando o cliente parcela no cartão ao
-  faturar uma OS. 1x é sempre à vista, sem juros.
-- **`caixa_movimentos`**: id, data, ordem_servico_id (FK opcional, único — 1 lançamento por OS
-  faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao, categoria_id (FK
-  categorias_caixa, opcional)
+- **`configuracoes_juros_parcelas`**: loja_id (FK lojas) + numero_parcelas (PK composta, 2 a 12),
+  juros_percentual. Editável só pelo admin — define o juro (% sobre o total) cobrado quando o
+  cliente parcela no cartão ao faturar uma OS. 1x é sempre à vista, sem juros.
+- **`caixa_movimentos`**: id, loja_id (FK lojas), data, ordem_servico_id (FK opcional, único — 1
+  lançamento por OS faturada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao,
+  categoria_id (FK categorias_caixa, opcional)
 - **`categorias_caixa`**: id, nome, tipo (`entrada`/`saida`), criado_em. Gerenciada em
   Configurações (admin), selecionável ao lançar um movimento manual no Caixa (ex: "Aluguel",
   "Sucata"). Tabela separada de `categorias` (que é só pra produtos) — o conceito é diferente.
-- **`funcionarios`**: id, nome, cargo (texto livre, opcional), operador_id (FK operadores,
+- **`funcionarios`**: id, loja_id (FK lojas, **nullable** — única exceção, ver subseção
+  "Multi-loja" acima), nome, cargo (texto livre, opcional), operador_id (FK operadores,
   opcional e único — presente quando esse funcionário também loga no sistema), ativo, criado_em.
   Cadastro leve pra quem não precisa logar mas precisa ser selecionável como técnico/vendedor.
   **Todo operador criado em Configurações ganha automaticamente um `funcionarios` espelhado**
@@ -295,37 +371,39 @@ outro projeto Supabase do zero (ver seção 9).
   escolha explícita (dado sensível, cuidado de LGPD).
 - **`funcionario_filhos`**: id, funcionario_id (FK, `on delete cascade`), nome, data_nascimento
   (opcional), criado_em. `FuncionarioForm.tsx` salva a lista inteira de uma vez (substitui tudo).
-- **`contagens_estoque`**: id, peca_id (FK), quantidade_contada, saldo_sistema, diferenca,
-  observacao, operador_id (FK operadores), criado_em. Ao salvar com diferença, gera
-  automaticamente um ajuste em `estoque_movimentos`.
-- **`configuracoes_garantia`**: "singleton" (1 linha, `id` fixo em 1) com `texto` — template do
+- **`contagens_estoque`**: id, loja_id (FK lojas), peca_id (FK), quantidade_contada,
+  saldo_sistema, diferenca, observacao, operador_id (FK operadores), criado_em. Ao salvar com
+  diferença, gera automaticamente um ajuste em `estoque_movimentos`.
+- **`configuracoes_garantia`**: 1 linha **por loja** (`loja_id` é a PK) com `texto` — template do
   texto de garantia, placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na hora
   (`lib/garantiaTexto.ts`). Editável só pelo admin.
-- **`notas_fiscais_arquivos`**: id, tipo (`nfe`/`nfse`), competencia (date, 1º dia do mês),
-  nome_arquivo, storage_path, ordem_servico_id (FK opcional), operador_id (FK operadores),
-  criado_em, origem (`manual`/`automatica`, default `manual`), numero/chave_acesso/status
-  (opcionais, preenchidos só quando `origem = automatica`, sem uso real ainda). O XML em si fica
-  no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path`:
-  `<tipo>/<ano>-<mes>/<uuid>-<nome original>`).
-- **`configuracoes_fiscais_loja`**: "singleton" com cnpj, razao_social, nome_fantasia,
-  inscricao_estadual, inscricao_municipal, regime_tributario, endereço da loja, telefone, email,
-  focus_nfe_token, focus_nfe_ambiente (`homologacao`/`producao`). Reaproveitada pelo cabeçalho do
-  documento de garantia.
-- **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único), nome, admin (bool),
-  permissoes (`text[]` com as chaves de `MODULOS` em `src/types/operador.ts`), ativo, criado_em.
-  Única tabela com RLS de verdade baseada em login (ver seção 6).
-- **`contas_pagar`**: id, descricao, valor, vencimento (date), categoria_id (FK
+- **`notas_fiscais_arquivos`**: id, loja_id (FK lojas), tipo (`nfe`/`nfse`), competencia (date, 1º
+  dia do mês), nome_arquivo, storage_path, ordem_servico_id (FK opcional), operador_id (FK
+  operadores), criado_em, origem (`manual`/`automatica`, default `manual`),
+  numero/chave_acesso/status (opcionais, preenchidos só quando `origem = automatica`, sem uso real
+  ainda). O XML em si fica no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path`:
+  `<tipo>/<ano>-<mes>/<uuid>-<nome original>`, **não segmentado por loja** — ver subseção
+  "Multi-loja" acima).
+- **`configuracoes_fiscais_loja`**: 1 linha **por loja** (`loja_id` é a PK) com cnpj, razao_social,
+  nome_fantasia, inscricao_estadual, inscricao_municipal, regime_tributario, endereço da loja,
+  telefone, email, focus_nfe_token, focus_nfe_ambiente (`homologacao`/`producao`). Reaproveitada
+  pelo cabeçalho do documento de garantia.
+- **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único **globalmente**, não por
+  loja), nome, admin (bool), permissoes (`text[]` com as chaves de `MODULOS` em
+  `src/types/operador.ts`), ativo, criado_em. Não tem `loja_id` — o acesso a loja(s) vem de
+  `operador_lojas` (ver subseção "Multi-loja" acima). RLS de verdade baseada em login (ver seção 6).
+- **`contas_pagar`**: id, loja_id (FK lojas), descricao, valor, vencimento (date), categoria_id (FK
   categorias_caixa, opcional), recorrente (bool), status (`pendente`/`paga`), data_pagamento
   (opcional), caixa_movimento_id (FK, opcional — a Saída gerada ao marcar como paga), operador_id
   (FK operadores), criado_em. Marcar como paga gera automaticamente uma Saída em
   `caixa_movimentos` e, se `recorrente`, cria a próxima ocorrência (mesmo valor, +1 mês) sozinha.
   **Sem "desfazer pagamento"** pelo app ainda.
-- **`configuracoes_painel_inicio`**: "singleton" com `cartoes` (`text[]`, até 3 chaves) — define
-  quais indicadores aparecem nos cartões de tendência da tela Início. Ajuste único pra loja
-  inteira, editável só pelo admin. As 5 chaves possíveis ficam em `CARTAO_METRICA_LABEL`
-  (`types/configuracao.ts`): vendas_mes, custos_mes, lucros_mes, ticket_medio_mes,
-  contas_pagar_vencendo. Padrão atual: Vendas/Lucro/Ticket médio (Custos saiu do padrão por não
-  ser legal mostrar "algo negativo" logo de cara).
+- **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
+  (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
+  Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
+  `CARTAO_METRICA_LABEL` (`types/configuracao.ts`): vendas_mes, custos_mes, lucros_mes,
+  ticket_medio_mes, contas_pagar_vencendo. Padrão atual: Vendas/Lucro/Ticket médio (Custos saiu do
+  padrão por não ser legal mostrar "algo negativo" logo de cara).
 
 Regras de negócio já implementadas: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -344,11 +422,13 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    direto pra mexer em "Clientes" se tentar de propósito. RLS exige **login** pra tudo (fecha o
    acesso sem estar logado), mas não reforça por módulo. Fica pra uma etapa futura se o risco
    mudar (ex: sistema vendido pra terceiros, não só a própria loja).
-2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). Ainda faltam: (a)
+2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). Ainda falta
    **redefinir senha de operador esquecida** — hoje não tem como o admin resetar a senha de outro
    operador pelo app (precisaria de uma Edge Function com a service role key, ainda não
-   construída); (b) **multi-loja** — arquitetura continua de loja única (cada loja = 1 projeto
-   Supabase próprio).
+   construída). **Multi-loja**: a fundação já existe (1 projeto Supabase pode servir 2+ lojas, ver
+   seção 5) — o que ainda não existe é um site externo de assinatura pra provisionar loja+admin
+   automaticamente pra um cliente novo (continua manual, pelo painel do Supabase + tela de
+   Configurações → Lojas).
 3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pela usuária em algum
    momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
    código. Vale sugerir que ela rotacione essa chave em Settings → API Keys do Supabase, se ainda
@@ -372,6 +452,21 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    login/dados reais sem essa rede, uma alternativa que funcionou bem foi recriar a estrutura HTML
    isolada (sem app inteiro) reaproveitando o CSS já compilado do `dist/`, pra testes puramente
    visuais/CSS que não dependem de dado real.
+   **Descoberto nesta sessão**: o sandbox já vem com um cluster **Postgres 16 local** instalado
+   (`service postgresql start`, usuário `postgres` via `sudo -u postgres psql`) — dá pra validar
+   migrations novas de verdade (não só ler o SQL): criar um banco de teste, aplicar um stub mínimo
+   de `auth.users`/`auth.uid()`/`storage.buckets`/`storage.objects` (Supabase não existe num
+   Postgres comum), rodar as migrations em sequência, inserir dados fake pra simular produção, e
+   rodar as migrations novas **duas vezes** pra provar idempotência de verdade — muito mais
+   confiável que revisão visual sozinha, e foi assim que um bug real de idempotência (`drop policy
+   if exists` cobrindo só o nome antigo, ver item 12) foi pego antes de chegar nela. Além disso,
+   `node_modules` não vem pré-instalado neste ambiente — rodar `npm install` (uns 20-30s) antes de
+   `npm run build`/`npm run lint`, senão o `tsc` do sandbox cai num binário global desalinhado com
+   a versão do projeto (erros estranhos tipo `TS5101` sobre `baseUrl` deprecated). Pra rodar
+   Playwright fora do fluxo `npm run dev` normal (ex: só pra tirar um screenshot pontual), o pacote
+   `playwright` já vem instalado **globalmente** neste ambiente
+   (`/opt/node22/lib/node_modules/playwright`) mesmo sem estar no `package.json` do projeto — útil
+   pra scripts avulsos de verificação visual sem mexer nas dependências do projeto.
 7. **Vercel**: o repositório tem uma integração de deploy automático na Vercel conectada (de
    quando este repo era um site em Next.js, antes da reescrita como app Electron) — isso faz
    alguns PRs mostrarem um check falhando sem relação com o código. Não dá pra desconectar pelo
@@ -480,20 +575,33 @@ normal (quebra de linha).
   Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta), calendário do mês com feriados
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
   "Veículos no pátio" (com ícone por tipo/cor).
-- **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador"), e seções
-  recolhíveis — Juros de parcelamento, Categorias de produto, Categorias de serviço, Categorias de
-  caixa, Texto de garantia, Dados fiscais da loja, Cartões do Início.
+- **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador", e agora um
+  multi-select de lojas dentro do form, só aparece com 2+ lojas cadastradas), Lojas (novo card,
+  sempre visível — criar/inativar lojas), e seções recolhíveis — Juros de parcelamento, Categorias
+  de produto, Categorias de serviço, Categorias de caixa, Texto de garantia, Dados fiscais da loja,
+  Cartões do Início (essas últimas 4, junto com Juros, agora são **por loja** — ver seção 5).
+- **Multi-loja (fundação)** — construída nesta sessão, ainda **não aplicada no Supabase real da
+  usuária** (só validada localmente, ver seção 8 pro passo a passo que falta): 1 projeto Supabase
+  pode servir 2+ lojas com um painel único (não instalações separadas). Catálogo compartilhado
+  (clientes, peças, serviços, categorias); estoque/caixa/OS/contas a pagar/notas fiscais/funcionários/
+  configurações separados por loja. Um operador pode ter acesso a 1 ou mais lojas
+  (`operador_lojas`); `LojaSwitcher.tsx` na Sidebar deixa trocar de loja ativa, só aparece pra quem
+  tem 2+. Detalhe completo do desenho na seção 5, subseção "Multi-loja".
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
-  enviada. **Versão atual: `0.1.3`** (tag publicada e instalador baixado pela usuária) — **muita
-  coisa foi implementada depois da v0.1.3** (Funcionários RH completo, Contas a Pagar, Notas
-  Fiscais, Relações com gráficos, cartões personalizáveis, veículos no pátio, scrollbar
-  customizada, Importar por foto/PDF, menu reorganizado, Relações+Lucratividade unificados, Enter
-  avançando entre campos, categorias de serviço...) **sem nenhuma tag nova publicada — decisão
-  explícita da usuária**: só publicar a próxima versão do instalador **quando a emissão de nota
-  fiscal também estiver pronta**, pra não ter que atualizar o instalador duas vezes seguidas. Até
-  lá, ela usa a loja rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`,
-  com `.env` configurado nesse PC também) em vez do instalador.
+  enviada. **Versão atual do `package.json`: `0.9.0`** (bump feito nesta sessão, refletindo a
+  fundação multi-loja — **ainda sem tag `v0.9.0` publicada/instalador gerado**, ela decide quando
+  publicar). A versão agora aparece pequena no canto inferior direito do app (`VersaoApp.tsx`, lê
+  `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive login. Última tag
+  publicada de verdade continua sendo `v0.1.3` — **muita coisa foi implementada depois** dela
+  (Funcionários RH completo, Contas a Pagar, Notas Fiscais, Relações com gráficos, cartões
+  personalizáveis, veículos no pátio, scrollbar customizada, Importar por foto/PDF, menu
+  reorganizado, Relações+Lucratividade unificados, Enter avançando entre campos, categorias de
+  serviço, e agora a fundação multi-loja) **sem nenhuma tag nova publicada — decisão explícita da
+  usuária**: só publicar a próxima versão do instalador **quando a emissão de nota fiscal também
+  estiver pronta**, pra não ter que atualizar o instalador duas vezes seguidas. Até lá, ela usa a
+  loja rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com `.env`
+  configurado nesse PC também) em vez do instalador.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -545,10 +653,16 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: emissão de nota fiscal (Focus NFe, item 1 desta seção) —
-decisão explícita da usuária. Ela só publica a próxima versão do instalador quando isso estiver
-pronto (ver aviso na seção 7, "Empacotamento"). Antes de codar de verdade, ela precisa ter criado
-a conta/token de homologação do Focus NFe (ver item 1) — confirmar isso no início da sessão.
+**Prioridade da próxima sessão**: primeiro, **aplicar a fundação multi-loja no Supabase real dela**
+(migrations `0031` a `0033`, construídas e validadas localmente nesta sessão mas ainda não rodadas
+lá — ver seção 5 pro desenho completo e seção 9 pro passo a passo/roteiro de teste). Depois disso
+confirmado funcionando, ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta
+seção) — foi o que ela combinou explicitamente nesta sessão ("na outra sessão eu faço a inclusão
+da emissão de nota fiscal"). Ela só publica a próxima versão do instalador quando isso estiver
+pronto (ver aviso na seção 7, "Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter
+criado a conta/token de homologação do Focus NFe (ver item 1) — confirmar isso no início da sessão.
+A fundação multi-loja já deixa `configuracoes_fiscais_loja` pronta como "1 linha por loja" — a
+emissão fiscal pode ser construída direto em cima disso, sem retrabalho.
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -562,13 +676,28 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
 URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0030` já foram confirmadas
-rodando sem erro nesse projeto.
+rodando sem erro nesse projeto. **`0031` a `0033` (fundação multi-loja) ainda precisam ser
+rodadas lá** — ver subseção logo abaixo.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0030`. Todas são idempotentes.
+até `0033`. Todas são idempotentes.
+
+### Rodar a fundação multi-loja (migrations 0031-0033) no projeto real dela
+
+Mesmo passo a passo acima (SQL Editor, colar e rodar cada arquivo, na ordem), só que agora nos 3
+arquivos novos: `0031_lojas_e_operador_lojas.sql` → `0032_loja_id_tabelas_por_loja.sql` →
+`0033_configuracoes_por_loja.sql`. A ordem entre os três importa (documentado no topo de cada
+arquivo). Depois de rodar, checar (roteiro completo desenhado nesta sessão, ver seção 5):
+1. Login com o operador de sempre — precisa continuar vendo todos os dados de hoje (prova que o
+   backfill pra "Loja 1" funcionou, sem perder nada).
+2. Configurações → "Lojas" → criar uma 2ª loja de teste, e no form de um operador de teste marcar
+   só essa loja nova — confirmar que esse operador **não** vê nada da Loja 1.
+3. Testar um "admin só da loja B": confirmar que ele não consegue editar/desativar um operador da
+   Loja A (nem pela interface, nem tentando forçar via API) — é o teste que valida o ponto central
+   do pedido dela original (dono vê as duas lojas, balconista só a dele).
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):
@@ -663,10 +792,11 @@ sempre antes da tag, nunca depois.
   precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
   está na seção 7.
 - **Branch de trabalho atual desta sessão**: `claude/ultimos-passos-v1-0-vmrzht`.
-- `package.json` em `"version": "0.1.3"` — tag `v0.1.3` publicada e instalador baixado pela
-  usuária, mas **sem confirmação de ter rodado/testado o instalador de verdade** (só o
-  download/build funcionou). Bastante coisa foi implementada depois dessa tag sem nova versão
-  publicada ainda (ver aviso no fim da seção 7).
+- `package.json` em `"version": "0.9.0"` (bump feito nesta sessão) — tag publicada mais recente
+  ainda é `v0.1.3` (instalador baixado pela usuária, mas **sem confirmação de ter rodado/testado o
+  instalador de verdade**, só o download/build funcionou). Bastante coisa foi implementada depois
+  dessa tag sem nova versão publicada ainda, incluindo a fundação multi-loja desta sessão (ver
+  aviso no fim da seção 7 e prioridade da próxima sessão na seção 8).
 
 ## 11. Trabalhando de outro computador
 

@@ -8,59 +8,70 @@ import type {
   JurosParcela,
 } from "@/types/configuracao";
 
-export async function listarJurosParcelas(): Promise<JurosParcela[]> {
+export async function listarJurosParcelas(lojaId: string): Promise<JurosParcela[]> {
   const { data, error } = await supabase
     .from("configuracoes_juros_parcelas")
     .select("*")
+    .eq("loja_id", lojaId)
     .order("numero_parcelas", { ascending: true });
 
   if (error) throw error;
   return data as JurosParcela[];
 }
 
-export async function salvarJurosParcelas(lista: JurosParcela[]): Promise<void> {
+export async function salvarJurosParcelas(
+  lojaId: string,
+  lista: Omit<JurosParcela, "loja_id">[],
+): Promise<void> {
   const { error } = await supabase
     .from("configuracoes_juros_parcelas")
-    .upsert(lista, { onConflict: "numero_parcelas" });
+    .upsert(
+      lista.map((item) => ({ ...item, loja_id: lojaId })),
+      { onConflict: "loja_id,numero_parcelas" },
+    );
 
   if (error) throw error;
 }
 
-export async function buscarTextoGarantia(): Promise<string> {
+export async function buscarTextoGarantia(lojaId: string): Promise<string> {
   const { data, error } = await supabase
     .from("configuracoes_garantia")
     .select("texto")
-    .eq("id", 1)
+    .eq("loja_id", lojaId)
     .maybeSingle();
 
   if (error) throw error;
   return (data as ConfiguracaoGarantia | null)?.texto ?? "";
 }
 
-export async function salvarTextoGarantia(texto: string): Promise<void> {
+export async function salvarTextoGarantia(lojaId: string, texto: string): Promise<void> {
   const { error } = await supabase
     .from("configuracoes_garantia")
-    .upsert({ id: 1, texto }, { onConflict: "id" });
+    .upsert({ loja_id: lojaId, texto }, { onConflict: "loja_id" });
 
   if (error) throw error;
 }
 
-export async function buscarConfiguracaoFiscal(): Promise<ConfiguracaoFiscalLoja | null> {
+export async function buscarConfiguracaoFiscal(
+  lojaId: string,
+): Promise<ConfiguracaoFiscalLoja | null> {
   const { data, error } = await supabase
     .from("configuracoes_fiscais_loja")
     .select("*")
-    .eq("id", 1)
+    .eq("loja_id", lojaId)
     .maybeSingle();
 
   if (error) throw error;
   return data as ConfiguracaoFiscalLoja | null;
 }
 
-export async function buscarConfiguracaoPainelInicio(): Promise<CartaoMetrica[]> {
+export async function buscarConfiguracaoPainelInicio(
+  lojaId: string,
+): Promise<CartaoMetrica[]> {
   const { data, error } = await supabase
     .from("configuracoes_painel_inicio")
     .select("cartoes")
-    .eq("id", 1)
+    .eq("loja_id", lojaId)
     .maybeSingle();
 
   if (error) throw error;
@@ -68,21 +79,24 @@ export async function buscarConfiguracaoPainelInicio(): Promise<CartaoMetrica[]>
 }
 
 export async function salvarConfiguracaoPainelInicio(
+  lojaId: string,
   cartoes: CartaoMetrica[],
 ): Promise<void> {
   const { error } = await supabase
     .from("configuracoes_painel_inicio")
-    .upsert({ id: 1, cartoes }, { onConflict: "id" });
+    .upsert({ loja_id: lojaId, cartoes }, { onConflict: "loja_id" });
 
   if (error) throw error;
 }
 
 export async function salvarConfiguracaoFiscal(
-  config: Omit<ConfiguracaoFiscalLoja, "id" | "atualizado_em">,
+  lojaId: string,
+  config: Omit<ConfiguracaoFiscalLoja, "loja_id" | "atualizado_em">,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("configuracoes_fiscais_loja")
-    .upsert({ id: 1, ...config, atualizado_em: new Date().toISOString() }, { onConflict: "id" });
+  const { error } = await supabase.from("configuracoes_fiscais_loja").upsert(
+    { loja_id: lojaId, ...config, atualizado_em: new Date().toISOString() },
+    { onConflict: "loja_id" },
+  );
 
   if (error) throw error;
 }

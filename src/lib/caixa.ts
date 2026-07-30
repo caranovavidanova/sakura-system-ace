@@ -5,10 +5,11 @@ const SELECT_MOVIMENTO =
   "*, ordem_servico:ordens_servico(id, cliente:clientes(nome), itens:ordens_servico_itens(*)), " +
   "categoria:categorias_caixa(nome)";
 
-export async function listarMovimentosCaixa(): Promise<MovimentoCaixa[]> {
+export async function listarMovimentosCaixa(lojaId: string): Promise<MovimentoCaixa[]> {
   const { data, error } = await supabase
     .from("caixa_movimentos")
     .select(SELECT_MOVIMENTO)
+    .eq("loja_id", lojaId)
     .order("data", { ascending: false });
 
   if (error) throw error;
@@ -30,10 +31,11 @@ export async function buscarMovimentoCaixaPorOrdem(
 
 export async function criarMovimentoCaixa(
   movimento: NovoMovimentoCaixa,
+  lojaId: string,
 ): Promise<MovimentoCaixa> {
   const { data, error } = await supabase
     .from("caixa_movimentos")
-    .insert(movimento)
+    .insert({ ...movimento, loja_id: lojaId })
     .select()
     .single();
 

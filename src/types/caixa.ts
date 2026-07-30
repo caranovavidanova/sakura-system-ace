@@ -4,6 +4,7 @@ export type TipoCaixa = "entrada" | "saida";
 
 export interface MovimentoCaixa {
   id: string;
+  loja_id: string;
   data: string;
   ordem_servico_id: string | null;
   tipo: TipoCaixa;
@@ -19,4 +20,7 @@ export interface MovimentoCaixa {
   categoria?: { nome: string } | null;
 }
 
-export type NovoMovimentoCaixa = Omit<MovimentoCaixa, "id" | "data" | "categoria">;
+export type NovoMovimentoCaixa = Omit<
+  MovimentoCaixa,
+  "id" | "loja_id" | "data" | "categoria"
+>;

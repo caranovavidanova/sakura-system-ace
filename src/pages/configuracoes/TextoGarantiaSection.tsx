@@ -4,10 +4,15 @@ import { salvarTextoGarantia } from "@/lib/configuracoes";
 
 interface TextoGarantiaSectionProps {
   texto: string;
+  lojaId: string;
   onSalvo: () => Promise<void>;
 }
 
-export function TextoGarantiaSection({ texto, onSalvo }: TextoGarantiaSectionProps) {
+export function TextoGarantiaSection({
+  texto,
+  lojaId,
+  onSalvo,
+}: TextoGarantiaSectionProps) {
   const [valor, setValor] = useState(texto);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -18,7 +23,7 @@ export function TextoGarantiaSection({ texto, onSalvo }: TextoGarantiaSectionPro
     setSalvo(false);
     setSalvando(true);
     try {
-      await salvarTextoGarantia(valor);
+      await salvarTextoGarantia(lojaId, valor);
       await onSalvo();
       setSalvo(true);
     } catch (err) {

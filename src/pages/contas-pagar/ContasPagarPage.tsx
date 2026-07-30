@@ -26,7 +26,7 @@ function hojeIso(): string {
 }
 
 export function ContasPagarPage() {
-  const { operador } = useAuth();
+  const { operador, lojaAtual } = useAuth();
   const [contas, setContas] = useState<ContaPagar[]>([]);
   const [categorias, setCategorias] = useState<CategoriaCaixa[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -35,11 +35,15 @@ export function ContasPagarPage() {
   const [contaPagando, setContaPagando] = useState<ContaPagar | null>(null);
 
   async function carregar() {
+    if (!lojaAtual) {
+      setCarregando(false);
+      return;
+    }
     setCarregando(true);
     setErro(null);
     try {
       const [listaContas, listaCategorias] = await Promise.all([
-        listarContasPagar(),
+        listarContasPagar(lojaAtual.id),
         listarCategoriasCaixa(),
       ]);
       setContas(listaContas);
@@ -54,10 +58,12 @@ export function ContasPagarPage() {
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
   async function handleCadastrar(conta: NovaContaPagar) {
-    await criarContaPagar(conta);
+    if (!lojaAtual) return;
+    await criarContaPagar(conta, lojaAtual.id);
     setMostrarFormulario(false);
     await carregar();
   }

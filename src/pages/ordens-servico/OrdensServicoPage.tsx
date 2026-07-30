@@ -31,7 +31,7 @@ import { FaturamentoCard } from "./FaturamentoCard";
 import { OrdemServicoForm } from "./OrdemServicoForm";
 
 export function OrdensServicoPage() {
-  const { operador } = useAuth();
+  const { operador, lojaAtual } = useAuth();
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
@@ -47,7 +47,7 @@ export function OrdensServicoPage() {
     funcionarios.find((f) => f.operador_id === operador?.id)?.id ?? "";
 
   async function carregar() {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
       return;
     }
@@ -62,12 +62,12 @@ export function OrdensServicoPage() {
         funcionariosCarregados,
         jurosCarregados,
       ] = await Promise.all([
-        listarOrdens(),
+        listarOrdens(lojaAtual.id),
         listarClientes(),
         listarPecas(),
         listarServicos(),
-        listarFuncionarios(),
-        listarJurosParcelas(),
+        listarFuncionarios(lojaAtual.id),
+        listarJurosParcelas(lojaAtual.id),
       ]);
       setOrdens(ordensCarregadas);
       setClientes(clientesCarregados);
@@ -85,11 +85,12 @@ export function OrdensServicoPage() {
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
   async function handleSalvarNova(ordem: NovaOrdemServico, itens: NovoItemOS[]) {
-    if (!operador) return;
-    await criarOrdem(ordem, itens, operador.id);
+    if (!operador || !lojaAtual) return;
+    await criarOrdem(ordem, itens, operador.id, lojaAtual.id);
     setMostrarFormulario(false);
     await carregar();
   }
@@ -99,10 +100,10 @@ export function OrdensServicoPage() {
     patch: PatchOrdemServico,
     novosItens: NovoItemOS[],
   ) {
-    if (!operador) return;
+    if (!operador || !lojaAtual) return;
     await atualizarOrdem(id, patch, operador.id);
     if (novosItens.length > 0) {
-      await adicionarItensOrdem(id, novosItens, operador.id);
+      await adicionarItensOrdem(id, novosItens, operador.id, lojaAtual.id);
     }
     setOrdemEmEdicao(null);
     await carregar();
@@ -151,7 +152,13 @@ export function OrdensServicoPage() {
         </p>
       )}
 
-      {isSupabaseConfigured && !carregando && clientes.length === 0 && (
+      {isSupabaseConfigured && !carregando && !lojaAtual && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Seu usuário não tem loja atribuída. Fale com o administrador.
+        </p>
+      )}
+
+      {isSupabaseConfigured && !carregando && lojaAtual && clientes.length === 0 && (
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Cadastre ao menos um cliente antes de abrir uma ordem de serviço.
         </p>

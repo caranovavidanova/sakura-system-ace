@@ -14,12 +14,14 @@ interface ItemRevisao extends ItemNotaFiscalExtraido {
 
 interface ImportarNotasFiscaisModalProps {
   categorias: Categoria[];
+  lojaId: string;
   onFechar: () => void;
   onImportado: () => Promise<void>;
 }
 
 export function ImportarNotasFiscaisModal({
   categorias,
+  lojaId,
   onFechar,
   onImportado,
 }: ImportarNotasFiscaisModalProps) {
@@ -84,13 +86,16 @@ export function ImportarNotasFiscaisModal({
           ativo: true,
         });
         if (item.quantidade && item.quantidade > 0) {
-          await criarMovimento({
-            peca_id: pecaCriada.id,
-            tipo: "entrada",
-            quantidade: item.quantidade,
-            motivo: "compra",
-            referencia: "Importado por foto de nota fiscal",
-          });
+          await criarMovimento(
+            {
+              peca_id: pecaCriada.id,
+              tipo: "entrada",
+              quantidade: item.quantidade,
+              motivo: "compra",
+              referencia: "Importado por foto de nota fiscal",
+            },
+            lojaId,
+          );
         }
       }
       await onImportado();

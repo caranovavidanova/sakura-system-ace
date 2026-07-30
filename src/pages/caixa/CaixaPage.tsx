@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useAuth } from "@/contexts/AuthContext";
 import { mensagemDeErro } from "@/lib/errors";
 import { criarMovimentoCaixa, listarMovimentosCaixa } from "@/lib/caixa";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
@@ -14,6 +15,7 @@ import { EntradaSaidaSection } from "./EntradaSaidaSection";
 type Aba = "diario" | "entradas" | "saidas";
 
 export function CaixaPage() {
+  const { lojaAtual } = useAuth();
   const [aba, setAba] = useState<Aba>("diario");
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
@@ -22,7 +24,7 @@ export function CaixaPage() {
   const [erro, setErro] = useState<string | null>(null);
 
   async function carregar() {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
       return;
     }
@@ -30,7 +32,7 @@ export function CaixaPage() {
     setErro(null);
     try {
       const [movimentosCarregados, pecasCarregadas, categoriasCarregadas] = await Promise.all([
-        listarMovimentosCaixa(),
+        listarMovimentosCaixa(lojaAtual.id),
         listarPecas(),
         listarCategoriasCaixa(),
       ]);
@@ -47,10 +49,12 @@ export function CaixaPage() {
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
   async function handleSalvar(movimento: NovoMovimentoCaixa) {
-    await criarMovimentoCaixa(movimento);
+    if (!lojaAtual) return;
+    await criarMovimentoCaixa(movimento, lojaAtual.id);
     await carregar();
   }
 

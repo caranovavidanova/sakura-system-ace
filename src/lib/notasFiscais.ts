@@ -4,11 +4,15 @@ import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 const SELECT_ARQUIVO =
   "*, ordem_servico:ordens_servico(cliente:clientes(nome)), operador:operadores(nome)";
 
-export async function listarArquivos(tipo: TipoNotaFiscal): Promise<NotaFiscalArquivo[]> {
+export async function listarArquivos(
+  tipo: TipoNotaFiscal,
+  lojaId: string,
+): Promise<NotaFiscalArquivo[]> {
   const { data, error } = await supabase
     .from("notas_fiscais_arquivos")
     .select(SELECT_ARQUIVO)
     .eq("tipo", tipo)
+    .eq("loja_id", lojaId)
     .order("competencia", { ascending: false })
     .order("criado_em", { ascending: false });
 
@@ -22,6 +26,7 @@ interface NovoEnvioArquivo {
   arquivo: File;
   ordemServicoId: string | null;
   operadorId: string;
+  lojaId: string;
 }
 
 export async function enviarArquivo({
@@ -30,6 +35,7 @@ export async function enviarArquivo({
   arquivo,
   ordemServicoId,
   operadorId,
+  lojaId,
 }: NovoEnvioArquivo): Promise<void> {
   const caminho = `${tipo}/${competencia.slice(0, 7)}/${crypto.randomUUID()}-${arquivo.name}`;
 
@@ -45,6 +51,7 @@ export async function enviarArquivo({
     storage_path: caminho,
     ordem_servico_id: ordemServicoId,
     operador_id: operadorId,
+    loja_id: lojaId,
   });
   if (erroMetadados) {
     await supabase.storage.from("notas-fiscais").remove([caminho]);

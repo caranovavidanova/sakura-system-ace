@@ -17,6 +17,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Menu lateral reorganizado por fluxo de trabalho (atendimento/operação, financeiro, pós-venda/fiscal, RH por último); o bloco do operador (nome/engrenagem/Sair) virou um card de vidro separado do menu, em vez de emendado nele.
 - Módulos "Relações" e "Lucratividade" unificados num só, com abas "Gráficos" e "Lucratividade".
 - Enter agora avança pro próximo campo em qualquer formulário do app, em vez de tentar enviar — pensado pra quem trabalha só de teclado, sem mouse.
+- Módulo Serviços ganha "Categoria de serviço" (Configurações → "Categorias de serviço"), pra agrupar por área do veículo (Pneus, Suspensão, Amortecedores, Freios, Alinhamento), mesmo padrão já usado em Categorias de produto e Categorias de caixa.
+- Categorias de produto, categorias de serviço e um catálogo inicial de ~17 serviços já vêm semeados (baseados numa ficha de orçamento de referência do ramo), como ponto de partida pra loja nova — sem preços, e sem nenhuma peça/produto inventada (cadastro de peça exige dado fiscal real, isso continua manual).
 
 ### Corrigido
 - Barra de rolagem nativa do Windows/Chromium aparecia duplicada por cima da barra customizada em alguns blocos, porque um CSS de reset ficava fora da camada certa do Tailwind.

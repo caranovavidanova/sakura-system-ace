@@ -138,8 +138,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   ├── lib/                     # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
-│   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, contagens.ts,
-│   │                             # garantias.ts, contasPagar.ts) + feriados.ts (feriados
+│   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
+│   │                             # contagens.ts, garantias.ts, contasPagar.ts) + feriados.ts (feriados
 │   │                             # nacionais, Páscoa calculada) + configuracoes.ts (juros de
 │   │                             # parcelamento + texto de garantia + dados fiscais da loja) +
 │   │                             # garantiaTexto.ts + garantiaDocumento.ts (HTML da garantia) +
@@ -163,13 +163,15 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                   # (RelatoriosEstoqueSection.tsx). Sem módulo "Peças" separado.
 │   │   garantias/      # GarantiasPage.tsx é só lista (deriva de ordens_servico_itens +
 │   │                   # pecas.prazo_garantia_dias, sem tabela própria)
-│   │   servicos/       # catálogo de serviços, só lista + form, sem abas
+│   │   servicos/       # catálogo de serviços, só lista + form (com categoria via
+│   │                   # categorias_servicos), sem abas
 │   │   ordens-servico/ # OrdemServicoForm.tsx (form principal) + FaturamentoCard.tsx (faturamento
 │   │                   # com parcelas calculadas) + FechamentoTab.tsx (NFC-e/NFS-e + garantia,
 │   │                   # só aparece com status concluída/faturada) + GarantiaVisualModal.tsx
 │   │   configuracoes/  # JurosParcelasSection.tsx, CategoriasSection.tsx, CategoriasCaixaSection.tsx,
-│   │                   # TextoGarantiaSection.tsx, DadosFiscaisSection.tsx, CartoesInicioSection.tsx
-│   │                   # (todas dentro de SecaoRecolhivel, exceto Operadores que é sempre visível)
+│   │                   # CategoriasServicoSection.tsx, TextoGarantiaSection.tsx,
+│   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
+│   │                   # SecaoRecolhivel, exceto Operadores que é sempre visível)
 │   │   funcionarios/   # FuncionarioForm.tsx com abas "Dados gerais" e "Família"
 │   │   caixa/          # CaixaPage.tsx (orquestrador de abas) + DiarioSection.tsx +
 │   │                   # EntradaSaidaSection.tsx (reusado por Entradas/Saídas, parametrizado por tipo)
@@ -183,7 +185,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   └── types/                    # um arquivo por entidade + configuracao.ts (JurosParcela,
 │                                  # ConfiguracaoGarantia, ConfiguracaoFiscalLoja) +
 │                                  # itemNotaFiscal.ts (item extraído da leitura por IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0028), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0030), todas idempotentes
+├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
+│                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
+│                                  # preserva login/config; ver seção 5)
 ├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts (única até
 │                                  # agora): lê fotos ou PDFs de nota fiscal via Claude/Anthropic e devolve
 │                                  # os produtos estruturados. A ANTHROPIC_API_KEY fica só como
@@ -217,11 +222,24 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0028` em `supabase/migrations/`. `0001` a `0027` já confirmadas rodando sem
-erro no projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`); a `0028` (merge de permissões
-Relações/Lucratividade) ainda **não foi rodada por ela** — precisa aplicar essa antes de usar o
-módulo "Relações" reorganizado. Todas idempotentes — seguro rodar de novo caso precise reconectar
-ou montar outro projeto Supabase do zero (ver seção 9).
+Migrations `0001` a `0030` em `supabase/migrations/`. `0001` a `0027` já confirmadas rodando sem
+erro no projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`); **`0028`, `0029` e `0030` ainda
+não foram rodadas por ela** — precisa aplicar essas três, **nessa ordem**, antes de usar o módulo
+"Relações" reorganizado e as categorias/serviços padrão:
+- `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
+- `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
+- `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
+  numa ficha de orçamento de referência do ramo — nenhuma "peça" é criada (exigiria dado fiscal
+  real, que não dá pra inventar com segurança).
+
+Depois dessas três, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
+(não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
+apagar os dados de negócio de teste (clientes, veículos, peças, serviços, OS, caixa, estoque,
+contas a pagar) mantendo o login de operador e as configurações da loja. Ver comentário no topo
+do próprio arquivo pra ordem exata de execução.
+
+Todas as migrations são idempotentes — seguro rodar de novo caso precise reconectar ou montar
+outro projeto Supabase do zero (ver seção 9).
 
 - **`clientes`**: id, nome (vira "Razão social" na tela quando `tipo_pessoa` é jurídica, mesmo
   campo), tipo_pessoa (`fisica`/`juridica`, default `fisica`), cpf_cnpj (rótulo muda pra "CPF" ou
@@ -236,9 +254,15 @@ ou montar outro projeto Supabase do zero (ver seção 9).
   opcional, usado pelo módulo Garantias), ativo, criado_em. **Margem % não é salva no banco** — é
   só calculada na tela a partir de `preco_custo`/`preco_venda`.
 - **`categorias`**: id, nome (único), criado_em. Gerenciada em Configurações (admin), selecionável
-  no cadastro de produto. Sem hierarquia nem campos extras, de propósito.
-- **`servicos`** (catálogo de serviços, análogo a `pecas` mas sem estoque): id, codigo_interno
-  (opcional), descricao, preco_padrao, ativo, criado_em
+  no cadastro de produto. Sem hierarquia nem campos extras, de propósito. Vem semeada com 5
+  categorias padrão (Pneus, Suspensão, Amortecedores, Freios, Outras Peças — migration `0030`).
+- **`categorias_servicos`**: id, nome (único), criado_em. Mesmo conceito de `categorias`, mas pra
+  serviços — tabela própria (não reaproveita `categorias`), mesmo padrão de "conceito parecido,
+  tabela separada" já usado com `categorias_caixa`. Vem semeada com 6 categorias padrão (Pneus,
+  Suspensão, Amortecedores, Freios, Alinhamento, Outros Serviços — migration `0030`).
+- **`servicos`** (catálogo de serviços, análogo a `pecas` mas sem estoque/fiscal): id,
+  codigo_interno (opcional), descricao, preco_padrao, categoria_id (FK categorias_servicos,
+  opcional), ativo, criado_em. Vem semeado com ~17 serviços padrão sem preço (migration `0030`).
 - **`estoque_movimentos`**: id, peca_id (FK), tipo (`entrada`/`saida`), quantidade, motivo
   (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
 - **`ordens_servico`**: id, cliente_id (FK), veiculo_id (FK, opcional), status
@@ -424,7 +448,10 @@ normal (quebra de linha).
   da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
   cadastra em lote (`ImportarNotasFiscaisModal.tsx`). Chave da Anthropic fica só como secret da
   Edge Function.
-- **Serviços**: catálogo simples (descrição, código opcional, preço padrão), sem estoque/fiscal.
+- **Serviços**: catálogo simples (descrição, código opcional, preço padrão, categoria de serviço
+  opcional), sem estoque/fiscal. Vem semeado com ~17 serviços padrão sem preço (organizados por
+  categoria: Pneus, Suspensão, Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa
+  ficha de orçamento de referência do ramo — ponto de partida, não os preços/serviços reais dela.
 - **Ordens de Serviço**: form em duas colunas, reabre pra editar (só permite acrescentar itens,
   não editar/remover item já lançado — evita desfazer baixa de estoque). Técnico por item +
   vendedor/atendente da OS (ambos listam `funcionarios`, não só operadores). Faturamento
@@ -458,16 +485,19 @@ normal (quebra de linha).
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
   "Veículos no pátio" (com ícone por tipo/cor).
 - **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador"), e seções
-  recolhíveis — Juros de parcelamento, Categorias de produto, Categorias de caixa, Texto de
-  garantia, Dados fiscais da loja, Cartões do Início.
+  recolhíveis — Juros de parcelamento, Categorias de produto, Categorias de serviço, Categorias de
+  caixa, Texto de garantia, Dados fiscais da loja, Cartões do Início.
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
-  enviada. **Versão atual: `0.1.3`** (tag publicada e instalador baixado pela usuária) — **mas
-  muita coisa foi implementada depois da v0.1.3** (Funcionários RH completo, Contas a Pagar,
-  Notas Fiscais, Relações com gráficos, cartões personalizáveis, veículos no pátio, scrollbar
+  enviada. **Versão atual: `0.1.3`** (tag publicada e instalador baixado pela usuária) — **muita
+  coisa foi implementada depois da v0.1.3** (Funcionários RH completo, Contas a Pagar, Notas
+  Fiscais, Relações com gráficos, cartões personalizáveis, veículos no pátio, scrollbar
   customizada, Importar por foto/PDF, menu reorganizado, Relações+Lucratividade unificados, Enter
-  avançando entre campos...) **sem nenhuma tag nova publicada ainda** — se a próxima sessão for
-  sobre lançar uma versão nova, é bom já avisar que tem bastante coisa acumulada desde a 0.1.3.
+  avançando entre campos, categorias de serviço...) **sem nenhuma tag nova publicada — decisão
+  explícita da usuária**: só publicar a próxima versão do instalador **quando a emissão de nota
+  fiscal também estiver pronta**, pra não ter que atualizar o instalador duas vezes seguidas. Até
+  lá, ela usa a loja rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`,
+  com `.env` configurado nesse PC também) em vez do instalador.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -519,9 +549,10 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: em aberto — a usuária ainda não decidiu se prefere avançar na
-parte fiscal, fechar a logo oficial, ou outra coisa. Perguntar no início da sessão em vez de
-presumir.
+**Prioridade da próxima sessão**: emissão de nota fiscal (Focus NFe, item 1 desta seção) —
+decisão explícita da usuária. Ela só publica a próxima versão do instalador quando isso estiver
+pronto (ver aviso na seção 7, "Empacotamento"). Antes de codar de verdade, ela precisa ter criado
+a conta/token de homologação do Focus NFe (ver item 1) — confirmar isso no início da sessão.
 
 ## 9. Como rodar / configurar (resumo)
 

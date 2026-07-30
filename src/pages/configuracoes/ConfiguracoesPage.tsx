@@ -4,6 +4,7 @@ import { SecaoRecolhivel } from "@/components/SecaoRecolhivel";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
+import { listarCategoriasServico } from "@/lib/categoriasServico";
 import {
   buscarConfiguracaoFiscal,
   buscarConfiguracaoPainelInicio,
@@ -15,12 +16,14 @@ import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operad
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
+import type { CategoriaServico } from "@/types/categoriaServico";
 import type { CartaoMetrica, ConfiguracaoFiscalLoja, JurosParcela } from "@/types/configuracao";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
 import { CartoesInicioSection } from "./CartoesInicioSection";
 import { CategoriasCaixaSection } from "./CategoriasCaixaSection";
 import { CategoriasSection } from "./CategoriasSection";
+import { CategoriasServicoSection } from "./CategoriasServicoSection";
 import { DadosFiscaisSection } from "./DadosFiscaisSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
 import { OperadorForm } from "./OperadorForm";
@@ -32,6 +35,7 @@ export function ConfiguracoesPage() {
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriasCaixa, setCategoriasCaixa] = useState<CategoriaCaixa[]>([]);
+  const [categoriasServico, setCategoriasServico] = useState<CategoriaServico[]>([]);
   const [textoGarantia, setTextoGarantia] = useState("");
   const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(
     null,
@@ -54,6 +58,7 @@ export function ConfiguracoesPage() {
         jurosCarregados,
         categoriasCarregadas,
         categoriasCaixaCarregadas,
+        categoriasServicoCarregadas,
         textoGarantiaCarregado,
         configuracaoFiscalCarregada,
         cartoesInicioCarregados,
@@ -62,6 +67,7 @@ export function ConfiguracoesPage() {
         listarJurosParcelas(),
         listarCategorias(),
         listarCategoriasCaixa(),
+        listarCategoriasServico(),
         buscarTextoGarantia(),
         buscarConfiguracaoFiscal(),
         buscarConfiguracaoPainelInicio(),
@@ -70,6 +76,7 @@ export function ConfiguracoesPage() {
       setJurosParcelas(jurosCarregados);
       setCategorias(categoriasCarregadas);
       setCategoriasCaixa(categoriasCaixaCarregadas);
+      setCategoriasServico(categoriasServicoCarregadas);
       setTextoGarantia(textoGarantiaCarregado);
       setConfiguracaoFiscal(configuracaoFiscalCarregada);
       setCartoesInicio(cartoesInicioCarregados);
@@ -249,6 +256,13 @@ export function ConfiguracoesPage() {
             descricao="Usadas no cadastro de produtos (aba Estoque → Produtos) para agrupar peças."
           >
             <CategoriasSection categorias={categorias} onSalvo={carregar} />
+          </SecaoRecolhivel>
+
+          <SecaoRecolhivel
+            titulo="Categorias de serviço"
+            descricao="Usadas no cadastro de serviços (módulo Serviços) para agrupar por área do veículo (ex: Pneus, Suspensão, Freios)."
+          >
+            <CategoriasServicoSection categorias={categoriasServico} onSalvo={carregar} />
           </SecaoRecolhivel>
 
           <SecaoRecolhivel

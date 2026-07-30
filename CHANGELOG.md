@@ -13,11 +13,12 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Configurações → Lojas: agora dá para editar nome/cidade/UF de uma loja já cadastrada (antes só dava para criar e inativar, o que deixava a "Loja 1" padrão sem jeito de virar o nome real da loja).
 - Ordens de Serviço: filtro de período (De/Até) e busca por cliente/placa na lista — OS em aberto sempre aparecem independente da data (só o histórico já faturado é filtrado por período), evitando que a lista cresça sem controle. Buscar por cliente/placa ignora o período e olha todo o histórico.
 - Ordens de Serviço: lista ganha colunas de Peças, Serviços e Lucro por ordem (além do Total que já existia), e o status ganha cores diferentes por etapa (Aberta/Em andamento/Concluída/Faturada) — "Concluída" usa laranja de propósito, pra chamar atenção de que falta faturar. O botão "Faturar" também ficou mais visível (virou um botão sólido, não só um link). As mesmas cores de status aparecem também no card "OS abertas" do Início.
-- Serviços: novo campo de custo (ex: mão de obra) no cadastro, igual peça já tinha custo/preço — a aba Lucratividade (Relações) agora calcula a margem de serviço de verdade, em vez de considerar o custo do serviço sempre zero.
+- Serviços: novo campo de custo (ex: mão de obra) no cadastro, igual peça já tinha custo/preço — a aba Lucratividade (Relações) agora calcula a margem de serviço de verdade, em vez de considerar o custo do serviço sempre zero. A lista de Serviços ganha uma coluna "Custo" e um botão "Editar" (antes só dava para criar/inativar/excluir, sem jeito de editar um serviço já cadastrado — inclusive os ~17 que já vêm semeados).
 - Novo módulo "Contas a Receber": ao faturar uma OS, dá para escolher entre "Recebido agora" (lança a Entrada no Caixa na hora, como sempre foi) ou "A receber depois" (informa uma previsão de data e cria uma pendência, sem lançar nada no Caixa ainda). Marcar como recebido em Contas a Receber gera a Entrada automaticamente no Caixa naquele momento — mesmo padrão já usado em Contas a Pagar.
 
 ### Alterado
 - Cadastro de Cliente: título da seção de veículos passa de "Veículos (opcional)" para só "Veículos"; o botão "+ Adicionar veículo" foi movido para baixo da lista de veículos (antes ficava em cima, antes de qualquer veículo existir).
+- Cadastro de Funcionário (aba Família): o campo "Sexo" estava dentro da seção "Filiação", ao lado de "Pai"/"Mãe" — dava a entender que era sobre outra pessoa, quando é sobre o próprio funcionário. Movido para a aba "Dados gerais", junto de Nome/Data de nascimento.
 
 ## [0.9.0] - 2026-07-30
 

@@ -22,6 +22,11 @@ export async function criarServico(servico: NovoServico): Promise<Servico> {
   return data as Servico;
 }
 
+export async function atualizarServico(id: string, servico: NovoServico): Promise<void> {
+  const { error } = await supabase.from("servicos").update(servico).eq("id", id);
+  if (error) throw error;
+}
+
 export async function excluirServico(id: string): Promise<void> {
   const { error } = await supabase.from("servicos").delete().eq("id", id);
   if (error) throw error;

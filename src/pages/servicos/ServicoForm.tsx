@@ -2,11 +2,13 @@ import { useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import type { CategoriaServico } from "@/types/categoriaServico";
-import type { NovoServico } from "@/types/servico";
+import type { NovoServico, Servico } from "@/types/servico";
 
 interface ServicoFormProps {
   categorias: CategoriaServico[];
+  servicoExistente?: Servico;
   onSalvar: (servico: NovoServico) => Promise<void>;
+  onSalvarEdicao?: (id: string, servico: NovoServico) => Promise<void>;
   onCancelar: () => void;
 }
 
@@ -19,8 +21,25 @@ const servicoVazio: NovoServico = {
   ativo: true,
 };
 
-export function ServicoForm({ categorias, onSalvar, onCancelar }: ServicoFormProps) {
-  const [servico, setServico] = useState<NovoServico>(servicoVazio);
+export function ServicoForm({
+  categorias,
+  servicoExistente,
+  onSalvar,
+  onSalvarEdicao,
+  onCancelar,
+}: ServicoFormProps) {
+  const [servico, setServico] = useState<NovoServico>(
+    servicoExistente
+      ? {
+          codigo_interno: servicoExistente.codigo_interno,
+          descricao: servicoExistente.descricao,
+          preco_padrao: servicoExistente.preco_padrao,
+          custo: servicoExistente.custo,
+          categoria_id: servicoExistente.categoria_id,
+          ativo: servicoExistente.ativo,
+        }
+      : servicoVazio,
+  );
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -29,7 +48,11 @@ export function ServicoForm({ categorias, onSalvar, onCancelar }: ServicoFormPro
     setErro(null);
     setSalvando(true);
     try {
-      await onSalvar(servico);
+      if (servicoExistente && onSalvarEdicao) {
+        await onSalvarEdicao(servicoExistente.id, servico);
+      } else {
+        await onSalvar(servico);
+      }
     } catch (err) {
       console.error("Erro ao salvar serviço:", err);
       setErro(mensagemDeErro(err));
@@ -46,7 +69,7 @@ export function ServicoForm({ categorias, onSalvar, onCancelar }: ServicoFormPro
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <h2 className="text-lg font-semibold text-sakura-purple-dark">
-          Novo serviço
+          {servicoExistente ? "Editar serviço" : "Novo serviço"}
         </h2>
       </div>
 
@@ -146,7 +169,7 @@ export function ServicoForm({ categorias, onSalvar, onCancelar }: ServicoFormPro
           disabled={salvando}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : "Salvar serviço"}
+          {salvando ? "Salvando..." : servicoExistente ? "Salvar alterações" : "Salvar serviço"}
         </button>
       </div>
     </form>

@@ -165,6 +165,17 @@ export function FuncionarioForm({
                   className={inputClasse}
                 />
               </Campo>
+              <Campo label="Sexo">
+                <select
+                  value={dados.sexo ?? ""}
+                  onChange={(e) => campo("sexo", e.target.value || null)}
+                  className={inputClasse}
+                >
+                  <option value="">Selecione</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Masculino">Masculino</option>
+                </select>
+              </Campo>
               <Campo label="Estado civil">
                 <select
                   value={dados.estado_civil ?? ""}
@@ -412,17 +423,6 @@ export function FuncionarioForm({
                   onChange={(e) => campo("mae", e.target.value || null)}
                   className={inputClasse}
                 />
-              </Campo>
-              <Campo label="Sexo">
-                <select
-                  value={dados.sexo ?? ""}
-                  onChange={(e) => campo("sexo", e.target.value || null)}
-                  className={inputClasse}
-                >
-                  <option value="">Selecione</option>
-                  <option value="Feminino">Feminino</option>
-                  <option value="Masculino">Masculino</option>
-                </select>
               </Campo>
               <Campo label="Naturalidade">
                 <input

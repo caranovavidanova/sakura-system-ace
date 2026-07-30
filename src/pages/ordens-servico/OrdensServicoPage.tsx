@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarJurosParcelas } from "@/lib/configuracoes";
@@ -32,6 +33,8 @@ import { OrdemServicoForm } from "./OrdemServicoForm";
 
 export function OrdensServicoPage() {
   const { operador, lojaAtual } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
@@ -75,6 +78,13 @@ export function OrdensServicoPage() {
       setServicos(servicosCarregados);
       setFuncionarios(funcionariosCarregados);
       setJurosParcelas(jurosCarregados);
+
+      const abrirOrdemId = (location.state as { abrirOrdemId?: string } | null)?.abrirOrdemId;
+      if (abrirOrdemId) {
+        const ordemParaAbrir = ordensCarregadas.find((o) => o.id === abrirOrdemId);
+        if (ordemParaAbrir) setOrdemEmEdicao(ordemParaAbrir);
+        navigate(location.pathname, { replace: true, state: null });
+      }
     } catch (err) {
       console.error("Erro ao carregar ordens de serviço:", err);
       setErro(mensagemDeErro(err));

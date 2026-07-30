@@ -29,73 +29,73 @@ export function Sidebar() {
     : MODULOS.filter((modulo) => operador?.permissoes.includes(modulo.chave));
 
   return (
-    <aside className="sakura-card flex h-full w-64 shrink-0 flex-col overflow-hidden">
-      <AreaRolavel className="flex flex-col">
-        <div className="px-6 py-6">
-          <Logo />
-          <p className="mt-1 text-xs text-sakura-purple-dark/85">AutoCenter Edition</p>
-        </div>
-
-        <nav className="flex flex-1 flex-col gap-1 px-3">
-          {modulosLiberados.length === 0 && (
-            <p className="px-4 py-2.5 text-xs text-sakura-purple-dark/85">
-              Nenhum módulo liberado. Fale com o administrador.
-            </p>
-          )}
-          {modulosLiberados.map((modulo) => (
-            <NavLink
-              key={modulo.chave}
-              to={modulo.rota}
-              end={modulo.chave === "painel"}
-              className={({ isActive }) =>
-                `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-white/50 text-sakura-purple-dark"
-                    : "text-sakura-purple-dark/90 hover:bg-white/30"
-                }`
-              }
-            >
-              {modulo.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        {operador && (
-          <div className="border-t border-white/40 px-6 py-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-sakura-purple-dark">
-                  {operador.nome}
-                </p>
-                <p className="truncate text-xs text-sakura-purple-dark/85">
-                  @{operador.usuario}
-                </p>
-              </div>
-              {operador.admin && (
-                <NavLink
-                  to="/configuracoes"
-                  title="Configurações"
-                  className={({ isActive }) =>
-                    `shrink-0 rounded-full p-2 transition-colors ${
-                      isActive
-                        ? "bg-white/50 text-sakura-purple-dark"
-                        : "text-sakura-purple-dark/85 hover:bg-white/30 hover:text-sakura-purple-dark"
-                    }`
-                  }
-                >
-                  <IconeEngrenagem className="h-5 w-5" />
-                </NavLink>
-              )}
-            </div>
-            <button
-              onClick={() => logout()}
-              className="mt-2 text-xs font-medium text-sakura-purple hover:underline"
-            >
-              Sair
-            </button>
+    <aside className="flex h-full w-64 shrink-0 flex-col gap-4">
+      <div className="sakura-card flex flex-1 flex-col overflow-hidden">
+        <AreaRolavel className="flex flex-col">
+          <div className="px-6 py-6">
+            <Logo />
+            <p className="mt-1 text-xs text-sakura-purple-dark/85">AutoCenter Edition</p>
           </div>
-        )}
-      </AreaRolavel>
+
+          <nav className="flex flex-1 flex-col gap-1 px-3 pb-3">
+            {modulosLiberados.length === 0 && (
+              <p className="px-4 py-2.5 text-xs text-sakura-purple-dark/85">
+                Nenhum módulo liberado. Fale com o administrador.
+              </p>
+            )}
+            {modulosLiberados.map((modulo) => (
+              <NavLink
+                key={modulo.chave}
+                to={modulo.rota}
+                end={modulo.chave === "painel"}
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-white/50 text-sakura-purple-dark"
+                      : "text-sakura-purple-dark/90 hover:bg-white/30"
+                  }`
+                }
+              >
+                {modulo.label}
+              </NavLink>
+            ))}
+          </nav>
+        </AreaRolavel>
+      </div>
+
+      {operador && (
+        <div className="sakura-card shrink-0 px-6 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-sakura-purple-dark">
+                {operador.nome}
+              </p>
+              <p className="truncate text-xs text-sakura-purple-dark/85">@{operador.usuario}</p>
+            </div>
+            {operador.admin && (
+              <NavLink
+                to="/configuracoes"
+                title="Configurações"
+                className={({ isActive }) =>
+                  `shrink-0 rounded-full p-2 transition-colors ${
+                    isActive
+                      ? "bg-white/50 text-sakura-purple-dark"
+                      : "text-sakura-purple-dark/85 hover:bg-white/30 hover:text-sakura-purple-dark"
+                  }`
+                }
+              >
+                <IconeEngrenagem className="h-5 w-5" />
+              </NavLink>
+            )}
+          </div>
+          <button
+            onClick={() => logout()}
+            className="mt-2 text-xs font-medium text-sakura-purple hover:underline"
+          >
+            Sair
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

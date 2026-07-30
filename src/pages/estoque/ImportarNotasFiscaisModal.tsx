@@ -54,7 +54,8 @@ export function ImportarNotasFiscaisModal({
     );
   }
 
-  async function handleCadastrar() {
+  async function handleCadastrar(e: React.FormEvent) {
+    e.preventDefault();
     if (!itens) return;
     const selecionados = itens.filter((item) => item.incluir);
     if (selecionados.length === 0) return;
@@ -116,11 +117,11 @@ export function ImportarNotasFiscaisModal({
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-sakura-purple-dark">
-              Importar produtos por foto da nota fiscal
+              Importar produtos por foto ou PDF da nota fiscal
             </h2>
             <p className="text-sm text-sakura-muted">
-              Escolha uma ou mais fotos (pode ser mais de uma nota junto) — a IA lê e
-              preenche os campos fiscais de cada item. Revise antes de cadastrar.
+              Escolha uma ou mais fotos e/ou PDFs (pode ser mais de uma nota junto) — a
+              IA lê e preenche os campos fiscais de cada item. Revise antes de cadastrar.
             </p>
           </div>
           <button
@@ -142,10 +143,10 @@ export function ImportarNotasFiscaisModal({
         {itens === null && (
           <div className="space-y-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-sakura-purple-dark/80">Fotos das notas</span>
+              <span className="text-sakura-purple-dark/80">Fotos ou PDFs das notas</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf,application/pdf"
                 multiple
                 onChange={(e) => setArquivos(Array.from(e.target.files ?? []))}
                 className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
@@ -153,7 +154,7 @@ export function ImportarNotasFiscaisModal({
             </label>
             {arquivos.length > 0 && (
               <p className="text-sm text-sakura-muted">
-                {arquivos.length} foto(s) selecionada(s).
+                {arquivos.length} arquivo(s) selecionado(s).
               </p>
             )}
             <div className="flex justify-end gap-3">
@@ -170,14 +171,14 @@ export function ImportarNotasFiscaisModal({
                 disabled={arquivos.length === 0 || lendo}
                 className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
-                {lendo ? "Lendo..." : "Ler fotos"}
+                {lendo ? "Lendo..." : "Ler arquivos"}
               </button>
             </div>
           </div>
         )}
 
         {itens !== null && (
-          <div className="space-y-4">
+          <form onSubmit={handleCadastrar} className="space-y-4">
             {itens.length === 0 ? (
               <p className="text-sm text-sakura-muted">
                 Não consegui identificar nenhum produto nessas fotos.
@@ -326,8 +327,7 @@ export function ImportarNotasFiscaisModal({
                 Cancelar
               </button>
               <button
-                type="button"
-                onClick={handleCadastrar}
+                type="submit"
                 disabled={quantidadeSelecionada === 0 || salvando}
                 className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
@@ -336,7 +336,7 @@ export function ImportarNotasFiscaisModal({
                   : `Cadastrar ${quantidadeSelecionada} produto(s)`}
               </button>
             </div>
-          </div>
+          </form>
         )}
       </div>
     </div>

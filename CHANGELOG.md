@@ -10,13 +10,17 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Notas Fiscais: botão "Versão para o cliente" gera um recibo em HTML (imprimir ou baixar) a partir do XML já enviado, além do "Baixar XML" que já existia.
 - Garantia da OS (aba Fechamento) redesenhada: cabeçalho com dados da loja, dados do cliente e do veículo, tabela de peças/serviços com técnico, totalização (produtos/serviços/subtotal/descontos), forma de pagamento (com parcelas, se houver) e linhas de assinatura — além do texto de garantia configurável, que continua editável em Configurações.
 - Módulo "Contas a Pagar": contas mensais (aluguel, etc.) com valor e vencimento, diferente das Entradas/Saídas manuais do Caixa. Marcar como paga lança automaticamente uma Saída no Caixa; contas marcadas como recorrentes já criam a próxima ocorrência (mês seguinte) sozinhas.
-- Estoque → "📷 Importar por foto": lê uma ou mais fotos de nota fiscal (pode ser mais de uma nota junto) via IA, mostra uma tabela editável com os produtos identificados e cadastra em lote.
+- Estoque → "Importar por foto/PDF": lê uma ou mais fotos **ou PDFs** de nota fiscal (pode ser mais de uma nota junto) via IA, mostra uma tabela editável com os produtos identificados e cadastra em lote.
 - Relações (antigo "Relatórios", só o nome mudou): gráfico de barras (Vendas x Custos x Lucro, por dia/semana/mês) e gráfico radar comparando o período atual com o anterior, sem biblioteca externa de gráficos.
 - Início: cartões de tendência personalizáveis (Configurações → "Cartões do Início" escolhe até 3 entre 5 indicadores), sem mais gráfico — só valor grande e seta, com um leve brilho interno por métrica. Nova seção "Veículos no pátio", com ícone por tipo de carroceria pintado na cor cadastrada do veículo.
 - Barra de rolagem 100% customizada (some a nativa do Windows, que não respeitava o arredondado dos blocos de vidro) na área principal e no menu lateral.
+- Menu lateral reorganizado por fluxo de trabalho (atendimento/operação, financeiro, pós-venda/fiscal, RH por último); o bloco do operador (nome/engrenagem/Sair) virou um card de vidro separado do menu, em vez de emendado nele.
+- Módulos "Relações" e "Lucratividade" unificados num só, com abas "Gráficos" e "Lucratividade".
+- Enter agora avança pro próximo campo em qualquer formulário do app, em vez de tentar enviar — pensado pra quem trabalha só de teclado, sem mouse.
 
 ### Corrigido
 - Barra de rolagem nativa do Windows/Chromium aparecia duplicada por cima da barra customizada em alguns blocos, porque um CSS de reset ficava fora da camada certa do Tailwind.
+- Ícone de câmera (emoji) do botão "Importar por foto" trocado por um ícone SVG minimalista, consistente com o resto do app.
 
 ## [0.1.3] - 2026-07-29
 

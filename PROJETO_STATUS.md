@@ -132,6 +132,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # usados em Relações), VeiculoIcone.tsx (ícone por tipo de
 │   │                             # veículo, pintado com a cor cadastrada), AreaRolavel.tsx (barra
 │   │                             # de rolagem 100% customizada, ver seção 2)
+│   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
+│   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
+│   │                             # globalmente, em App.tsx
 │   ├── lib/                     # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
@@ -147,9 +150,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto)
 │   ├── pages/<modulo>/           # uma pasta por módulo: painel, clientes, estoque, servicos,
-│   │                             # ordens-servico, funcionarios, caixa, contas-pagar, relatorios
-│   │                             # (rota /relatorios, label "Relações"), lucratividade, garantias,
-│   │                             # notas-fiscais, login, configuracoes. Cada pasta tem
+│   │                             # ordens-servico, caixa, contas-pagar, relatorios (rota
+│   │                             # /relatorios, label "Relações" — abas Gráficos/Lucratividade,
+│   │                             # absorveu o antigo módulo "Lucratividade"), garantias,
+│   │                             # notas-fiscais, funcionarios, login, configuracoes. Cada pasta tem
 │   │                             # <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário), com
 │   │                             # exceções:
 │   │   estoque/       # EstoquePage.tsx com 4 abas: Produtos (ProdutosSection.tsx + PecaForm.tsx +
@@ -172,13 +176,16 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │   notas-fiscais/  # NotasFiscaisPage.tsx com abas NFe/NFS-e + ArquivosSection.tsx +
 │   │                   # NotaFiscalVisualModal.tsx (recibo "versão para o cliente")
 │   │   contas-pagar/   # ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx
+│   │   relatorios/     # RelatoriosPage.tsx (orquestrador de abas) + GraficosSection.tsx (barras +
+│   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
+│   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado)
 │   ├── styles/globals.css       # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                    # um arquivo por entidade + configuracao.ts (JurosParcela,
 │                                  # ConfiguracaoGarantia, ConfiguracaoFiscalLoja) +
 │                                  # itemNotaFiscal.ts (item extraído da leitura por IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0027), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0028), todas idempotentes
 ├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts (única até
-│                                  # agora): lê fotos de nota fiscal via Claude/Anthropic e devolve
+│                                  # agora): lê fotos ou PDFs de nota fiscal via Claude/Anthropic e devolve
 │                                  # os produtos estruturados. A ANTHROPIC_API_KEY fica só como
 │                                  # secret dessa função no Supabase, nunca no app instalado.
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
@@ -210,9 +217,11 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0027` em `supabase/migrations/`, todas confirmadas rodando sem erro no
-projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`). Todas idempotentes — seguro rodar de
-novo caso precise reconectar ou montar outro projeto Supabase do zero (ver seção 9).
+Migrations `0001` a `0028` em `supabase/migrations/`. `0001` a `0027` já confirmadas rodando sem
+erro no projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`); a `0028` (merge de permissões
+Relações/Lucratividade) ainda **não foi rodada por ela** — precisa aplicar essa antes de usar o
+módulo "Relações" reorganizado. Todas idempotentes — seguro rodar de novo caso precise reconectar
+ou montar outro projeto Supabase do zero (ver seção 9).
 
 - **`clientes`**: id, nome (vira "Razão social" na tela quando `tipo_pessoa` é jurídica, mesmo
   campo), tipo_pessoa (`fisica`/`juridica`, default `fisica`), cpf_cnpj (rótulo muda pra "CPF" ou
@@ -383,8 +392,21 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
-completos), Estoque (entrada/saída, saldo), Ordens de Serviço, Caixa Diário, Relatórios,
-Lucratividade, Painel/Início.
+completos), Estoque (entrada/saída, saldo), Ordens de Serviço, Caixa Diário, Relações,
+Painel/Início.
+
+**Ordem do menu lateral**: reorganizada a pedido da usuária, agrupando por fluxo de trabalho —
+Início, Clientes, Ordens de Serviço, Estoque, Serviços, Caixa Diário, Contas a Pagar, Relações,
+Garantias, Notas Fiscais, Funcionários (RH por último, de propósito — é cadastro usado bem menos
+no dia a dia do balcão do que os módulos anteriores). Ver `MODULOS` em `src/types/operador.ts`.
+
+**Enter avança pro próximo campo**: em qualquer formulário do app, apertar Enter move o foco pro
+próximo campo em vez de tentar enviar o formulário — pensado pra quem trabalha só de teclado, sem
+mouse (comum em balcão de loja). No último campo, Enter foca o botão de salvar/confirmar (mais um
+Enter confirma). Implementado uma única vez, globalmente (`src/hooks/useEnterParaProximoCampo.ts`,
+usado em `App.tsx`) — não precisa de nada especial em cada tela nova, funciona em qualquer
+`<form>`. Campos de texto multilinha (`<textarea>`, ex: "Observação" da OS) continuam com Enter
+normal (quebra de linha).
 
 - **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
   do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
@@ -396,11 +418,12 @@ Lucratividade, Painel/Início.
 - **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
   categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
   produto), Contagem (inventário físico, gera ajuste automático na diferença), Relatórios (estoque
-  físico-financeiro, saldo por situação, produtos sem movimentação). **Importar por foto**: botão
-  "📷 Importar por foto" ao lado de "+ Novo produto" — lê uma ou mais fotos de nota fiscal (pode
-  ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através da Edge Function
-  `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e cadastra em lote
-  (`ImportarNotasFiscaisModal.tsx`). Chave da Anthropic fica só como secret da Edge Function.
+  físico-financeiro, saldo por situação, produtos sem movimentação). **Importar por foto/PDF**:
+  botão ao lado de "+ Novo produto" (ícone de câmera, SVG) — lê uma ou mais fotos **ou PDFs** de
+  nota fiscal (pode ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através
+  da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
+  cadastra em lote (`ImportarNotasFiscaisModal.tsx`). Chave da Anthropic fica só como secret da
+  Edge Function.
 - **Serviços**: catálogo simples (descrição, código opcional, preço padrão), sem estoque/fiscal.
 - **Ordens de Serviço**: form em duas colunas, reabre pra editar (só permite acrescentar itens,
   não editar/remover item já lançado — evita desfazer baixa de estoque). Técnico por item +
@@ -423,10 +446,13 @@ Lucratividade, Painel/Início.
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
   (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
   e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code).
-- **Relações** (ex-"Relatórios", só o label mudou): gráfico de barras (Vendas x Custos x Lucro,
-  Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca externa
-  de gráficos. Paleta categórica própria (verde/laranja/violeta), diferente das cores do Início.
-- **Lucratividade**: margem por peça/serviço, período filtrável.
+- **Relações** (ex-"Relatórios", label mudou antes; agora também absorveu o módulo antigo
+  "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
+  Lucro, Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca
+  externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba "Lucratividade" —
+  margem por peça/serviço, período filtrável. **Atenção**: quem tinha só a permissão
+  "Lucratividade" liberada (sem "Relações") precisa rodar a migration `0028` pra não perder acesso
+  (ver seção 5).
 - **Início**: 3 cartões de tendência personalizáveis (Configurações → "Cartões do Início", padrão
   Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta), calendário do mês com feriados
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
@@ -439,9 +465,9 @@ Lucratividade, Painel/Início.
   enviada. **Versão atual: `0.1.3`** (tag publicada e instalador baixado pela usuária) — **mas
   muita coisa foi implementada depois da v0.1.3** (Funcionários RH completo, Contas a Pagar,
   Notas Fiscais, Relações com gráficos, cartões personalizáveis, veículos no pátio, scrollbar
-  customizada, Importar por foto...) **sem nenhuma tag nova publicada ainda** — se a próxima
-  sessão for sobre lançar uma versão nova, é bom já avisar que tem bastante coisa acumulada desde
-  a 0.1.3.
+  customizada, Importar por foto/PDF, menu reorganizado, Relações+Lucratividade unificados, Enter
+  avançando entre campos...) **sem nenhuma tag nova publicada ainda** — se a próxima sessão for
+  sobre lançar uma versão nova, é bom já avisar que tem bastante coisa acumulada desde a 0.1.3.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -508,8 +534,8 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Todas as migrations `0001` a `0027` já foram
-confirmadas rodando sem erro nesse projeto.
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0027` já foram confirmadas
+rodando sem erro nesse projeto; falta rodar a `0028` (ver seção 5).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
@@ -543,7 +569,14 @@ chave de API. Feito pelo painel do Supabase, sem instalar nada no computador:
    function**.
 3. **Configurar o secret**: na função criada, aba **Secrets** (ou Project Settings → Edge
    Functions → "Add new secret") → nome `ANTHROPIC_API_KEY`, valor a chave do passo 1.
-4. Testar: **Estoque → Produtos → "📷 Importar por foto"**.
+4. Testar: **Estoque → Produtos → "Importar por foto/PDF"**.
+
+**Se a função já estava publicada antes** (leitura só de fotos) e agora quer aceitar PDF também:
+volta no passo 2 e cola o conteúdo **atualizado** de `supabase/functions/ler-notas-fiscais/index.ts`
+por cima do código antigo (mesma função, só o código muda) — o app já manda arquivos com
+`mediaType: "application/pdf"` quando o operador escolhe um PDF, mas só a versão nova da função
+sabe montar o bloco de "documento" certo pro Claude; com a função antiga, um PDF simplesmente
+falha na leitura.
 
 **Pegadinha real encontrada configurando isso**: o campo "Name" da tela de configuração da função
 **é só um apelido visual** — o aviso "Your slug and endpoint URL will remain the same" avisa que
@@ -602,7 +635,7 @@ sempre antes da tag, nunca depois.
   (descrição, o que mudou, quando foi confirmado) já fica registrado no próprio GitHub — não
   precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
   está na seção 7.
-- **Branch de trabalho atual desta sessão**: `claude/1-0-quase-pronta-fcqe6d`.
+- **Branch de trabalho atual desta sessão**: `claude/ajustes-finais-v1-q1knzk`.
 - `package.json` em `"version": "0.1.3"` — tag `v0.1.3` publicada e instalador baixado pela
   usuária, mas **sem confirmação de ter rodado/testado o instalador de verdade** (só o
   download/build funcionou). Bastante coisa foi implementada depois dessa tag sem nova versão

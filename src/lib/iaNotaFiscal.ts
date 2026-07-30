@@ -1,15 +1,15 @@
 import { supabase } from "./supabase";
 import type { ItemNotaFiscalExtraido } from "@/types/itemNotaFiscal";
 
-interface ImagemNota {
+interface ArquivoNota {
   base64: string;
   mediaType: string;
 }
 
-// Converte um File (foto escolhida pelo operador) pro par base64/mediaType
-// que a Edge Function espera — sem o prefixo "data:image/...;base64," do
-// FileReader, só o conteúdo puro.
-export function arquivoParaImagemNota(arquivo: File): Promise<ImagemNota> {
+// Converte um File (foto ou PDF escolhido pelo operador) pro par
+// base64/mediaType que a Edge Function espera — sem o prefixo
+// "data:.../...;base64," do FileReader, só o conteúdo puro.
+export function arquivoParaConteudoNota(arquivo: File): Promise<ArquivoNota> {
   return new Promise((resolve, reject) => {
     const leitor = new FileReader();
     leitor.onload = () => {
@@ -23,15 +23,15 @@ export function arquivoParaImagemNota(arquivo: File): Promise<ImagemNota> {
 }
 
 // Chama a Edge Function "ler-notas-fiscais" — a chave da Anthropic fica só
-// lá no Supabase (secret), nunca no app instalado. Aceita várias fotos numa
-// leitura só (várias notas, ou uma nota com vários itens).
+// lá no Supabase (secret), nunca no app instalado. Aceita várias fotos e/ou
+// PDFs numa leitura só (várias notas, ou uma nota com vários itens).
 export async function lerNotasFiscais(
   arquivos: File[],
 ): Promise<ItemNotaFiscalExtraido[]> {
-  const imagens = await Promise.all(arquivos.map(arquivoParaImagemNota));
+  const conteudos = await Promise.all(arquivos.map(arquivoParaConteudoNota));
 
   const { data, error } = await supabase.functions.invoke("ler-notas-fiscais", {
-    body: { imagens },
+    body: { arquivos: conteudos },
   });
 
   if (error) throw error;

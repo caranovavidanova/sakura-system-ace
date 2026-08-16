@@ -54,6 +54,26 @@ do SSACE é UX simples e moderna, mantendo as funções essenciais de um ERP de 
 SSACE validado, a ideia é criar outras edições (ex: Supermarket Edition), reaproveitando a base
 arquitetural.
 
+### Plano de expansão/vendas (definido pela usuária)
+
+Três fases, nessa ordem, sem pressa de pular etapa:
+
+1. **Lançar na borracharia do pai dela** (ver seção 1) com tudo funcionando — usar de verdade lá
+   é como ela pretende achar bugs reais (os que só aparecem usando de verdade, não em teste) e
+   descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a emissão de nota
+   fiscal (seção 8, item 1).
+2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela**, ainda como teste — validar como o
+   sistema se comporta crescendo pra fora de uma loja só, antes de pensar grande. Como essas lojas
+   são de donos diferentes (não é a mesma empresa do pai dela), o modelo esperado é cada uma com
+   seu próprio projeto Supabase — diferente da fundação **multi-loja** já construída (que é pra
+   **uma empresa com várias lojas**, não várias empresas diferentes). Não assumir automaticamente
+   qual modelo usar aqui sem confirmar com ela quando chegar a hora.
+3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema** —
+   aí sim vira a "versão comercial" mencionada em outros pontos deste documento (site externo de
+   assinatura pra criar loja nova sozinho, seção 8 item 2; reconsiderar centralizar o custo da IA
+   em vez de cada loja pagar a própria conta Anthropic, seção 8 item 6). Não adiantar esse trabalho
+   agora — as duas fases anteriores ainda não aconteceram.
+
 ### Identidade visual — como está hoje
 
 - **Tema escuro/neon (confirmado pela usuária)**: paleta rosa/roxo neon sobre fundo quase preto —

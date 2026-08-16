@@ -761,8 +761,12 @@ normal (quebra de linha).
   aparece no lugar do app normal até ele criar uma senha nova. Por trás, uma Edge Function nova
   (`redefinir-senha-operador`, mesmo padrão da `ler-notas-fiscais`: a service role key nunca sai
   do Supabase) confere de novo, do lado do servidor, que quem está chamando é realmente admin
-  antes de mudar a senha de qualquer um. **Ainda não publicado** — falta rodar a migration `0038`
-  e publicar a função no Supabase real (passo a passo na seção 9).
+  antes de mudar a senha de qualquer um. **Estado real do deploy incerto** — ver nota na seção 10
+  sobre duas linhas de trabalho paralelas que aconteceram no mesmo período: uma versão bem mais
+  simples desse mesmo recurso (admin define a senha nova direto, sem senha temporária) chegou a
+  ser publicada por engano no Supabase real dela numa sessão separada. **Antes de considerar isso
+  pronto, é preciso redeployar a Edge Function com o código atual** (passo a passo na seção 9) —
+  mesmo que a função já exista publicada, o código de lá ainda pode ser o da versão simples.
 - **Clientes**: CRUD completo (**edição** adicionada nesta sessão — antes só criava/excluía) +
   múltiplos veículos por cliente, pessoa física/jurídica (rótulos de campo mudam conforme o tipo),
   aniversário do cliente no calendário do Início, tipo de veículo (ícone 2D por carroceria, pintado
@@ -790,9 +794,15 @@ normal (quebra de linha).
   semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
   Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa ficha de orçamento de
   referência do ramo — ponto de partida, não os preços/serviços reais dela.
-- **Fornecedores** (módulo novo nesta sessão, migration `0039` já confirmada rodando no Supabase
-  real dela): duas abas. "Cadastro" — nome/razão social, CNPJ, telefone,
+- **Fornecedores** (duas abas): "Cadastro" — nome/razão social, CNPJ, telefone,
   e-mail, endereço completo, ativo/inativo; compartilhado entre lojas (mesmo padrão de Clientes).
+  **Cuidado real com a migration `0039`** (ver seção 10): uma versão bem mais simples desta mesma
+  tabela (só nome/CNPJ/telefone/e-mail, sem endereço) foi publicada por engano no Supabase real
+  dela numa sessão em paralelo — se `0039` já tiver sido rodada depois disso, as colunas de
+  endereço **não** teriam sido adicionadas de verdade (`create table if not exists` não altera
+  tabela já existente). A migration já foi corrigida nesta sessão pra usar `alter table ... add
+  column if not exists` também, então rodá-la de novo (mesmo que já tenha "rodado" antes) resolve
+  — mas vale confirmar rodando de novo, não assumir que já está certo.
   "Pedidos de compra" — por loja, número sequencial (`numero`, mesmo padrão de OS), itens de peça
   com quantidade pedida + preço unitário, status (`pendente`/`parcial`/`recebido`/`cancelado`).
   Botão **"Receber"** abre uma conferência: a usuária confirma quanto chegou de cada item (pode
@@ -840,7 +850,10 @@ normal (quebra de linha).
   resumo por forma de recebimento.
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
-  já cria a próxima ocorrência sozinha. Sem "desfazer pagamento" pelo app ainda.
+  já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
+  branch separada que trabalhou em paralelo — ver seção 10): botão na lista "Pagas recentemente" —
+  volta a conta pra pendente e remove a Saída gerada (se a conta era recorrente, a próxima
+  ocorrência já criada continua existindo, pendente).
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
   cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
   vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
@@ -930,13 +943,7 @@ normal (quebra de linha).
    - Cadastro de Depósito (múltiplos locais físicos de estoque dentro da mesma loja)
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
      implementada)
-6. **Sistema de notificação de conta a vencer** — a usuária mencionou a ideia, mas confirmou que é
-   pra depois. `contas_pagar` já tem o campo `vencimento` pronto pra isso. Nenhuma decisão de como
-   notificar (dentro do app? e-mail? Windows notification?) foi tomada — apresentar opções antes
-   de codar.
-7. **"Desfazer pagamento" de uma conta paga** (módulo Contas a Pagar) — hoje não existe pelo app;
-   se marcar uma conta como paga por engano, precisa corrigir direto no Supabase.
-8. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
+6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
    configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas que um dia
    usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio projeto
    Supabase, a Edge Function e o secret `ANTHROPIC_API_KEY` ficam dentro do projeto de cada loja,
@@ -952,17 +959,25 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: a migration `0037` já está rodando no Supabase real dela
-(número sequencial de OS, simplificação de status, split de pagamento e a policy de exclusão de
-loja que faltava) — falta só ela **testar na prática** os fluxos novos (abrir uma OS nova e
-confirmar que nasce "Em andamento" com número sequencial, usar o botão "Encerrar OS", faturar
-dividindo entre 2 formas de pagamento, excluir uma loja de teste vazia em Configurações → Lojas) —
-confirmar isso no início da sessão, e só então seguir com pedidos novos. Depois disso confirmado
-funcionando, ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta seção) —
-combinado numa sessão anterior ("na outra sessão eu faço a inclusão da emissão de nota fiscal").
-Ela só publica a próxima versão do instalador quando isso estiver pronto (ver aviso na seção 7,
-"Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter criado a conta/token de
-homologação do Focus NFe (ver item 1).
+**Prioridade da próxima sessão**: a `0037` já foi confirmada por ela na prática (número sequencial
+de OS, "Encerrar OS", split de pagamento, exclusão de loja vazia — todos testados e funcionando).
+**Duas linhas de trabalho paralelas convergiram nesta sessão** (ver seção 10 pro histórico
+completo) — uma sessão baseada em chat (mais simples: cadastro básico de Fornecedores, redefinir
+senha via modal de admin, desfazer pagamento em Contas a Pagar) e um trabalho feito localmente via
+Antigravity (bem mais completo: Fornecedores + Pedido de Compra, Auditoria, testes automatizados,
+formulários refatorados pro padrão `react-hook-form`+`zod`, design novo, redefinir senha via senha
+temporária + troca obrigatória). A usuária decidiu que **o trabalho do Antigravity vira a base
+principal**; o "desfazer pagamento" (que só existia na linha simples) foi portado por cima; a
+migration de Fornecedores foi corrigida pra lidar com o caso de a tabela simples já ter sido
+criada antes (ver seção 7, "Fornecedores"). **Antes de qualquer pedido novo, confirmar com ela**:
+(a) rodar as migrations `0038`/`0039`/`0040` no Supabase real — mesmo que uma versão anterior já
+tenha rodado alguma delas, rodar de novo é seguro e necessário (idempotentes, e a `0039` foi
+corrigida); (b) redeployar a Edge Function `redefinir-senha-operador` com o código atual (o que
+está publicado agora é a versão simples da linha de chat); (c) testar os 3 fluxos novos de
+verdade: Fornecedores com Pedido de Compra, redefinir senha com senha temporária + tela de trocar
+senha, e a trilha de Auditoria. Depois disso confirmado, ela mesma vai puxar a **emissão de nota
+fiscal** (Focus NFe, item 1 desta seção) assim que tiver o token de homologação. Ela só publica a
+próxima versão do instalador quando isso estiver pronto (ver aviso na seção 7, "Empacotamento").
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -975,12 +990,13 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0040` já foram confirmadas
-rodando sem erro nesse projeto (incluindo a fundação multi-loja, as correções/módulos novos
-`0034`-`0037`, a coluna de redefinição de senha `0038`, o módulo de Fornecedores `0039` e a
-trilha de auditoria `0040`, todos já testados por ela de verdade). Falta só publicar a Edge
-Function `redefinir-senha-operador` pra redefinição de senha funcionar de ponta a ponta — ver
-"Ativar a redefinição de senha esquecida" abaixo.
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0037` já foram confirmadas
+rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
+`0034`-`0037`, `0037` já testada na prática por ela). **`0038`/`0039`/`0040` têm um histórico
+confuso** por causa de duas sessões de trabalho paralelas (ver seção 10) — o mais seguro é ela
+rodar as três de novo agora, na ordem, mesmo que ache que já rodou antes (são idempotentes, e a
+`0039` foi corrigida nesta sessão pra não deixar colunas faltando num banco que já tinha uma
+versão mais simples de `fornecedores`). Ver "Reconciliar migrations 0038-0040" abaixo.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
@@ -988,20 +1004,17 @@ Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
 até `0040`. Todas são idempotentes.
 
-### Coisas pra confirmar que `0037` está funcionando na prática
+### Reconciliar migrations `0038`-`0040` no Supabase real dela
 
-Migration já rodada; falta ela testar na prática se os fluxos novos funcionam (ver "Prioridade da
-próxima sessão" acima):
-1. Ordens de Serviço → abrir uma OS nova — deve nascer com status "Em andamento" direto (sem
-   "Aberta") e um número sequencial (ex: "OS 1", "OS 2"...) em vez de código grande.
-2. Abrir uma OS em andamento → botão "Encerrar OS" → deve marcar como concluída e já abrir a tela
-   de faturamento.
-3. Faturar marcando "Dividir em mais de uma forma de pagamento" com 2 formas — deve dar pra
-   confirmar só quando a soma bater com o total, e devem aparecer 2 lançamentos no Caixa.
-4. Configurações → "Lojas" → criar uma loja de teste vazia (sem nada lançado nela) e excluir de
-   verdade — antes não fazia nada (bug silencioso), agora deve sumir da lista. Tentar excluir uma
-   loja com dado de verdade deve dar uma mensagem clara explicando por que não dá, sugerindo
-   inativar.
+1. SQL Editor → rodar, nessa ordem, `0038_deve_trocar_senha.sql`, `0039_fornecedores_pedidos_compra.sql`
+   e `0040_auditoria.sql` — colar cada um numa "New query" e Run, mesmo que ela ache que alguma já
+   rodou antes.
+2. Conferir que `fornecedores` tem as colunas de endereço (`cep`/`rua`/`numero`/`bairro`/`cidade`/`uf`)
+   — Table Editor → `fornecedores` → checar as colunas. Se estiverem faltando, é sinal de que a
+   `0039` rodou antes da correção desta sessão; rodar de novo resolve.
+3. Redeployar a Edge Function `redefinir-senha-operador` (ver "Ativar a redefinição de senha
+   esquecida" abaixo) — o que está publicado hoje é uma versão mais simples, de uma sessão em
+   paralelo.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):
@@ -1050,11 +1063,14 @@ esperado, não confiar só no campo "Name".
 
 ### Ativar a redefinição de senha esquecida
 
-A migration `0038` já rodou. **Falta só publicar a Edge Function** — não precisa de nenhum secret
+Depois de rodar a migration `0038` (ver "Reconciliar migrations" acima), **é preciso (re)publicar
+a Edge Function** — mesmo que uma função com esse nome já exista publicada, porque o código de lá
+hoje é de uma versão mais simples (de uma sessão em paralelo). Não precisa de nenhum secret
 configurado (só usa chaves que o Supabase já injeta sozinho em toda função), diferente da
 `ler-notas-fiscais`.
 
-1. **Publicar a função**: painel do projeto → **Edge Functions** → **"Deploy a new function"** →
+1. **Publicar a função** (ou substituir o código de uma já existente): painel do projeto →
+   **Edge Functions** → **"Deploy a new function"** →
    **"Via Editor"** → digitar `redefinir-senha-operador` **no campo "Function name" antes de
    clicar em Deploy** (mesma pegadinha da `ler-notas-fiscais`: renomear depois não muda o endereço
    real) → apagar o código de exemplo e colar todo o conteúdo de
@@ -1066,7 +1082,8 @@ configurado (só usa chaves que o Supabase já injeta sozinho em toda função),
 
 ### Ativar o módulo de Fornecedores
 
-A migration `0039` já rodou — não precisava de Edge Function nem secret nenhum aqui, é só testar:
+Depois de rodar a migration `0039` (ver "Reconciliar migrations" acima) — não precisa de Edge
+Function nem secret nenhum aqui, é só testar:
 
 1. Menu lateral → **Fornecedores** (aparece pra quem tem a permissão liberada, ou pra
    admin) → aba "Cadastro", criar um fornecedor de teste → aba "Pedidos de compra", criar um
@@ -1132,12 +1149,37 @@ sempre antes da tag, nunca depois.
   (descrição, o que mudou, quando foi confirmado) já fica registrado no próprio GitHub — não
   precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
   está na seção 7.
-- **Branch de trabalho atual desta sessão**: `claude/ultimos-passos-v1-0-vmrzht`.
-- `package.json` em `"version": "0.9.0"` (bump feito nesta sessão) — tag publicada mais recente
-  ainda é `v0.1.3` (instalador baixado pela usuária, mas **sem confirmação de ter rodado/testado o
-  instalador de verdade**, só o download/build funcionou). Bastante coisa foi implementada depois
-  dessa tag sem nova versão publicada ainda, incluindo a fundação multi-loja desta sessão (ver
-  aviso no fim da seção 7 e prioridade da próxima sessão na seção 8).
+- **Episódio "duas linhas de trabalho paralelas" (agosto de 2026)** — vale entender pra não
+  repetir: na mesma janela de tempo, a usuária tinha (a) uma sessão de chat (esta) trabalhando
+  direto no GitHub, que implementou uma versão simples de Fornecedores + redefinir senha (modal de
+  admin) + desfazer pagamento, mesclou na `main` (PR #68) e pediu pra ela rodar a migration e
+  publicar a Edge Function no Supabase real — e (b), **sem essa sessão saber**, um trabalho bem
+  mais avançado feito **localmente no computador dela via Antigravity** (outra ferramenta de IA,
+  fora do Claude Code): mesmo módulo de Fornecedores só que com Pedido de Compra, um módulo de
+  Auditoria novo, testes automatizados (`vitest`), formulários inteiros migrados pro padrão
+  `react-hook-form`+`zod`, e um design visual novo (tema escuro/neon). Esse trabalho nunca tinha
+  sido commitado — só existia solto no computador dela. Quando ela tentou dar `git pull` pra pegar
+  o que a sessão (a) tinha mesclado, o Git recusou (com razão) porque isso apagaria o trabalho (b)
+  sem commit. Recuperado com `git stash -u` (nada foi perdido) e trazido pra uma branch própria
+  (`antigravity-trabalho-local`, criada a partir do commit anterior à mescla da sessão (a), pra o
+  `stash pop` encaixar sem conflito nenhum). A usuária decidiu que **o trabalho (b) — Antigravity —
+  vira a base principal**; o "desfazer pagamento" (que só existia em (a)) foi portado por cima; os
+  conflitos de merge entre as duas branches (`App.tsx`, `types/operador.ts`,
+  `ConfiguracoesPage.tsx`, `PROJETO_STATUS.md`, e a migration simples de Fornecedores da sessão (a),
+  removida por estar superada) foram resolvidos nesta sessão, sempre priorizando o lado do
+  Antigravity. **Lição pra sessões futuras**: se o `git pull`/`git checkout` mostrar uma lista
+  grande de arquivos modificados que a sessão não reconhece, é sinal de trabalho feito por fora do
+  Claude Code (outra ferramenta, ou direto pela usuária) — nunca descartar, sempre perguntar e
+  usar `git stash` antes de qualquer `pull`/`checkout` destrutivo.
+- **Branch de trabalho atual desta sessão**: `antigravity-trabalho-local` (mesclada na `main` ao
+  final desta sessão — ver PR aberta a partir dela).
+- `package.json` em `"version": "0.9.2"`. Tag publicada mais recente é `v0.9.0` (instalador
+  baixado e testado por ela). Bastante coisa foi implementada depois dessa tag sem nova versão
+  publicada ainda (toda a lista de módulos novos desta seção). Ela só publica a próxima versão do
+  instalador quando a nota fiscal estiver pronta (ver seção 7, "Empacotamento") — decisão revista
+  numa sessão anterior pra publicar mesmo sem isso, mas sem confirmação de que a tag `v0.9.2`
+  chegou a ser criada; como esta sessão trouxe bastante coisa nova por cima (o trabalho do
+  Antigravity), vale re-perguntar antes de publicar qualquer tag.
 
 ## 11. Trabalhando de outro computador
 

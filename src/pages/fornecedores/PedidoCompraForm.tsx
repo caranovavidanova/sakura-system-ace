@@ -15,6 +15,7 @@ import {
 import type { Fornecedor } from "@/types/fornecedor";
 import type { NovoItemPedidoCompra, NovoPedidoCompra } from "@/types/pedidoCompra";
 import type { Peca } from "@/types/peca";
+import { PedidoCompraItemRow } from "./PedidoCompraItemRow";
 
 interface PedidoCompraFormProps {
   fornecedores: Fornecedor[];
@@ -114,50 +115,17 @@ export function PedidoCompraForm({
 
         <div className="space-y-2">
           {fields.map((campo, index) => (
-            <div key={campo.id} className="flex items-center gap-2">
-              <div className="flex-1">
-                <Combobox
-                  opcoes={pecas.map((peca) => ({ valor: peca.id, rotulo: peca.descricao }))}
-                  valor={watch(`itens.${index}.peca_id`)}
-                  onMudar={(v) => setValue(`itens.${index}.peca_id`, v)}
-                  placeholder="Selecione a peça"
-                />
-                {errors.itens?.[index]?.peca_id && (
-                  <span className="text-xs text-red-600">
-                    {errors.itens[index]?.peca_id?.message}
-                  </span>
-                )}
-              </div>
-              <div className="w-28">
-                <input
-                  type="number"
-                  step="1"
-                  min="1"
-                  placeholder="Qtde."
-                  {...register(`itens.${index}.quantidade_pedida`)}
-                  className={`w-full ${inputClasse}`}
-                />
-              </div>
-              <div className="w-32">
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Preço unit."
-                  {...register(`itens.${index}.preco_unitario`)}
-                  className={`w-full ${inputClasse}`}
-                />
-              </div>
-              {fields.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="shrink-0 text-xs font-medium text-red-600 hover:underline"
-                >
-                  Remover
-                </button>
-              )}
-            </div>
+            <PedidoCompraItemRow
+              key={campo.id}
+              index={index}
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              pecas={pecas}
+              podeRemover={fields.length > 1}
+              onRemover={() => remove(index)}
+              erroPecaId={errors.itens?.[index]?.peca_id?.message}
+            />
           ))}
         </div>
       </section>

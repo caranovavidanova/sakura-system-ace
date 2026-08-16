@@ -40,6 +40,7 @@ export function FuncionarioForm({
   const {
     register,
     control,
+    setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FuncionarioFormValues>({
@@ -97,7 +98,7 @@ export function FuncionarioForm({
       <div className={aba === "gerais" ? "space-y-5" : "hidden"}>
         <IdentificacaoFields register={register} errors={errors} />
         <DocumentosFields register={register} />
-        <EnderecoFields register={register} />
+        <EnderecoFields register={register} setValue={setValue} />
         <ContatoFields register={register} />
         <CargoAdmissaoFields register={register} />
       </div>

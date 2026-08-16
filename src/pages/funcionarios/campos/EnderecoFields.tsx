@@ -1,19 +1,40 @@
-import type { UseFormRegister } from "react-hook-form";
+import type { UseFormRegister, UseFormSetValue } from "react-hook-form";
+import { buscarEnderecoPorCep } from "@/lib/viaCep";
 import type { FuncionarioFormValues } from "@/schemas/funcionario";
 import { Campo, inputClasse, Secao } from "./FormCompartilhado";
 
 export function EnderecoFields({
   register,
+  setValue,
 }: {
   register: UseFormRegister<FuncionarioFormValues>;
+  setValue: UseFormSetValue<FuncionarioFormValues>;
 }) {
   const estado = register("estado");
+  const cep = register("cep");
+
+  async function aoSairDoCep(valor: string) {
+    const endereco = await buscarEnderecoPorCep(valor);
+    if (!endereco) return;
+    setValue("endereco", endereco.logradouro);
+    setValue("bairro", endereco.bairro);
+    setValue("cidade", endereco.localidade);
+    setValue("estado", endereco.uf);
+  }
 
   return (
     <Secao titulo="Endereço">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Campo label="CEP">
-          <input type="text" {...register("cep")} className={inputClasse} />
+          <input
+            type="text"
+            {...cep}
+            onBlur={(e) => {
+              cep.onBlur(e);
+              aoSairDoCep(e.target.value);
+            }}
+            className={inputClasse}
+          />
         </Campo>
         <Campo label="Endereço" className="md:col-span-2">
           <input type="text" {...register("endereco")} className={inputClasse} />

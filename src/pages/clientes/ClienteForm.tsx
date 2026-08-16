@@ -32,6 +32,7 @@ export function ClienteForm({
     register,
     control,
     watch,
+    setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ClienteFormValues>({
@@ -72,7 +73,7 @@ export function ClienteForm({
         errors={errors}
         tipoPessoa={watch("tipo_pessoa")}
       />
-      <EnderecoFields register={register} />
+      <EnderecoFields register={register} setValue={setValue} />
       <VeiculosFields control={control} register={register} />
 
       <div className="flex justify-end gap-3">

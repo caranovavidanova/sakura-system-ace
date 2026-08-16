@@ -8,7 +8,7 @@ export function criarOperadorFormSchema(editando: boolean) {
   return z.object({
     usuario: z.string().trim().min(1, "Usuário é obrigatório."),
     nome: z.string().trim().min(1, "Nome é obrigatório."),
-    senha: editando ? z.string() : z.string().min(4, "A senha precisa ter pelo menos 4 caracteres."),
+    senha: editando ? z.string() : z.string().min(6, "A senha precisa ter pelo menos 6 caracteres."),
     admin: z.boolean(),
     permissoes: z.array(z.string()),
     ativo: z.boolean(),

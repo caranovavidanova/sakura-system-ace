@@ -5,7 +5,7 @@ import { trocarSenhaPropria } from "@/lib/auth";
 import { mensagemDeErro } from "@/lib/errors";
 import { confirmarTrocaSenha } from "@/lib/operadores";
 
-const TAMANHO_MINIMO_SENHA = 4;
+const TAMANHO_MINIMO_SENHA = 6;
 
 // Tela cheia, bloqueante — aparece no lugar do app normal quando
 // `operador.deve_trocar_senha` está true (depois de um admin redefinir a

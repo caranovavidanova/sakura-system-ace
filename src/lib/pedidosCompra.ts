@@ -40,12 +40,13 @@ export async function criarPedido(
   );
   if (erroItens) throw erroItens;
 
-  // Todo item com preço lançado vira uma cotação nova — sem formulário
-  // próprio pra preencher, ver "Cotação de peças por fornecedor" no
-  // PROJETO_STATUS.md.
+  // Todo item com preço lançado (maior que zero — cotacoes_pecas.preco tem
+  // `check (preco > 0)`, e preço 0 não é uma cotação de verdade) vira uma
+  // cotação nova — sem formulário próprio pra preencher, ver "Cotação de
+  // peças por fornecedor" no PROJETO_STATUS.md.
   await registrarCotacoes(
     itens
-      .filter((item) => item.preco_unitario !== null)
+      .filter((item) => item.preco_unitario !== null && item.preco_unitario > 0)
       .map((item) => ({
         peca_id: item.peca_id,
         fornecedor_id: pedido.fornecedor_id,
@@ -113,12 +114,16 @@ export async function importarNotaFiscalCompra(
     );
   }
 
+  // Mesma regra de criarPedido(): preço 0 (ex: NFe sem `vUnCom`) não vira
+  // cotação, senão quebra o `check (preco > 0)` de cotacoes_pecas.
   await registrarCotacoes(
-    itens.map((item) => ({
-      peca_id: item.pecaId,
-      fornecedor_id: fornecedorId,
-      preco: item.precoUnitario,
-    })),
+    itens
+      .filter((item) => item.precoUnitario > 0)
+      .map((item) => ({
+        peca_id: item.pecaId,
+        fornecedor_id: fornecedorId,
+        preco: item.precoUnitario,
+      })),
   );
 
   return pedidoCriado as PedidoCompra;

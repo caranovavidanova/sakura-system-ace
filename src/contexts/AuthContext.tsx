@@ -18,6 +18,7 @@ interface AuthContextValue {
   definirLojaAtual: (lojaId: string) => void;
   login: (usuario: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
+  recarregarOperador: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -108,6 +109,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sair();
   }
 
+  // Recarrega só o perfil do operador logado — usado depois de confirmar a
+  // troca de senha obrigatória, pra `deve_trocar_senha` sair de `true` sem
+  // precisar deslogar e logar de novo.
+  async function recarregarOperador() {
+    if (!session) return;
+    const perfil = await buscarOperadorAtual(session.user.id);
+    setOperador(perfil);
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -119,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         definirLojaAtual,
         login,
         logout,
+        recarregarOperador,
       }}
     >
       {children}

@@ -1,0 +1,183 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { Combobox } from "@/components/Combobox";
+import { mensagemDeErro } from "@/lib/errors";
+import {
+  itemPedidoVazio,
+  paraItensPedido,
+  paraNovoPedidoCompra,
+  pedidoCompraFormSchema,
+  pedidoCompraFormVazio,
+  type PedidoCompraFormValues,
+} from "@/schemas/pedidoCompra";
+import type { Fornecedor } from "@/types/fornecedor";
+import type { NovoItemPedidoCompra, NovoPedidoCompra } from "@/types/pedidoCompra";
+import type { Peca } from "@/types/peca";
+
+interface PedidoCompraFormProps {
+  fornecedores: Fornecedor[];
+  pecas: Peca[];
+  onSalvar: (pedido: NovoPedidoCompra, itens: NovoItemPedidoCompra[]) => Promise<void>;
+  onCancelar: () => void;
+}
+
+const inputClasse =
+  "rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple";
+
+export function PedidoCompraForm({
+  fornecedores,
+  pecas,
+  onSalvar,
+  onCancelar,
+}: PedidoCompraFormProps) {
+  const [erro, setErro] = useState<string | null>(null);
+
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<PedidoCompraFormValues>({
+    resolver: zodResolver(pedidoCompraFormSchema),
+    defaultValues: pedidoCompraFormVazio,
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "itens" });
+
+  async function aoSubmeter(valores: PedidoCompraFormValues) {
+    setErro(null);
+    try {
+      await onSalvar(paraNovoPedidoCompra(valores), paraItensPedido(valores.itens));
+    } catch (err) {
+      console.error("Erro ao criar pedido de compra:", err);
+      setErro(mensagemDeErro(err));
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-6 sakura-card p-6 shadow-sm">
+      <div className="flex items-center gap-3">
+        <BotaoVoltar onClick={onCancelar} />
+        <h2 className="text-lg font-semibold text-sakura-purple-dark">Novo pedido de compra</h2>
+      </div>
+
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+
+      <div className="grid grid-cols-2 gap-4">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">
+            Fornecedor <span className="text-red-500">*</span>
+          </span>
+          <Combobox
+            opcoes={fornecedores.map((f) => ({ valor: f.id, rotulo: f.nome }))}
+            valor={watch("fornecedor_id")}
+            onMudar={(v) => setValue("fornecedor_id", v)}
+            placeholder="Selecione o fornecedor"
+          />
+          {errors.fornecedor_id && (
+            <span className="text-xs text-red-600">{errors.fornecedor_id.message}</span>
+          )}
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">
+            Data do pedido <span className="text-red-500">*</span>
+          </span>
+          <input type="date" {...register("data_pedido")} className={inputClasse} />
+        </label>
+
+        <label className="col-span-2 flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">Observação (opcional)</span>
+          <textarea rows={2} {...register("observacao")} className={inputClasse} />
+        </label>
+      </div>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-sakura-purple-dark">Itens do pedido</h3>
+          <button
+            type="button"
+            onClick={() => append({ ...itemPedidoVazio })}
+            className="text-xs font-medium text-sakura-purple hover:underline"
+          >
+            + adicionar item
+          </button>
+        </div>
+
+        {errors.itens?.message && (
+          <p className="mb-2 text-xs text-red-600">{errors.itens.message}</p>
+        )}
+
+        <div className="space-y-2">
+          {fields.map((campo, index) => (
+            <div key={campo.id} className="flex items-center gap-2">
+              <div className="flex-1">
+                <Combobox
+                  opcoes={pecas.map((peca) => ({ valor: peca.id, rotulo: peca.descricao }))}
+                  valor={watch(`itens.${index}.peca_id`)}
+                  onMudar={(v) => setValue(`itens.${index}.peca_id`, v)}
+                  placeholder="Selecione a peça"
+                />
+                {errors.itens?.[index]?.peca_id && (
+                  <span className="text-xs text-red-600">
+                    {errors.itens[index]?.peca_id?.message}
+                  </span>
+                )}
+              </div>
+              <div className="w-28">
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  placeholder="Qtde."
+                  {...register(`itens.${index}.quantidade_pedida`)}
+                  className={`w-full ${inputClasse}`}
+                />
+              </div>
+              <div className="w-32">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Preço unit."
+                  {...register(`itens.${index}.preco_unitario`)}
+                  className={`w-full ${inputClasse}`}
+                />
+              </div>
+              {fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="shrink-0 text-xs font-medium text-red-600 hover:underline"
+                >
+                  Remover
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancelar}
+          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {isSubmitting ? "Salvando..." : "Criar pedido"}
+        </button>
+      </div>
+    </form>
+  );
+}

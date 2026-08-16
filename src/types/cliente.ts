@@ -43,3 +43,8 @@ export interface Cliente {
 
 export type NovoCliente = Omit<Cliente, "id" | "criado_em" | "veiculos">;
 export type NovoVeiculo = Omit<Veiculo, "id" | "cliente_id" | "criado_em">;
+
+// Usado no formulário: veículo já existente carrega o `id` (pra atualizar em
+// vez de recriar e perder o vínculo com Ordens de Serviço antigas); veículo
+// novo, adicionado na tela, ainda não tem.
+export type VeiculoFormulario = NovoVeiculo & { id?: string };

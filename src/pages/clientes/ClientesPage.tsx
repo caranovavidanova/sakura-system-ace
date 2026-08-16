@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
-import { criarCliente, excluirCliente, listarClientes } from "@/lib/clientes";
+import {
+  atualizarCliente,
+  criarCliente,
+  excluirCliente,
+  listarClientes,
+} from "@/lib/clientes";
 import { mensagemDeErro } from "@/lib/errors";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import type { Cliente, NovoCliente, NovoVeiculo } from "@/types/cliente";
+import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
 import { ClienteForm } from "./ClienteForm";
 
 export function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [formulario, setFormulario] = useState<"novo" | Cliente | null>(null);
 
   async function carregar() {
     if (!isSupabaseConfigured) {
@@ -33,9 +38,13 @@ export function ClientesPage() {
     carregar();
   }, []);
 
-  async function handleSalvar(cliente: NovoCliente, veiculos: NovoVeiculo[]) {
-    await criarCliente(cliente, veiculos);
-    setMostrarFormulario(false);
+  async function handleSalvar(cliente: NovoCliente, veiculos: VeiculoFormulario[]) {
+    if (formulario && formulario !== "novo") {
+      await atualizarCliente(formulario.id, cliente, veiculos);
+    } else {
+      await criarCliente(cliente, veiculos);
+    }
+    setFormulario(null);
     await carregar();
   }
 
@@ -69,9 +78,9 @@ export function ClientesPage() {
             </p>
           </div>
         </div>
-        {!mostrarFormulario && (
+        {!formulario && (
           <button
-            onClick={() => setMostrarFormulario(true)}
+            onClick={() => setFormulario("novo")}
             className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
           >
             + Novo cliente
@@ -87,10 +96,11 @@ export function ClientesPage() {
         </p>
       )}
 
-      {mostrarFormulario && (
+      {formulario && (
         <ClienteForm
+          clienteExistente={formulario === "novo" ? undefined : formulario}
           onSalvar={handleSalvar}
-          onCancelar={() => setMostrarFormulario(false)}
+          onCancelar={() => setFormulario(null)}
         />
       )}
 
@@ -130,12 +140,20 @@ export function ClientesPage() {
                     {cliente.cidade ? `${cliente.cidade}/${cliente.uf ?? ""}` : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleExcluir(cliente.id)}
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      Excluir
-                    </button>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => setFormulario(cliente)}
+                        className="text-xs font-medium text-sakura-purple hover:underline"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleExcluir(cliente.id)}
+                        className="text-xs font-medium text-red-600 hover:underline"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

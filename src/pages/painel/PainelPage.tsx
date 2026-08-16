@@ -219,7 +219,7 @@ export function PainelPage() {
           <div className="flex justify-center">
             <Link
               to="/relatorios"
-              className="rounded-full bg-white/50 px-5 py-2 text-xs font-medium text-sakura-purple-dark hover:bg-white/70"
+              className="rounded-full bg-white/10 px-5 py-2 text-xs font-medium text-sakura-pink hover:bg-white/20"
             >
               Ver relações completas →
             </Link>
@@ -237,7 +237,7 @@ export function PainelPage() {
               ) : (
                 <div className="overflow-hidden rounded-xl border border-white/50">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-white/40 text-sakura-purple-dark">
+                    <thead className="bg-white/10 text-sakura-pink">
                       <tr>
                         <th className="px-4 py-3 font-medium">Nº</th>
                         <th className="px-4 py-3 font-medium">Cliente</th>
@@ -252,7 +252,7 @@ export function PainelPage() {
                           onClick={() =>
                             navigate("/ordens-servico", { state: { abrirOrdemId: ordem.id } })
                           }
-                          className="cursor-pointer border-t border-white/40 hover:bg-white/30"
+                          className="cursor-pointer border-t border-white/10 hover:bg-white/5"
                         >
                           <td className="px-4 py-3 text-sakura-purple-dark/85">
                             {nomeOrdem(ordem.numero)}

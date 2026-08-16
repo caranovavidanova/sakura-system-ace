@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Combobox } from "@/components/Combobox";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarContagens, registrarContagem } from "@/lib/contagens";
 import { mensagemDeErro } from "@/lib/errors";
@@ -119,17 +120,12 @@ export function ContagemSection({
           <div className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-sakura-purple-dark/80">Produto</span>
-              <select
-                value={pecaId}
-                onChange={(e) => setPecaId(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-              >
-                {pecas.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.descricao}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                opcoes={pecas.map((p) => ({ valor: p.id, rotulo: p.descricao }))}
+                valor={pecaId}
+                onMudar={setPecaId}
+                placeholder="Selecione o produto"
+              />
             </label>
 
             <div className="flex flex-col gap-1 text-sm">

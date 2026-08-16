@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { Modal } from "@/components/Modal";
 import { SecaoRecolhivel } from "@/components/SecaoRecolhivel";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
@@ -13,7 +14,12 @@ import {
 } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { definirLojasDoOperador, listarLojas, listarLojasDoOperador } from "@/lib/lojas";
-import { atualizarOperador, criarOperador, listarOperadores } from "@/lib/operadores";
+import {
+  atualizarOperador,
+  criarOperador,
+  listarOperadores,
+  redefinirSenhaOperador,
+} from "@/lib/operadores";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
@@ -49,6 +55,10 @@ export function ConfiguracoesPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
   const [lojaIdsFormulario, setLojaIdsFormulario] = useState<string[]>([]);
+  const [redefinindoId, setRedefinindoId] = useState<string | null>(null);
+  const [senhaGerada, setSenhaGerada] = useState<{ operador: Operador; senha: string } | null>(
+    null,
+  );
 
   async function carregar() {
     if (!isSupabaseConfigured || !lojaAtual) {
@@ -140,6 +150,21 @@ export function ConfiguracoesPage() {
     } catch (err) {
       console.error("Erro ao atualizar status do operador:", err);
       setErro(mensagemDeErro(err));
+    }
+  }
+
+  async function handleRedefinirSenha(op: Operador) {
+    if (!confirm(`Redefinir a senha de ${op.nome}? Uma senha temporária será gerada.`)) return;
+    setRedefinindoId(op.id);
+    setErro(null);
+    try {
+      const senha = await redefinirSenhaOperador(op.id);
+      setSenhaGerada({ operador: op, senha });
+    } catch (err) {
+      console.error("Erro ao redefinir senha:", err);
+      setErro(mensagemDeErro(err));
+    } finally {
+      setRedefinindoId(null);
     }
   }
 
@@ -248,12 +273,19 @@ export function ConfiguracoesPage() {
                   )}
                 </div>
 
-                <div className="mt-4 flex justify-end gap-3">
+                <div className="mt-4 flex flex-wrap justify-end gap-3">
                   <button
                     onClick={() => abrirFormulario(op)}
                     className="text-xs font-medium text-sakura-purple hover:underline"
                   >
                     Editar
+                  </button>
+                  <button
+                    onClick={() => handleRedefinirSenha(op)}
+                    disabled={redefinindoId === op.id}
+                    className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50"
+                  >
+                    {redefinindoId === op.id ? "Redefinindo..." : "Redefinir senha"}
                   </button>
                   {op.id !== operadorLogado?.id && (
                     <button
@@ -359,6 +391,35 @@ export function ConfiguracoesPage() {
             />
           </SecaoRecolhivel>
         </>
+      )}
+
+      {senhaGerada && (
+        <Modal titulo="Senha temporária gerada" onFechar={() => setSenhaGerada(null)}>
+          <p className="text-sm text-sakura-purple-dark/90">
+            Repasse essa senha pra <strong>{senhaGerada.operador.nome}</strong> (WhatsApp,
+            pessoalmente etc.). Ela só aparece aqui uma vez — ao fazer login com ela, o sistema
+            já vai pedir pra criar uma senha nova.
+          </p>
+          <p className="mt-4 select-all rounded-xl border border-sakura-gray/30 bg-black/30 px-4 py-3 text-center font-mono text-lg tracking-wider text-sakura-pink">
+            {senhaGerada.senha}
+          </p>
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => navigator.clipboard.writeText(senhaGerada.senha)}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+            >
+              Copiar
+            </button>
+            <button
+              type="button"
+              onClick={() => setSenhaGerada(null)}
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+            >
+              Já anotei
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

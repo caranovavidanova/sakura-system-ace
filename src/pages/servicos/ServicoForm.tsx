@@ -1,6 +1,15 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { Combobox } from "@/components/Combobox";
 import { mensagemDeErro } from "@/lib/errors";
+import {
+  paraNovoServico,
+  paraValoresFormulario,
+  servicoFormSchema,
+  type ServicoFormValues,
+} from "@/schemas/servico";
 import type { CategoriaServico } from "@/types/categoriaServico";
 import type { NovoServico, Servico } from "@/types/servico";
 
@@ -12,15 +21,6 @@ interface ServicoFormProps {
   onCancelar: () => void;
 }
 
-const servicoVazio: NovoServico = {
-  codigo_interno: "",
-  descricao: "",
-  preco_padrao: null,
-  custo: null,
-  categoria_id: null,
-  ativo: true,
-};
-
 export function ServicoForm({
   categorias,
   servicoExistente,
@@ -28,44 +28,36 @@ export function ServicoForm({
   onSalvarEdicao,
   onCancelar,
 }: ServicoFormProps) {
-  const [servico, setServico] = useState<NovoServico>(
-    servicoExistente
-      ? {
-          codigo_interno: servicoExistente.codigo_interno,
-          descricao: servicoExistente.descricao,
-          preco_padrao: servicoExistente.preco_padrao,
-          custo: servicoExistente.custo,
-          categoria_id: servicoExistente.categoria_id,
-          ativo: servicoExistente.ativo,
-        }
-      : servicoVazio,
-  );
-  const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const {
+    register,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ServicoFormValues>({
+    resolver: zodResolver(servicoFormSchema),
+    defaultValues: paraValoresFormulario(servicoExistente),
+  });
+
+  async function aoSubmeter(valores: ServicoFormValues) {
     setErro(null);
-    setSalvando(true);
     try {
+      const novoServico = paraNovoServico(valores, servicoExistente?.ativo ?? true);
       if (servicoExistente && onSalvarEdicao) {
-        await onSalvarEdicao(servicoExistente.id, servico);
+        await onSalvarEdicao(servicoExistente.id, novoServico);
       } else {
-        await onSalvar(servico);
+        await onSalvar(novoServico);
       }
     } catch (err) {
       console.error("Erro ao salvar serviço:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setSalvando(false);
     }
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4 sakura-card p-6 shadow-sm"
-    >
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <h2 className="text-lg font-semibold text-sakura-purple-dark">
@@ -73,11 +65,7 @@ export function ServicoForm({
         </h2>
       </div>
 
-      {erro && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
-          {erro}
-        </p>
-      )}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
 
       <div className="grid grid-cols-2 gap-4">
         <label className="col-span-2 flex flex-col gap-1 text-sm">
@@ -86,19 +74,19 @@ export function ServicoForm({
           </span>
           <input
             type="text"
-            required
-            value={servico.descricao}
-            onChange={(e) => setServico({ ...servico, descricao: e.target.value })}
+            {...register("descricao")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
+          {errors.descricao && (
+            <span className="text-xs text-red-600">{errors.descricao.message}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-sakura-purple-dark/80">Código (opcional)</span>
           <input
             type="text"
-            value={servico.codigo_interno ?? ""}
-            onChange={(e) => setServico({ ...servico, codigo_interno: e.target.value })}
+            {...register("codigo_interno")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
         </label>
@@ -109,13 +97,7 @@ export function ServicoForm({
             type="number"
             step="0.01"
             min="0"
-            value={servico.preco_padrao ?? ""}
-            onChange={(e) =>
-              setServico({
-                ...servico,
-                preco_padrao: e.target.value === "" ? null : Number(e.target.value),
-              })
-            }
+            {...register("preco_padrao")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
         </label>
@@ -126,33 +108,20 @@ export function ServicoForm({
             type="number"
             step="0.01"
             min="0"
-            value={servico.custo ?? ""}
-            onChange={(e) =>
-              setServico({
-                ...servico,
-                custo: e.target.value === "" ? null : Number(e.target.value),
-              })
-            }
+            {...register("custo")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-sakura-purple-dark/80">Categoria</span>
-          <select
-            value={servico.categoria_id ?? ""}
-            onChange={(e) =>
-              setServico({ ...servico, categoria_id: e.target.value || null })
-            }
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-          >
-            <option value="">Sem categoria</option>
-            {categorias.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.nome}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            opcoes={categorias.map((categoria) => ({ valor: categoria.id, rotulo: categoria.nome }))}
+            valor={watch("categoria_id")}
+            onMudar={(v) => setValue("categoria_id", v)}
+            opcaoVazia="Sem categoria"
+            placeholder="Sem categoria"
+          />
         </label>
       </div>
 
@@ -166,10 +135,10 @@ export function ServicoForm({
         </button>
         <button
           type="submit"
-          disabled={salvando}
+          disabled={isSubmitting}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : servicoExistente ? "Salvar alterações" : "Salvar serviço"}
+          {isSubmitting ? "Salvando..." : servicoExistente ? "Salvar alterações" : "Salvar serviço"}
         </button>
       </div>
     </form>

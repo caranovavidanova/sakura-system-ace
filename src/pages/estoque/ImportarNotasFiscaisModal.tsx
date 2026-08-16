@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Combobox } from "@/components/Combobox";
 import { criarMovimento } from "@/lib/estoque";
 import { mensagemDeErro } from "@/lib/errors";
 import { lerNotasFiscais } from "@/lib/iaNotaFiscal";
@@ -227,22 +228,17 @@ export function ImportarNotasFiscaisModal({
                           />
                         </td>
                         <td className="px-2 py-1.5">
-                          <select
-                            value={item.categoria_id ?? ""}
-                            onChange={(e) =>
-                              atualizarItem(indice, {
-                                categoria_id: e.target.value || null,
-                              })
-                            }
-                            className="w-28 rounded border border-sakura-gray/40 px-1.5 py-1 outline-none focus:border-sakura-purple"
-                          >
-                            <option value="">Sem categoria</option>
-                            {categorias.map((categoria) => (
-                              <option key={categoria.id} value={categoria.id}>
-                                {categoria.nome}
-                              </option>
-                            ))}
-                          </select>
+                          <Combobox
+                            className="w-28"
+                            opcoes={categorias.map((categoria) => ({
+                              valor: categoria.id,
+                              rotulo: categoria.nome,
+                            }))}
+                            valor={item.categoria_id ?? ""}
+                            onMudar={(v) => atualizarItem(indice, { categoria_id: v || null })}
+                            opcaoVazia="Sem categoria"
+                            placeholder="Sem categoria"
+                          />
                         </td>
                         <td className="px-2 py-1.5">
                           <CelulaTexto

@@ -1,5 +1,11 @@
 import { supabase } from "./supabase";
-import type { Cliente, NovoCliente, NovoVeiculo, Veiculo } from "@/types/cliente";
+import type {
+  Cliente,
+  NovoCliente,
+  NovoVeiculo,
+  Veiculo,
+  VeiculoFormulario,
+} from "@/types/cliente";
 
 export async function listarClientes(): Promise<Cliente[]> {
   const { data, error } = await supabase
@@ -31,6 +37,36 @@ export async function criarCliente(
   }
 
   return clienteCriado as Cliente;
+}
+
+export async function atualizarCliente(
+  id: string,
+  cliente: NovoCliente,
+  veiculos: VeiculoFormulario[],
+): Promise<void> {
+  const { error: erroCliente } = await supabase
+    .from("clientes")
+    .update(cliente)
+    .eq("id", id);
+  if (erroCliente) throw erroCliente;
+
+  const idsParaManter = veiculos
+    .map((veiculo) => veiculo.id)
+    .filter((veiculoId): veiculoId is string => Boolean(veiculoId));
+
+  const exclusao = supabase.from("veiculos").delete().eq("cliente_id", id);
+  const { error: erroExclusao } =
+    idsParaManter.length > 0
+      ? await exclusao.not("id", "in", `(${idsParaManter.join(",")})`)
+      : await exclusao;
+  if (erroExclusao) throw erroExclusao;
+
+  if (veiculos.length > 0) {
+    const { error: erroVeiculos } = await supabase
+      .from("veiculos")
+      .upsert(veiculos.map((veiculo) => ({ ...veiculo, cliente_id: id })));
+    if (erroVeiculos) throw erroVeiculos;
+  }
 }
 
 export async function excluirCliente(id: string): Promise<void> {

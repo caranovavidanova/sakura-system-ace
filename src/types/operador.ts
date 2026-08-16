@@ -3,6 +3,7 @@ export const MODULOS = [
   { chave: "clientes", label: "Clientes", rota: "/clientes" },
   { chave: "ordens_servico", label: "Ordens de Serviço", rota: "/ordens-servico" },
   { chave: "estoque", label: "Estoque", rota: "/estoque" },
+  { chave: "fornecedores", label: "Fornecedores", rota: "/fornecedores" },
   { chave: "servicos", label: "Serviços", rota: "/servicos" },
   { chave: "caixa", label: "Caixa Diário", rota: "/caixa" },
   { chave: "contas_pagar", label: "Contas a Pagar", rota: "/contas-pagar" },
@@ -22,10 +23,13 @@ export interface Operador {
   admin: boolean;
   permissoes: ModuloChave[];
   ativo: boolean;
+  deve_trocar_senha: boolean;
   criado_em: string;
 }
 
-export type NovoOperador = Omit<Operador, "id" | "criado_em">;
+// `deve_trocar_senha` não é um campo de formulário — nasce `false` (default
+// do banco) e só vira `true` via a Edge Function de redefinir senha.
+export type NovoOperador = Omit<Operador, "id" | "criado_em" | "deve_trocar_senha">;
 
 export function temPermissao(
   operador: Operador | null,

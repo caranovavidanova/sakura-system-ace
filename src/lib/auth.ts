@@ -20,6 +20,14 @@ export async function sair(): Promise<void> {
   if (error) throw error;
 }
 
+// Troca a própria senha (usa a sessão já logada — funciona tanto pra quem
+// só quer trocar por vontade própria quanto pra quem está cumprindo a troca
+// obrigatória depois de um reset feito pelo admin, ver TrocarSenhaPage).
+export async function trocarSenhaPropria(novaSenha: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: novaSenha });
+  if (error) throw error;
+}
+
 export async function buscarOperadorAtual(
   userId: string,
 ): Promise<Operador | null> {

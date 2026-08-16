@@ -28,9 +28,9 @@ export function LoginPage() {
   return (
     <div
       className="flex h-screen items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: `url(${import.meta.env.BASE_URL}sakura-login-bg.svg)` }}
+      style={{ backgroundImage: `url(${import.meta.env.BASE_URL}sakura-login-bg-premium.png)` }}
     >
-      <div className="w-full max-w-sm rounded-3xl border border-white/40 bg-white/30 p-8 shadow-xl backdrop-blur-xl">
+      <div className="sakura-card w-full max-w-sm p-8">
         <div className="mb-6 flex justify-center">
           <Logo className="drop-shadow-sm" />
         </div>
@@ -64,7 +64,7 @@ export function LoginPage() {
               autoFocus
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/65 focus:border-sakura-purple"
+              className="rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-white outline-none placeholder:text-white/40 focus:border-sakura-pink focus:ring-1 focus:ring-sakura-pink transition-all"
             />
           </label>
 
@@ -74,14 +74,14 @@ export function LoginPage() {
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="rounded-xl border border-white/60 bg-white/50 px-3 py-2.5 text-sakura-purple-dark outline-none placeholder:text-sakura-purple-dark/65 focus:border-sakura-purple"
+              className="rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-white outline-none placeholder:text-white/40 focus:border-sakura-pink focus:ring-1 focus:ring-sakura-pink transition-all"
             />
           </label>
 
           <button
             type="submit"
             disabled={entrando}
-            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white shadow-md hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white shadow-[0_0_15px_rgba(182,36,255,0.4)] hover:shadow-[0_0_25px_rgba(182,36,255,0.7)] hover:bg-sakura-purple/90 transition-all disabled:opacity-50"
           >
             {entrando ? "Entrando..." : "Entrar"}
           </button>

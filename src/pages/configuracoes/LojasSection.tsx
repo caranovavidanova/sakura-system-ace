@@ -1,6 +1,16 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { atualizarLoja, atualizarStatusLoja, criarLoja, excluirLoja } from "@/lib/lojas";
 import { mensagemDeErro } from "@/lib/errors";
+import {
+  lojaFormSchema,
+  lojaFormVazio,
+  paraNovaLoja,
+  paraPatchLoja,
+  paraValoresFormulario,
+  type LojaFormValues,
+} from "@/schemas/loja";
 import type { Loja } from "@/types/loja";
 
 interface LojasSectionProps {
@@ -9,38 +19,33 @@ interface LojasSectionProps {
   onSalvo: () => Promise<void>;
 }
 
+const inputClasse =
+  "rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple";
+
 export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSectionProps) {
-  const [nome, setNome] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [uf, setUf] = useState("");
-  const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [nomeEdicao, setNomeEdicao] = useState("");
-  const [cidadeEdicao, setCidadeEdicao] = useState("");
-  const [ufEdicao, setUfEdicao] = useState("");
-  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
-  async function handleAdicionar(e: React.FormEvent) {
-    e.preventDefault();
-    if (!nome.trim()) return;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<LojaFormValues>({
+    resolver: zodResolver(lojaFormSchema),
+    defaultValues: lojaFormVazio,
+  });
+  const ufField = register("uf");
+
+  async function aoAdicionar(valores: LojaFormValues) {
     setErro(null);
-    setSalvando(true);
     try {
-      await criarLoja(
-        { nome: nome.trim(), cidade: cidade.trim() || null, uf: uf.trim() || null, ativo: true },
-        operadorCriadorId,
-      );
-      setNome("");
-      setCidade("");
-      setUf("");
+      await criarLoja(paraNovaLoja(valores), operadorCriadorId);
+      reset(lojaFormVazio);
       await onSalvo();
     } catch (err) {
       console.error("Erro ao criar loja:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setSalvando(false);
     }
   }
 
@@ -66,74 +71,40 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
     }
   }
 
-  function iniciarEdicao(loja: Loja) {
-    setErro(null);
-    setEditandoId(loja.id);
-    setNomeEdicao(loja.nome);
-    setCidadeEdicao(loja.cidade ?? "");
-    setUfEdicao(loja.uf ?? "");
-  }
-
-  function cancelarEdicao() {
-    setEditandoId(null);
-  }
-
-  async function handleSalvarEdicao(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editandoId || !nomeEdicao.trim()) return;
-    setErro(null);
-    setSalvandoEdicao(true);
-    try {
-      await atualizarLoja(editandoId, {
-        nome: nomeEdicao.trim(),
-        cidade: cidadeEdicao.trim() || null,
-        uf: ufEdicao.trim() || null,
-      });
-      setEditandoId(null);
-      await onSalvo();
-    } catch (err) {
-      console.error("Erro ao editar loja:", err);
-      setErro(mensagemDeErro(err));
-    } finally {
-      setSalvandoEdicao(false);
-    }
-  }
-
   return (
     <>
-      {erro && (
-        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
-      )}
+      {erro && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
 
-      <form onSubmit={handleAdicionar} className="mt-4 grid grid-cols-4 gap-2">
+      <form onSubmit={handleSubmit(aoAdicionar)} className="mt-4 grid grid-cols-4 gap-2">
         <input
           type="text"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
           placeholder="Nome da loja"
-          className="col-span-2 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          {...register("nome")}
+          className={`col-span-2 ${inputClasse}`}
         />
         <input
           type="text"
-          value={cidade}
-          onChange={(e) => setCidade(e.target.value)}
           placeholder="Cidade"
-          className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          {...register("cidade")}
+          className={inputClasse}
         />
         <input
           type="text"
-          value={uf}
-          onChange={(e) => setUf(e.target.value.toUpperCase())}
           placeholder="UF"
           maxLength={2}
-          className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          {...ufField}
+          onChange={(e) => {
+            e.target.value = e.target.value.toUpperCase();
+            ufField.onChange(e);
+          }}
+          className={inputClasse}
         />
         <button
           type="submit"
-          disabled={salvando || !nome.trim()}
+          disabled={isSubmitting}
           className="col-span-4 rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 sm:col-span-1 sm:justify-self-end"
         >
-          {salvando ? "Salvando..." : "+ Nova loja"}
+          {isSubmitting ? "Salvando..." : "+ Nova loja"}
         </button>
       </form>
 
@@ -143,49 +114,16 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
         <div className="mt-4 flex flex-wrap gap-2">
           {lojas.map((loja) =>
             editandoId === loja.id ? (
-              <form
+              <LinhaEdicaoLoja
                 key={loja.id}
-                onSubmit={handleSalvarEdicao}
-                className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-white/70 px-3 py-1.5"
-              >
-                <input
-                  type="text"
-                  value={nomeEdicao}
-                  onChange={(e) => setNomeEdicao(e.target.value)}
-                  placeholder="Nome da loja"
-                  autoFocus
-                  className="w-28 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
-                />
-                <input
-                  type="text"
-                  value={cidadeEdicao}
-                  onChange={(e) => setCidadeEdicao(e.target.value)}
-                  placeholder="Cidade"
-                  className="w-20 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
-                />
-                <input
-                  type="text"
-                  value={ufEdicao}
-                  onChange={(e) => setUfEdicao(e.target.value.toUpperCase())}
-                  placeholder="UF"
-                  maxLength={2}
-                  className="w-12 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
-                />
-                <button
-                  type="submit"
-                  disabled={salvandoEdicao || !nomeEdicao.trim()}
-                  className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50"
-                >
-                  Salvar
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelarEdicao}
-                  className="text-xs font-medium text-sakura-muted hover:underline"
-                >
-                  Cancelar
-                </button>
-              </form>
+                loja={loja}
+                onSalvo={async () => {
+                  setEditandoId(null);
+                  await onSalvo();
+                }}
+                onErro={setErro}
+                onCancelar={() => setEditandoId(null)}
+              />
             ) : (
               <span
                 key={loja.id}
@@ -202,7 +140,10 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
                   </span>
                 )}
                 <button
-                  onClick={() => iniciarEdicao(loja)}
+                  onClick={() => {
+                    setErro(null);
+                    setEditandoId(loja.id);
+                  }}
                   title="Editar loja"
                   className="text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
                 >
@@ -228,5 +169,88 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
         </div>
       )}
     </>
+  );
+}
+
+// Componente à parte de propósito: cada clique em "editar" monta uma
+// instância nova (troca de `loja.id` na lista muda o elemento de tipo
+// `<span>` pra `<form>`, remontando), então cada uma já nasce com o
+// `useForm` preenchido pelos dados daquela loja — sem precisar de `reset()`
+// manual toda vez que a usuária troca de loja sendo editada.
+function LinhaEdicaoLoja({
+  loja,
+  onSalvo,
+  onErro,
+  onCancelar,
+}: {
+  loja: Loja;
+  onSalvo: () => Promise<void>;
+  onErro: (mensagem: string) => void;
+  onCancelar: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<LojaFormValues>({
+    resolver: zodResolver(lojaFormSchema),
+    defaultValues: paraValoresFormulario(loja),
+  });
+  const ufField = register("uf");
+
+  async function aoSalvar(valores: LojaFormValues) {
+    try {
+      await atualizarLoja(loja.id, paraPatchLoja(valores));
+      await onSalvo();
+    } catch (err) {
+      console.error("Erro ao editar loja:", err);
+      onErro(mensagemDeErro(err));
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(aoSalvar)}
+      className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-white/10 px-3 py-1.5"
+    >
+      <input
+        type="text"
+        placeholder="Nome da loja"
+        autoFocus
+        {...register("nome")}
+        className="w-28 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+      />
+      <input
+        type="text"
+        placeholder="Cidade"
+        {...register("cidade")}
+        className="w-20 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+      />
+      <input
+        type="text"
+        placeholder="UF"
+        maxLength={2}
+        {...ufField}
+        onChange={(e) => {
+          e.target.value = e.target.value.toUpperCase();
+          ufField.onChange(e);
+        }}
+        className="w-12 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+      />
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50"
+      >
+        Salvar
+      </button>
+      <button
+        type="button"
+        onClick={onCancelar}
+        className="text-xs font-medium text-sakura-muted hover:underline"
+      >
+        Cancelar
+      </button>
+    </form>
   );
 }

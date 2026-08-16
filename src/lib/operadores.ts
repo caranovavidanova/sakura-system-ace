@@ -66,3 +66,17 @@ export async function atualizarOperador(
   const { error } = await supabase.from("operadores").update(patch).eq("id", id);
   if (error) throw error;
 }
+
+// Redefine a senha de um operador esquecida — só quem é admin de uma loja
+// que esse operador também acessa consegue (checado dentro da Edge Function,
+// que é quem de fato troca a senha via service role key).
+export async function redefinirSenhaOperador(
+  operadorAlvoId: string,
+  novaSenha: string,
+): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("redefinir-senha-operador", {
+    body: { operadorAlvoId, novaSenha },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+}

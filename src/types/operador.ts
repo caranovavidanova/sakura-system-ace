@@ -4,6 +4,7 @@ export const MODULOS = [
   { chave: "ordens_servico", label: "Ordens de Serviço", rota: "/ordens-servico" },
   { chave: "estoque", label: "Estoque", rota: "/estoque" },
   { chave: "servicos", label: "Serviços", rota: "/servicos" },
+  { chave: "fornecedores", label: "Fornecedores", rota: "/fornecedores" },
   { chave: "caixa", label: "Caixa Diário", rota: "/caixa" },
   { chave: "contas_pagar", label: "Contas a Pagar", rota: "/contas-pagar" },
   { chave: "contas_receber", label: "Contas a Receber", rota: "/contas-receber" },

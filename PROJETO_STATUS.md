@@ -707,6 +707,10 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    fundação já existe (1 projeto Supabase pode servir 2+ lojas, ver seção 5) — o que ainda não
    existe é um site externo de assinatura pra provisionar loja+admin automaticamente pra um
    cliente novo (continua manual, pelo painel do Supabase + tela de Configurações → Lojas).
+   **Senha mínima trava em 6 caracteres, sem exceção**: já foi tentado reduzir pra 4 (pedido dela,
+   pra digitar mais rápido no balcão) — não dá, o Supabase Auth barra isso mesmo pelo painel
+   ("Must be greater or equal to 6"). Não sugerir de novo sem uma mudança de arquitetura de login
+   (ex: PIN numérico em vez de senha via Supabase Auth) e sem ela pedir explicitamente.
 3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pela usuária em algum
    momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
    código. Vale sugerir que ela rotacione essa chave em Settings → API Keys do Supabase, se ainda
@@ -1067,29 +1071,30 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: a `0037` já foi confirmada por ela na prática (número sequencial
-de OS, "Encerrar OS", split de pagamento, exclusão de loja vazia — todos testados e funcionando).
-**Duas linhas de trabalho paralelas convergiram numa sessão anterior** (ver seção 10 pro histórico
-completo) — uma sessão baseada em chat (mais simples: cadastro básico de Fornecedores, redefinir
-senha via modal de admin, desfazer pagamento em Contas a Pagar) e um trabalho feito localmente via
-Antigravity (bem mais completo: Fornecedores + Pedido de Compra, Auditoria, testes automatizados,
-formulários refatorados pro padrão `react-hook-form`+`zod`, design novo, redefinir senha via senha
-temporária + troca obrigatória). A usuária decidiu que **o trabalho do Antigravity vira a base
-principal**; o "desfazer pagamento" (que só existia na linha simples) foi portado por cima. **Tudo
-isso já foi confirmado por ela funcionando de verdade**: migrations `0038`/`0039`/`0040` rodadas no
-Supabase real, Edge Function `redefinir-senha-operador` redeployada, e os 4 fluxos testados na
-prática — Fornecedores (cadastro com preenchimento automático de endereço por CEP via ViaCEP,
-ver seção 7), redefinir senha com senha temporária + tela de trocar senha, a trilha de Auditoria
-(cobre update/delete, não insert — testado editando um fornecedor), e desfazer pagamento em Contas
-a Pagar. **Descoberta nesta sessão**: a usuária pediu pra reduzir a senha mínima de 6 pra 4
-caracteres (mais rápido de digitar no balcão) — não dá, o Supabase Auth trava o mínimo em 6 mesmo
-pelo painel ("Must be greater or equal to 6"), sem exceção; a tentativa foi revertida no código
-pra manter os dois lados consistentes. Não vale tentar de novo sem uma mudança de arquitetura de
-login (ex: PIN numérico em vez de senha via Supabase Auth) — não sugerir isso sem ela pedir.
-Próximo passo puxado por ela mesma, sem pressa: a **emissão de nota fiscal** (Focus NFe, item 1
-desta seção), só quando estiver com tudo pronto pra lançar a primeira versão de verdade na loja do
-pai dela. Ela só publica a próxima versão do instalador quando isso
-estiver pronto (ver aviso na seção 7, "Empacotamento").
+**Prioridade da próxima sessão — pedido explícito da usuária**: antes de atacar a emissão de nota
+fiscal, ela quer uma **passada de revisão/limpeza no código inteiro** — não só nos três módulos
+novos desta sessão (Depósito, Cotação de Peças, Importar XML — ver seção 7), no projeto todo —
+caçando bugs e problemas antes de seguir em frente. Só depois dessa revisão: emissão de nota fiscal
+(Focus NFe, item 1 da seção 8) → testar tudo → lançar de verdade na loja do pai dela. Como abordar:
+
+- Usar a skill `/code-review` (nível de esforço alto — `high` ou `xhigh`) e/ou `/simplify`,
+  apontando pro repositório inteiro (branch `main`), não só o diff desta sessão — o pedido é
+  "revisar o código", não só revisar o que acabou de mudar.
+- **Atenção especial aos três módulos novos desta sessão**: validados por `tsc`/lint/testes/build
+  e as migrations testadas de verdade num Postgres local (idempotência + RLS conferida trocando de
+  papel) — mas **nunca vistos rodando visualmente** (o sandbox não alcança o Supabase real dela,
+  ver item 6 da seção 6), então o primeiro teste visual de verdade só acontece quando ela roda na
+  própria máquina. Vale checar com mais cuidado.
+- **Edge case não testado**: o que acontece se ela inativar *todos* os depósitos de uma loja —
+  `buscarDepositoPadraoId()` (`lib/depositos.ts`) provavelmente quebra sem depósito ativo nenhum
+  pra cair como padrão (fluxos automáticos como baixa em OS ficariam sem conseguir lançar).
+- Reler as dívidas técnicas já conhecidas na seção 6 (principalmente item 1 — permissão só na
+  interface, sem RLS por módulo — e item 4 — sem teste de UI/integração) e decidir com ela se algo
+  ali precisa de atenção antes do lançamento real, ou se continua aceitável pro tamanho da operação
+  dela.
+
+Ela só publica a próxima versão do instalador quando a nota fiscal estiver pronta (ver aviso na
+seção 7, "Empacotamento").
 
 ## 9. Como rodar / configurar (resumo)
 

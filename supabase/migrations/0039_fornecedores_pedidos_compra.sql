@@ -13,6 +13,12 @@
 -- fiscal do fornecedor (isso é bem mais complexo, fica pra uma etapa futura
 -- separada se um dia for pedida).
 --
+-- Nota: uma versão anterior e mais simples de `fornecedores` (sem endereço)
+-- chegou a ser publicada numa sessão separada — as colunas de endereço são
+-- adicionadas via `alter table ... add column if not exists`, não só no
+-- `create table`, pra funcionar tanto num banco novo quanto num banco que
+-- já tinha essa versão simples.
+--
 -- Idempotente: seguro rodar de novo.
 
 create table if not exists fornecedores (
@@ -21,15 +27,21 @@ create table if not exists fornecedores (
   cnpj text,
   telefone text,
   email text,
-  cep text,
-  rua text,
-  numero text,
-  bairro text,
-  cidade text,
-  uf text,
   ativo boolean not null default true,
   criado_em timestamptz not null default now()
 );
+
+-- Colunas de endereço, adicionadas via `alter` (não só no `create table`
+-- acima) porque uma versão mais simples desta tabela — sem endereço — pode
+-- já ter sido criada antes desta migration existir; `create table if not
+-- exists` sozinho não adicionaria essas colunas num banco que já tem a
+-- tabela.
+alter table fornecedores add column if not exists cep text;
+alter table fornecedores add column if not exists rua text;
+alter table fornecedores add column if not exists numero text;
+alter table fornecedores add column if not exists bairro text;
+alter table fornecedores add column if not exists cidade text;
+alter table fornecedores add column if not exists uf text;
 
 alter table fornecedores enable row level security;
 drop policy if exists "fornecedores_acesso_autenticados" on fornecedores;

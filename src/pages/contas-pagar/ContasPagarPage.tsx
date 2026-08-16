@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
 import {
   criarContaPagar,
+  desfazerPagamento,
   excluirContaPagar,
   listarContasPagar,
   pagarConta,
@@ -87,6 +88,22 @@ export function ContasPagarPage() {
       await carregar();
     } catch (err) {
       console.error("Erro ao excluir conta a pagar:", err);
+      setErro(mensagemDeErro(err));
+    }
+  }
+
+  async function handleDesfazerPagamento(conta: ContaPagar) {
+    if (
+      !confirm(
+        `Desfazer o pagamento de "${conta.descricao}"? A conta volta a ficar pendente e a Saída lançada no Caixa será removida.`,
+      )
+    )
+      return;
+    try {
+      await desfazerPagamento(conta);
+      await carregar();
+    } catch (err) {
+      console.error("Erro ao desfazer pagamento:", err);
       setErro(mensagemDeErro(err));
     }
   }
@@ -231,6 +248,7 @@ export function ContasPagarPage() {
                       <th className="px-4 py-3 font-medium">Categoria</th>
                       <th className="px-4 py-3 font-medium">Valor</th>
                       <th className="px-4 py-3 font-medium">Pago em</th>
+                      <th className="px-4 py-3" />
                     </tr>
                   </thead>
                   <tbody>
@@ -246,6 +264,14 @@ export function ContasPagarPage() {
                           {conta.data_pagamento
                             ? new Date(conta.data_pagamento).toLocaleDateString("pt-BR")
                             : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handleDesfazerPagamento(conta)}
+                            className="text-xs font-medium text-sakura-purple hover:underline"
+                          >
+                            Desfazer pagamento
+                          </button>
                         </td>
                       </tr>
                     ))}

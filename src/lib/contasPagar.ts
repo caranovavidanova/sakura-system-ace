@@ -1,4 +1,4 @@
-import { criarMovimentoCaixa } from "./caixa";
+import { criarMovimentoCaixa, excluirMovimentoCaixa } from "./caixa";
 import { supabase } from "./supabase";
 import type { ContaPagar, NovaContaPagar } from "@/types/contaPagar";
 
@@ -87,5 +87,24 @@ export async function pagarConta({
       loja_id: conta.loja_id,
     });
     if (erroProxima) throw erroProxima;
+  }
+}
+
+// Reverte um pagamento feito por engano: volta a conta pra pendente e
+// remove a Saída que tinha sido lançada automaticamente no Caixa.
+export async function desfazerPagamento(conta: ContaPagar): Promise<void> {
+  const { error } = await supabase
+    .from("contas_pagar")
+    .update({
+      status: "pendente",
+      data_pagamento: null,
+      caixa_movimento_id: null,
+      operador_id: null,
+    })
+    .eq("id", conta.id);
+  if (error) throw error;
+
+  if (conta.caixa_movimento_id) {
+    await excluirMovimentoCaixa(conta.caixa_movimento_id);
   }
 }

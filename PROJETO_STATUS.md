@@ -58,21 +58,25 @@ arquitetural.
 
 Três fases, nessa ordem, sem pressa de pular etapa:
 
-1. **Lançar na borracharia do pai dela** (ver seção 1) com tudo funcionando — usar de verdade lá
-   é como ela pretende achar bugs reais (os que só aparecem usando de verdade, não em teste) e
-   descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a emissão de nota
-   fiscal (seção 8, item 1).
-2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela**, ainda como teste — validar como o
-   sistema se comporta crescendo pra fora de uma loja só, antes de pensar grande. Como essas lojas
-   são de donos diferentes (não é a mesma empresa do pai dela), o modelo esperado é cada uma com
-   seu próprio projeto Supabase — diferente da fundação **multi-loja** já construída (que é pra
-   **uma empresa com várias lojas**, não várias empresas diferentes). Não assumir automaticamente
-   qual modelo usar aqui sem confirmar com ela quando chegar a hora.
-3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema** —
-   aí sim vira a "versão comercial" mencionada em outros pontos deste documento (site externo de
-   assinatura pra criar loja nova sozinho, seção 8 item 2; reconsiderar centralizar o custo da IA
-   em vez de cada loja pagar a própria conta Anthropic, seção 8 item 6). Não adiantar esse trabalho
-   agora — as duas fases anteriores ainda não aconteceram.
+1. **Lançar na borracharia do pai dela** (ver seção 1), em **Araraquara**, com tudo funcionando —
+   usar de verdade lá é como ela pretende achar bugs reais (os que só aparecem usando de verdade,
+   não em teste) e descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a
+   emissão de nota fiscal (seção 8, item 1).
+2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
+   teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
+   grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
+   esperado é cada uma com seu próprio projeto Supabase — diferente da fundação **multi-loja** já
+   construída (que é pra **uma empresa com várias lojas**, não várias empresas diferentes). Não
+   assumir automaticamente qual modelo usar aqui sem confirmar com ela quando chegar a hora.
+3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema**
+   — essa fase **já envolve estados diferentes** (não fica só em Araraquara/SP como as fases
+   anteriores) — o que pode importar pra emissão fiscal (regras de ICMS/ISS variam por
+   estado/município; não assumir que o que funcionar pra loja do pai dela vai servir sem ajuste
+   pras outras) e é justamente aí que vira a "versão comercial" mencionada em outros pontos deste
+   documento (site externo de assinatura pra criar loja nova sozinho, seção 8 item 2;
+   reconsiderar centralizar o custo da IA em vez de cada loja pagar a própria conta Anthropic,
+   seção 8 item 6). Não adiantar esse trabalho agora — as duas fases anteriores ainda não
+   aconteceram.
 
 ### Identidade visual — como está hoje
 

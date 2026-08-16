@@ -577,7 +577,8 @@ outro projeto Supabase do zero (ver seção 9).
   (opcional), caixa_movimento_id (FK, opcional — a Saída gerada ao marcar como paga), operador_id
   (FK operadores), criado_em. Marcar como paga gera automaticamente uma Saída em
   `caixa_movimentos` e, se `recorrente`, cria a próxima ocorrência (mesmo valor, +1 mês) sozinha.
-  **Sem "desfazer pagamento"** pelo app ainda.
+  **"Desfazer pagamento"** (`desfazerPagamento()` em `lib/contasPagar.ts`) volta a conta pra
+  pendente e apaga a Saída que tinha sido gerada.
 - **`contas_receber`**: id, loja_id (FK lojas), cliente_id (FK clientes), ordem_servico_id (FK
   ordens_servico, opcional e único — 1 conta a receber por OS faturada), descricao, valor,
   vencimento (date, aqui é "previsão de recebimento"), status (`pendente`/`recebido`),
@@ -851,8 +852,9 @@ normal (quebra de linha).
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
   já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
-  branch separada que trabalhou em paralelo — ver seção 10): botão na lista "Pagas recentemente" —
-  volta a conta pra pendente e remove a Saída gerada (se a conta era recorrente, a próxima
+  branch separada que trabalhou em paralelo — ver seção 10, já testado por ela de verdade): botão
+  na lista "Pagas recentemente" — volta a conta pra pendente e remove a Saída gerada (se a conta
+  era recorrente, a próxima
   ocorrência já criada continua existindo, pendente).
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
   cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
@@ -961,23 +963,26 @@ importador universal de dados de outros sistemas, versão mobile, outras ediçõ
 
 **Prioridade da próxima sessão**: a `0037` já foi confirmada por ela na prática (número sequencial
 de OS, "Encerrar OS", split de pagamento, exclusão de loja vazia — todos testados e funcionando).
-**Duas linhas de trabalho paralelas convergiram nesta sessão** (ver seção 10 pro histórico
+**Duas linhas de trabalho paralelas convergiram numa sessão anterior** (ver seção 10 pro histórico
 completo) — uma sessão baseada em chat (mais simples: cadastro básico de Fornecedores, redefinir
 senha via modal de admin, desfazer pagamento em Contas a Pagar) e um trabalho feito localmente via
 Antigravity (bem mais completo: Fornecedores + Pedido de Compra, Auditoria, testes automatizados,
 formulários refatorados pro padrão `react-hook-form`+`zod`, design novo, redefinir senha via senha
 temporária + troca obrigatória). A usuária decidiu que **o trabalho do Antigravity vira a base
-principal**; o "desfazer pagamento" (que só existia na linha simples) foi portado por cima; a
-migration de Fornecedores foi corrigida pra lidar com o caso de a tabela simples já ter sido
-criada antes (ver seção 7, "Fornecedores"). **Antes de qualquer pedido novo, confirmar com ela**:
-(a) rodar as migrations `0038`/`0039`/`0040` no Supabase real — mesmo que uma versão anterior já
-tenha rodado alguma delas, rodar de novo é seguro e necessário (idempotentes, e a `0039` foi
-corrigida); (b) redeployar a Edge Function `redefinir-senha-operador` com o código atual (o que
-está publicado agora é a versão simples da linha de chat); (c) testar os 3 fluxos novos de
-verdade: Fornecedores com Pedido de Compra, redefinir senha com senha temporária + tela de trocar
-senha, e a trilha de Auditoria. Depois disso confirmado, ela mesma vai puxar a **emissão de nota
-fiscal** (Focus NFe, item 1 desta seção) assim que tiver o token de homologação. Ela só publica a
-próxima versão do instalador quando isso estiver pronto (ver aviso na seção 7, "Empacotamento").
+principal**; o "desfazer pagamento" (que só existia na linha simples) foi portado por cima. **Tudo
+isso já foi confirmado por ela funcionando de verdade**: migrations `0038`/`0039`/`0040` rodadas no
+Supabase real, Edge Function `redefinir-senha-operador` redeployada, e os 4 fluxos testados na
+prática — Fornecedores (cadastro com preenchimento automático de endereço por CEP via ViaCEP,
+ver seção 7), redefinir senha com senha temporária + tela de trocar senha, a trilha de Auditoria
+(cobre update/delete, não insert — testado editando um fornecedor), e desfazer pagamento em Contas
+a Pagar. **Descoberta nesta sessão**: a usuária pediu pra reduzir a senha mínima de 6 pra 4
+caracteres (mais rápido de digitar no balcão) — não dá, o Supabase Auth trava o mínimo em 6 mesmo
+pelo painel ("Must be greater or equal to 6"), sem exceção; a tentativa foi revertida no código
+pra manter os dois lados consistentes. Não vale tentar de novo sem uma mudança de arquitetura de
+login (ex: PIN numérico em vez de senha via Supabase Auth) — não sugerir isso sem ela pedir.
+Próximo passo puxado por ela mesma: a **emissão de nota fiscal** (Focus NFe, item 1 desta seção)
+assim que tiver o token de homologação. Ela só publica a próxima versão do instalador quando isso
+estiver pronto (ver aviso na seção 7, "Empacotamento").
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -990,13 +995,12 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0037` já foram confirmadas
-rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
-`0034`-`0037`, `0037` já testada na prática por ela). **`0038`/`0039`/`0040` têm um histórico
-confuso** por causa de duas sessões de trabalho paralelas (ver seção 10) — o mais seguro é ela
-rodar as três de novo agora, na ordem, mesmo que ache que já rodou antes (são idempotentes, e a
-`0039` foi corrigida nesta sessão pra não deixar colunas faltando num banco que já tinha uma
-versão mais simples de `fornecedores`). Ver "Reconciliar migrations 0038-0040" abaixo.
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0040` já foram confirmadas
+rodando sem erro nesse projeto (incluindo a fundação multi-loja, as correções/módulos novos
+`0034`-`0037`, e `0038`/`0039`/`0040` — apesar do histórico confuso de duas sessões de trabalho
+paralelas que rodaram nomes de migration conflitantes, ver seção 10, o resultado final já foi
+confirmado funcionando de verdade por ela: Fornecedores com endereço completo, redefinir senha, e
+Auditoria, todos testados na prática).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
@@ -1004,17 +1008,14 @@ Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
 até `0040`. Todas são idempotentes.
 
-### Reconciliar migrations `0038`-`0040` no Supabase real dela
+### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 
-1. SQL Editor → rodar, nessa ordem, `0038_deve_trocar_senha.sql`, `0039_fornecedores_pedidos_compra.sql`
-   e `0040_auditoria.sql` — colar cada um numa "New query" e Run, mesmo que ela ache que alguma já
-   rodou antes.
-2. Conferir que `fornecedores` tem as colunas de endereço (`cep`/`rua`/`numero`/`bairro`/`cidade`/`uf`)
-   — Table Editor → `fornecedores` → checar as colunas. Se estiverem faltando, é sinal de que a
-   `0039` rodou antes da correção desta sessão; rodar de novo resolve.
-3. Redeployar a Edge Function `redefinir-senha-operador` (ver "Ativar a redefinição de senha
-   esquecida" abaixo) — o que está publicado hoje é uma versão mais simples, de uma sessão em
-   paralelo.
+Registro histórico, caso um projeto Supabase novo (segunda loja, ou reinstalação) precise do mesmo
+cuidado: `0038_deve_trocar_senha.sql`, `0039_fornecedores_pedidos_compra.sql` e
+`0040_auditoria.sql` foram rodadas em sequência, a Edge Function `redefinir-senha-operador` foi
+redeployada com o código atual, e as colunas de endereço de `fornecedores`
+(`cep`/`rua`/`numero`/`bairro`/`cidade`/`uf`) foram conferidas no Table Editor — tudo certo. Num
+banco novo do zero, basta seguir a ordem normal de "Montar um projeto Supabase do zero" acima.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):

@@ -56,6 +56,74 @@ export async function criarPedido(
   return pedidoCriado as PedidoCompra;
 }
 
+export interface ItemImportacaoXml {
+  pecaId: string;
+  quantidade: number;
+  precoUnitario: number;
+}
+
+// Diferente de criarPedido() + receberItensPedido() (fluxo em duas etapas:
+// primeiro planeja, depois confere o que chegou): a nota fiscal XML já é a
+// prova de que a mercadoria chegou, então o pedido nasce direto "recebido"
+// — sem passar por "pendente". Usada por ImportarNotaFiscalXmlModal.tsx.
+export async function importarNotaFiscalCompra(
+  fornecedorId: string,
+  itens: ItemImportacaoXml[],
+  depositoId: string,
+  lojaId: string,
+  operadorId: string | null,
+  observacao: string | null,
+): Promise<PedidoCompra> {
+  const { data: pedidoCriado, error: erroPedido } = await supabase
+    .from("pedidos_compra")
+    .insert({
+      fornecedor_id: fornecedorId,
+      data_pedido: new Date().toISOString().slice(0, 10),
+      observacao,
+      status: "recebido",
+      loja_id: lojaId,
+      operador_id: operadorId,
+    })
+    .select()
+    .single();
+  if (erroPedido) throw erroPedido;
+
+  const { error: erroItens } = await supabase.from("pedidos_compra_itens").insert(
+    itens.map((item) => ({
+      pedido_compra_id: pedidoCriado.id,
+      peca_id: item.pecaId,
+      quantidade_pedida: item.quantidade,
+      preco_unitario: item.precoUnitario,
+      quantidade_recebida: item.quantidade,
+    })),
+  );
+  if (erroItens) throw erroItens;
+
+  for (const item of itens) {
+    await criarMovimento(
+      {
+        peca_id: item.pecaId,
+        deposito_id: depositoId,
+        tipo: "entrada",
+        quantidade: item.quantidade,
+        motivo: "compra",
+        referencia: nomePedido(pedidoCriado.numero),
+      },
+      lojaId,
+    );
+  }
+
+  await registrarCotacoes(
+    itens.map((item) => ({
+      peca_id: item.pecaId,
+      fornecedor_id: fornecedorId,
+      preco: item.precoUnitario,
+    })),
+  );
+
+  return pedidoCriado as PedidoCompra;
+}
+
 export async function cancelarPedido(id: string): Promise<void> {
   const { error } = await supabase
     .from("pedidos_compra")

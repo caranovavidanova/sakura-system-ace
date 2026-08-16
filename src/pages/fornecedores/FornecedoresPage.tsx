@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarDepositos } from "@/lib/depositos";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarFornecedores } from "@/lib/fornecedores";
 import { listarPecas } from "@/lib/pecas";
 import { listarPedidos } from "@/lib/pedidosCompra";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { Deposito } from "@/types/deposito";
 import type { Fornecedor } from "@/types/fornecedor";
 import type { PedidoCompra } from "@/types/pedidoCompra";
 import type { Peca } from "@/types/peca";
@@ -20,6 +22,7 @@ export function FornecedoresPage() {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [pedidos, setPedidos] = useState<PedidoCompra[]>([]);
+  const [depositos, setDepositos] = useState<Deposito[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -31,14 +34,17 @@ export function FornecedoresPage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [fornecedoresCarregados, pecasCarregadas, pedidosCarregados] = await Promise.all([
-        listarFornecedores(),
-        listarPecas(),
-        listarPedidos(lojaAtual.id),
-      ]);
+      const [fornecedoresCarregados, pecasCarregadas, pedidosCarregados, depositosCarregados] =
+        await Promise.all([
+          listarFornecedores(),
+          listarPecas(),
+          listarPedidos(lojaAtual.id),
+          listarDepositos(lojaAtual.id),
+        ]);
       setFornecedores(fornecedoresCarregados);
       setPecas(pecasCarregadas);
       setPedidos(pedidosCarregados);
+      setDepositos(depositosCarregados);
     } catch (err) {
       console.error("Erro ao carregar fornecedores:", err);
       setErro(mensagemDeErro(err));
@@ -96,6 +102,7 @@ export function FornecedoresPage() {
           pedidos={pedidos}
           fornecedores={fornecedores}
           pecas={pecas}
+          depositos={depositos}
           lojaId={lojaAtual.id}
           operadorId={operador?.id ?? null}
           onRecarregar={carregar}

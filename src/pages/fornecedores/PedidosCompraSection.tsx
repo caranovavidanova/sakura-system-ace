@@ -2,10 +2,12 @@ import { useState } from "react";
 import { mensagemDeErro } from "@/lib/errors";
 import { cancelarPedido, criarPedido, receberItensPedido } from "@/lib/pedidosCompra";
 import type { RecebimentoItem } from "@/lib/pedidosCompra";
+import type { Deposito } from "@/types/deposito";
 import type { Fornecedor } from "@/types/fornecedor";
 import type { NovoItemPedidoCompra, NovoPedidoCompra, PedidoCompra } from "@/types/pedidoCompra";
 import { nomePedido, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, totalPedido } from "@/types/pedidoCompra";
 import type { Peca } from "@/types/peca";
+import { ImportarNotaFiscalXmlModal } from "./ImportarNotaFiscalXmlModal";
 import { PedidoCompraForm } from "./PedidoCompraForm";
 import { ReceberPedidoModal } from "./ReceberPedidoModal";
 
@@ -13,9 +15,29 @@ interface PedidosCompraSectionProps {
   pedidos: PedidoCompra[];
   fornecedores: Fornecedor[];
   pecas: Peca[];
+  depositos: Deposito[];
   lojaId: string;
   operadorId: string | null;
   onRecarregar: () => Promise<void>;
+}
+
+function IconeArquivo({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M12 18v-6" />
+      <path d="M9 15l3-3 3 3" />
+    </svg>
+  );
 }
 
 function formatarMoeda(valor: number): string {
@@ -26,12 +48,14 @@ export function PedidosCompraSection({
   pedidos,
   fornecedores,
   pecas,
+  depositos,
   lojaId,
   operadorId,
   onRecarregar,
 }: PedidosCompraSectionProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarImportarXml, setMostrarImportarXml] = useState(false);
   const [pedidoRecebendo, setPedidoRecebendo] = useState<PedidoCompra | null>(null);
 
   async function handleSalvar(pedido: NovoPedidoCompra, itens: NovoItemPedidoCompra[]) {
@@ -60,8 +84,15 @@ export function PedidosCompraSection({
 
   return (
     <div className="space-y-6">
-      {!mostrarFormulario && (
-        <div className="flex justify-end">
+      {!mostrarFormulario && !mostrarImportarXml && (
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setMostrarImportarXml(true)}
+            className="flex items-center gap-2 rounded-xl border border-sakura-purple/40 px-5 py-2.5 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+          >
+            <IconeArquivo className="h-4 w-4" />
+            Importar XML de nota fiscal
+          </button>
           <button
             onClick={() => setMostrarFormulario(true)}
             disabled={fornecedores.length === 0 || pecas.length === 0}
@@ -70,6 +101,18 @@ export function PedidosCompraSection({
             + Novo pedido
           </button>
         </div>
+      )}
+
+      {mostrarImportarXml && (
+        <ImportarNotaFiscalXmlModal
+          fornecedores={fornecedores}
+          pecas={pecas}
+          depositos={depositos}
+          lojaId={lojaId}
+          operadorId={operadorId}
+          onFechar={() => setMostrarImportarXml(false)}
+          onImportado={onRecarregar}
+        />
       )}
 
       {fornecedores.length === 0 && (

@@ -207,8 +207,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
 │   │                             # fornecedores.ts + pedidosCompra.ts + cotacoesPecas.ts (histórico
-│   │                             # de preço por fornecedor, ver "Cotação de peças" na seção 7 —
-│   │                             # módulo de Fornecedores) +
+│   │                             # de preço por fornecedor, ver "Cotação de peças" na seção 7) +
+│   │                             # notaFiscalXmlFornecedor.ts (lê o XML de NFe que o fornecedor
+│   │                             # emite pra loja — puro parsing com `DOMParser`, sem IA nem Edge
+│   │                             # Function, é formato público/estável do governo — usado pelo
+│   │                             # "Importar XML de nota fiscal" em Pedidos de Compra, ver seção
+│   │                             # 7; módulo de Fornecedores) +
 │   │                             # auditoria.ts (só leitura — `listarAuditoria`, filtra por
 │   │                             # tabela/operador; a escrita é 100% via trigger de banco, ver
 │   │                             # seção 5)
@@ -243,7 +247,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                   # PedidoCompraForm.tsx — itens via useFieldArray, igual OS — +
 │   │                   # PedidoCompraItemRow.tsx, mesmo espírito do ItemOSRow.tsx: mostra as
 │   │                   # cotações anteriores daquela peça por fornecedor ao escolher a peça, com
-│   │                   # botão "usar esse preço" — + ReceberPedidoModal.tsx, ver seção 7)
+│   │                   # botão "usar esse preço" — + ReceberPedidoModal.tsx +
+│   │                   # ImportarNotaFiscalXmlModal.tsx — lê o XML da nota fiscal do fornecedor e
+│   │                   # já cria um pedido "recebido" com entrada de estoque e cotação, ver seção
+│   │                   # 7)
 │   │   garantias/      # GarantiasPage.tsx é só lista (deriva de ordens_servico_itens +
 │   │                   # pecas.prazo_garantia_dias, sem tabela própria)
 │   │   servicos/       # catálogo de serviços, só lista + form (com categoria via
@@ -295,7 +302,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │                                  # ConfiguracaoFiscalLoja — todas com `loja_id` no lugar do antigo
 │                                  # `id: 1`, ver seção 5) + itemNotaFiscal.ts (item extraído da
 │                                  # leitura por IA) + cotacaoPeca.ts (histórico de preço por
-│                                  # fornecedor, sem `loja_id` — compartilhado, ver seção 7)
+│                                  # fornecedor, sem `loja_id` — compartilhado, ver seção 7) +
+│                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
+│                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
+│                                  # item da leitura por foto/IA)
 ├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
@@ -701,14 +711,18 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
    código. Vale sugerir que ela rotacione essa chave em Settings → API Keys do Supabase, se ainda
    não tiver feito.
-4. **Testes automatizados — começando** (Vitest, configurado nesta sessão, ver seção 4/9). Cobre
-   só as **funções puras de cálculo** que já tinham sido isoladas dos componentes durante a
-   migração pro `react-hook-form` (juros/parcelas/split de pagamento em `schemas/faturamento.ts`,
-   margem de peça em `schemas/peca.ts`, totais de OS/Pedido de Compra, saldo de estoque) — **não**
-   testa componente React, tela, nem nada que dependa do Supabase (esse tipo de teste, de UI/
-   integração, é bem mais trabalhoso de montar e não foi feito ainda). 35 testes, todos passando.
-   Achou e corrigiu de brinde um bug real de arredondamento de ponto flutuante em
-   `calcularValorCobrado` (`100 * 1.1` podia sair `110.00000000000001` em vez de `110`).
+4. **Testes automatizados — começando** (Vitest). Cobre principalmente **funções puras de cálculo**
+   isoladas dos componentes durante a migração pro `react-hook-form` (juros/parcelas/split de
+   pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
+   de Compra, saldo de estoque, cotação por fornecedor) — **não** testa componente React, tela,
+   nem nada que dependa do Supabase (esse tipo de teste, de UI/integração, é bem mais trabalhoso de
+   montar e não foi feito ainda). 45 testes, todos passando. Achou e corrigiu de brinde um bug real
+   de arredondamento de ponto flutuante em `calcularValorCobrado` (`100 * 1.1` podia sair
+   `110.00000000000001` em vez de `110`). **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
+   o parser de XML de verdade (precisa de `DOMParser`, uma API de navegador que o ambiente "node"
+   padrão do Vitest não tem) — usa jsdom só nesse arquivo, via comentário `// @vitest-environment
+   jsdom` no topo do arquivo (`jsdom` virou devDependency só pra isso; o resto dos testes continua
+   no ambiente node simples, mais rápido).
 5. **Assinatura de código do instalador**: o Windows/SmartScreen avisa "editor desconhecido" no
    instalador (normal sem certificado pago; não impede instalar, só exige "Mais informações →
    Executar assim mesmo"). Reconsiderar comprar um certificado se algum dia distribuir pra muitas
@@ -875,31 +889,32 @@ normal (quebra de linha).
   semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
   Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa ficha de orçamento de
   referência do ramo — ponto de partida, não os preços/serviços reais dela.
-- **Fornecedores** (duas abas): "Cadastro" — nome/razão social, CNPJ, telefone,
-  e-mail, endereço completo, ativo/inativo; compartilhado entre lojas (mesmo padrão de Clientes).
-  **Cuidado real com a migration `0039`** (ver seção 10): uma versão bem mais simples desta mesma
-  tabela (só nome/CNPJ/telefone/e-mail, sem endereço) foi publicada por engano no Supabase real
-  dela numa sessão em paralelo — se `0039` já tiver sido rodada depois disso, as colunas de
-  endereço **não** teriam sido adicionadas de verdade (`create table if not exists` não altera
-  tabela já existente). A migration já foi corrigida nesta sessão pra usar `alter table ... add
-  column if not exists` também, então rodá-la de novo (mesmo que já tenha "rodado" antes) resolve
-  — mas vale confirmar rodando de novo, não assumir que já está certo.
-  "Pedidos de compra" — por loja, número sequencial (`numero`, mesmo padrão de OS), itens de peça
-  com quantidade pedida + preço unitário, status (`pendente`/`parcial`/`recebido`/`cancelado`).
-  **Cotação de peças (nova nesta sessão)**: ao escolher a peça num item do pedido, aparece um
-  resumo das cotações anteriores daquela peça por fornecedor (mais barato primeiro, com a data da
-  última compra), com um botão "usar esse preço" que preenche o campo — sem tela/formulário
-  próprio, é só isso mesmo (`PedidoCompraItemRow.tsx` + `lib/cotacoesPecas.ts`). Toda vez que um
-  pedido é criado com preço numa peça, a cotação daquele fornecedor pra aquela peça é gravada
-  sozinha (histórico completo, nunca sobrescreve — ver tabela `cotacoes_pecas` na seção 5).
-  Botão **"Receber"** abre uma conferência: a usuária confirma quanto chegou de cada item (pode
-  ser parcial, em mais de uma vez) e o sistema já lança a entrada em Estoque → Movimentações
-  sozinho (motivo "Compra"), soma na quantidade recebida do item, e recalcula o status do pedido
-  inteiro. **Não é** importação de XML de nota fiscal do fornecedor — é conferência manual (ver
-  item correspondente na seção 8, é um passo maior separado se um dia for pedido). Sem
-  cotação/comparação de preço entre fornecedores diferentes ainda, sem garantia do fornecedor na
-  compra — ambos ainda pendentes (cadastro de Depósito, que também estava nessa lista, já foi
-  construído — ver "Depósitos" em Estoque, seção 7).
+- **Fornecedores** (duas abas): "Cadastro" — nome/razão social, CNPJ, telefone, e-mail, endereço
+  completo, ativo/inativo; compartilhado entre lojas (mesmo padrão de Clientes). "Pedidos de
+  compra" — por loja, número sequencial (`numero`, mesmo padrão de OS), itens de peça com
+  quantidade pedida + preço unitário, status (`pendente`/`parcial`/`recebido`/`cancelado`). Botão
+  **"Receber"** abre uma conferência: a usuária confirma quanto chegou de cada item (pode ser
+  parcial, em mais de uma vez) e o sistema já lança a entrada em Estoque → Movimentações sozinho
+  (motivo "Compra"), soma na quantidade recebida do item, e recalcula o status do pedido inteiro.
+  **Cotação de peças**: ao escolher a peça num item do pedido, aparece um resumo das cotações
+  anteriores daquela peça por fornecedor (mais barato primeiro, com a data da última compra), com
+  um botão "usar esse preço" que preenche o campo — sem tela própria, é gravado sozinho toda vez
+  que um pedido é criado com preço numa peça (`PedidoCompraItemRow.tsx` + `lib/cotacoesPecas.ts`,
+  histórico completo em `cotacoes_pecas`, nunca sobrescreve — ver seção 5). **Importar XML de nota
+  fiscal (nova nesta sessão)**: botão "Importar XML de nota fiscal" ao lado de "+ Novo pedido" —
+  lê o arquivo XML que o **fornecedor** emite (formato público/estável do governo, puro parsing
+  com `DOMParser`, sem IA/Edge Function — não confundir com o "Importar por foto" de Estoque, que
+  lê a nota **por foto/PDF via IA**, nem com a emissão de nota **pra o cliente**, ainda pendente,
+  ver seção 8 item 1), acha o fornecedor pelo CNPJ (cria um novo automaticamente se não achar) e
+  casa cada item com uma peça já cadastrada por código de barras/código interno (deixa escolher
+  outra peça ou cadastrar nova pra quem não bateu), pede o depósito de destino uma vez só pro lote
+  inteiro, e confirma criando um Pedido de Compra que já nasce **"Recebido"** (a nota já é a prova
+  de que chegou) — com entrada em Estoque e cotação de cada item gravadas sozinhas
+  (`ImportarNotaFiscalXmlModal.tsx` + `lib/notaFiscalXmlFornecedor.ts` +
+  `lib/pedidosCompra.ts` → `importarNotaFiscalCompra()`). Terceiro e último dos três passos
+  combinados com a usuária antes da emissão de nota fiscal (ver seção 8, item 5) — sem garantia do
+  fornecedor na compra ainda (diferente da garantia ao cliente já implementada), sem ordem
+  definida pra atacar isso.
 - **Ordens de Serviço**: cada OS tem um número sequencial **por loja** (`numero`, 1/2/3...,
   atribuído por trigger no insert) — é como a OS é identificada em toda tela ("OS 12"), nunca mais
   o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
@@ -1018,27 +1033,24 @@ normal (quebra de linha).
    à mão (ver seção 2) até ela decidir trocar no futuro. Não sugerir/perguntar sobre isso de
    novo por conta própria; só retomar se ela trouxer o assunto.
 4. Refinamentos possíveis no Início e demais módulos, conforme feedback da usuária.
-5. **Módulo de Fornecedores — construído numa sessão anterior** (cadastro + Pedido de Compra +
-   Receber pedido, ver seção 7 "Fornecedores"). A usuária pediu pra completar, nessa ordem, três
+5. **Módulo de Fornecedores — completo** (cadastro + Pedido de Compra + Receber pedido + Cotação +
+   Importar XML, ver seção 7 "Fornecedores"). A usuária pediu pra completar, nessa ordem, três
    funcionalidades que um sistema de referência (S3Auto/Comsis) também costuma ter, antes de
-   atacar a emissão de nota fiscal (item 1 desta seção):
-   1. ✅ **Cadastro de Depósito** (múltiplos locais físicos de estoque dentro da mesma loja) —
-      **construído nesta sessão e já confirmado por ela funcionando de verdade** (rodou a
+   atacar a emissão de nota fiscal (item 1 desta seção) — **as três já estão prontas**:
+   1. ✅ **Cadastro de Depósito** — **confirmado por ela funcionando de verdade** (rodou a
       migration `0041` e testou o cadastro), ver "Depósitos" na seção 7 e migration `0041` na
       seção 5.
-   2. ✅ **Cotação de Peças por fornecedor** (comparar preço do mesmo item entre fornecedores
-      diferentes antes de decidir onde comprar) — **construída nesta sessão**, ver "Cotação de
+   2. ✅ **Cotação de Peças por fornecedor** — **construída nesta sessão**, ver "Cotação de
       peças" na seção 7 e migration `0042` na seção 5. **Falta ela rodar a migration `0042` no
       Supabase real** (ver seção 9) antes de aparecer o histórico de preço nos Pedidos de Compra.
-   3. **Entrada de Produtos via NFe de verdade** (importar o **arquivo XML** da nota fiscal do
-      fornecedor e extrair os itens automaticamente) — o que existe hoje é diferente: "Receber
-      pedido" é conferência manual (a usuária digita/confirma as quantidades que chegaram, sem
-      ler nenhum arquivo). Importar XML de verdade é viável (é um formato público/estável, ao
-      contrário da API do Focus NFe) — pensado pra se apoiar no Depósito (escolher onde a
-      mercadoria entrou) e na Cotação (registrar o preço automaticamente), ambos já prontos.
-      Próximo item da lista.
+   3. ✅ **Importar XML de nota fiscal do fornecedor** — **construído nesta sessão**, ver a
+      descrição completa em "Fornecedores" na seção 7. Não precisa de migration nova (só reaproveita
+      tabelas já existentes: `pedidos_compra`, `fornecedores`, `pecas`, `cotacoes_pecas`,
+      `estoque_movimentos`) — funciona assim que o código novo chegar na máquina dela
+      (`git pull` + `npm install`), sem precisar rodar nada no SQL Editor.
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
-     implementada) — sem ordem definida ainda, fica pra depois dessas três.
+     implementada) — não fazia parte da lista de 3 combinada com ela; sem ordem definida, fica
+     pra quando ela sentir falta.
 6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
    configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas que um dia
    usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio projeto

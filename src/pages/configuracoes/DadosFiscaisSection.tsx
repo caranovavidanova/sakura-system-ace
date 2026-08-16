@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { salvarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
+import { buscarEnderecoPorCep } from "@/lib/viaCep";
 import { REGIME_TRIBUTARIO_LABEL } from "@/types/configuracao";
 import type {
   AmbienteFocusNfe,
@@ -52,6 +53,18 @@ export function DadosFiscaisSection({
 
   function set<K extends keyof FormularioFiscal>(campo: K, valor: FormularioFiscal[K]) {
     setValores((atual) => ({ ...atual, [campo]: valor }));
+  }
+
+  async function aoSairDoCep(valor: string) {
+    const endereco = await buscarEnderecoPorCep(valor);
+    if (!endereco) return;
+    setValores((atual) => ({
+      ...atual,
+      rua: endereco.logradouro,
+      bairro: endereco.bairro,
+      cidade: endereco.localidade,
+      uf: endereco.uf,
+    }));
   }
 
   async function handleSalvar() {
@@ -178,6 +191,7 @@ export function DadosFiscaisSection({
           <input
             value={valores.cep ?? ""}
             onChange={(e) => set("cep", e.target.value)}
+            onBlur={(e) => aoSairDoCep(e.target.value)}
             className={campoClasse}
           />
         </label>

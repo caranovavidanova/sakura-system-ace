@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
+import { buscarEnderecoPorCep } from "@/lib/viaCep";
 import {
   fornecedorFormSchema,
   paraNovoFornecedor,
@@ -28,6 +29,7 @@ export function FornecedorForm({
   const [erro, setErro] = useState<string | null>(null);
   const {
     register,
+    setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FornecedorFormValues>({
@@ -35,6 +37,16 @@ export function FornecedorForm({
     defaultValues: paraValoresFormulario(fornecedorExistente),
   });
   const ufField = register("uf");
+  const cepField = register("cep");
+
+  async function aoSairDoCep(cep: string) {
+    const endereco = await buscarEnderecoPorCep(cep);
+    if (!endereco) return;
+    setValue("rua", endereco.logradouro);
+    setValue("bairro", endereco.bairro);
+    setValue("cidade", endereco.localidade);
+    setValue("uf", endereco.uf);
+  }
 
   async function aoSubmeter(valores: FornecedorFormValues) {
     setErro(null);
@@ -87,7 +99,15 @@ export function FornecedorForm({
         <div className="grid grid-cols-3 gap-4">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-sakura-purple-dark/80">CEP</span>
-            <input type="text" {...register("cep")} className={inputClasse} />
+            <input
+              type="text"
+              {...cepField}
+              onBlur={(e) => {
+                cepField.onBlur(e);
+                aoSairDoCep(e.target.value);
+              }}
+              className={inputClasse}
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-sakura-purple-dark/80">Rua</span>

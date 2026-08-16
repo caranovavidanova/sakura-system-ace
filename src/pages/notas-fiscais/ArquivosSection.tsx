@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Combobox } from "@/components/Combobox";
 import { useAuth } from "@/contexts/AuthContext";
 import { mensagemDeErro } from "@/lib/errors";
 import { baixarArquivo, enviarArquivo, excluirArquivo, listarArquivos } from "@/lib/notasFiscais";
@@ -167,19 +168,18 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
               <span className="text-sakura-purple-dark/80">
                 Ordem de Serviço relacionada (opcional)
               </span>
-              <select
-                value={ordemServicoId}
-                onChange={(e) => setOrdemServicoId(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-              >
-                <option value="">Nenhuma</option>
-                {ordens.map((ordem) => (
-                  <option key={ordem.id} value={ordem.id}>
-                    {ordem.cliente?.nome ?? "Cliente"} —{" "}
-                    {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                opcoes={ordens.map((ordem) => ({
+                  valor: ordem.id,
+                  rotulo: `${ordem.cliente?.nome ?? "Cliente"} — ${new Date(
+                    ordem.data_abertura,
+                  ).toLocaleDateString("pt-BR")}`,
+                }))}
+                valor={ordemServicoId}
+                onMudar={setOrdemServicoId}
+                opcaoVazia="Nenhuma"
+                placeholder="Nenhuma"
+              />
             </label>
           </div>
           <div className="flex justify-end gap-3">

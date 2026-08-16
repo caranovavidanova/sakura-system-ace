@@ -1,33 +1,44 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useAuth } from "@/contexts/AuthContext";
 import { mensagemDeErro } from "@/lib/errors";
-import {
-  atualizarFornecedor,
-  atualizarStatusFornecedor,
-  criarFornecedor,
-  excluirFornecedor,
-  listarFornecedores,
-} from "@/lib/fornecedores";
+import { listarFornecedores } from "@/lib/fornecedores";
+import { listarPecas } from "@/lib/pecas";
+import { listarPedidos } from "@/lib/pedidosCompra";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import type { Fornecedor, NovoFornecedor } from "@/types/fornecedor";
-import { FornecedorForm } from "./FornecedorForm";
+import type { Fornecedor } from "@/types/fornecedor";
+import type { PedidoCompra } from "@/types/pedidoCompra";
+import type { Peca } from "@/types/peca";
+import { FornecedoresSection } from "./FornecedoresSection";
+import { PedidosCompraSection } from "./PedidosCompraSection";
+
+type Aba = "cadastro" | "pedidos";
 
 export function FornecedoresPage() {
+  const { lojaAtual, operador } = useAuth();
+  const [aba, setAba] = useState<Aba>("cadastro");
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [pecas, setPecas] = useState<Peca[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoCompra[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [fornecedorEditando, setFornecedorEditando] = useState<Fornecedor | null>(null);
 
   async function carregar() {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
       return;
     }
     setCarregando(true);
     setErro(null);
     try {
-      setFornecedores(await listarFornecedores());
+      const [fornecedoresCarregados, pecasCarregadas, pedidosCarregados] = await Promise.all([
+        listarFornecedores(),
+        listarPecas(),
+        listarPedidos(lojaAtual.id),
+      ]);
+      setFornecedores(fornecedoresCarregados);
+      setPecas(pecasCarregadas);
+      setPedidos(pedidosCarregados);
     } catch (err) {
       console.error("Erro ao carregar fornecedores:", err);
       setErro(mensagemDeErro(err));
@@ -38,151 +49,81 @@ export function FornecedoresPage() {
 
   useEffect(() => {
     carregar();
-  }, []);
-
-  async function handleSalvar(fornecedor: NovoFornecedor) {
-    await criarFornecedor(fornecedor);
-    setMostrarFormulario(false);
-    await carregar();
-  }
-
-  async function handleSalvarEdicao(id: string, fornecedor: NovoFornecedor) {
-    await atualizarFornecedor(id, fornecedor);
-    setFornecedorEditando(null);
-    await carregar();
-  }
-
-  async function handleExcluir(id: string) {
-    if (!confirm("Excluir este fornecedor?")) return;
-    try {
-      await excluirFornecedor(id);
-      await carregar();
-    } catch (err) {
-      console.error("Erro ao excluir fornecedor:", err);
-      setErro(mensagemDeErro(err));
-    }
-  }
-
-  async function handleAlternarStatus(fornecedor: Fornecedor) {
-    try {
-      await atualizarStatusFornecedor(fornecedor.id, !fornecedor.ativo);
-      await carregar();
-    } catch (err) {
-      console.error("Erro ao atualizar status do fornecedor:", err);
-      setErro(mensagemDeErro(err));
-    }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lojaAtual?.id]);
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <BotaoVoltar />
-          <div>
-            <h1 className="text-2xl font-semibold text-sakura-purple-dark">Fornecedores</h1>
-            <p className="text-sm text-sakura-muted">
-              Cadastro de fornecedores, compartilhado entre todas as lojas
-            </p>
-          </div>
+      <header className="flex items-center gap-3">
+        <BotaoVoltar />
+        <div>
+          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Fornecedores</h1>
+          <p className="text-sm text-sakura-muted">
+            Cadastro de fornecedores e pedidos de compra
+          </p>
         </div>
-        {!mostrarFormulario && !fornecedorEditando && (
-          <button
-            onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
-          >
-            + Novo fornecedor
-          </button>
-        )}
       </header>
 
       {!isSupabaseConfigured && (
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
-          no arquivo <code>.env</code> para começar a cadastrar fornecedores de verdade.
+          no arquivo <code>.env</code> para começar a usar fornecedores de verdade.
         </p>
       )}
 
-      {mostrarFormulario && (
-        <FornecedorForm onSalvar={handleSalvar} onCancelar={() => setMostrarFormulario(false)} />
-      )}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
 
-      {fornecedorEditando && (
-        <FornecedorForm
-          fornecedorExistente={fornecedorEditando}
-          onSalvar={handleSalvar}
-          onSalvarEdicao={handleSalvarEdicao}
-          onCancelar={() => setFornecedorEditando(null)}
+      <div className="flex gap-1 border-b border-sakura-gray/30">
+        <AbaBotao label="Cadastro" ativa={aba === "cadastro"} onClick={() => setAba("cadastro")} />
+        <AbaBotao
+          label="Pedidos de compra"
+          ativa={aba === "pedidos"}
+          onClick={() => setAba("pedidos")}
         />
-      )}
-
-      {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
-      )}
+      </div>
 
       {carregando ? (
         <p className="text-sm text-sakura-muted">Carregando...</p>
-      ) : fornecedores.length === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhum fornecedor cadastrado ainda.</p>
+      ) : aba === "cadastro" ? (
+        <FornecedoresSection fornecedores={fornecedores} onRecarregar={carregar} />
+      ) : !lojaAtual ? (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Seu usuário não tem loja atribuída. Fale com o administrador.
+        </p>
       ) : (
-        <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nome / Razão social</th>
-                <th className="px-4 py-3 font-medium">CNPJ</th>
-                <th className="px-4 py-3 font-medium">Telefone</th>
-                <th className="px-4 py-3 font-medium">E-mail</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {fornecedores.map((fornecedor) => (
-                <tr key={fornecedor.id} className="border-t border-sakura-gray/20">
-                  <td className="px-4 py-3">{fornecedor.nome}</td>
-                  <td className="px-4 py-3">{fornecedor.cnpj || "—"}</td>
-                  <td className="px-4 py-3">{fornecedor.telefone || "—"}</td>
-                  <td className="px-4 py-3">{fornecedor.email || "—"}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        fornecedor.ativo
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-sakura-gray/20 text-sakura-muted"
-                      }`}
-                    >
-                      {fornecedor.ativo ? "Ativo" : "Inativo"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setFornecedorEditando(fornecedor)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleAlternarStatus(fornecedor)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        {fornecedor.ativo ? "Inativar" : "Reativar"}
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(fornecedor.id)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <PedidosCompraSection
+          pedidos={pedidos}
+          fornecedores={fornecedores}
+          pecas={pecas}
+          lojaId={lojaAtual.id}
+          operadorId={operador?.id ?? null}
+          onRecarregar={carregar}
+        />
       )}
     </div>
+  );
+}
+
+function AbaBotao({
+  label,
+  ativa,
+  onClick,
+}: {
+  label: string;
+  ativa: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+        ativa
+          ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

@@ -1,4 +1,7 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Modal } from "@/components/Modal";
 import { mensagemDeErro } from "@/lib/errors";
 import type { ContaPagar } from "@/types/contaPagar";
@@ -9,38 +12,47 @@ interface PagarContaModalProps {
   onFechar: () => void;
 }
 
+// Schema pequeno o bastante pra ficar direto no componente — não é um
+// formulário de entidade própria (ver "Padrão de formulário" no
+// PROJETO_STATUS.md), então não precisa de um arquivo em src/schemas/.
+const pagarContaSchema = z.object({
+  valor: z.string().refine((v) => Number(v) > 0, "Informe um valor maior que zero."),
+  formaPagamento: z.string(),
+});
+
+type PagarContaValues = z.infer<typeof pagarContaSchema>;
+
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModalProps) {
-  const [valor, setValor] = useState(String(conta.valor));
-  const [formaPagamento, setFormaPagamento] = useState("dinheiro");
-  const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const {
+    register,
+    watch,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<PagarContaValues>({
+    resolver: zodResolver(pagarContaSchema),
+    defaultValues: { valor: String(conta.valor), formaPagamento: "dinheiro" },
+  });
 
-  async function handleConfirmar(e: React.FormEvent) {
-    e.preventDefault();
+  async function aoConfirmar(valores: PagarContaValues) {
     setErro(null);
-    const valorNumero = Number(valor);
-    if (!valorNumero || valorNumero <= 0) {
-      setErro("Informe um valor maior que zero.");
-      return;
-    }
-    setConfirmando(true);
     try {
-      await onConfirmar(valorNumero, formaPagamento);
+      await onConfirmar(Number(valores.valor), valores.formaPagamento);
     } catch (err) {
       console.error("Erro ao marcar conta como paga:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setConfirmando(false);
     }
   }
 
+  const valorAtual = Number(watch("valor")) || 0;
+
   return (
     <Modal titulo="Marcar como paga" onFechar={onFechar}>
-      <form onSubmit={handleConfirmar} className="space-y-3 text-sm">
+      <form onSubmit={handleSubmit(aoConfirmar)} className="space-y-3 text-sm">
         <p className="text-sakura-purple-dark/80">
           {conta.descricao} — venceu em {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
           {conta.recorrente ? " · a próxima ocorrência já é criada automaticamente" : ""}
@@ -55,24 +67,25 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
               type="number"
               min="0.01"
               step="0.01"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
+              {...register("valor")}
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
             />
+            {errors.valor && (
+              <span className="text-xs text-red-600">{errors.valor.message}</span>
+            )}
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
             <input
               type="text"
-              value={formaPagamento}
-              onChange={(e) => setFormaPagamento(e.target.value)}
+              {...register("formaPagamento")}
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
             />
           </label>
         </div>
 
         <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-xs text-sakura-purple-dark/90">
-          Isso lança uma Saída de {formatarMoeda(Number(valor) || 0)} no Caixa automaticamente.
+          Isso lança uma Saída de {formatarMoeda(valorAtual)} no Caixa automaticamente.
         </p>
 
         <div className="mt-4 flex justify-end gap-3">
@@ -85,10 +98,10 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
           </button>
           <button
             type="submit"
-            disabled={confirmando}
+            disabled={isSubmitting}
             className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
-            {confirmando ? "Confirmando..." : "Confirmar pagamento"}
+            {isSubmitting ? "Confirmando..." : "Confirmar pagamento"}
           </button>
         </div>
       </form>

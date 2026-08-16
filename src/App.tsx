@@ -5,6 +5,7 @@ import { Sidebar } from "./components/Sidebar";
 import { VersaoApp } from "./components/VersaoApp";
 import { useAuth } from "./contexts/AuthContext";
 import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
+import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
@@ -15,6 +16,7 @@ import { FornecedoresPage } from "./pages/fornecedores/FornecedoresPage";
 import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
 import { LoginPage } from "./pages/login/LoginPage";
+import { TrocarSenhaPage } from "./pages/login/TrocarSenhaPage";
 import { NotasFiscaisPage } from "./pages/notas-fiscais/NotasFiscaisPage";
 import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
 import { PainelPage } from "./pages/painel/PainelPage";
@@ -49,7 +51,7 @@ function PaginaInicial() {
 }
 
 export default function App() {
-  const { carregando, session } = useAuth();
+  const { carregando, session, operador } = useAuth();
   useEnterParaProximoCampo();
 
   if (carregando) {
@@ -65,6 +67,15 @@ export default function App() {
     return (
       <>
         <LoginPage />
+        <VersaoApp />
+      </>
+    );
+  }
+
+  if (operador?.deve_trocar_senha) {
+    return (
+      <>
+        <TrocarSenhaPage />
         <VersaoApp />
       </>
     );
@@ -95,6 +106,14 @@ export default function App() {
               }
             />
             <Route
+              path="/fornecedores"
+              element={
+                <PermissaoRoute modulo="fornecedores">
+                  <FornecedoresPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
               path="/servicos"
               element={
                 <PermissaoRoute modulo="servicos">
@@ -107,14 +126,6 @@ export default function App() {
               element={
                 <PermissaoRoute modulo="ordens_servico">
                   <OrdensServicoPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/fornecedores"
-              element={
-                <PermissaoRoute modulo="fornecedores">
-                  <FornecedoresPage />
                 </PermissaoRoute>
               }
             />
@@ -179,6 +190,14 @@ export default function App() {
               element={
                 <AdminRoute>
                   <ConfiguracoesPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/auditoria"
+              element={
+                <AdminRoute>
+                  <AuditoriaPage />
                 </AdminRoute>
               }
             />

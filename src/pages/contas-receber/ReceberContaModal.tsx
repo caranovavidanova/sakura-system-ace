@@ -1,4 +1,7 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Modal } from "@/components/Modal";
 import { mensagemDeErro } from "@/lib/errors";
 import type { ContaReceber } from "@/types/contaReceber";
@@ -9,38 +12,46 @@ interface ReceberContaModalProps {
   onFechar: () => void;
 }
 
+// Schema pequeno o bastante pra ficar direto no componente — mesma decisão
+// do PagarContaModal.tsx (não é formulário de entidade própria).
+const receberContaSchema = z.object({
+  valor: z.string().refine((v) => Number(v) > 0, "Informe um valor maior que zero."),
+  formaPagamento: z.string(),
+});
+
+type ReceberContaValues = z.infer<typeof receberContaSchema>;
+
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export function ReceberContaModal({ conta, onConfirmar, onFechar }: ReceberContaModalProps) {
-  const [valor, setValor] = useState(String(conta.valor));
-  const [formaPagamento, setFormaPagamento] = useState("dinheiro");
-  const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const {
+    register,
+    watch,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ReceberContaValues>({
+    resolver: zodResolver(receberContaSchema),
+    defaultValues: { valor: String(conta.valor), formaPagamento: "dinheiro" },
+  });
 
-  async function handleConfirmar(e: React.FormEvent) {
-    e.preventDefault();
+  async function aoConfirmar(valores: ReceberContaValues) {
     setErro(null);
-    const valorNumero = Number(valor);
-    if (!valorNumero || valorNumero <= 0) {
-      setErro("Informe um valor maior que zero.");
-      return;
-    }
-    setConfirmando(true);
     try {
-      await onConfirmar(valorNumero, formaPagamento);
+      await onConfirmar(Number(valores.valor), valores.formaPagamento);
     } catch (err) {
       console.error("Erro ao marcar conta como recebida:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setConfirmando(false);
     }
   }
 
+  const valorAtual = Number(watch("valor")) || 0;
+
   return (
     <Modal titulo="Marcar como recebido" onFechar={onFechar}>
-      <form onSubmit={handleConfirmar} className="space-y-3 text-sm">
+      <form onSubmit={handleSubmit(aoConfirmar)} className="space-y-3 text-sm">
         <p className="text-sakura-purple-dark/80">
           {conta.descricao} — {conta.cliente?.nome ?? "cliente"} · previsto para{" "}
           {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
@@ -55,24 +66,25 @@ export function ReceberContaModal({ conta, onConfirmar, onFechar }: ReceberConta
               type="number"
               min="0.01"
               step="0.01"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
+              {...register("valor")}
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
             />
+            {errors.valor && (
+              <span className="text-xs text-red-600">{errors.valor.message}</span>
+            )}
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
             <input
               type="text"
-              value={formaPagamento}
-              onChange={(e) => setFormaPagamento(e.target.value)}
+              {...register("formaPagamento")}
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
             />
           </label>
         </div>
 
         <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-xs text-sakura-purple-dark/90">
-          Isso lança uma Entrada de {formatarMoeda(Number(valor) || 0)} no Caixa automaticamente.
+          Isso lança uma Entrada de {formatarMoeda(valorAtual)} no Caixa automaticamente.
         </p>
 
         <div className="mt-4 flex justify-end gap-3">
@@ -85,10 +97,10 @@ export function ReceberContaModal({ conta, onConfirmar, onFechar }: ReceberConta
           </button>
           <button
             type="submit"
-            disabled={confirmando}
+            disabled={isSubmitting}
             className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
-            {confirmando ? "Confirmando..." : "Confirmar recebimento"}
+            {isSubmitting ? "Confirmando..." : "Confirmar recebimento"}
           </button>
         </div>
       </form>

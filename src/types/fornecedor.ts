@@ -4,6 +4,12 @@ export interface Fornecedor {
   cnpj: string | null;
   telefone: string | null;
   email: string | null;
+  cep: string | null;
+  rua: string | null;
+  numero: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
   ativo: boolean;
   criado_em: string;
 }

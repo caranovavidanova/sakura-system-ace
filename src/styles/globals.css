@@ -1,58 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  /* Paleta oficial Sakura System */
-  --color-sakura-pink: #ffc9f3;
-  --color-sakura-purple: #b38dac;
-  --color-sakura-gray: #c7c7c7;
+  /* Paleta oficial Sakura System - Dark Neon Edition */
+  --color-sakura-pink: #ff4dce;
+  --color-sakura-purple: #b624ff;
+  --color-sakura-gray: #3a3238;
 
-  /* Variações para garantir contraste de texto (WCAG AA) sobre fundo claro */
-  --color-sakura-purple-dark: #6e4d68;
-  --color-sakura-pink-soft: #fff0fb;
-  --color-sakura-bg: #fff7fc;
+  /* Variações de fundo escuro e detalhes neon */
+  --color-sakura-purple-dark: #e8d5e5;
+  --color-sakura-pink-soft: #1a1018;
+  --color-sakura-bg: #0b070a;
 
-  /* Tom "cinza" (sakura-gray, #c7c7c7) só tem contraste suficiente pra bordas
-     e fundos sutis — como texto ele reprovava WCAG (~1.5:1 sobre os cards
-     claros). sakura-muted é a versão pra texto secundário/legenda: mesma
-     "temperatura" da paleta (tom roxo-acinzentado), mas escuro o bastante
-     pra ler bem (~6:1 sobre os cards). */
-  --color-sakura-muted: #6b5d68;
+  /* Muted agora é mais claro pra ler sobre fundo escuro */
+  --color-sakura-muted: #9e8d9a;
 
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 :root {
-  /* Sem isso, o Chromium/Electron usa o modo escuro do Windows (quando
-     ativado) pra escolher a cor padrão do texto dentro de campos de
-     formulário — o app é sempre "claro", então o texto digitado ficava
-     branco sobre fundo claro (invisível, mas era digitado normalmente). */
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   background-color: var(--color-sakura-bg);
   font-family: var(--font-sans);
+  color: #f2eef1;
 }
 
 input,
 select,
 textarea {
-  color: var(--color-sakura-purple-dark);
+  color: #fff;
 }
 
-/* Checkbox/rádio nativos com a cor da paleta em vez do azul padrão do
-   Windows/Chromium — outro elemento que "denunciava" ser um componente do
-   sistema, não do app. */
+option {
+  background-color: var(--color-sakura-pink-soft); /* Fundo bem escuro pra ler bem */
+  color: #fff;
+}
+
 input[type="checkbox"],
 input[type="radio"] {
-  accent-color: var(--color-sakura-purple);
+  accent-color: var(--color-sakura-pink);
 }
 
-/* Ícone de calendário do input de data, também na paleta (o resto do campo
-   já respeita a cor do app; só esse ícone que o navegador desenha sozinho). */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(31%) sepia(11%) saturate(1252%) hue-rotate(272deg) brightness(92%) contrast(87%);
+  filter: invert(100%);
 }
 
 /* Barra de rolagem nativa discreta — usada só como reforço/fallback nos
@@ -66,7 +59,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(110, 77, 104, 0.35) transparent;
+    scrollbar-color: rgba(255, 77, 206, 0.35) transparent;
   }
 
   ::-webkit-scrollbar {
@@ -74,8 +67,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     height: 10px;
   }
 
-  /* Sem as setinhas de subir/descer nas pontas — não combinam com o resto da
-     interface, que não usa esse tipo de botão em nenhum outro lugar. */
   ::-webkit-scrollbar-button {
     display: none;
     width: 0;
@@ -84,58 +75,52 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   ::-webkit-scrollbar-track {
     background: transparent;
-    /* Afasta a barra um pouco do topo/base — sem isso ela encostava bem na
-       quina arredondada dos blocos (sakura-card) e parecia "vazar" pra fora. */
     margin-block: 10px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(110, 77, 104, 0.4);
+    background-color: rgba(255, 77, 206, 0.2);
     border-radius: 9999px;
     border: 3px solid transparent;
     background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(110, 77, 104, 0.6);
+    background-color: rgba(255, 77, 206, 0.5);
   }
 }
 
-/* Fundo rosa "flutuante" do app inteiro — os blocos (sakura-card) boiam por
-   cima dele, então ele só aparece nos vãos entre os blocos. */
+/* Fundo dark do app inteiro */
 @utility sakura-shell-bg {
-  background-color: #ffc9f3;
+  background-color: var(--color-sakura-bg);
   background-image:
-    radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.5), transparent 42%),
-    radial-gradient(circle at 88% 0%, rgba(179, 141, 172, 0.45), transparent 48%),
-    radial-gradient(circle at 50% 105%, rgba(255, 140, 224, 0.45), transparent 55%),
-    linear-gradient(160deg, #ffd9f6 0%, #ffb2ea 55%, #f38fdd 100%);
+    radial-gradient(circle at 10% 10%, rgba(255, 77, 206, 0.08), transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba(182, 36, 255, 0.12), transparent 50%);
   background-attachment: fixed;
 }
 
-/* Bloco arredondado, transparente e "flutuante" — usado em todo o app no
-   lugar do antigo "rounded-2xl border bg-white". Fica bem mais claro/branco
-   que o fundo rosa saturado, pra se destacar por cor mesmo, não só pelo
-   blur — um toque de roxo (sakura-purple) só no canto pra dar profundidade. */
+/* Bloco arredondado dark glassmorphism com neon glow */
 @utility sakura-card {
   border-radius: 1.75rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: rgba(20, 15, 20, 0.35);
   background-image: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(255, 255, 255, 0.62) 55%,
-    rgba(179, 141, 172, 0.4) 100%
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.01) 40%,
+    rgba(182, 36, 255, 0.05) 100%
   );
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow:
-    0 14px 34px -10px rgba(110, 77, 104, 0.4),
-    0 2px 8px -2px rgba(110, 77, 104, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    0 12px 40px -10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 25px rgba(255, 77, 206, 0.08); /* Glow mais visível */
 }
 
-/* Botão circular de vidro (ex: "voltar") — mesma família visual do
-   sakura-card, só que redondo e com uma reação de hover/clique. */
+/* Botão circular de vidro escuro */
 @utility sakura-icon-button {
   display: inline-flex;
   align-items: center;
@@ -144,28 +129,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   height: 2.5rem;
   flex-shrink: 0;
   border-radius: 9999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
-  background-image: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(255, 255, 255, 0.62) 55%,
-    rgba(179, 141, 172, 0.4) 100%
-  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  color: var(--color-sakura-purple-dark);
+  color: var(--color-sakura-pink);
   box-shadow:
-    0 8px 20px -8px rgba(110, 77, 104, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    0 8px 20px -8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transition:
     transform 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
     transform: translateY(-2px) scale(1.06);
+    background-color: rgba(255, 77, 206, 0.1);
+    border-color: rgba(255, 77, 206, 0.4);
     box-shadow:
-      0 12px 26px -8px rgba(110, 77, 104, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      0 12px 26px -8px rgba(255, 77, 206, 0.2),
+      0 0 15px rgba(255, 77, 206, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   &:active {

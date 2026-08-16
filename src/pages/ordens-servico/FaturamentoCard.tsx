@@ -1,7 +1,19 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
 import type { PagamentoOrdem } from "@/lib/ordensServico";
+import {
+  calcularJurosPercentual,
+  calcularListaParcelas,
+  calcularValorCobrado,
+  faturamentoFormSchema,
+  faturamentoFormVazio,
+  paraPagamentos,
+  somarLinhasPagamento,
+  type FaturamentoFormValues,
+} from "@/schemas/faturamento";
 import type { JurosParcela } from "@/types/configuracao";
 import { FORMA_PAGAMENTO_LABEL, nomeOrdem, totalOrdem } from "@/types/os";
 import type { OrdemServico } from "@/types/os";
@@ -17,18 +29,6 @@ interface FaturamentoCardProps {
   onCancelar: () => void;
 }
 
-interface LinhaPagamento {
-  formaPagamento: string;
-  valor: string;
-}
-
-function hojeIso(): string {
-  const hoje = new Date();
-  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(
-    hoje.getDate(),
-  ).padStart(2, "0")}`;
-}
-
 const FORMAS_PAGAMENTO = Object.entries(FORMA_PAGAMENTO_LABEL).map(([valor, label]) => ({
   valor,
   label,
@@ -38,12 +38,6 @@ function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function addMeses(data: Date, meses: number): Date {
-  const nova = new Date(data);
-  nova.setMonth(nova.getMonth() + meses);
-  return nova;
-}
-
 export function FaturamentoCard({
   ordem,
   jurosParcelas,
@@ -51,114 +45,87 @@ export function FaturamentoCard({
   onCancelar,
 }: FaturamentoCardProps) {
   const total = totalOrdem(ordem.itens ?? []);
-
-  const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [parcelas, setParcelas] = useState(1);
-  const [dividirPagamento, setDividirPagamento] = useState(false);
-  const [linhasPagamento, setLinhasPagamento] = useState<LinhaPagamento[]>([
-    { formaPagamento: "pix", valor: String(total) },
-    { formaPagamento: "cartao_credito", valor: "0" },
-  ]);
-  const [recebidoAgora, setRecebidoAgora] = useState(true);
-  const [previsaoRecebimento, setPrevisaoRecebimento] = useState(hojeIso());
-  const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<FaturamentoFormValues>({
+    resolver: zodResolver(faturamentoFormSchema),
+    defaultValues: faturamentoFormVazio(total),
+  });
+
+  const { fields, append, remove, replace } = useFieldArray({
+    control,
+    name: "linhasPagamento",
+  });
+
+  const recebidoAgora = watch("recebidoAgora");
+  const dividirPagamento = watch("dividirPagamento");
+  const formaPagamento = watch("formaPagamento");
+  const parcelas = Number(watch("parcelas")) || 1;
+  const linhasPagamento = watch("linhasPagamento");
 
   const permiteParcelar = !dividirPagamento && formaPagamento === "cartao_credito";
   const jurosPercentual =
-    !dividirPagamento && parcelas > 1
-      ? jurosParcelas.find((j) => j.numero_parcelas === parcelas)?.juros_percentual ?? 0
-      : 0;
-  const valorCobrado = total * (1 + jurosPercentual / 100);
-  const valorParcela = valorCobrado / parcelas;
-  const hoje = new Date();
-  const listaParcelas = Array.from({ length: parcelas }, (_, i) => ({
-    numero: i + 1,
-    vencimento: addMeses(hoje, i + 1),
-    valor: valorParcela,
-  }));
+    !dividirPagamento && parcelas > 1 ? calcularJurosPercentual(jurosParcelas, parcelas) : 0;
+  const valorCobrado = calcularValorCobrado(total, jurosPercentual);
+  const listaParcelas = calcularListaParcelas(valorCobrado, parcelas);
 
-  const somaLinhasPagamento = linhasPagamento.reduce(
-    (soma, linha) => soma + (Number(linha.valor) || 0),
-    0,
-  );
+  const somaLinhasPagamento = somarLinhasPagamento(linhasPagamento);
   const diferencaLinhasPagamento = valorCobrado - somaLinhasPagamento;
   const linhasBatem = Math.abs(diferencaLinhasPagamento) < 0.01;
 
-  function handleFormaPagamentoChange(valor: string) {
-    setFormaPagamento(valor);
-    if (valor !== "cartao_credito") setParcelas(1);
-  }
+  const formaPagamentoField = register("formaPagamento");
 
-  function handleDividirPagamentoChange(dividir: boolean) {
-    setDividirPagamento(dividir);
+  function aoMudarDividirPagamento(dividir: boolean) {
+    setValue("dividirPagamento", dividir);
     if (dividir) {
-      setParcelas(1);
-      setLinhasPagamento([
+      setValue("parcelas", "1");
+      replace([
         { formaPagamento: "pix", valor: String(total) },
         { formaPagamento: "cartao_credito", valor: "0" },
       ]);
     }
   }
 
-  function atualizarLinha(index: number, patch: Partial<LinhaPagamento>) {
-    setLinhasPagamento((atual) =>
-      atual.map((linha, i) => (i === index ? { ...linha, ...patch } : linha)),
-    );
-  }
-
-  function adicionarLinha() {
-    setLinhasPagamento((atual) => [...atual, { formaPagamento: "dinheiro", valor: "0" }]);
-  }
-
-  function removerLinha(index: number) {
-    setLinhasPagamento((atual) => atual.filter((_, i) => i !== index));
-  }
-
-  async function handleConfirmar(e: React.FormEvent) {
-    e.preventDefault();
+  async function aoSubmeter(valores: FaturamentoFormValues) {
     setErro(null);
 
-    if (recebidoAgora && dividirPagamento && !linhasBatem) {
+    if (valores.recebidoAgora && valores.dividirPagamento && !linhasBatem) {
       setErro("A soma das formas de pagamento precisa bater com o total cobrado.");
       return;
     }
 
-    const pagamentos: PagamentoOrdem[] =
-      recebidoAgora && dividirPagamento
-        ? linhasPagamento
-            .filter((linha) => Number(linha.valor) > 0)
-            .map((linha) => ({ formaPagamento: linha.formaPagamento, valor: Number(linha.valor) }))
-        : [{ formaPagamento, valor: valorCobrado }];
-
-    setConfirmando(true);
     try {
-      await onConfirmar(pagamentos, parcelas, recebidoAgora ? null : previsaoRecebimento);
+      await onConfirmar(
+        paraPagamentos(valores, valorCobrado),
+        parcelas,
+        valores.recebidoAgora ? null : valores.previsaoRecebimento,
+      );
     } catch (err) {
       console.error("Erro ao faturar ordem de serviço:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setConfirmando(false);
     }
   }
 
   return (
-    <form onSubmit={handleConfirmar} className="space-y-5 sakura-card p-6 shadow-sm">
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-5 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <div>
           <h3 className="text-sm font-semibold text-sakura-purple-dark">
             Faturar {nomeOrdem(ordem.numero)} de {ordem.cliente?.nome ?? "cliente"}
           </h3>
-          <p className="text-xs text-sakura-muted">
-            Total dos itens: {formatarMoeda(total)}
-          </p>
+          <p className="text-xs text-sakura-muted">Total dos itens: {formatarMoeda(total)}</p>
         </div>
       </div>
 
-      {erro && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
-      )}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
 
       <div className="rounded-xl border border-sakura-gray/30 p-4">
         <div className="flex flex-wrap gap-4">
@@ -167,7 +134,7 @@ export function FaturamentoCard({
               type="radio"
               name="recebimento"
               checked={recebidoAgora}
-              onChange={() => setRecebidoAgora(true)}
+              onChange={() => setValue("recebidoAgora", true)}
               className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
             />
             <span className="text-sakura-purple-dark/80">Recebido agora</span>
@@ -177,7 +144,7 @@ export function FaturamentoCard({
               type="radio"
               name="recebimento"
               checked={!recebidoAgora}
-              onChange={() => setRecebidoAgora(false)}
+              onChange={() => setValue("recebidoAgora", false)}
               className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
             />
             <span className="text-sakura-purple-dark/80">A receber depois</span>
@@ -198,8 +165,7 @@ export function FaturamentoCard({
               <span className="text-sakura-purple-dark/80">Previsão de recebimento</span>
               <input
                 type="date"
-                value={previsaoRecebimento}
-                onChange={(e) => setPrevisaoRecebimento(e.target.value)}
+                {...register("previsaoRecebimento")}
                 className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 outline-none focus:border-sakura-purple"
               />
             </label>
@@ -212,7 +178,7 @@ export function FaturamentoCard({
           <input
             type="checkbox"
             checked={dividirPagamento}
-            onChange={(e) => handleDividirPagamentoChange(e.target.checked)}
+            onChange={(e) => aoMudarDividirPagamento(e.target.checked)}
             className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
           />
           <span className="text-sakura-purple-dark/80">
@@ -223,11 +189,10 @@ export function FaturamentoCard({
 
       {recebidoAgora && dividirPagamento ? (
         <div className="space-y-2">
-          {linhasPagamento.map((linha, index) => (
-            <div key={index} className="flex items-center gap-2">
+          {fields.map((campo, index) => (
+            <div key={campo.id} className="flex items-center gap-2">
               <select
-                value={linha.formaPagamento}
-                onChange={(e) => atualizarLinha(index, { formaPagamento: e.target.value })}
+                {...register(`linhasPagamento.${index}.formaPagamento`)}
                 className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
               >
                 {FORMAS_PAGAMENTO.map((forma) => (
@@ -240,14 +205,13 @@ export function FaturamentoCard({
                 type="number"
                 step="0.01"
                 min="0"
-                value={linha.valor}
-                onChange={(e) => atualizarLinha(index, { valor: e.target.value })}
+                {...register(`linhasPagamento.${index}.valor`)}
                 className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
               />
-              {linhasPagamento.length > 1 && (
+              {fields.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => removerLinha(index)}
+                  onClick={() => remove(index)}
                   className="text-xs font-medium text-red-600 hover:underline"
                 >
                   Remover
@@ -257,7 +221,7 @@ export function FaturamentoCard({
           ))}
           <button
             type="button"
-            onClick={adicionarLinha}
+            onClick={() => append({ formaPagamento: "dinheiro", valor: "0" })}
             className="text-xs font-medium text-sakura-purple hover:underline"
           >
             + Adicionar forma de pagamento
@@ -279,8 +243,11 @@ export function FaturamentoCard({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
             <select
-              value={formaPagamento}
-              onChange={(e) => handleFormaPagamentoChange(e.target.value)}
+              {...formaPagamentoField}
+              onChange={(e) => {
+                formaPagamentoField.onChange(e);
+                if (e.target.value !== "cartao_credito") setValue("parcelas", "1");
+              }}
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
             >
               {FORMAS_PAGAMENTO.map((forma) => (
@@ -294,13 +261,12 @@ export function FaturamentoCard({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-sakura-purple-dark/80">Parcelas</span>
             <select
-              value={parcelas}
-              onChange={(e) => setParcelas(Number(e.target.value))}
+              {...register("parcelas")}
               disabled={!permiteParcelar}
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple disabled:opacity-50"
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
-                const percentual = jurosParcelas.find((j) => j.numero_parcelas === n)?.juros_percentual ?? 0;
+                const percentual = calcularJurosPercentual(jurosParcelas, n);
                 return (
                   <option key={n} value={n}>
                     {n}x{n === 1 ? " à vista" : percentual > 0 ? ` (${percentual}% de juros)` : " sem juros"}
@@ -334,9 +300,7 @@ export function FaturamentoCard({
                     <td className="px-4 py-2 text-sakura-purple-dark">
                       {p.vencimento.toLocaleDateString("pt-BR")}
                     </td>
-                    <td className="px-4 py-2 text-sakura-purple-dark">
-                      {formatarMoeda(p.valor)}
-                    </td>
+                    <td className="px-4 py-2 text-sakura-purple-dark">{formatarMoeda(p.valor)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -357,10 +321,10 @@ export function FaturamentoCard({
         </button>
         <button
           type="submit"
-          disabled={confirmando || (recebidoAgora && dividirPagamento && !linhasBatem)}
+          disabled={isSubmitting || (recebidoAgora && dividirPagamento && !linhasBatem)}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {confirmando ? "Faturando..." : "Confirmar faturamento"}
+          {isSubmitting ? "Faturando..." : "Confirmar faturamento"}
         </button>
       </div>
     </form>

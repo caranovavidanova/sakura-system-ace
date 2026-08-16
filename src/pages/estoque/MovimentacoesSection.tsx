@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Combobox } from "@/components/Combobox";
 import { criarMovimento } from "@/lib/estoque";
 import type { MovimentoEstoque, NovoMovimentoEstoque } from "@/types/estoque";
 import type { Peca } from "@/types/peca";
@@ -72,18 +73,14 @@ export function MovimentacoesSection({
           {movimentos.length > 0 && (
             <label className="flex items-center gap-2 text-sm">
               <span className="text-sakura-purple-dark/80">Produto</span>
-              <select
-                value={filtroPecaId}
-                onChange={(e) => setFiltroPecaId(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 outline-none focus:border-sakura-purple"
-              >
-                <option value="">Todos</option>
-                {pecas.map((peca) => (
-                  <option key={peca.id} value={peca.id}>
-                    {peca.descricao}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                className="w-56"
+                opcoes={pecas.map((peca) => ({ valor: peca.id, rotulo: peca.descricao }))}
+                valor={filtroPecaId}
+                onMudar={setFiltroPecaId}
+                opcaoVazia="Todos"
+                placeholder="Todos"
+              />
             </label>
           )}
         </div>

@@ -53,16 +53,26 @@ arquitetural.
 
 ### Identidade visual — como está hoje
 
-- Paleta: rosa `#FFC9F3`, roxo `#B38DAC`, cinza `#C7C7C7` (`src/styles/globals.css`, tokens
-  `--color-sakura-*`). `sakura-purple-dark` e `sakura-muted` (`#6b5d68`) são as variantes de
-  contraste usadas em texto — **nunca usar `text-sakura-gray` como texto** (contraste ~1.5:1,
-  reprova WCAG; serve só como borda/fundo sutil) **nem opacidade `/60` ou menor** em cima de
-  `sakura-card` — usar `sakura-muted` (secundário) ou `sakura-purple-dark` (primário).
-- Estilo "glassmorphism": blocos arredondados translúcidos (`sakura-card`, com
-  `backdrop-filter: blur`) flutuando sobre um fundo rosa com brilho difuso (`sakura-shell-bg`),
-  aplicado em praticamente toda tela do app (exceto Login, que tem seu próprio vidro fosco sobre
-  fundo floral). Cartões de tendência do Início não usam mais gráfico/sparkline — só valor grande
-  + seta `›`, com um leve glow interno por métrica (ver seção 7).
+- **Tema escuro/neon (confirmado pela usuária)**: paleta rosa/roxo neon sobre fundo quase preto —
+  `sakura-pink` `#ff4dce`, `sakura-purple` `#b624ff`, fundo `sakura-bg` `#0b070a`
+  (`src/styles/globals.css`, tokens `--color-sakura-*`), `color-scheme: dark` no `:root`. Substituiu
+  o tema claro/rosa original (paleta `#FFC9F3`/`#B38DAC`/`#C7C7C7` sobre fundo claro) — a troca foi
+  feita pela usuária com ajuda do Gemini (fora do Claude Code) e confirmada nesta sessão depois de
+  ver rodando de verdade. **`sakura-purple-dark` virou um tom claro (`#e8d5e5`)** e `sakura-muted`
+  (`#9e8d9a`) são as variantes de texto sobre fundo escuro — mesma regra de sempre (nunca usar
+  `text-sakura-gray` como texto, nem opacidade baixa em cima de `sakura-card`), só que os nomes das
+  variáveis agora carregam valores invertidos (claro→escuro) — **cuidado ao ler CSS antigo/exemplos
+  desta documentação**: onde antes dizia "sakura-purple-dark é escuro pra contraste sobre card
+  claro", agora é o oposto (claro pra contraste sobre card escuro). Ainda não foi feita uma auditoria
+  de contraste WCAG completa da paleta nova — se algum texto parecer "sumido" em uma tela ainda não
+  tocada por essa leva de mudanças, é candidato a ajuste pontual, não bug misterioso.
+- Estilo "glassmorphism escuro": blocos arredondados translúcidos (`sakura-card`, com
+  `backdrop-filter: blur` + glow neon sutil) flutuando sobre um fundo escuro com brilho difuso rosa/
+  roxo (`sakura-shell-bg`), aplicado em praticamente toda tela do app (o Login usa
+  `public/sakura-login-bg-premium.png` como fundo, no lugar do antigo `sakura-login-bg.svg`, e o
+  próprio `sakura-card` no bloco de login em vez de um vidro à parte). Cartões de tendência do
+  Início não usam mais gráfico/sparkline — só valor grande + seta `›`, com um leve glow interno por
+  métrica (ver seção 7).
 - **Barra de rolagem 100% customizada** (`src/components/AreaRolavel.tsx`): a barra nativa do
   Windows/Chromium não respeita `border-radius`, então nunca fica "dentro" de um card de vidro —
   a solução foi esconder a nativa por completo (`scrollbar-width: none` +
@@ -114,7 +124,8 @@ arquitetural.
 | Empacotamento do instalador Windows | Instalador simples (NSIS) + atualização automática via GitHub Releases (`electron-builder` + `electron-updater`) | Evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
 | Chave da IA (leitura de nota fiscal por foto) | Fica só como secret de uma Supabase Edge Function — nunca no app Electron instalado | Cada loja (projeto Supabase próprio) paga pela própria conta Anthropic, sem expor a chave a quem tem acesso ao computador. Ver seção 7 e item 8 da seção 8 |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
-| Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
+| Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
+| Gerenciamento de formulário | `react-hook-form` + `zod` — **migração concluída**, todo formulário do app já está nesse padrão | Pedido da usuária, baseado num plano de refatoração de outra IA (Gemini) — decisão explícita de que é o padrão geral, não um teste isolado. Ver "Padrão de formulário" na seção 4 |
 
 ## 4. Estrutura de pastas
 
@@ -137,7 +148,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # (seletor de loja ativa, só aparece com 2+ lojas — fica no
 │   │                             # rodapé da Sidebar), VersaoApp.tsx (mostra a versão do app,
 │   │                             # pequena, no canto inferior direito, lendo
-│   │                             # window.sakuraApp.version exposto pelo preload)
+│   │                             # window.sakuraApp.version exposto pelo preload), Combobox.tsx
+│   │                             # (select com busca por digitação — abre mostrando a lista
+│   │                             # inteira, mas deixa filtrar digitando; usado em todo select do
+│   │                             # app cuja lista vem de dado dinâmico — peça, serviço, cliente,
+│   │                             # veículo, técnico/vendedor, categoria etc. — ver seção 6 sobre o
+│   │                             # bug de clique já corrigido nele)
 │   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
 │   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
 │   │                             # globalmente, em App.tsx
@@ -158,35 +174,68 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
-│   │                             # fornecedores.ts (cadastro compartilhado entre lojas)
-│   ├── pages/<modulo>/           # uma pasta por módulo: painel, clientes, estoque, servicos,
-│   │                             # ordens-servico, fornecedores, caixa, contas-pagar, relatorios
-│   │                             # (rota /relatorios, label "Relações" — abas
-│   │                             # Gráficos/Lucratividade, absorveu o antigo módulo
-│   │                             # "Lucratividade"), garantias, notas-fiscais, funcionarios, login,
-│   │                             # configuracoes. Cada pasta tem <Modulo>Page.tsx (lista) +
-│   │                             # <Modulo>Form.tsx (formulário), com exceções:
-│   │   estoque/       # EstoquePage.tsx com 4 abas: Produtos (ProdutosSection.tsx + PecaForm.tsx +
-│   │                   # ImportarNotasFiscaisModal.tsx — leitura por foto), Movimentações
-│   │                   # (MovimentacoesSection.tsx + MovimentoForm.tsx), Contagem
-│   │                   # (ContagemSection.tsx — inventário físico), Relatórios
+│   │                             # fornecedores.ts + pedidosCompra.ts (módulo de Fornecedores) +
+│   │                             # auditoria.ts (só leitura — `listarAuditoria`, filtra por
+│   │                             # tabela/operador; a escrita é 100% via trigger de banco, ver
+│   │                             # seção 5)
+│   ├── pages/<modulo>/           # uma pasta por módulo: painel, clientes, estoque, fornecedores,
+│   │                             # servicos, ordens-servico, caixa, contas-pagar, relatorios (rota
+│   │                             # /relatorios, label "Relações" — abas Gráficos/Lucratividade,
+│   │                             # absorveu o antigo módulo "Lucratividade"), garantias,
+│   │                             # notas-fiscais, funcionarios, auditoria (admin-only, sem entrada
+│   │                             # em MODULOS — acesso via ícone no rodapé da Sidebar, igual
+│   │                             # Configurações, não é permissão de operador comum), login,
+│   │                             # configuracoes. Cada pasta tem
+│   │                             # <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário), com
+│   │                             # exceções:
+│   │   login/          # LoginPage.tsx + TrocarSenhaPage.tsx (nesta sessão — tela cheia,
+│   │                   # bloqueante, aparece no lugar do app normal quando
+│   │                   # `operador.deve_trocar_senha` é true; ver "Login e permissões" na seção 7)
+│   │   clientes/       # ClienteForm.tsx (orquestrador, ~100 linhas) + campos/ (DadosClienteFields,
+│   │                   # EnderecoFields, VeiculosFields — este último usa useFieldArray, com um
+│   │                   # `<input type="hidden">` pro `id` do veículo existente, ver seção 4).
+│   │                   # **Segundo módulo migrado** pro padrão `react-hook-form` + `zod`.
+│   │   estoque/       # EstoquePage.tsx com 4 abas: Produtos (ProdutosSection.tsx + PecaForm.tsx —
+│   │                   # orquestrador, ~80 linhas, terceiro módulo migrado pro padrão
+│   │                   # react-hook-form + zod — + campos/ com DadosCadastraisFields,
+│   │                   # TributosFields, PrecosFields (custo/margem%/preço final calculados entre
+│   │                   # si, ver schemas/peca.ts) + ImportarNotasFiscaisModal.tsx — leitura por
+│   │                   # foto), Movimentações (MovimentacoesSection.tsx + MovimentoForm.tsx),
+│   │                   # Contagem (ContagemSection.tsx — inventário físico), Relatórios
 │   │                   # (RelatoriosEstoqueSection.tsx). Sem módulo "Peças" separado.
+│   │   fornecedores/   # FornecedoresPage.tsx (orquestrador de abas — módulo novo nesta sessão)
+│   │                   # com abas "Cadastro" (FornecedoresSection.tsx + FornecedorForm.tsx, igual
+│   │                   # padrão Clientes/Serviços) e "Pedidos de compra" (PedidosCompraSection.tsx
+│   │                   # + PedidoCompraForm.tsx — itens via useFieldArray, igual OS — +
+│   │                   # ReceberPedidoModal.tsx, ver seção 7)
 │   │   garantias/      # GarantiasPage.tsx é só lista (deriva de ordens_servico_itens +
 │   │                   # pecas.prazo_garantia_dias, sem tabela própria)
 │   │   servicos/       # catálogo de serviços, só lista + form (com categoria via
 │   │                   # categorias_servicos), sem abas
-│   │   ordens-servico/ # OrdemServicoForm.tsx (form principal) + FaturamentoCard.tsx (faturamento
-│   │                   # com parcelas calculadas) + FechamentoTab.tsx (NFC-e/NFS-e + garantia,
-│   │                   # só aparece com status concluída/faturada) + GarantiaVisualModal.tsx
+│   │   ordens-servico/ # OrdemServicoForm.tsx (orquestrador, ~240 linhas — quarto módulo migrado
+│   │                   # pro padrão react-hook-form + zod, ver "Padrão de formulário" na seção 4)
+│   │                   # + campos/ (DetalhesFields, ItensFields — usa useFieldArray pros itens
+│   │                   # novos da OS, itens já lançados continuam só leitura) + ItemOSRow.tsx
+│   │                   # (linha de peça/serviço — trocar peça/serviço auto-preenche descrição e
+│   │                   # preço, select fica controlado via watch/setValue em vez de register, ver
+│   │                   # seção 4) + FaturamentoCard.tsx (faturamento com parcelas calculadas, ainda
+│   │                   # não migrado) + FechamentoTab.tsx (NFC-e/NFS-e + garantia, só aparece com
+│   │                   # status concluída/faturada) + GarantiaVisualModal.tsx
 │   │   configuracoes/  # JurosParcelasSection.tsx, CategoriasSection.tsx, CategoriasCaixaSection.tsx,
 │   │                   # CategoriasServicoSection.tsx, TextoGarantiaSection.tsx,
 │   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
 │   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora); LojasSection.tsx
 │   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
-│   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas);
-│   │                   # RedefinirSenhaModal.tsx (admin redefine senha de operador esquecida,
-│   │                   # chama a Edge Function redefinir-senha-operador)
-│   │   funcionarios/   # FuncionarioForm.tsx com abas "Dados gerais" e "Família"
+│   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas)
+│   │   funcionarios/   # FuncionarioForm.tsx (orquestrador enxuto, ~140 linhas) com abas "Dados
+│   │                   # gerais" e "Família" + campos/ (um componente por grupo de campos:
+│   │                   # IdentificacaoFields, DocumentosFields, EnderecoFields, ContatoFields,
+│   │                   # CargoAdmissaoFields, FiliacaoFields, ConjugeFields, FilhosFields — este
+│   │                   # último usa useFieldArray do react-hook-form pra lista dinâmica de filhos
+│   │                   # — + FormCompartilhado.tsx com Secao/Campo/inputClasse reaproveitados).
+│   │                   # **Primeiro módulo migrado pro padrão novo de formulário** (react-hook-form
+│   │                   # + zod, ver "Padrão de formulário" logo abaixo) — referência pra migrar os
+│   │                   # demais formulários do app quando for a vez deles.
 │   │   caixa/          # CaixaPage.tsx (orquestrador de abas) + DiarioSection.tsx +
 │   │                   # EntradaSaidaSection.tsx (reusado por Entradas/Saídas, parametrizado por tipo)
 │   │   notas-fiscais/  # NotasFiscaisPage.tsx com abas NFe/NFS-e + ArquivosSection.tsx +
@@ -198,13 +247,19 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
 │   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado, agora conta o
 │   │                   # custo de serviço também, não só de peça)
+│   ├── schemas/                  # esquemas zod de validação de formulário + funções de mapeamento
+│   │                             # form↔banco (ex: funcionario.ts — paraValoresFormulario,
+│   │                             # paraNovoFuncionario, paraFilhosPreenchidos). Pasta nova —
+│   │                             # `funcionario.ts`, `cliente.ts`, `peca.ts` até agora (este último
+│   │                             # também guarda o cálculo custo↔margem%↔preço final) — ver
+│   │                             # "Padrão de formulário" abaixo.
 │   ├── styles/globals.css       # paleta Sakura System (Tailwind v4 @theme)
 │   └── types/                    # um arquivo por entidade + loja.ts (Loja, NovaLoja) +
 │                                  # configuracao.ts (JurosParcela, ConfiguracaoGarantia,
 │                                  # ConfiguracaoFiscalLoja — todas com `loja_id` no lugar do antigo
 │                                  # `id: 1`, ver seção 5) + itemNotaFiscal.ts (item extraído da
 │                                  # leitura por IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0038), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5)
@@ -212,11 +267,19 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │                                  # PDFs de nota fiscal via Claude/Anthropic e devolve os produtos
 │                                  # estruturados (a ANTHROPIC_API_KEY fica só como secret dessa
 │                                  # função no Supabase, nunca no app instalado); e
-│                                  # redefinir-senha-operador/index.ts: admin redefine senha de
-│                                  # operador esquecida, usando a service role key (ver seção 5).
+│                                  # redefinir-senha-operador/index.ts (nesta sessão): admin gera
+│                                  # senha temporária pra outro operador — usa a service role key
+│                                  # (só o Supabase injeta sozinha, sem secret manual pra
+│                                  # configurar), ver "Login e permissões" na seção 7.
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
 ├── eslint.config.js              # flat config do ESLint 9
+├── vitest.config.ts              # config de teste separado do vite.config.ts de propósito (não
+│                                  # carrega os plugins do Electron, que não fazem sentido numa
+│                                  # rodada de teste unitário puro) — `npm test` roda uma vez,
+│                                  # `npm run test:watch` fica observando arquivo mudar. Testes
+│                                  # ficam ao lado do arquivo testado (`<arquivo>.test.ts`), não
+│                                  # numa pasta `__tests__` separada.
 ├── CHANGELOG.md                  # fechado até [0.1.3] - 2026-07-29; segue tudo em v1.0.0 não tagueada
 └── .env (local, não commitado)   # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
 ```
@@ -236,6 +299,51 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 - Toda migration que se diz "idempotente" precisa dropar o nome **final** da policy/objeto antes
   de criar (não só o nome antigo que está substituindo) — ver item 13 da seção 6.
 
+**Padrão de formulário — `react-hook-form` + `zod`, migração concluída**: decisão tomada pela
+usuária (a partir de um plano de refatoração escrito por outra IA, Gemini, fora desta sessão) de
+que esse é o jeito **padrão** de construir formulários no app, substituindo o padrão antigo
+(`useState` bruto por campo + função `campo()`/`setDados()` genérica). **Todo formulário do app já
+foi migrado** (nesta e na sessão anterior): `FuncionarioForm.tsx`, `ClienteForm.tsx`,
+`PecaForm.tsx`, `OrdemServicoForm.tsx` (o mais complexo, itens de peça/serviço via
+`useFieldArray`), `OperadorForm.tsx` (checkbox de permissões/lojas via array nativo do RHF),
+`ServicoForm.tsx`, `CaixaForm.tsx`, `MovimentoForm.tsx`, `ContaPagarForm.tsx`,
+`PagarContaModal.tsx`, `ReceberContaModal.tsx`, `LojasSection.tsx` (dois `useForm` — cadastro novo
++ edição inline por loja, cada card de edição remonta com dados próprios em vez de um `reset()`
+manual) e `FaturamentoCard.tsx` (o mais carregado de cálculo — juros/parcelas/split de pagamento
+viraram funções puras em `schemas/faturamento.ts`, testáveis fora do componente). É, desde então,
+o padrão que a skill `/gerar-modulo` deveria seguir também — conferir se já gera nesse formato ao
+usá-la de novo. Convenção estabelecida no piloto, seguida em todos:
+  - Schema de validação zod + funções de mapeamento form↔banco ficam em `src/schemas/<entidade>.ts`
+    (não junto do componente): `<entidade>FormSchema`, `paraValoresFormulario(existente?)` (banco →
+    formulário), `para<Entidade>(valores)` (formulário → banco, convertendo `""` pra `null` e string
+    numérica pra `number`).
+  - O formulário em si vira um **orquestrador** (`useForm` + abas/estado de UI + `handleSubmit`),
+    delegando os campos pra componentes menores em `<modulo>/campos/<Grupo>Fields.tsx`, cada um
+    recebendo `register` (e `control`, só quando precisa de `useFieldArray` — caso de listas
+    dinâmicas tipo "filhos" ou "veículos").
+  - `Secao`/`Campo`/`inputClasse` (os wrappers visuais de sempre) viram um arquivo só,
+    `<modulo>/campos/FormCompartilhado.tsx`, reaproveitado por todos os grupos de campos daquele
+    módulo (cada módulo tem o seu próprio — não compartilhado entre módulos diferentes, de
+    propósito, pra não acoplar Clientes e Funcionários por causa de um wrapper visual).
+  - **Item de lista dinâmica que tem `id` de banco (ex: veículo de um cliente) precisa de um
+    `<input type="hidden">` registrado pro campo `id`** dentro do `useFieldArray`, mesmo ele nunca
+    aparecendo pro usuário — sem isso, dar "Adicionar"/"Remover" no meio da lista arrisca perder o
+    `id` original e recriar a linha no banco, desconectando referências de outra tabela (caso real:
+    `veiculos.id` referenciado por `ordens_servico.veiculo_id`, ver `VeiculosFields.tsx`).
+  - **Campos que se recalculam entre si** (ex: custo → margem % → preço final em `PecaForm.tsx`)
+    não dá pra resolver só com `register` — usam `watch()` (ler o valor atual de outro campo) +
+    `setValue()` (escrever no campo derivado) dentro de um `onChange` customizado, com a conta em
+    si isolada como função pura no `schemas/<entidade>.ts` (`precoAPartirDaMargem`/
+    `margemAPartirDoPreco` em `schemas/peca.ts`), não dentro do componente.
+  - **Select com valor "sentinela" que não existe de verdade no dado** (ex: "Serviço avulso" no
+    item de OS, que na prática é `servico_id` vazio/nenhum) **não dá pra registrar direto via
+    `register()`** — mutar `e.target.value` (como no truque de maiúsculas do `uf`/`estado`) faz o
+    `<select>` "desmarcar" visualmente porque o valor não bate com nenhuma `<option>`. Nesse caso,
+    deixar o campo **controlado de verdade** (`value={watch(...)}` + `onChange` chamando
+    `setValue()` com a tradução do sentinela pro valor real), sem passar `register()` nesse
+    elemento — funciona sem `Controller`, só com `watch`/`setValue` (ver `ItemOSRow.tsx`, troca de
+    peça/serviço/tipo do item da OS).
+
 **Skill `/gerar-modulo`** (`.claude/skills/gerar-modulo/SKILL.md`): automatiza a criação de um
 módulo novo inteiro (migration + types + lib + página + form + registro em `MODULOS`/`App.tsx`)
 seguindo esse padrão de código. Uso: `/gerar-modulo <Nome do módulo>`. Preferir essa skill a fazer
@@ -243,15 +351,14 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0037` em `supabase/migrations/` já estão confirmadas rodando sem erro no
+Migrations `0001` a `0036` em `supabase/migrations/` já estão confirmadas rodando sem erro no
 projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a fundação multi-loja
 (`0031`-`0033`, que ela testou de verdade: criou uma 2ª loja, foi quando apareceu o bug de RLS
-descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0037`, criadas e validadas
-localmente — Postgres local, `service postgresql start` + `sudo -u postgres psql`, rodando a
-sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase real
-logo em seguida). **`0038` (cria `fornecedores`) foi criada e validada da mesma forma nesta
-sessão, mas ainda não foi rodada por ela no Supabase real** — falta esse passo manual (ver seção
-9) antes do módulo Fornecedores funcionar de verdade. Resumo das últimas:
+descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0036`, criadas e validadas
+localmente nesta sessão — Postgres local, `service postgresql start` + `sudo -u postgres psql`,
+rodando a sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase
+real logo em seguida). **`0037`, criada e validada localmente na mesma sessão, também já foi
+confirmada rodando no Supabase real dela.** Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -279,8 +386,23 @@ sessão, mas ainda não foi rodada por ela no Supabase real** — falta esse pas
   RLS pra `DELETE` em `lojas` (só select/insert/update) — sem policy nenhuma cobrindo o comando, o
   delete "funcionava" sem erro nenhum, mas apagava 0 linhas (bug silencioso, sem mensagem de erro
   nenhuma). Ver item 15 da seção 6.
-- `0038`: cria `fornecedores` (cadastro básico, compartilhado entre lojas) — ver módulo
-  "Fornecedores" na seção 7.
+- `0038`: adiciona `operadores.deve_trocar_senha` (bool, default `false`) — suporte pra
+  redefinição de senha esquecida (ver "Login e permissões" na seção 7).
+- `0039`: cria o módulo de Fornecedores — `fornecedores` (compartilhado), `pedidos_compra` (por
+  loja, número sequencial via trigger, mesmo padrão de `ordens_servico.numero`) e
+  `pedidos_compra_itens` (sem `loja_id` próprio, herda via `pedido_compra_id`, mesmo padrão de
+  `ordens_servico_itens`). Ver "Fornecedores" na seção 7.
+- `0040`: cria a trilha de auditoria — tabela genérica `auditoria` + função `registrar_auditoria()`
+  (trigger, `security definer`) aplicada via `UPDATE`/`DELETE` num conjunto de tabelas sensíveis
+  (`operadores`, `pecas`, `servicos`, `caixa_movimentos`, `contas_pagar`, `contas_receber`,
+  `ordens_servico`, `clientes`, `fornecedores`, `pedidos_compra`, `lojas`). Ver "Auditoria" na
+  seção 7.
+
+**`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
+(auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
+Falta só, pra redefinição de senha funcionar de ponta a ponta, publicar a Edge Function
+`redefinir-senha-operador` (a migration `0038` sozinha não é suficiente pra essa — passo a passo
+na seção 9).
 
 Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
 (não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
@@ -367,6 +489,18 @@ outro projeto Supabase do zero (ver seção 9).
 - **`servicos`** (catálogo de serviços, análogo a `pecas` mas sem estoque/fiscal): id,
   codigo_interno (opcional), descricao, preco_padrao, categoria_id (FK categorias_servicos,
   opcional), ativo, criado_em. Vem semeado com ~17 serviços padrão sem preço (migration `0030`).
+- **`fornecedores`** (compartilhado entre lojas, migration `0039`): id, nome, cnpj, telefone,
+  email, cep/rua/numero/bairro/cidade/uf, ativo, criado_em. Mesmo padrão de `clientes`
+  (endereço completo) mas sem veículos nem tipo pessoa física/jurídica — fornecedor é sempre
+  tratado como uma única "razão social".
+- **`pedidos_compra`** (por loja, migration `0039`): id, **numero** (int, sequencial **por loja**,
+  trigger no insert, mesmo padrão de `ordens_servico.numero`), loja_id (FK lojas), fornecedor_id
+  (FK fornecedores), status (`pendente`/`parcial`/`recebido`/`cancelado`), data_pedido, observacao,
+  operador_id (FK operadores — quem criou), criado_em.
+- **`pedidos_compra_itens`**: id, pedido_compra_id (FK, `on delete cascade`), peca_id (FK pecas),
+  quantidade_pedida, preco_unitario (opcional), quantidade_recebida (default 0, soma conforme a
+  usuária confirma recebimentos — pode ser parcial, em mais de uma vez). Sem `loja_id` próprio,
+  herda via `pedido_compra_id` (mesmo padrão de `ordens_servico_itens`).
 - **`estoque_movimentos`**: id, loja_id (FK lojas), peca_id (FK), tipo (`entrada`/`saida`),
   quantidade, motivo (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
 - **`ordens_servico`**: id, **numero** (int, sequencial **por loja** — 1, 2, 3..., atribuído
@@ -426,16 +560,24 @@ outro projeto Supabase do zero (ver seção 9).
   pelo cabeçalho do documento de garantia.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único **globalmente**, não por
   loja), nome, admin (bool), permissoes (`text[]` com as chaves de `MODULOS` em
-  `src/types/operador.ts`), ativo, criado_em. Não tem `loja_id` — o acesso a loja(s) vem de
+  `src/types/operador.ts`), ativo, deve_trocar_senha (bool, default `false` — migration `0038`;
+  marcado `true` quando um admin redefine a senha de alguém, obriga trocar antes de liberar o app,
+  ver seção 7 "Login e permissões"), criado_em. Não tem `loja_id` — o acesso a loja(s) vem de
   `operador_lojas` (ver subseção "Multi-loja" acima). RLS de verdade baseada em login (ver seção 6).
+- **`auditoria`** (migration `0040`): id, tabela (nome da tabela afetada), registro_id, acao
+  (`atualizar`/`excluir`), operador_id (FK operadores — quem fez), dados_antes/dados_depois
+  (jsonb, snapshot da linha inteira via `to_jsonb(old)`/`to_jsonb(new)`), criado_em. **Não é
+  gravada pelo app** — uma função trigger (`registrar_auditoria()`, `security definer`) grava
+  sozinha em `UPDATE`/`DELETE` das tabelas cobertas (ver lista no comentário da migration `0040`),
+  então pega qualquer alteração não importa a origem (tela do app, SQL Editor manual, bug futuro).
+  Leitura só pra admin (`operador_atual_e_admin()`); sem policy de insert pra ninguém — só a
+  função (dona = quem rodou a migration) consegue gravar. Ver "Auditoria" na seção 7.
 - **`contas_pagar`**: id, loja_id (FK lojas), descricao, valor, vencimento (date), categoria_id (FK
   categorias_caixa, opcional), recorrente (bool), status (`pendente`/`paga`), data_pagamento
   (opcional), caixa_movimento_id (FK, opcional — a Saída gerada ao marcar como paga), operador_id
   (FK operadores), criado_em. Marcar como paga gera automaticamente uma Saída em
   `caixa_movimentos` e, se `recorrente`, cria a próxima ocorrência (mesmo valor, +1 mês) sozinha.
-  **"Desfazer pagamento"** (`desfazerPagamento()` em `lib/contasPagar.ts`) volta a conta pra
-  pendente e apaga a Saída que tinha sido gerada — se a conta era recorrente, a próxima ocorrência
-  já criada automaticamente **não** é apagada junto (fica pendente também; caso raro, não tratado).
+  **Sem "desfazer pagamento"** pelo app ainda.
 - **`contas_receber`**: id, loja_id (FK lojas), cliente_id (FK clientes), ordem_servico_id (FK
   ordens_servico, opcional e único — 1 conta a receber por OS faturada), descricao, valor,
   vencimento (date, aqui é "previsão de recebimento"), status (`pendente`/`recebido`),
@@ -451,25 +593,20 @@ outro projeto Supabase do zero (ver seção 9).
   `CARTAO_METRICA_LABEL` (`types/configuracao.ts`): vendas_mes, custos_mes, lucros_mes,
   ticket_medio_mes, contas_pagar_vencendo. Padrão atual: Vendas/Lucro/Ticket médio (Custos saiu do
   padrão por não ser legal mostrar "algo negativo" logo de cara).
-- **`fornecedores`** (migration `0038`): id, nome (rótulo "Nome / Razão social"), cnpj, telefone,
-  email, ativo, criado_em. **Compartilhado entre lojas** (mesmo padrão de
-  clientes/pecas/servicos) — cadastro básico só, base pra decidir depois qual funcionalidade
-  avançada de estoque vem em seguida (Pedido de Compra, Entrada via NFe do fornecedor, Depósito,
-  Garantia do fornecedor — nenhuma delas construída ainda, ver seção 8).
 
 Regras de negócio já implementadas: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
 entrada em `caixa_movimentos` com o valor total (já incluindo juros, se parcelado). Garantia dada
 ao cliente (módulo "Garantias") **não tem tabela própria** — deriva de `ordens_servico_itens` +
-`pecas.prazo_garantia_dias` + `ordens_servico.data_fechamento`.
+`pecas.prazo_garantia_dias` + `ordens_servico.data_fechamento`. Ao confirmar o recebimento de um
+Pedido de Compra (mesmo que parcial), gera automaticamente uma entrada em `estoque_movimentos`
+(motivo `compra`) por item recebido, soma em `pedidos_compra_itens.quantidade_recebida`, e
+recalcula sozinho o status do pedido (`parcial` até todo item bater a quantidade pedida, aí vira
+`recebido`).
 
 **Fora do Postgres** (Supabase Storage): bucket `notas-fiscais` (XMLs enviados manualmente).
-**Fora do Postgres/Storage** (Edge Functions): `ler-notas-fiscais`, ver seção 4 — não tem tabela
+**Fora do Postgres/Storage** (Edge Function): `ler-notas-fiscais`, ver seção 4 — não tem tabela
 própria, o resultado só passa pela tela de revisão em memória antes de salvar em `pecas`.
-`redefinir-senha-operador` (nova) — usa a service role key pra trocar a senha de um operador
-esquecida; só executa depois de confirmar (via RPC `operador_administra`, rodando com o token do
-próprio chamador, sem privilégio extra) que quem está chamando é admin de uma loja que o operador-
-alvo também acessa. Nenhuma das duas guarda nada em tabela própria.
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
@@ -478,18 +615,26 @@ alvo também acessa. Nenhuma das duas guarda nada em tabela própria.
    direto pra mexer em "Clientes" se tentar de propósito. RLS exige **login** pra tudo (fecha o
    acesso sem estar logado), mas não reforça por módulo. Fica pra uma etapa futura se o risco
    mudar (ex: sistema vendido pra terceiros, não só a própria loja).
-2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). Ainda falta
-   **redefinir senha de operador esquecida** — hoje não tem como o admin resetar a senha de outro
-   operador pelo app (precisaria de uma Edge Function com a service role key, ainda não
-   construída). **Multi-loja**: a fundação já existe (1 projeto Supabase pode servir 2+ lojas, ver
-   seção 5) — o que ainda não existe é um site externo de assinatura pra provisionar loja+admin
-   automaticamente pra um cliente novo (continua manual, pelo painel do Supabase + tela de
-   Configurações → Lojas).
+2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). **Redefinir senha de
+   operador esquecida** já está implementado (Configurações → Operadores → "Redefinir senha",
+   migration `0038` + Edge Function `redefinir-senha-operador` — ver "Login e permissões" na seção
+   7 e o passo a passo de deploy na seção 9) — falta só ela rodar a migration e publicar a função
+   no Supabase real, mesmo processo já feito uma vez pra `ler-notas-fiscais`. **Multi-loja**: a
+   fundação já existe (1 projeto Supabase pode servir 2+ lojas, ver seção 5) — o que ainda não
+   existe é um site externo de assinatura pra provisionar loja+admin automaticamente pra um
+   cliente novo (continua manual, pelo painel do Supabase + tela de Configurações → Lojas).
 3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pela usuária em algum
    momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
    código. Vale sugerir que ela rotacione essa chave em Settings → API Keys do Supabase, se ainda
    não tiver feito.
-4. **Sem testes automatizados** (nenhum framework de teste configurado ainda).
+4. **Testes automatizados — começando** (Vitest, configurado nesta sessão, ver seção 4/9). Cobre
+   só as **funções puras de cálculo** que já tinham sido isoladas dos componentes durante a
+   migração pro `react-hook-form` (juros/parcelas/split de pagamento em `schemas/faturamento.ts`,
+   margem de peça em `schemas/peca.ts`, totais de OS/Pedido de Compra, saldo de estoque) — **não**
+   testa componente React, tela, nem nada que dependa do Supabase (esse tipo de teste, de UI/
+   integração, é bem mais trabalhoso de montar e não foi feito ainda). 35 testes, todos passando.
+   Achou e corrigiu de brinde um bug real de arredondamento de ponto flutuante em
+   `calcularValorCobrado` (`100 * 1.1` podia sair `110.00000000000001` em vez de `110`).
 5. **Assinatura de código do instalador**: o Windows/SmartScreen avisa "editor desconhecido" no
    instalador (normal sem certificado pago; não impede instalar, só exige "Mais informações →
    Executar assim mesmo"). Reconsiderar comprar um certificado se algum dia distribuir pra muitas
@@ -572,6 +717,18 @@ alvo também acessa. Nenhuma das duas guarda nada em tabela própria.
     que uma tabela ganha uma ação nova (excluir, reativar, etc.), conferir explicitamente se existe
     policy cobrindo *aquele comando exato* — não basta a tabela já ter RLS habilitada com outras
     policies.
+16. **Padrão de bug: dropdown customizado com "seleciona no `onClick`" pode nunca disparar o
+    clique** — o `Combobox.tsx` (select com busca, ver seção 4) fechava a lista de opções num
+    `onBlur` do input, com `onMouseDown={preventDefault}` nos botões de opção só pra impedir que o
+    clique tirasse o foco do input antes da hora. Na prática, o `blur` disparou de qualquer forma
+    antes do `click` chegar a acontecer (o app roda dentro do Electron, onde o foco de janela se
+    comporta diferente de um navegador comum) — a lista fechava e o botão da opção sumia do DOM
+    *entre* o `mousedown` e o `click`, então o clique nunca tinha um elemento pra disparar em cima,
+    e a seleção simplesmente não acontecia (sem erro nenhum, só "não fazia nada"). **Lição**: em
+    qualquer dropdown customizado (não é só esse — vale pra qualquer coisa parecida no futuro), a
+    seleção precisa acontecer no **próprio `onMouseDown`** do item (com `preventDefault()` pra não
+    perder o foco), nunca separada num `onClick` posterior — `mousedown` sempre dispara antes de
+    qualquer `blur` resultante da mesma interação, então a seleção fica imune a essa corrida.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -580,10 +737,9 @@ completos), Estoque (entrada/saída, saldo), Ordens de Serviço, Caixa Diário, 
 Painel/Início.
 
 **Ordem do menu lateral**: reorganizada a pedido da usuária, agrupando por fluxo de trabalho —
-Início, Clientes, Ordens de Serviço, Estoque, Serviços, Fornecedores, Caixa Diário, Contas a Pagar,
-Relações, Garantias, Notas Fiscais, Funcionários (RH por último, de propósito — é cadastro usado
-bem menos no dia a dia do balcão do que os módulos anteriores). Ver `MODULOS` em
-`src/types/operador.ts`.
+Início, Clientes, Ordens de Serviço, Estoque, Serviços, Caixa Diário, Contas a Pagar, Relações,
+Garantias, Notas Fiscais, Funcionários (RH por último, de propósito — é cadastro usado bem menos
+no dia a dia do balcão do que os módulos anteriores). Ver `MODULOS` em `src/types/operador.ts`.
 
 **Enter avança pro próximo campo**: em qualquer formulário do app, apertar Enter move o foco pro
 próximo campo em vez de tentar enviar o formulário — pensado pra quem trabalha só de teclado, sem
@@ -596,18 +752,38 @@ normal (quebra de linha).
 - **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
   do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
   novo). Menu lateral e rotas filtrados por permissão (`PermissaoRoute`/`AdminRoute`). Tela
-  Configurações (admin) gerencia operadores com checkboxes de módulo. **Redefinir senha
-  esquecida**: botão "Redefinir senha" no card de cada operador (Configurações), abre
-  `RedefinirSenhaModal.tsx` — só funciona pra quem administra aquele operador (admin de uma loja
-  que ele também acessa). Chama a Edge Function `redefinir-senha-operador`, que é quem de fato
-  troca a senha via service role key (nunca fica no app instalado).
-- **Clientes**: CRUD + múltiplos veículos por cliente, pessoa física/jurídica (rótulos de
-  campo mudam conforme o tipo), aniversário do cliente no calendário do Início, tipo de veículo
-  (ícone 2D por carroceria, pintado com a cor cadastrada) exibido na seção "Veículos no pátio".
+  Configurações (admin) gerencia operadores com checkboxes de módulo. **Redefinir senha esquecida
+  (nesta sessão)**: como o login não usa e-mail de verdade, o fluxo padrão de "esqueci minha
+  senha" por e-mail do Supabase não funciona aqui — em vez disso, qualquer admin pode clicar
+  "Redefinir senha" no card de outro operador (Configurações → Operadores), o sistema gera uma
+  senha temporária (mostrada uma vez só, num modal, pra ele repassar por WhatsApp/pessoalmente) e
+  marca que aquele operador precisa trocar a senha no próximo login — `TrocarSenhaPage.tsx`
+  aparece no lugar do app normal até ele criar uma senha nova. Por trás, uma Edge Function nova
+  (`redefinir-senha-operador`, mesmo padrão da `ler-notas-fiscais`: a service role key nunca sai
+  do Supabase) confere de novo, do lado do servidor, que quem está chamando é realmente admin
+  antes de mudar a senha de qualquer um. **Estado real do deploy incerto** — ver nota na seção 10
+  sobre duas linhas de trabalho paralelas que aconteceram no mesmo período: uma versão bem mais
+  simples desse mesmo recurso (admin define a senha nova direto, sem senha temporária) chegou a
+  ser publicada por engano no Supabase real dela numa sessão separada. **Antes de considerar isso
+  pronto, é preciso redeployar a Edge Function com o código atual** (passo a passo na seção 9) —
+  mesmo que a função já exista publicada, o código de lá ainda pode ser o da versão simples.
+- **Clientes**: CRUD completo (**edição** adicionada nesta sessão — antes só criava/excluía) +
+  múltiplos veículos por cliente, pessoa física/jurídica (rótulos de campo mudam conforme o tipo),
+  aniversário do cliente no calendário do Início, tipo de veículo (ícone 2D por carroceria, pintado
+  com a cor cadastrada) exibido na seção "Veículos no pátio". **Editar cliente preserva o `id` dos
+  veículos já existentes** (`atualizarCliente` em `lib/clientes.ts` faz `upsert`, não
+  apaga-e-recria como `funcionario_filhos`) — importante porque `ordens_servico.veiculo_id`
+  referencia esse `id`; recriar do zero desconectaria OS antigas do veículo (a FK é `on delete set
+  null`, então o dado não quebraria, mas o vínculo se perderia silenciosamente). **Formulário
+  migrado nesta sessão** pro padrão `react-hook-form` + `zod` (segundo módulo, depois de
+  Funcionários — ver "Padrão de formulário" na seção 4); comportamento pro usuário não mudou.
 - **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
   categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
   produto), Contagem (inventário físico, gera ajuste automático na diferença), Relatórios (estoque
-  físico-financeiro, saldo por situação, produtos sem movimentação). **Importar por foto/PDF**:
+  físico-financeiro, saldo por situação, produtos sem movimentação). **`PecaForm.tsx` migrado nesta
+  sessão** pro padrão `react-hook-form` + `zod` (terceiro módulo — ver "Padrão de formulário" na
+  seção 4); ainda só cria produto, não edita (não mudou nesta migração — só existia criação antes
+  também). **Importar por foto/PDF**:
   botão ao lado de "+ Novo produto" (ícone de câmera, SVG) — lê uma ou mais fotos **ou PDFs** de
   nota fiscal (pode ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através
   da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
@@ -618,6 +794,24 @@ normal (quebra de linha).
   semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
   Amortecedores, Freios, Alinhamento, Outros Serviços), baseados numa ficha de orçamento de
   referência do ramo — ponto de partida, não os preços/serviços reais dela.
+- **Fornecedores** (duas abas): "Cadastro" — nome/razão social, CNPJ, telefone,
+  e-mail, endereço completo, ativo/inativo; compartilhado entre lojas (mesmo padrão de Clientes).
+  **Cuidado real com a migration `0039`** (ver seção 10): uma versão bem mais simples desta mesma
+  tabela (só nome/CNPJ/telefone/e-mail, sem endereço) foi publicada por engano no Supabase real
+  dela numa sessão em paralelo — se `0039` já tiver sido rodada depois disso, as colunas de
+  endereço **não** teriam sido adicionadas de verdade (`create table if not exists` não altera
+  tabela já existente). A migration já foi corrigida nesta sessão pra usar `alter table ... add
+  column if not exists` também, então rodá-la de novo (mesmo que já tenha "rodado" antes) resolve
+  — mas vale confirmar rodando de novo, não assumir que já está certo.
+  "Pedidos de compra" — por loja, número sequencial (`numero`, mesmo padrão de OS), itens de peça
+  com quantidade pedida + preço unitário, status (`pendente`/`parcial`/`recebido`/`cancelado`).
+  Botão **"Receber"** abre uma conferência: a usuária confirma quanto chegou de cada item (pode
+  ser parcial, em mais de uma vez) e o sistema já lança a entrada em Estoque → Movimentações
+  sozinho (motivo "Compra"), soma na quantidade recebida do item, e recalcula o status do pedido
+  inteiro. **Não é** importação de XML de nota fiscal do fornecedor — é conferência manual (ver
+  item correspondente na seção 8, é um passo maior separado se um dia for pedido). Sem
+  cotação/comparação de preço entre fornecedores diferentes ainda, sem cadastro de Depósito
+  (múltiplos locais físicos), sem garantia do fornecedor na compra — todos ainda pendentes.
 - **Ordens de Serviço**: cada OS tem um número sequencial **por loja** (`numero`, 1/2/3...,
   atribuído por trigger no insert) — é como a OS é identificada em toda tela ("OS 12"), nunca mais
   o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
@@ -625,7 +819,10 @@ normal (quebra de linha).
   permite acrescentar itens, não editar/remover item já lançado — evita desfazer baixa de estoque).
   Não existe mais seletor manual de status no form — o cabeçalho mostra o status atual (badge) e,
   enquanto "em_andamento", um botão **"Encerrar OS"** que marca como concluída e já abre a tela de
-  faturamento na sequência, num fluxo só. Técnico por item + vendedor/atendente da OS (ambos listam
+  faturamento na sequência, num fluxo só. **`OrdemServicoForm.tsx` migrado nesta sessão** pro
+  padrão `react-hook-form` + `zod` (quarto módulo — ver "Padrão de formulário" na seção 4);
+  comportamento pro usuário não mudou (mesmos campos, mesma regra de só acrescentar item, não
+  editar/remover o que já foi lançado). Técnico por item + vendedor/atendente da OS (ambos listam
   `funcionarios`, não só operadores). Lista de OS tem filtro de período (De/Até) e busca por
   cliente/placa — OS em aberto sempre aparecem, não importa a data (só o histórico já faturado é
   filtrado por período, pra lista não crescer sem controle); colunas de Nº/Peças/Serviços/Total/Lucro
@@ -644,18 +841,19 @@ normal (quebra de linha).
   opção de baixar HTML/imprimir via `iframe`).
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
   abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
+  **Formulário refatorado nesta sessão** pro padrão novo `react-hook-form` + `zod` (ver "Padrão de
+  formulário" na seção 4) — primeiro do app nesse estilo, orquestrador caiu de 601 pra ~140 linhas,
+  campos organizados em `campos/*Fields.tsx` por grupo. Comportamento pro usuário final não mudou
+  em nada (mesmos campos, mesma validação de "Nome obrigatório").
 - **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
   lançamentos manuais, com categoria opcional via `categorias_caixa`). Card de "Lucro do dia" +
   resumo por forma de recebimento.
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
-  já cria a próxima ocorrência sozinha. **"Desfazer pagamento"**: botão na lista "Pagas
-  recentemente" — volta a conta pra pendente e remove a Saída gerada (se a conta era recorrente, a
-  próxima ocorrência já criada continua existindo, pendente).
-- **Fornecedores**: cadastro básico (nome/razão social, CNPJ, telefone, e-mail, ativo/inativo),
-  compartilhado entre lojas — mesmo padrão de Clientes/Peças/Serviços. Só o cadastro por
-  enquanto; base pra decidir depois qual funcionalidade avançada de estoque vem em seguida (Pedido
-  de Compra, Entrada via NFe do fornecedor, Depósito, Garantia do fornecedor — ver seção 8).
+  já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
+  branch separada que trabalhou em paralelo — ver seção 10): botão na lista "Pagas recentemente" —
+  volta a conta pra pendente e remove a Saída gerada (se a conta era recorrente, a próxima
+  ocorrência já criada continua existindo, pendente).
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
   cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
   vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
@@ -681,6 +879,14 @@ normal (quebra de linha).
   de parcelamento, Categorias de produto, Categorias de serviço, Categorias de caixa, Texto de
   garantia, Dados fiscais da loja, Cartões do Início (essas últimas 4, junto com Juros, agora são
   **por loja** — ver seção 5).
+- **Auditoria** (módulo novo nesta sessão, migration `0040` já rodada e testada por ela de
+  verdade): admin-only, acesso via ícone novo no rodapé da Sidebar (ao lado da engrenagem de
+  Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem editou ou
+  excluiu o quê e quando, com filtro por tabela e por operador, e um "Ver detalhes" que mostra o
+  registro inteiro antes/depois (ou só "antes" se foi exclusão) em JSON. Cobre só
+  `UPDATE`/`DELETE` (não criação) num conjunto de tabelas sensíveis — ver lista completa na seção
+  5, tabela `auditoria`. É gravado por trigger de banco, não pelo código do app — funciona mesmo
+  se a alteração vier de outro lugar (SQL Editor manual, por exemplo).
 - **Multi-loja** — já aplicada e testada de verdade no Supabase real da usuária (criou uma 2ª loja,
   o que revelou o bug corrigido na migration 0034). 1 projeto Supabase serve 2+ lojas com um painel
   único (não instalações separadas). Catálogo compartilhado (clientes, peças, serviços, categorias);
@@ -691,18 +897,16 @@ normal (quebra de linha).
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
   enviada. **Versão atual do `package.json`: `0.9.2`**. Última tag publicada de verdade é `v0.9.0`
-  (ela baixou e testou o instalador dessa versão). **Decisão antiga revista nesta sessão**: a
-  regra era só publicar o próximo instalador quando a nota fiscal estivesse pronta — a usuária
-  confirmou que quer publicar a `v0.9.2` mesmo sem isso. Passo a passo já passado pra ela rodar no
-  próprio terminal (`git checkout main && git pull origin main && git tag v0.9.2 && git push
-  origin v0.9.2` — a sessão remota não tem permissão de git pra empurrar tags, só pra branch
-  normal); **ainda sem confirmação de que ela rodou**. Depois de publicada, bastante coisa segue
-  sem ir pro instalador ainda (Contas a Receber, número sequencial de OS, split de pagamento,
-  desfazer pagamento, redefinir senha, Fornecedores — tudo isso só entra na próxima tag). Até lá,
-  ela usa a loja rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com
-  `.env` configurado nesse PC também) em vez do instalador. A versão aparece pequena no canto
-  inferior direito do app (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em
-  toda tela, inclusive login.
+  (ela baixou e testou o instalador dessa versão) — bastante coisa foi implementada depois dela
+  (correção do bug de criar loja, edição/exclusão de loja, atalho de OS no Início e em Contas a
+  Receber, filtro/busca/cores/colunas na lista de OS, custo de serviço, módulo Contas a Receber,
+  número sequencial de OS, simplificação de status, botão Encerrar OS, split de pagamento) **sem
+  nenhuma tag nova publicada ainda** — mesma decisão de sempre: só publicar a próxima versão do
+  instalador **quando a emissão de nota fiscal também estiver pronta**. Até lá, ela usa a loja
+  rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com `.env` configurado
+  nesse PC também) em vez do instalador. A versão aparece pequena no canto inferior direito do app
+  (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive
+  login.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -716,20 +920,27 @@ normal (quebra de linha).
    (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
    homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
    campos**.
-2. **Site externo de assinatura** que cria a primeira conta de cada loja automaticamente (hoje é
-   manual, pelo painel do Supabase) — combinado que fica pra quando pensarem na versão comercial.
-   (Redefinir senha de operador esquecida já existe — ver seção 7, "Login e permissões".)
+2. **Redefinir senha de operador esquecida — implementado, falta ela publicar** (migration `0038`
+   + Edge Function `redefinir-senha-operador`, ver seção 7 "Login e permissões" e o passo a passo
+   na seção 9). **Site externo de assinatura** que cria a primeira conta de cada loja
+   automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
+   pra quando pensarem na versão comercial.
 3. **Logo oficial** — pegar o arquivo `.svg` real da usuária como **anexo** (não colado no chat) e
    aplicar no lugar dos SVGs feitos à mão (ver seção 2 pras duas pendências de upload já vistas).
 4. Refinamentos possíveis no Início e demais módulos, conforme feedback da usuária.
-5. **Funcionalidades avançadas de estoque que dependem de Fornecedores** — o cadastro básico de
-   Fornecedores já existe (migration `0038`, ver seção 7), mas nenhuma dessas 3 foi construída
-   ainda; qual vem em seguida é decisão da usuária (opções + recomendação, ver seção 1):
-   - Pedido de Compra / Cotações de Peças por fornecedor
-   - Entrada de Produtos via NFe (importação de XML de nota fiscal do **fornecedor**, diferente do
-     "Importar por foto" que já existe — aquele é leitura de foto por IA, esse seria importação de
-     um XML estruturado de verdade)
-   - Cadastro de Depósito (múltiplos locais físicos de estoque)
+5. **Módulo de Fornecedores — construído nesta sessão** (cadastro + Pedido de Compra + Receber
+   pedido, ver seção 7 "Fornecedores"). Restam, do que um sistema de referência (S3Auto/Comsis)
+   também costuma ter — nenhum decidido ainda, precisam de opções + recomendação antes de codar:
+   - **Entrada de Produtos via NFe de verdade** (importar o **arquivo XML** da nota fiscal do
+     fornecedor e extrair os itens automaticamente) — o que existe hoje é diferente: "Receber
+     pedido" é conferência manual (a usuária digita/confirma as quantidades que chegaram, sem ler
+     nenhum arquivo). Importar XML de verdade é viável (é um formato público/estável, ao contrário
+     da API do Focus NFe), mas é trabalho considerável à parte — avaliar quando a usuária sentir
+     falta disso no dia a dia.
+   - **Cotação de Peças por fornecedor** (comparar preço do mesmo item entre fornecedores diferentes
+     antes de decidir onde comprar) — não existe ainda, Pedido de Compra hoje já assume qual
+     fornecedor foi escolhido.
+   - Cadastro de Depósito (múltiplos locais físicos de estoque dentro da mesma loja)
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
      implementada)
 6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
@@ -750,18 +961,23 @@ importador universal de dados de outros sistemas, versão mobile, outras ediçõ
 
 **Prioridade da próxima sessão**: a `0037` já foi confirmada por ela na prática (número sequencial
 de OS, "Encerrar OS", split de pagamento, exclusão de loja vazia — todos testados e funcionando).
-Nesta sessão foram implementados: "desfazer pagamento" em Contas a Pagar, redefinir senha de
-operador esquecida (Configurações), e o cadastro de Fornecedores — tudo validado localmente
-(`tsc`/`build`/`lint` + migrations rodadas duas vezes num Postgres local pra confirmar
-idempotência), mas **ainda não testado por ela no Supabase real**. Passos manuais que faltam antes
-de considerar isso pronto (ver seção 9): (a) rodar a migration `0038` no Supabase; (b) publicar a
-Edge Function `redefinir-senha-operador` (mesmo processo da `ler-notas-fiscais`, sem secret
-nenhum pra configurar dessa vez). Depois disso: ela decide qual das 3 funcionalidades avançadas de
-estoque que dependem de Fornecedores quer construir em seguida (seção 8, item 5), e/ou puxa a
-**emissão de nota fiscal** (Focus NFe, item 1) assim que tiver o token de homologação — combinado
-que ela mesma avisa quando estiver pronta pra essa etapa. Ver seção 7, "Empacotamento", pro
-estado atual da publicação do instalador (decisão de esperar a nota fiscal foi revista nesta
-sessão).
+**Duas linhas de trabalho paralelas convergiram nesta sessão** (ver seção 10 pro histórico
+completo) — uma sessão baseada em chat (mais simples: cadastro básico de Fornecedores, redefinir
+senha via modal de admin, desfazer pagamento em Contas a Pagar) e um trabalho feito localmente via
+Antigravity (bem mais completo: Fornecedores + Pedido de Compra, Auditoria, testes automatizados,
+formulários refatorados pro padrão `react-hook-form`+`zod`, design novo, redefinir senha via senha
+temporária + troca obrigatória). A usuária decidiu que **o trabalho do Antigravity vira a base
+principal**; o "desfazer pagamento" (que só existia na linha simples) foi portado por cima; a
+migration de Fornecedores foi corrigida pra lidar com o caso de a tabela simples já ter sido
+criada antes (ver seção 7, "Fornecedores"). **Antes de qualquer pedido novo, confirmar com ela**:
+(a) rodar as migrations `0038`/`0039`/`0040` no Supabase real — mesmo que uma versão anterior já
+tenha rodado alguma delas, rodar de novo é seguro e necessário (idempotentes, e a `0039` foi
+corrigida); (b) redeployar a Edge Function `redefinir-senha-operador` com o código atual (o que
+está publicado agora é a versão simples da linha de chat); (c) testar os 3 fluxos novos de
+verdade: Fornecedores com Pedido de Compra, redefinir senha com senha temporária + tela de trocar
+senha, e a trilha de Auditoria. Depois disso confirmado, ela mesma vai puxar a **emissão de nota
+fiscal** (Focus NFe, item 1 desta seção) assim que tiver o token de homologação. Ela só publica a
+próxima versão do instalador quando isso estiver pronto (ver aviso na seção 7, "Empacotamento").
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -776,26 +992,29 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
 URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0037` já foram confirmadas
 rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
-`0034`-`0037`, todas já testadas por ela de verdade). **`0038` (cria `fornecedores`) ainda não foi
-rodada por ela** — só validada localmente nesta sessão (ver seção 5).
+`0034`-`0037`, `0037` já testada na prática por ela). **`0038`/`0039`/`0040` têm um histórico
+confuso** por causa de duas sessões de trabalho paralelas (ver seção 10) — o mais seguro é ela
+rodar as três de novo agora, na ordem, mesmo que ache que já rodou antes (são idempotentes, e a
+`0039` foi corrigida nesta sessão pra não deixar colunas faltando num banco que já tinha uma
+versão mais simples de `fornecedores`). Ver "Reconciliar migrations 0038-0040" abaixo.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0038`. Todas são idempotentes.
+até `0040`. Todas são idempotentes.
 
-### Coisas pra confirmar que `0038` e as novidades desta sessão estão funcionando na prática
+### Reconciliar migrations `0038`-`0040` no Supabase real dela
 
-`0037` já foi confirmada por ela (número sequencial de OS, "Encerrar OS", split de pagamento,
-exclusão de loja vazia — todos testados). Falta ela rodar a migration `0038` no Supabase (passo
-acima) e testar o que foi implementado nesta sessão:
-1. Contas a Pagar → marcar uma conta como paga, depois usar "Desfazer pagamento" na lista "Pagas
-   recentemente" — deve voltar pra pendente e a Saída correspondente deve sumir do Caixa.
-2. Configurações → Operadores → "Redefinir senha" num operador (não o que está logado) — só
-   funciona depois de publicar a Edge Function nova (ver seção abaixo). Definir uma senha nova e
-   confirmar que dá pra entrar com ela.
-3. Fornecedores (novo item no menu lateral) → cadastrar um fornecedor de teste, editar, inativar.
+1. SQL Editor → rodar, nessa ordem, `0038_deve_trocar_senha.sql`, `0039_fornecedores_pedidos_compra.sql`
+   e `0040_auditoria.sql` — colar cada um numa "New query" e Run, mesmo que ela ache que alguma já
+   rodou antes.
+2. Conferir que `fornecedores` tem as colunas de endereço (`cep`/`rua`/`numero`/`bairro`/`cidade`/`uf`)
+   — Table Editor → `fornecedores` → checar as colunas. Se estiverem faltando, é sinal de que a
+   `0039` rodou antes da correção desta sessão; rodar de novo resolve.
+3. Redeployar a Edge Function `redefinir-senha-operador` (ver "Ativar a redefinição de senha
+   esquecida" abaixo) — o que está publicado hoje é uma versão mais simples, de uma sessão em
+   paralelo.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):
@@ -825,22 +1044,6 @@ chave de API. Feito pelo painel do Supabase, sem instalar nada no computador:
    Functions → "Add new secret") → nome `ANTHROPIC_API_KEY`, valor a chave do passo 1.
 4. Testar: **Estoque → Produtos → "Importar por foto/PDF"**.
 
-### Ativar "Redefinir senha de operador esquecida"
-
-Também depende de publicar uma Edge Function — mas essa **não precisa de nenhuma chave/conta
-externa** (só usa credenciais que o próprio Supabase já fornece pra função):
-
-1. Painel do projeto → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"** →
-   digitar o nome `redefinir-senha-operador` **no campo "Function name" antes de clicar em
-   Deploy** (mesma pegadinha do nome descasado do endereço, ver abaixo) → apagar o código de
-   exemplo e colar todo o conteúdo de `supabase/functions/redefinir-senha-operador/index.ts` →
-   **Deploy function**.
-2. Não precisa configurar secret nenhum — a função usa `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
-   `SUPABASE_SERVICE_ROLE_KEY`, que o Supabase já injeta automaticamente em toda Edge Function.
-3. Testar: **Configurações → Operadores → "Redefinir senha"** num operador que não seja você
-   mesma (só funciona pra quem administra aquele operador — admin de uma loja que ele também
-   acessa).
-
 **Se a função já estava publicada antes** (leitura só de fotos) e agora quer aceitar PDF também:
 volta no passo 2 e cola o conteúdo **atualizado** de `supabase/functions/ler-notas-fiscais/index.ts`
 por cima do código antigo (mesma função, só o código muda) — o app já manda arquivos com
@@ -857,6 +1060,47 @@ renomear ali **não muda o endereço real** da função. Se deployar com um nome
 digitando o nome certo **antes** do Deploy. Se acontecer de novo criando outra Edge Function,
 conferir se o endereço nos exemplos de `curl`/CLI da tela de configurações bate com o nome
 esperado, não confiar só no campo "Name".
+
+### Ativar a redefinição de senha esquecida
+
+Depois de rodar a migration `0038` (ver "Reconciliar migrations" acima), **é preciso (re)publicar
+a Edge Function** — mesmo que uma função com esse nome já exista publicada, porque o código de lá
+hoje é de uma versão mais simples (de uma sessão em paralelo). Não precisa de nenhum secret
+configurado (só usa chaves que o Supabase já injeta sozinho em toda função), diferente da
+`ler-notas-fiscais`.
+
+1. **Publicar a função** (ou substituir o código de uma já existente): painel do projeto →
+   **Edge Functions** → **"Deploy a new function"** →
+   **"Via Editor"** → digitar `redefinir-senha-operador` **no campo "Function name" antes de
+   clicar em Deploy** (mesma pegadinha da `ler-notas-fiscais`: renomear depois não muda o endereço
+   real) → apagar o código de exemplo e colar todo o conteúdo de
+   `supabase/functions/redefinir-senha-operador/index.ts` → **Deploy function**.
+2. Testar: **Configurações → Operadores → "Redefinir senha"** num operador qualquer (não precisa
+   ser ela mesma) — deve aparecer uma senha temporária num modal. Deslogar, entrar com essa senha
+   temporária, e confirmar que a tela "Crie uma senha nova" aparece antes de liberar o resto do
+   app.
+
+### Ativar o módulo de Fornecedores
+
+Depois de rodar a migration `0039` (ver "Reconciliar migrations" acima) — não precisa de Edge
+Function nem secret nenhum aqui, é só testar:
+
+1. Menu lateral → **Fornecedores** (aparece pra quem tem a permissão liberada, ou pra
+   admin) → aba "Cadastro", criar um fornecedor de teste → aba "Pedidos de compra", criar um
+   pedido com 1-2 itens de peça já cadastrada → "Receber" → confirmar quantidade → conferir que
+   apareceu um lançamento novo em Estoque → Movimentações (motivo "Compra") e que o status do
+   pedido mudou pra "Recebido".
+
+### Ativar a trilha de auditoria
+
+Só precisa da migration — sem Edge Function, sem secret.
+
+1. **Rodar a migration**: SQL Editor do Supabase → abrir `supabase/migrations/0040_auditoria.sql`,
+   copiar tudo, colar numa "New query" → Run.
+2. Testar: edite ou exclua algo numa das telas cobertas (ex: editar um Cliente, editar um
+   Operador, excluir um Fornecedor) → clique no ícone novo ao lado da engrenagem de Configurações
+   (rodapé do menu lateral, só aparece pra admin) → deve aparecer o registro na lista, com "Ver
+   detalhes" mostrando o que mudou.
 
 ### Gerar o instalador Windows e publicar uma versão nova
 
@@ -905,13 +1149,37 @@ sempre antes da tag, nunca depois.
   (descrição, o que mudou, quando foi confirmado) já fica registrado no próprio GitHub — não
   precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
   está na seção 7.
-- **Branch de trabalho atual desta sessão**: `claude/ssae-contexto-atual-jaqur8`.
+- **Episódio "duas linhas de trabalho paralelas" (agosto de 2026)** — vale entender pra não
+  repetir: na mesma janela de tempo, a usuária tinha (a) uma sessão de chat (esta) trabalhando
+  direto no GitHub, que implementou uma versão simples de Fornecedores + redefinir senha (modal de
+  admin) + desfazer pagamento, mesclou na `main` (PR #68) e pediu pra ela rodar a migration e
+  publicar a Edge Function no Supabase real — e (b), **sem essa sessão saber**, um trabalho bem
+  mais avançado feito **localmente no computador dela via Antigravity** (outra ferramenta de IA,
+  fora do Claude Code): mesmo módulo de Fornecedores só que com Pedido de Compra, um módulo de
+  Auditoria novo, testes automatizados (`vitest`), formulários inteiros migrados pro padrão
+  `react-hook-form`+`zod`, e um design visual novo (tema escuro/neon). Esse trabalho nunca tinha
+  sido commitado — só existia solto no computador dela. Quando ela tentou dar `git pull` pra pegar
+  o que a sessão (a) tinha mesclado, o Git recusou (com razão) porque isso apagaria o trabalho (b)
+  sem commit. Recuperado com `git stash -u` (nada foi perdido) e trazido pra uma branch própria
+  (`antigravity-trabalho-local`, criada a partir do commit anterior à mescla da sessão (a), pra o
+  `stash pop` encaixar sem conflito nenhum). A usuária decidiu que **o trabalho (b) — Antigravity —
+  vira a base principal**; o "desfazer pagamento" (que só existia em (a)) foi portado por cima; os
+  conflitos de merge entre as duas branches (`App.tsx`, `types/operador.ts`,
+  `ConfiguracoesPage.tsx`, `PROJETO_STATUS.md`, e a migration simples de Fornecedores da sessão (a),
+  removida por estar superada) foram resolvidos nesta sessão, sempre priorizando o lado do
+  Antigravity. **Lição pra sessões futuras**: se o `git pull`/`git checkout` mostrar uma lista
+  grande de arquivos modificados que a sessão não reconhece, é sinal de trabalho feito por fora do
+  Claude Code (outra ferramenta, ou direto pela usuária) — nunca descartar, sempre perguntar e
+  usar `git stash` antes de qualquer `pull`/`checkout` destrutivo.
+- **Branch de trabalho atual desta sessão**: `antigravity-trabalho-local` (mesclada na `main` ao
+  final desta sessão — ver PR aberta a partir dela).
 - `package.json` em `"version": "0.9.2"`. Tag publicada mais recente é `v0.9.0` (instalador
-  baixado e testado por ela). A `v0.9.2` foi combinada nesta sessão (ela decidiu publicar mesmo
-  sem a nota fiscal pronta, revendo a decisão antiga) — passo a passo do `git tag`/`git push` já
-  passado pra ela rodar no terminal dela, mas **ainda sem confirmação de que rodou** (a sessão
-  remota não tem permissão de git pra empurrar tags). Ver seção 7, "Empacotamento", e seção 8,
-  "Prioridade da próxima sessão".
+  baixado e testado por ela). Bastante coisa foi implementada depois dessa tag sem nova versão
+  publicada ainda (toda a lista de módulos novos desta seção). Ela só publica a próxima versão do
+  instalador quando a nota fiscal estiver pronta (ver seção 7, "Empacotamento") — decisão revista
+  numa sessão anterior pra publicar mesmo sem isso, mas sem confirmação de que a tag `v0.9.2`
+  chegou a ser criada; como esta sessão trouxe bastante coisa nova por cima (o trabalho do
+  Antigravity), vale re-perguntar antes de publicar qualquer tag.
 
 ## 11. Trabalhando de outro computador
 

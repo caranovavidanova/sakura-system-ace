@@ -1,83 +1,63 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { mensagemDeErro } from "@/lib/errors";
-import { TIPO_VEICULO_LABEL } from "@/types/cliente";
-import type { NovoCliente, NovoVeiculo, TipoVeiculo } from "@/types/cliente";
+import {
+  type ClienteFormValues,
+  clienteFormSchema,
+  paraNovoCliente,
+  paraValoresFormulario,
+  paraVeiculosPreenchidos,
+} from "@/schemas/cliente";
+import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
+import { DadosClienteFields } from "./campos/DadosClienteFields";
+import { EnderecoFields } from "./campos/EnderecoFields";
+import { VeiculosFields } from "./campos/VeiculosFields";
 
 interface ClienteFormProps {
-  onSalvar: (cliente: NovoCliente, veiculos: NovoVeiculo[]) => Promise<void>;
+  clienteExistente?: Cliente;
+  onSalvar: (cliente: NovoCliente, veiculos: VeiculoFormulario[]) => Promise<void>;
   onCancelar: () => void;
 }
 
-const clienteVazio: NovoCliente = {
-  nome: "",
-  tipo_pessoa: "fisica",
-  cpf_cnpj: "",
-  telefone: "",
-  email: "",
-  cep: "",
-  rua: "",
-  numero: "",
-  bairro: "",
-  cidade: "",
-  uf: "",
-  data_nascimento: null,
-};
-
-const veiculoVazio: NovoVeiculo = {
-  placa: "",
-  marca: "",
-  modelo: "",
-  ano: null,
-  cor: "",
-  tipo: null,
-  km_atual: null,
-};
-
-export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
-  const [cliente, setCliente] = useState<NovoCliente>(clienteVazio);
-  const [veiculos, setVeiculos] = useState<NovoVeiculo[]>([veiculoVazio]);
-  const [salvando, setSalvando] = useState(false);
+export function ClienteForm({
+  clienteExistente,
+  onSalvar,
+  onCancelar,
+}: ClienteFormProps) {
   const [erro, setErro] = useState<string | null>(null);
 
-  function atualizarVeiculo(index: number, patch: Partial<NovoVeiculo>) {
-    setVeiculos((atual) =>
-      atual.map((v, i) => (i === index ? { ...v, ...patch } : v)),
-    );
-  }
+  const {
+    register,
+    control,
+    watch,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ClienteFormValues>({
+    resolver: zodResolver(clienteFormSchema),
+    defaultValues: paraValoresFormulario(clienteExistente),
+  });
 
-  function adicionarVeiculo() {
-    setVeiculos((atual) => [...atual, { ...veiculoVazio }]);
-  }
-
-  function removerVeiculo(index: number) {
-    setVeiculos((atual) => atual.filter((_, i) => i !== index));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function aoSubmeter(valores: ClienteFormValues) {
     setErro(null);
-    setSalvando(true);
     try {
-      const veiculosPreenchidos = veiculos.filter((v) => v.placa.trim());
-      await onSalvar(cliente, veiculosPreenchidos);
+      await onSalvar(paraNovoCliente(valores), paraVeiculosPreenchidos(valores.veiculos));
     } catch (err) {
       console.error("Erro ao salvar cliente:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setSalvando(false);
     }
   }
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(aoSubmeter)}
       className="space-y-6 sakura-card p-6 shadow-sm"
     >
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <h2 className="text-lg font-semibold text-sakura-purple-dark">
-          Novo cliente
+          {clienteExistente ? "Editar cliente" : "Novo cliente"}
         </h2>
       </div>
 
@@ -87,200 +67,13 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
         </p>
       )}
 
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-          Dados do cliente
-        </h3>
-        <div className="mb-4 flex gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="tipo_pessoa"
-              checked={cliente.tipo_pessoa === "fisica"}
-              onChange={() => setCliente({ ...cliente, tipo_pessoa: "fisica" })}
-              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
-            />
-            <span className="text-sakura-purple-dark/80">Pessoa física</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="tipo_pessoa"
-              checked={cliente.tipo_pessoa === "juridica"}
-              onChange={() => setCliente({ ...cliente, tipo_pessoa: "juridica" })}
-              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
-            />
-            <span className="text-sakura-purple-dark/80">Pessoa jurídica</span>
-          </label>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Campo
-            label={cliente.tipo_pessoa === "juridica" ? "Razão social" : "Nome completo"}
-            required
-            value={cliente.nome}
-            onChange={(v) => setCliente({ ...cliente, nome: v })}
-          />
-          <Campo
-            label={cliente.tipo_pessoa === "juridica" ? "CNPJ" : "CPF"}
-            value={cliente.cpf_cnpj ?? ""}
-            onChange={(v) => setCliente({ ...cliente, cpf_cnpj: v })}
-          />
-          <Campo
-            label="Telefone"
-            value={cliente.telefone ?? ""}
-            onChange={(v) => setCliente({ ...cliente, telefone: v })}
-          />
-          <Campo
-            label="E-mail"
-            value={cliente.email ?? ""}
-            onChange={(v) => setCliente({ ...cliente, email: v })}
-          />
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-sakura-purple-dark/80">Data de nascimento</span>
-            <input
-              type="date"
-              value={cliente.data_nascimento ?? ""}
-              onChange={(e) =>
-                setCliente({ ...cliente, data_nascimento: e.target.value || null })
-              }
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-            />
-          </label>
-        </div>
-      </section>
-
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-          Endereço
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          <Campo
-            label="CEP"
-            value={cliente.cep ?? ""}
-            onChange={(v) => setCliente({ ...cliente, cep: v })}
-          />
-          <Campo
-            label="Rua"
-            value={cliente.rua ?? ""}
-            onChange={(v) => setCliente({ ...cliente, rua: v })}
-          />
-          <Campo
-            label="Número"
-            value={cliente.numero ?? ""}
-            onChange={(v) => setCliente({ ...cliente, numero: v })}
-          />
-          <Campo
-            label="Bairro"
-            value={cliente.bairro ?? ""}
-            onChange={(v) => setCliente({ ...cliente, bairro: v })}
-          />
-          <Campo
-            label="Cidade"
-            value={cliente.cidade ?? ""}
-            onChange={(v) => setCliente({ ...cliente, cidade: v })}
-          />
-          <Campo
-            label="UF"
-            value={cliente.uf ?? ""}
-            onChange={(v) => setCliente({ ...cliente, uf: v.toUpperCase() })}
-          />
-        </div>
-      </section>
-
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
-          Veículos
-        </h3>
-
-        <div className="space-y-4">
-          {veiculos.map((veiculo, index) => (
-            <div
-              key={index}
-              className="relative rounded-xl border border-sakura-gray/30 p-4"
-            >
-              {veiculos.length > 1 && (
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-medium text-sakura-muted">
-                    Veículo {index + 1}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => removerVeiculo(index)}
-                    className="text-xs font-medium text-red-600 hover:underline"
-                  >
-                    Remover
-                  </button>
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-4">
-                <Campo
-                  label="Placa"
-                  value={veiculo.placa}
-                  onChange={(v) =>
-                    atualizarVeiculo(index, { placa: v.toUpperCase() })
-                  }
-                />
-                <Campo
-                  label="Marca"
-                  value={veiculo.marca ?? ""}
-                  onChange={(v) => atualizarVeiculo(index, { marca: v })}
-                />
-                <Campo
-                  label="Modelo"
-                  value={veiculo.modelo ?? ""}
-                  onChange={(v) => atualizarVeiculo(index, { modelo: v })}
-                />
-                <Campo
-                  label="Ano"
-                  value={veiculo.ano?.toString() ?? ""}
-                  onChange={(v) =>
-                    atualizarVeiculo(index, { ano: v ? Number(v) : null })
-                  }
-                />
-                <Campo
-                  label="Cor"
-                  value={veiculo.cor ?? ""}
-                  onChange={(v) => atualizarVeiculo(index, { cor: v })}
-                />
-                <Campo
-                  label="KM atual"
-                  value={veiculo.km_atual?.toString() ?? ""}
-                  onChange={(v) =>
-                    atualizarVeiculo(index, { km_atual: v ? Number(v) : null })
-                  }
-                />
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="text-sakura-purple-dark/80">Tipo</span>
-                  <select
-                    value={veiculo.tipo ?? ""}
-                    onChange={(e) =>
-                      atualizarVeiculo(index, {
-                        tipo: (e.target.value || null) as TipoVeiculo | null,
-                      })
-                    }
-                    className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-                  >
-                    <option value="">Selecione...</option>
-                    {(Object.keys(TIPO_VEICULO_LABEL) as TipoVeiculo[]).map((chave) => (
-                      <option key={chave} value={chave}>
-                        {TIPO_VEICULO_LABEL[chave]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={adicionarVeiculo}
-          className="mt-4 text-xs font-medium text-sakura-purple hover:underline"
-        >
-          + Adicionar veículo
-        </button>
-      </section>
+      <DadosClienteFields
+        register={register}
+        errors={errors}
+        tipoPessoa={watch("tipo_pessoa")}
+      />
+      <EnderecoFields register={register} />
+      <VeiculosFields control={control} register={register} />
 
       <div className="flex justify-end gap-3">
         <button
@@ -292,40 +85,16 @@ export function ClienteForm({ onSalvar, onCancelar }: ClienteFormProps) {
         </button>
         <button
           type="submit"
-          disabled={salvando}
+          disabled={isSubmitting}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : "Salvar cliente"}
+          {isSubmitting
+            ? "Salvando..."
+            : clienteExistente
+              ? "Salvar alterações"
+              : "Salvar cliente"}
         </button>
       </div>
     </form>
-  );
-}
-
-function Campo({
-  label,
-  value,
-  onChange,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="text-sakura-purple-dark/80">
-        {label}
-        {required && <span className="text-red-500"> *</span>}
-      </span>
-      <input
-        type="text"
-        value={value}
-        required={required}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-      />
-    </label>
   );
 }

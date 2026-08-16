@@ -24,18 +24,18 @@ export async function criarFornecedor(fornecedor: NovoFornecedor): Promise<Forne
 
 export async function atualizarFornecedor(
   id: string,
-  fornecedor: NovoFornecedor,
+  patch: Partial<NovoFornecedor>,
 ): Promise<void> {
-  const { error } = await supabase.from("fornecedores").update(fornecedor).eq("id", id);
-  if (error) throw error;
-}
-
-export async function excluirFornecedor(id: string): Promise<void> {
-  const { error } = await supabase.from("fornecedores").delete().eq("id", id);
+  const { error } = await supabase.from("fornecedores").update(patch).eq("id", id);
   if (error) throw error;
 }
 
 export async function atualizarStatusFornecedor(id: string, ativo: boolean): Promise<void> {
   const { error } = await supabase.from("fornecedores").update({ ativo }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function excluirFornecedor(id: string): Promise<void> {
+  const { error } = await supabase.from("fornecedores").delete().eq("id", id);
   if (error) throw error;
 }

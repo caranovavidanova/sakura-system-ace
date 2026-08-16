@@ -171,7 +171,7 @@ export function GraficosSection({ movimentos }: GraficosSectionProps) {
           <h2 className="text-sm font-semibold text-sakura-purple-dark">
             Vendas x Custos x Lucro
           </h2>
-          <div className="flex gap-1 rounded-full bg-white/50 p-1">
+          <div className="flex gap-1 rounded-full bg-white/10 p-1">
             {PERIODOS.map((p) => (
               <button
                 key={p.chave}
@@ -179,7 +179,7 @@ export function GraficosSection({ movimentos }: GraficosSectionProps) {
                 className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                   periodo === p.chave
                     ? "bg-sakura-purple text-white"
-                    : "text-sakura-purple-dark/85 hover:bg-white/60"
+                    : "text-sakura-purple-dark/85 hover:bg-white/10"
                 }`}
               >
                 {p.label}

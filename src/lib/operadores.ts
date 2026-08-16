@@ -67,15 +67,26 @@ export async function atualizarOperador(
   if (error) throw error;
 }
 
-// Redefine a senha de um operador esquecida — só quem é admin de uma loja
-// que esse operador também acessa consegue (checado dentro da Edge Function,
-// que é quem de fato troca a senha via service role key).
-export async function redefinirSenhaOperador(
-  operadorAlvoId: string,
-  novaSenha: string,
-): Promise<void> {
+// Só admin consegue de verdade — a Edge Function confere isso de novo do
+// lado do servidor antes de mudar qualquer coisa (ver
+// supabase/functions/redefinir-senha-operador). Devolve a senha temporária
+// gerada, pra admin repassar ao operador (por WhatsApp, pessoalmente etc.) —
+// ela só aparece essa vez, o app não guarda em lugar nenhum.
+export async function redefinirSenhaOperador(operadorId: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke("redefinir-senha-operador", {
-    body: { operadorAlvoId, novaSenha },
+    body: { acao: "redefinir", operadorId },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  if (!data?.senhaTemporaria) throw new Error("Não foi possível redefinir a senha.");
+  return data.senhaTemporaria as string;
+}
+
+// Chamado depois que o próprio operador já trocou a senha de verdade (ver
+// trocarSenhaPropria em lib/auth.ts) — limpa a marca de troca obrigatória.
+export async function confirmarTrocaSenha(): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("redefinir-senha-operador", {
+    body: { acao: "confirmar-troca" },
   });
   if (error) throw error;
   if (data?.error) throw new Error(data.error);

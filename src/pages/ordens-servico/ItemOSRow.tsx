@@ -1,102 +1,90 @@
+import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { Combobox } from "@/components/Combobox";
+import { paraDisplayNumero, type OrdemServicoFormValues } from "@/schemas/ordemServico";
 import type { Funcionario } from "@/types/funcionario";
+import type { TipoItemOS } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
-import type { NovoItemOS, TipoItemOS } from "@/types/os";
 
 interface ItemOSRowProps {
-  item: NovoItemOS;
+  index: number;
+  register: UseFormRegister<OrdemServicoFormValues>;
+  watch: UseFormWatch<OrdemServicoFormValues>;
+  setValue: UseFormSetValue<OrdemServicoFormValues>;
   pecas: Peca[];
   servicos: Servico[];
   funcionarios: Funcionario[];
-  onChange: (item: NovoItemOS) => void;
   onRemover: () => void;
 }
 
-const SERVICO_AVULSO = "avulso";
-
 export function ItemOSRow({
-  item,
+  index,
+  register,
+  watch,
+  setValue,
   pecas,
   servicos,
   funcionarios,
-  onChange,
   onRemover,
 }: ItemOSRowProps) {
-  function handleTipoChange(tipo: TipoItemOS) {
-    onChange({
-      ...item,
-      tipo,
-      peca_id: null,
-      servico_id: null,
-      descricao: "",
-      preco_unitario: 0,
-    });
+  const tipo = watch(`itens.${index}.tipo`);
+  const pecaId = watch(`itens.${index}.peca_id`);
+  const servicoId = watch(`itens.${index}.servico_id`);
+
+  function aoMudarTipo(tipo: TipoItemOS) {
+    setValue(`itens.${index}.tipo`, tipo);
+    setValue(`itens.${index}.peca_id`, "");
+    setValue(`itens.${index}.servico_id`, "");
+    setValue(`itens.${index}.descricao`, "");
+    setValue(`itens.${index}.preco_unitario`, "");
   }
 
-  function handlePecaChange(pecaId: string) {
+  function aoMudarPeca(pecaId: string) {
     const peca = pecas.find((p) => p.id === pecaId);
-    onChange({
-      ...item,
-      peca_id: pecaId || null,
-      descricao: peca?.descricao ?? "",
-      preco_unitario: peca?.preco_venda ?? 0,
-    });
+    setValue(`itens.${index}.peca_id`, pecaId);
+    setValue(`itens.${index}.descricao`, peca?.descricao ?? "");
+    setValue(`itens.${index}.preco_unitario`, paraDisplayNumero(peca?.preco_venda ?? 0));
   }
 
-  function handleServicoChange(valor: string) {
-    if (valor === SERVICO_AVULSO) {
-      onChange({ ...item, servico_id: null, descricao: "", preco_unitario: 0 });
-      return;
-    }
-    const servico = servicos.find((s) => s.id === valor);
-    onChange({
-      ...item,
-      servico_id: valor,
-      descricao: servico?.descricao ?? "",
-      preco_unitario: servico?.preco_padrao ?? 0,
-    });
+  function aoMudarServico(servicoId: string) {
+    const servico = servicos.find((s) => s.id === servicoId);
+    setValue(`itens.${index}.servico_id`, servicoId);
+    setValue(`itens.${index}.descricao`, servico?.descricao ?? "");
+    setValue(`itens.${index}.preco_unitario`, paraDisplayNumero(servico?.preco_padrao ?? 0));
   }
 
-  const servicoEhAvulso = item.tipo === "servico" && !item.servico_id;
+  const servicoEhAvulso = tipo === "servico" && !servicoId;
 
   return (
     <div className="space-y-2 rounded-lg border border-sakura-gray/30 p-3">
       <div className="flex gap-2">
         <select
-          value={item.tipo}
-          onChange={(e) => handleTipoChange(e.target.value as TipoItemOS)}
+          value={tipo}
+          onChange={(e) => aoMudarTipo(e.target.value as TipoItemOS)}
           className="w-28 shrink-0 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
         >
           <option value="peca">Peça</option>
           <option value="servico">Serviço</option>
         </select>
 
-        {item.tipo === "peca" ? (
-          <select
-            value={item.peca_id ?? ""}
-            onChange={(e) => handlePecaChange(e.target.value)}
-            className="flex-1 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
-          >
-            <option value="">Selecione a peça</option>
-            {pecas.map((peca) => (
-              <option key={peca.id} value={peca.id}>
-                {peca.descricao}
-              </option>
-            ))}
-          </select>
+        {tipo === "peca" ? (
+          <Combobox
+            className="flex-1"
+            opcoes={pecas.map((peca) => ({ valor: peca.id, rotulo: peca.descricao }))}
+            valor={pecaId}
+            onMudar={aoMudarPeca}
+            opcaoVazia="Selecione a peça"
+            placeholder="Selecione a peça"
+          />
         ) : (
-          <select
-            value={item.servico_id ?? SERVICO_AVULSO}
-            onChange={(e) => handleServicoChange(e.target.value)}
-            className="flex-1 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
-          >
-            <option value={SERVICO_AVULSO}>Serviço avulso (digitar abaixo)</option>
-            {servicos.map((servico) => (
-              <option key={servico.id} value={servico.id}>
-                {servico.descricao}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            className="flex-1"
+            opcoes={servicos.map((servico) => ({ valor: servico.id, rotulo: servico.descricao }))}
+            valor={servicoId}
+            onMudar={aoMudarServico}
+            opcaoVazia="Serviço avulso (digitar abaixo)"
+            placeholder="Serviço avulso (digitar abaixo)"
+          />
         )}
 
         <button
@@ -112,8 +100,7 @@ export function ItemOSRow({
         <input
           type="text"
           placeholder="Descrição do serviço"
-          value={item.descricao}
-          onChange={(e) => onChange({ ...item, descricao: e.target.value })}
+          {...register(`itens.${index}.descricao`)}
           className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
         />
       )}
@@ -125,8 +112,7 @@ export function ItemOSRow({
             type="number"
             min="0.01"
             step="0.01"
-            value={item.quantidade || ""}
-            onChange={(e) => onChange({ ...item, quantidade: Number(e.target.value) })}
+            {...register(`itens.${index}.quantidade`)}
             className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
           />
         </label>
@@ -137,8 +123,7 @@ export function ItemOSRow({
             type="number"
             min="0"
             step="0.01"
-            value={item.preco_unitario || ""}
-            onChange={(e) => onChange({ ...item, preco_unitario: Number(e.target.value) })}
+            {...register(`itens.${index}.preco_unitario`)}
             className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
           />
         </label>
@@ -149,26 +134,23 @@ export function ItemOSRow({
             type="number"
             min="0"
             step="0.01"
-            value={item.desconto || ""}
-            onChange={(e) => onChange({ ...item, desconto: Number(e.target.value) })}
+            {...register(`itens.${index}.desconto`)}
             className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
           />
         </label>
 
         <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
           Técnico
-          <select
-            value={item.tecnico_id ?? ""}
-            onChange={(e) => onChange({ ...item, tecnico_id: e.target.value || null })}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
-          >
-            <option value="">Sem técnico definido</option>
-            {funcionarios.map((funcionario) => (
-              <option key={funcionario.id} value={funcionario.id}>
-                {funcionario.nome}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            opcoes={funcionarios.map((funcionario) => ({
+              valor: funcionario.id,
+              rotulo: funcionario.nome,
+            }))}
+            valor={watch(`itens.${index}.tecnico_id`)}
+            onMudar={(v) => setValue(`itens.${index}.tecnico_id`, v)}
+            opcaoVazia="Sem técnico definido"
+            placeholder="Sem técnico definido"
+          />
         </label>
       </div>
     </div>

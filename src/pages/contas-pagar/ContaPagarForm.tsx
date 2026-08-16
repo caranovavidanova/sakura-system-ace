@@ -1,6 +1,15 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { Combobox } from "@/components/Combobox";
 import { mensagemDeErro } from "@/lib/errors";
+import {
+  contaPagarFormSchema,
+  contaPagarFormVazio,
+  paraNovaContaPagar,
+  type ContaPagarFormValues,
+} from "@/schemas/contaPagar";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { NovaContaPagar } from "@/types/contaPagar";
 
@@ -11,45 +20,32 @@ interface ContaPagarFormProps {
 }
 
 export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarFormProps) {
-  const [descricao, setDescricao] = useState("");
-  const [valor, setValor] = useState("");
-  const [vencimento, setVencimento] = useState("");
-  const [categoriaId, setCategoriaId] = useState("");
-  const [recorrente, setRecorrente] = useState(false);
-  const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-
   const categoriasSaida = categorias.filter((c) => c.tipo === "saida");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const {
+    register,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ContaPagarFormValues>({
+    resolver: zodResolver(contaPagarFormSchema),
+    defaultValues: contaPagarFormVazio,
+  });
+
+  async function aoSubmeter(valores: ContaPagarFormValues) {
     setErro(null);
-
-    const valorNumero = Number(valor);
-    if (!descricao.trim() || !valorNumero || valorNumero <= 0 || !vencimento) {
-      setErro("Preencha descrição, valor e vencimento.");
-      return;
-    }
-
-    setSalvando(true);
     try {
-      await onSalvar({
-        descricao: descricao.trim(),
-        valor: valorNumero,
-        vencimento,
-        categoria_id: categoriaId || null,
-        recorrente,
-      });
+      await onSalvar(paraNovaContaPagar(valores));
     } catch (err) {
       console.error("Erro ao cadastrar conta a pagar:", err);
       setErro(mensagemDeErro(err));
-    } finally {
-      setSalvando(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 sakura-card p-6 shadow-sm">
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <h2 className="text-lg font-semibold text-sakura-purple-dark">Nova conta</h2>
@@ -64,11 +60,13 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
           </span>
           <input
             type="text"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
             placeholder="Ex: Aluguel"
+            {...register("descricao")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
+          {errors.descricao && (
+            <span className="text-xs text-red-600">{errors.descricao.message}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
@@ -79,10 +77,10 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
             type="number"
             min="0.01"
             step="0.01"
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
+            {...register("valor")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
+          {errors.valor && <span className="text-xs text-red-600">{errors.valor.message}</span>}
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
@@ -91,33 +89,32 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
           </span>
           <input
             type="date"
-            value={vencimento}
-            onChange={(e) => setVencimento(e.target.value)}
+            {...register("vencimento")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
           />
+          {errors.vencimento && (
+            <span className="text-xs text-red-600">{errors.vencimento.message}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-sakura-purple-dark/80">Categoria (opcional)</span>
-          <select
-            value={categoriaId}
-            onChange={(e) => setCategoriaId(e.target.value)}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
-          >
-            <option value="">Sem categoria</option>
-            {categoriasSaida.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.nome}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            opcoes={categoriasSaida.map((categoria) => ({
+              valor: categoria.id,
+              rotulo: categoria.nome,
+            }))}
+            valor={watch("categoria_id")}
+            onMudar={(v) => setValue("categoria_id", v)}
+            opcaoVazia="Sem categoria"
+            placeholder="Sem categoria"
+          />
         </label>
 
         <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
           <input
             type="checkbox"
-            checked={recorrente}
-            onChange={(e) => setRecorrente(e.target.checked)}
+            {...register("recorrente")}
             className="h-4 w-4 rounded border-sakura-gray/40"
           />
           Conta mensal recorrente (ao pagar, já cria a próxima automaticamente)
@@ -134,10 +131,10 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
         </button>
         <button
           type="submit"
-          disabled={salvando}
+          disabled={isSubmitting}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : "Cadastrar"}
+          {isSubmitting ? "Salvando..." : "Cadastrar"}
         </button>
       </div>
     </form>

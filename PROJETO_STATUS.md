@@ -206,7 +206,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
-│   │                             # fornecedores.ts + pedidosCompra.ts (módulo de Fornecedores) +
+│   │                             # fornecedores.ts + pedidosCompra.ts + cotacoesPecas.ts (histórico
+│   │                             # de preço por fornecedor, ver "Cotação de peças" na seção 7 —
+│   │                             # módulo de Fornecedores) +
 │   │                             # auditoria.ts (só leitura — `listarAuditoria`, filtra por
 │   │                             # tabela/operador; a escrita é 100% via trigger de banco, ver
 │   │                             # seção 5)
@@ -235,11 +237,13 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                   # foto), Movimentações (MovimentacoesSection.tsx + MovimentoForm.tsx),
 │   │                   # Contagem (ContagemSection.tsx — inventário físico), Relatórios
 │   │                   # (RelatoriosEstoqueSection.tsx). Sem módulo "Peças" separado.
-│   │   fornecedores/   # FornecedoresPage.tsx (orquestrador de abas — módulo novo nesta sessão)
-│   │                   # com abas "Cadastro" (FornecedoresSection.tsx + FornecedorForm.tsx, igual
-│   │                   # padrão Clientes/Serviços) e "Pedidos de compra" (PedidosCompraSection.tsx
-│   │                   # + PedidoCompraForm.tsx — itens via useFieldArray, igual OS — +
-│   │                   # ReceberPedidoModal.tsx, ver seção 7)
+│   │   fornecedores/   # FornecedoresPage.tsx (orquestrador de abas) com abas "Cadastro"
+│   │                   # (FornecedoresSection.tsx + FornecedorForm.tsx, igual padrão
+│   │                   # Clientes/Serviços) e "Pedidos de compra" (PedidosCompraSection.tsx +
+│   │                   # PedidoCompraForm.tsx — itens via useFieldArray, igual OS — +
+│   │                   # PedidoCompraItemRow.tsx, mesmo espírito do ItemOSRow.tsx: mostra as
+│   │                   # cotações anteriores daquela peça por fornecedor ao escolher a peça, com
+│   │                   # botão "usar esse preço" — + ReceberPedidoModal.tsx, ver seção 7)
 │   │   garantias/      # GarantiasPage.tsx é só lista (deriva de ordens_servico_itens +
 │   │                   # pecas.prazo_garantia_dias, sem tabela própria)
 │   │   servicos/       # catálogo de serviços, só lista + form (com categoria via
@@ -290,7 +294,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │                                  # configuracao.ts (JurosParcela, ConfiguracaoGarantia,
 │                                  # ConfiguracaoFiscalLoja — todas com `loja_id` no lugar do antigo
 │                                  # `id: 1`, ver seção 5) + itemNotaFiscal.ts (item extraído da
-│                                  # leitura por IA)
+│                                  # leitura por IA) + cotacaoPeca.ts (histórico de preço por
+│                                  # fornecedor, sem `loja_id` — compartilhado, ver seção 7)
 ├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
@@ -431,7 +436,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   seção 7.
 - `0041` (criada e validada localmente nesta sessão — Postgres local, rodada duas vezes pra provar
   idempotência, e com um teste manual de RLS trocando de papel/`auth.uid()` simulado pra confirmar
-  que balconista só vê depósito da própria loja e só admin cria/edita; **ainda não confirmada por
+  que balconista só vê depósito da própria loja e só admin cria/edita; **já rodada e confirmada por
   ela no Supabase real**): cria o cadastro de Depósito — tabela `depositos` (locais físicos de
   estoque dentro de uma loja, ex: "Depósito Principal", "Fundos") + `deposito_id` em
   `estoque_movimentos` e `contagens_estoque` (mesmo padrão nullable → backfill → not null das
@@ -440,6 +445,12 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   `lib/lojas.ts` → `criarLoja()`) já nasce com um "Depósito Principal" sozinho, então nada muda pra
   quem usa um só lugar físico. Ver "Depósitos" na seção 7 e a subseção logo abaixo dos tipos de
   `estoque_movimentos`/`contagens_estoque`.
+- `0042` (criada e validada localmente nesta sessão — Postgres local, rodada duas vezes pra provar
+  idempotência, RLS conferida com `authenticated`/`auth.uid()` simulado; **ainda não confirmada por
+  ela no Supabase real**): cria `cotacoes_pecas` — histórico de preço por fornecedor (peça,
+  fornecedor, preço, data), compartilhado entre lojas (mesmo padrão RLS de `fornecedores`: qualquer
+  logado lê/grava, sem escopo de loja). Gravado sozinho pelo app a cada Pedido de Compra com preço
+  (não tem formulário próprio) — ver "Cotação de peças" na seção 7.
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -544,6 +555,11 @@ outro projeto Supabase do zero (ver seção 9).
   quantidade_pedida, preco_unitario (opcional), quantidade_recebida (default 0, soma conforme a
   usuária confirma recebimentos — pode ser parcial, em mais de uma vez). Sem `loja_id` próprio,
   herda via `pedido_compra_id` (mesmo padrão de `ordens_servico_itens`).
+- **`cotacoes_pecas`** (compartilhado entre lojas, migration `0042`): id, peca_id (FK pecas),
+  fornecedor_id (FK fornecedores), preco, criado_em. Tabela só de histórico — **não editável nem
+  excluível pelo app**, sempre insert: toda vez que um Pedido de Compra é criado com preço numa
+  peça, uma linha nova é gravada aqui sozinha (`lib/pedidosCompra.ts` → `criarPedido()`). Ver
+  "Cotação de peças" na seção 7.
 - **`depositos`** (migration `0041`): id, loja_id (FK lojas), nome, ativo, criado_em. Locais
   físicos de estoque dentro de uma loja (ex: "Depósito Principal", "Fundos") — gerenciado em
   Configurações (admin), igual padrão de `categorias`/`categorias_caixa` (sem exclusão de verdade,
@@ -870,6 +886,12 @@ normal (quebra de linha).
   — mas vale confirmar rodando de novo, não assumir que já está certo.
   "Pedidos de compra" — por loja, número sequencial (`numero`, mesmo padrão de OS), itens de peça
   com quantidade pedida + preço unitário, status (`pendente`/`parcial`/`recebido`/`cancelado`).
+  **Cotação de peças (nova nesta sessão)**: ao escolher a peça num item do pedido, aparece um
+  resumo das cotações anteriores daquela peça por fornecedor (mais barato primeiro, com a data da
+  última compra), com um botão "usar esse preço" que preenche o campo — sem tela/formulário
+  próprio, é só isso mesmo (`PedidoCompraItemRow.tsx` + `lib/cotacoesPecas.ts`). Toda vez que um
+  pedido é criado com preço numa peça, a cotação daquele fornecedor pra aquela peça é gravada
+  sozinha (histórico completo, nunca sobrescreve — ver tabela `cotacoes_pecas` na seção 5).
   Botão **"Receber"** abre uma conferência: a usuária confirma quanto chegou de cada item (pode
   ser parcial, em mais de uma vez) e o sistema já lança a entrada em Estoque → Movimentações
   sozinho (motivo "Compra"), soma na quantidade recebida do item, e recalcula o status do pedido
@@ -1001,18 +1023,20 @@ normal (quebra de linha).
    funcionalidades que um sistema de referência (S3Auto/Comsis) também costuma ter, antes de
    atacar a emissão de nota fiscal (item 1 desta seção):
    1. ✅ **Cadastro de Depósito** (múltiplos locais físicos de estoque dentro da mesma loja) —
-      **construído nesta sessão**, ver "Depósitos" na seção 7 e migration `0041` na seção 5.
-      **Falta ela rodar a migration `0041` no Supabase real** (ver seção 9) antes de usar de
-      verdade.
-   2. **Cotação de Peças por fornecedor** (comparar preço do mesmo item entre fornecedores
-      diferentes antes de decidir onde comprar) — não existe ainda, Pedido de Compra hoje já
-      assume qual fornecedor foi escolhido. Próximo item da lista.
+      **construído nesta sessão e já confirmado por ela funcionando de verdade** (rodou a
+      migration `0041` e testou o cadastro), ver "Depósitos" na seção 7 e migration `0041` na
+      seção 5.
+   2. ✅ **Cotação de Peças por fornecedor** (comparar preço do mesmo item entre fornecedores
+      diferentes antes de decidir onde comprar) — **construída nesta sessão**, ver "Cotação de
+      peças" na seção 7 e migration `0042` na seção 5. **Falta ela rodar a migration `0042` no
+      Supabase real** (ver seção 9) antes de aparecer o histórico de preço nos Pedidos de Compra.
    3. **Entrada de Produtos via NFe de verdade** (importar o **arquivo XML** da nota fiscal do
       fornecedor e extrair os itens automaticamente) — o que existe hoje é diferente: "Receber
       pedido" é conferência manual (a usuária digita/confirma as quantidades que chegaram, sem
       ler nenhum arquivo). Importar XML de verdade é viável (é um formato público/estável, ao
       contrário da API do Focus NFe) — pensado pra se apoiar no Depósito (escolher onde a
-      mercadoria entrou) e na Cotação (registrar o preço automaticamente) já prontos antes dela.
+      mercadoria entrou) e na Cotação (registrar o preço automaticamente), ambos já prontos.
+      Próximo item da lista.
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
      implementada) — sem ordem definida ainda, fica pra depois dessas três.
 6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
@@ -1066,20 +1090,22 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0040` já foram confirmadas
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0041` já foram confirmadas
 rodando sem erro nesse projeto (incluindo a fundação multi-loja, as correções/módulos novos
-`0034`-`0037`, e `0038`/`0039`/`0040` — apesar do histórico confuso de duas sessões de trabalho
+`0034`-`0037`, `0038`/`0039`/`0040` — apesar do histórico confuso de duas sessões de trabalho
 paralelas que rodaram nomes de migration conflitantes, ver seção 10, o resultado final já foi
 confirmado funcionando de verdade por ela: Fornecedores com endereço completo, redefinir senha, e
-Auditoria, todos testados na prática). **`0041` (Depósito) ainda não foi rodada por ela** — só
-validada localmente nesta sessão (Postgres local, idempotência + RLS testadas de verdade, ver
-seção 5) — falta rodar no SQL Editor do Supabase real antes de usar o cadastro de Depósito.
+Auditoria, todos testados na prática — e `0041`, o cadastro de Depósito, também já rodada e
+testada por ela). **`0042` (Cotação de peças) ainda não foi rodada por ela** — só validada
+localmente nesta sessão (Postgres local, idempotência + RLS testadas de verdade, ver seção 5) —
+falta rodar no SQL Editor do Supabase real antes do histórico de cotação aparecer nos Pedidos de
+Compra.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0041`. Todas são idempotentes.
+até `0042`. Todas são idempotentes.
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 

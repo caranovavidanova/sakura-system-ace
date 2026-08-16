@@ -1,3 +1,4 @@
+import { registrarCotacoes } from "./cotacoesPecas";
 import { criarMovimento } from "./estoque";
 import { supabase } from "./supabase";
 import { nomePedido } from "@/types/pedidoCompra";
@@ -38,6 +39,19 @@ export async function criarPedido(
     itens.map((item) => ({ ...item, pedido_compra_id: pedidoCriado.id })),
   );
   if (erroItens) throw erroItens;
+
+  // Todo item com preço lançado vira uma cotação nova — sem formulário
+  // próprio pra preencher, ver "Cotação de peças por fornecedor" no
+  // PROJETO_STATUS.md.
+  await registrarCotacoes(
+    itens
+      .filter((item) => item.preco_unitario !== null)
+      .map((item) => ({
+        peca_id: item.peca_id,
+        fornecedor_id: pedido.fornecedor_id,
+        preco: item.preco_unitario as number,
+      })),
+  );
 
   return pedidoCriado as PedidoCompra;
 }

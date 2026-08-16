@@ -922,9 +922,7 @@ normal (quebra de linha).
    (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
    homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
    campos**.
-2. **Redefinir senha de operador esquecida — implementado, falta ela publicar** (migration `0038`
-   + Edge Function `redefinir-senha-operador`, ver seção 7 "Login e permissões" e o passo a passo
-   na seção 9). **Site externo de assinatura** que cria a primeira conta de cada loja
+2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.
 3. **Logo oficial** — pegar o arquivo `.svg` real da usuária como **anexo** (não colado no chat) e

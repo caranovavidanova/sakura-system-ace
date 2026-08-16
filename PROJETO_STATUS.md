@@ -20,6 +20,9 @@
 - **Instalador Windows**: ela baixa e instala primeiro na **própria máquina dela** (não a da
   borracharia) pra testar antes de levar pra loja de verdade — bom lembrar disso ao dar
   instruções de instalação/teste, não assumir que já está testando no ambiente de produção.
+- **A borracharia é do pai dela** — ela é quem constrói o sistema, mas quem vai operar no dia a
+  dia é o pai (e funcionários da loja dele). A primeira versão "de verdade" só vai pra lá quando
+  ela achar que está pronta o suficiente (ver decisão sobre nota fiscal/lançamento na seção 8).
 - E-mail: caranovavidanova@gmail.com.
 - **A organização atual de módulos/abas no menu lateral e dentro de cada tela** (ex: Caixa com
   abas Diário/Entradas/Saídas, "Contas a Pagar" como módulo próprio) **é provisória** — a usuária
@@ -912,21 +915,24 @@ normal (quebra de linha).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
-1. **Parte fiscal (prioridade alta, NÃO bloqueia o uso na loja)**: emissão de NFC-e (peças) e
-   NFS-e (serviço). **Provedor escolhido: Focus NFe, plano básico** — usuária ainda não assinou,
-   pediu pra deixar o código "semi pronto" antes. Já feito: modelagem dos dados fiscais da loja
-   (`configuracoes_fiscais_loja`) + tela em Configurações + a "casca" da integração HTTP
-   (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a função de emissão de verdade
-   (`emitirNFCe()`) — não foi possível confirmar o formato exato do corpo da requisição (CFOP/NCM/
-   ICMS por item) contra a documentação oficial do Focus NFe a partir deste ambiente
-   (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
+1. **Parte fiscal (NÃO bloqueia o uso na loja — ver ordem de prioridade da usuária logo abaixo)**:
+   emissão de NFC-e (peças) e NFS-e (serviço). **Provedor escolhido: Focus NFe, plano básico** —
+   usuária ainda não assinou, pediu pra deixar o código "semi pronto" antes. Já feito: modelagem
+   dos dados fiscais da loja (`configuracoes_fiscais_loja`) + tela em Configurações + a "casca" da
+   integração HTTP (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a função de
+   emissão de verdade (`emitirNFCe()`) — não foi possível confirmar o formato exato do corpo da
+   requisição (CFOP/NCM/ICMS por item) contra a documentação oficial do Focus NFe a partir deste
+   ambiente (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
    homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
-   campos**.
+   campos**. **Ela só vai atacar isso quando estiver com tudo pronto pra lançar a primeira versão
+   de verdade na loja do pai dela** — não tem pressa, é o último passo antes do lançamento real,
+   não um bloqueio do dia a dia (ver seção 1).
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.
-3. **Logo oficial** — pegar o arquivo `.svg` real da usuária como **anexo** (não colado no chat) e
-   aplicar no lugar dos SVGs feitos à mão (ver seção 2 pras duas pendências de upload já vistas).
+3. **Logo oficial** — **decisão da usuária: não é prioridade agora**, continua com os SVGs feitos
+   à mão (ver seção 2) até ela decidir trocar no futuro. Não sugerir/perguntar sobre isso de
+   novo por conta própria; só retomar se ela trouxer o assunto.
 4. Refinamentos possíveis no Início e demais módulos, conforme feedback da usuária.
 5. **Módulo de Fornecedores — construído nesta sessão** (cadastro + Pedido de Compra + Receber
    pedido, ver seção 7 "Fornecedores"). Restam, do que um sistema de referência (S3Auto/Comsis)
@@ -978,8 +984,9 @@ caracteres (mais rápido de digitar no balcão) — não dá, o Supabase Auth tr
 pelo painel ("Must be greater or equal to 6"), sem exceção; a tentativa foi revertida no código
 pra manter os dois lados consistentes. Não vale tentar de novo sem uma mudança de arquitetura de
 login (ex: PIN numérico em vez de senha via Supabase Auth) — não sugerir isso sem ela pedir.
-Próximo passo puxado por ela mesma: a **emissão de nota fiscal** (Focus NFe, item 1 desta seção)
-assim que tiver o token de homologação. Ela só publica a próxima versão do instalador quando isso
+Próximo passo puxado por ela mesma, sem pressa: a **emissão de nota fiscal** (Focus NFe, item 1
+desta seção), só quando estiver com tudo pronto pra lançar a primeira versão de verdade na loja do
+pai dela. Ela só publica a próxima versão do instalador quando isso
 estiver pronto (ver aviso na seção 7, "Empacotamento").
 
 ## 9. Como rodar / configurar (resumo)

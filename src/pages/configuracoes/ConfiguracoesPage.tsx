@@ -12,6 +12,7 @@ import {
   buscarTextoGarantia,
   listarJurosParcelas,
 } from "@/lib/configuracoes";
+import { listarDepositos } from "@/lib/depositos";
 import { mensagemDeErro } from "@/lib/errors";
 import { definirLojasDoOperador, listarLojas, listarLojasDoOperador } from "@/lib/lojas";
 import {
@@ -25,6 +26,7 @@ import type { Categoria } from "@/types/categoria";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { CategoriaServico } from "@/types/categoriaServico";
 import type { CartaoMetrica, ConfiguracaoFiscalLoja, JurosParcela } from "@/types/configuracao";
+import type { Deposito } from "@/types/deposito";
 import type { Loja } from "@/types/loja";
 import { MODULOS } from "@/types/operador";
 import type { NovoOperador, Operador } from "@/types/operador";
@@ -33,6 +35,7 @@ import { CategoriasCaixaSection } from "./CategoriasCaixaSection";
 import { CategoriasSection } from "./CategoriasSection";
 import { CategoriasServicoSection } from "./CategoriasServicoSection";
 import { DadosFiscaisSection } from "./DadosFiscaisSection";
+import { DepositosSection } from "./DepositosSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
 import { LojasSection } from "./LojasSection";
 import { OperadorForm } from "./OperadorForm";
@@ -42,6 +45,7 @@ export function ConfiguracoesPage() {
   const { operador: operadorLogado, lojaAtual } = useAuth();
   const [operadores, setOperadores] = useState<Operador[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
+  const [depositos, setDepositos] = useState<Deposito[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriasCaixa, setCategoriasCaixa] = useState<CategoriaCaixa[]>([]);
@@ -71,6 +75,7 @@ export function ConfiguracoesPage() {
       const [
         operadoresCarregados,
         lojasCarregadas,
+        depositosCarregados,
         jurosCarregados,
         categoriasCarregadas,
         categoriasCaixaCarregadas,
@@ -81,6 +86,7 @@ export function ConfiguracoesPage() {
       ] = await Promise.all([
         listarOperadores(),
         listarLojas(),
+        listarDepositos(lojaAtual.id),
         listarJurosParcelas(lojaAtual.id),
         listarCategorias(),
         listarCategoriasCaixa(),
@@ -91,6 +97,7 @@ export function ConfiguracoesPage() {
       ]);
       setOperadores(operadoresCarregados);
       setLojas(lojasCarregadas);
+      setDepositos(depositosCarregados);
       setJurosParcelas(jurosCarregados);
       setCategorias(categoriasCarregadas);
       setCategoriasCaixa(categoriasCaixaCarregadas);
@@ -328,6 +335,13 @@ export function ConfiguracoesPage() {
               lojaId={lojaAtual.id}
               onSalvo={carregar}
             />
+          </SecaoRecolhivel>
+
+          <SecaoRecolhivel
+            titulo="Depósitos"
+            descricao="Locais físicos de estoque dentro da loja (ex: Depósito Principal, Fundos). Toda loja já nasce com um depósito padrão — crie mais só se tiver mais de um lugar físico guardando peça."
+          >
+            <DepositosSection depositos={depositos} lojaId={lojaAtual.id} onSalvo={carregar} />
           </SecaoRecolhivel>
 
           <SecaoRecolhivel

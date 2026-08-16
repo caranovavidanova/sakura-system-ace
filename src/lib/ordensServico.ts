@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { criarMovimentoCaixa } from "./caixa";
 import { criarContaReceber } from "./contasReceber";
+import { buscarDepositoPadraoId } from "./depositos";
 import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
 import type {
   NovaOrdemServico,
@@ -47,9 +48,11 @@ async function inserirItens(
 
   const itensPeca = itens.filter((item) => item.tipo === "peca" && item.peca_id);
   if (itensPeca.length > 0) {
+    const depositoId = await buscarDepositoPadraoId(lojaId);
     const { error: erroEstoque } = await supabase.from("estoque_movimentos").insert(
       itensPeca.map((item) => ({
         peca_id: item.peca_id,
+        deposito_id: depositoId,
         tipo: "saida" as const,
         quantidade: item.quantidade,
         motivo: "uso_em_os" as const,

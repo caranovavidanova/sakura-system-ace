@@ -4,23 +4,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listarContagens, registrarContagem } from "@/lib/contagens";
 import { mensagemDeErro } from "@/lib/errors";
 import type { ContagemEstoque } from "@/types/contagem";
+import type { Deposito } from "@/types/deposito";
 import type { Peca } from "@/types/peca";
 
 interface ContagemSectionProps {
   pecas: Peca[];
-  saldos: Map<string, number>;
+  depositos: Deposito[];
+  saldosPorDeposito: Map<string, Map<string, number>>;
   lojaId: string;
   onRecarregar: () => Promise<void>;
 }
 
 export function ContagemSection({
   pecas,
-  saldos,
+  depositos,
+  saldosPorDeposito,
   lojaId,
   onRecarregar,
 }: ContagemSectionProps) {
   const { operador } = useAuth();
   const [pecaId, setPecaId] = useState(pecas[0]?.id ?? "");
+  const [depositoId, setDepositoId] = useState(depositos[0]?.id ?? "");
   const [quantidadeContada, setQuantidadeContada] = useState("");
   const [observacao, setObservacao] = useState("");
   const [contagens, setContagens] = useState<ContagemEstoque[]>([]);
@@ -46,7 +50,7 @@ export function ContagemSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lojaId]);
 
-  const saldoSistema = saldos.get(pecaId) ?? 0;
+  const saldoSistema = saldosPorDeposito.get(pecaId)?.get(depositoId) ?? 0;
   const quantidadeNumero = Number(quantidadeContada);
   const diferenca =
     quantidadeContada !== "" && !isNaN(quantidadeNumero)
@@ -62,6 +66,10 @@ export function ContagemSection({
       setErro("Selecione um produto.");
       return;
     }
+    if (!depositoId) {
+      setErro("Selecione um depósito.");
+      return;
+    }
     if (quantidadeContada === "" || isNaN(quantidadeNumero) || quantidadeNumero < 0) {
       setErro("Informe a quantidade contada.");
       return;
@@ -71,6 +79,7 @@ export function ContagemSection({
     try {
       await registrarContagem(
         pecaId,
+        depositoId,
         quantidadeNumero,
         saldoSistema,
         observacao.trim() || null,
@@ -126,6 +135,21 @@ export function ContagemSection({
                 onMudar={setPecaId}
                 placeholder="Selecione o produto"
               />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-sakura-purple-dark/80">Depósito</span>
+              <select
+                value={depositoId}
+                onChange={(e) => setDepositoId(e.target.value)}
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+              >
+                {depositos.map((deposito) => (
+                  <option key={deposito.id} value={deposito.id}>
+                    {deposito.nome}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <div className="flex flex-col gap-1 text-sm">
@@ -202,6 +226,7 @@ export function ContagemSection({
                 <tr>
                   <th className="px-4 py-3 font-medium">Data</th>
                   <th className="px-4 py-3 font-medium">Produto</th>
+                  <th className="px-4 py-3 font-medium">Depósito</th>
                   <th className="px-4 py-3 font-medium">Contado</th>
                   <th className="px-4 py-3 font-medium">Sistema</th>
                   <th className="px-4 py-3 font-medium">Diferença</th>
@@ -216,6 +241,9 @@ export function ContagemSection({
                     </td>
                     <td className="px-4 py-3">
                       {pecas.find((p) => p.id === contagem.peca_id)?.descricao ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {depositos.find((d) => d.id === contagem.deposito_id)?.nome ?? "—"}
                     </td>
                     <td className="px-4 py-3">{contagem.quantidade_contada}</td>
                     <td className="px-4 py-3">{contagem.saldo_sistema}</td>

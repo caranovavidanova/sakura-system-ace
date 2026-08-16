@@ -1,6 +1,7 @@
 export interface ContagemEstoque {
   id: string;
   loja_id: string;
+  deposito_id: string;
   peca_id: string;
   quantidade_contada: number;
   saldo_sistema: number;

@@ -30,6 +30,7 @@ import { DadosFiscaisSection } from "./DadosFiscaisSection";
 import { JurosParcelasSection } from "./JurosParcelasSection";
 import { LojasSection } from "./LojasSection";
 import { OperadorForm } from "./OperadorForm";
+import { RedefinirSenhaModal } from "./RedefinirSenhaModal";
 import { TextoGarantiaSection } from "./TextoGarantiaSection";
 
 export function ConfiguracoesPage() {
@@ -49,6 +50,9 @@ export function ConfiguracoesPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [formulario, setFormulario] = useState<"novo" | Operador | null>(null);
   const [lojaIdsFormulario, setLojaIdsFormulario] = useState<string[]>([]);
+  const [operadorRedefinindoSenha, setOperadorRedefinindoSenha] = useState<Operador | null>(
+    null,
+  );
 
   async function carregar() {
     if (!isSupabaseConfigured || !lojaAtual) {
@@ -255,6 +259,12 @@ export function ConfiguracoesPage() {
                   >
                     Editar
                   </button>
+                  <button
+                    onClick={() => setOperadorRedefinindoSenha(op)}
+                    className="text-xs font-medium text-sakura-purple hover:underline"
+                  >
+                    Redefinir senha
+                  </button>
                   {op.id !== operadorLogado?.id && (
                     <button
                       onClick={() => handleAlternarStatus(op)}
@@ -359,6 +369,14 @@ export function ConfiguracoesPage() {
             />
           </SecaoRecolhivel>
         </>
+      )}
+
+      {operadorRedefinindoSenha && (
+        <RedefinirSenhaModal
+          operador={operadorRedefinindoSenha}
+          onFechar={() => setOperadorRedefinindoSenha(null)}
+          onRedefinida={() => setOperadorRedefinindoSenha(null)}
+        />
       )}
     </div>
   );

@@ -11,6 +11,7 @@ import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
 import { ContasPagarPage } from "./pages/contas-pagar/ContasPagarPage";
 import { ContasReceberPage } from "./pages/contas-receber/ContasReceberPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
+import { FornecedoresPage } from "./pages/fornecedores/FornecedoresPage";
 import { FuncionariosPage } from "./pages/funcionarios/FuncionariosPage";
 import { GarantiasPage } from "./pages/garantias/GarantiasPage";
 import { LoginPage } from "./pages/login/LoginPage";
@@ -106,6 +107,14 @@ export default function App() {
               element={
                 <PermissaoRoute modulo="ordens_servico">
                   <OrdensServicoPage />
+                </PermissaoRoute>
+              }
+            />
+            <Route
+              path="/fornecedores"
+              element={
+                <PermissaoRoute modulo="fornecedores">
+                  <FornecedoresPage />
                 </PermissaoRoute>
               }
             />

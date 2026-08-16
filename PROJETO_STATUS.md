@@ -157,14 +157,15 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # ainda não implementada) + corVeiculo.ts (nome de cor em
 │   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
-│   │                             # (chama a Edge Function de leitura de nota fiscal por foto)
+│   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
+│   │                             # fornecedores.ts (cadastro compartilhado entre lojas)
 │   ├── pages/<modulo>/           # uma pasta por módulo: painel, clientes, estoque, servicos,
-│   │                             # ordens-servico, caixa, contas-pagar, relatorios (rota
-│   │                             # /relatorios, label "Relações" — abas Gráficos/Lucratividade,
-│   │                             # absorveu o antigo módulo "Lucratividade"), garantias,
-│   │                             # notas-fiscais, funcionarios, login, configuracoes. Cada pasta tem
-│   │                             # <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário), com
-│   │                             # exceções:
+│   │                             # ordens-servico, fornecedores, caixa, contas-pagar, relatorios
+│   │                             # (rota /relatorios, label "Relações" — abas
+│   │                             # Gráficos/Lucratividade, absorveu o antigo módulo
+│   │                             # "Lucratividade"), garantias, notas-fiscais, funcionarios, login,
+│   │                             # configuracoes. Cada pasta tem <Modulo>Page.tsx (lista) +
+│   │                             # <Modulo>Form.tsx (formulário), com exceções:
 │   │   estoque/       # EstoquePage.tsx com 4 abas: Produtos (ProdutosSection.tsx + PecaForm.tsx +
 │   │                   # ImportarNotasFiscaisModal.tsx — leitura por foto), Movimentações
 │   │                   # (MovimentacoesSection.tsx + MovimentoForm.tsx), Contagem
@@ -182,7 +183,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
 │   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora); LojasSection.tsx
 │   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
-│   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas)
+│   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas);
+│   │                   # RedefinirSenhaModal.tsx (admin redefine senha de operador esquecida,
+│   │                   # chama a Edge Function redefinir-senha-operador)
 │   │   funcionarios/   # FuncionarioForm.tsx com abas "Dados gerais" e "Família"
 │   │   caixa/          # CaixaPage.tsx (orquestrador de abas) + DiarioSection.tsx +
 │   │                   # EntradaSaidaSection.tsx (reusado por Entradas/Saídas, parametrizado por tipo)
@@ -201,14 +204,16 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │                                  # ConfiguracaoFiscalLoja — todas com `loja_id` no lugar do antigo
 │                                  # `id: 1`, ver seção 5) + itemNotaFiscal.ts (item extraído da
 │                                  # leitura por IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0038), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5)
-├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts (única até
-│                                  # agora): lê fotos ou PDFs de nota fiscal via Claude/Anthropic e devolve
-│                                  # os produtos estruturados. A ANTHROPIC_API_KEY fica só como
-│                                  # secret dessa função no Supabase, nunca no app instalado.
+├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts: lê fotos ou
+│                                  # PDFs de nota fiscal via Claude/Anthropic e devolve os produtos
+│                                  # estruturados (a ANTHROPIC_API_KEY fica só como secret dessa
+│                                  # função no Supabase, nunca no app instalado); e
+│                                  # redefinir-senha-operador/index.ts: admin redefine senha de
+│                                  # operador esquecida, usando a service role key (ver seção 5).
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
 ├── eslint.config.js              # flat config do ESLint 9
@@ -238,14 +243,15 @@ o andaime manualmente sempre que o pedido for "módulo/cadastro novo".
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0036` em `supabase/migrations/` já estão confirmadas rodando sem erro no
+Migrations `0001` a `0037` em `supabase/migrations/` já estão confirmadas rodando sem erro no
 projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a fundação multi-loja
 (`0031`-`0033`, que ela testou de verdade: criou uma 2ª loja, foi quando apareceu o bug de RLS
-descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0036`, criadas e validadas
-localmente nesta sessão — Postgres local, `service postgresql start` + `sudo -u postgres psql`,
-rodando a sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase
-real logo em seguida). **`0037`, criada e validada localmente na mesma sessão, também já foi
-confirmada rodando no Supabase real dela.** Resumo das últimas:
+descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0037`, criadas e validadas
+localmente — Postgres local, `service postgresql start` + `sudo -u postgres psql`, rodando a
+sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase real
+logo em seguida). **`0038` (cria `fornecedores`) foi criada e validada da mesma forma nesta
+sessão, mas ainda não foi rodada por ela no Supabase real** — falta esse passo manual (ver seção
+9) antes do módulo Fornecedores funcionar de verdade. Resumo das últimas:
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -273,6 +279,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   RLS pra `DELETE` em `lojas` (só select/insert/update) — sem policy nenhuma cobrindo o comando, o
   delete "funcionava" sem erro nenhum, mas apagava 0 linhas (bug silencioso, sem mensagem de erro
   nenhuma). Ver item 15 da seção 6.
+- `0038`: cria `fornecedores` (cadastro básico, compartilhado entre lojas) — ver módulo
+  "Fornecedores" na seção 7.
 
 Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
 (não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
@@ -425,7 +433,9 @@ outro projeto Supabase do zero (ver seção 9).
   (opcional), caixa_movimento_id (FK, opcional — a Saída gerada ao marcar como paga), operador_id
   (FK operadores), criado_em. Marcar como paga gera automaticamente uma Saída em
   `caixa_movimentos` e, se `recorrente`, cria a próxima ocorrência (mesmo valor, +1 mês) sozinha.
-  **Sem "desfazer pagamento"** pelo app ainda.
+  **"Desfazer pagamento"** (`desfazerPagamento()` em `lib/contasPagar.ts`) volta a conta pra
+  pendente e apaga a Saída que tinha sido gerada — se a conta era recorrente, a próxima ocorrência
+  já criada automaticamente **não** é apagada junto (fica pendente também; caso raro, não tratado).
 - **`contas_receber`**: id, loja_id (FK lojas), cliente_id (FK clientes), ordem_servico_id (FK
   ordens_servico, opcional e único — 1 conta a receber por OS faturada), descricao, valor,
   vencimento (date, aqui é "previsão de recebimento"), status (`pendente`/`recebido`),
@@ -441,6 +451,11 @@ outro projeto Supabase do zero (ver seção 9).
   `CARTAO_METRICA_LABEL` (`types/configuracao.ts`): vendas_mes, custos_mes, lucros_mes,
   ticket_medio_mes, contas_pagar_vencendo. Padrão atual: Vendas/Lucro/Ticket médio (Custos saiu do
   padrão por não ser legal mostrar "algo negativo" logo de cara).
+- **`fornecedores`** (migration `0038`): id, nome (rótulo "Nome / Razão social"), cnpj, telefone,
+  email, ativo, criado_em. **Compartilhado entre lojas** (mesmo padrão de
+  clientes/pecas/servicos) — cadastro básico só, base pra decidir depois qual funcionalidade
+  avançada de estoque vem em seguida (Pedido de Compra, Entrada via NFe do fornecedor, Depósito,
+  Garantia do fornecedor — nenhuma delas construída ainda, ver seção 8).
 
 Regras de negócio já implementadas: ao criar uma OS com item tipo peça, gera automaticamente uma
 saída em `estoque_movimentos` (motivo `uso_em_os`). Ao faturar uma OS, gera automaticamente uma
@@ -449,8 +464,12 @@ ao cliente (módulo "Garantias") **não tem tabela própria** — deriva de `ord
 `pecas.prazo_garantia_dias` + `ordens_servico.data_fechamento`.
 
 **Fora do Postgres** (Supabase Storage): bucket `notas-fiscais` (XMLs enviados manualmente).
-**Fora do Postgres/Storage** (Edge Function): `ler-notas-fiscais`, ver seção 4 — não tem tabela
+**Fora do Postgres/Storage** (Edge Functions): `ler-notas-fiscais`, ver seção 4 — não tem tabela
 própria, o resultado só passa pela tela de revisão em memória antes de salvar em `pecas`.
+`redefinir-senha-operador` (nova) — usa a service role key pra trocar a senha de um operador
+esquecida; só executa depois de confirmar (via RPC `operador_administra`, rodando com o token do
+próprio chamador, sem privilégio extra) que quem está chamando é admin de uma loja que o operador-
+alvo também acessa. Nenhuma das duas guarda nada em tabela própria.
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
@@ -561,9 +580,10 @@ completos), Estoque (entrada/saída, saldo), Ordens de Serviço, Caixa Diário, 
 Painel/Início.
 
 **Ordem do menu lateral**: reorganizada a pedido da usuária, agrupando por fluxo de trabalho —
-Início, Clientes, Ordens de Serviço, Estoque, Serviços, Caixa Diário, Contas a Pagar, Relações,
-Garantias, Notas Fiscais, Funcionários (RH por último, de propósito — é cadastro usado bem menos
-no dia a dia do balcão do que os módulos anteriores). Ver `MODULOS` em `src/types/operador.ts`.
+Início, Clientes, Ordens de Serviço, Estoque, Serviços, Fornecedores, Caixa Diário, Contas a Pagar,
+Relações, Garantias, Notas Fiscais, Funcionários (RH por último, de propósito — é cadastro usado
+bem menos no dia a dia do balcão do que os módulos anteriores). Ver `MODULOS` em
+`src/types/operador.ts`.
 
 **Enter avança pro próximo campo**: em qualquer formulário do app, apertar Enter move o foco pro
 próximo campo em vez de tentar enviar o formulário — pensado pra quem trabalha só de teclado, sem
@@ -576,7 +596,11 @@ normal (quebra de linha).
 - **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
   do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
   novo). Menu lateral e rotas filtrados por permissão (`PermissaoRoute`/`AdminRoute`). Tela
-  Configurações (admin) gerencia operadores com checkboxes de módulo.
+  Configurações (admin) gerencia operadores com checkboxes de módulo. **Redefinir senha
+  esquecida**: botão "Redefinir senha" no card de cada operador (Configurações), abre
+  `RedefinirSenhaModal.tsx` — só funciona pra quem administra aquele operador (admin de uma loja
+  que ele também acessa). Chama a Edge Function `redefinir-senha-operador`, que é quem de fato
+  troca a senha via service role key (nunca fica no app instalado).
 - **Clientes**: CRUD + múltiplos veículos por cliente, pessoa física/jurídica (rótulos de
   campo mudam conforme o tipo), aniversário do cliente no calendário do Início, tipo de veículo
   (ícone 2D por carroceria, pintado com a cor cadastrada) exibido na seção "Veículos no pátio".
@@ -625,7 +649,13 @@ normal (quebra de linha).
   resumo por forma de recebimento.
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
-  já cria a próxima ocorrência sozinha. Sem "desfazer pagamento" pelo app ainda.
+  já cria a próxima ocorrência sozinha. **"Desfazer pagamento"**: botão na lista "Pagas
+  recentemente" — volta a conta pra pendente e remove a Saída gerada (se a conta era recorrente, a
+  próxima ocorrência já criada continua existindo, pendente).
+- **Fornecedores**: cadastro básico (nome/razão social, CNPJ, telefone, e-mail, ativo/inativo),
+  compartilhado entre lojas — mesmo padrão de Clientes/Peças/Serviços. Só o cadastro por
+  enquanto; base pra decidir depois qual funcionalidade avançada de estoque vem em seguida (Pedido
+  de Compra, Entrada via NFe do fornecedor, Depósito, Garantia do fornecedor — ver seção 8).
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
   cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
   vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
@@ -661,16 +691,18 @@ normal (quebra de linha).
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
   enviada. **Versão atual do `package.json`: `0.9.2`**. Última tag publicada de verdade é `v0.9.0`
-  (ela baixou e testou o instalador dessa versão) — bastante coisa foi implementada depois dela
-  (correção do bug de criar loja, edição/exclusão de loja, atalho de OS no Início e em Contas a
-  Receber, filtro/busca/cores/colunas na lista de OS, custo de serviço, módulo Contas a Receber,
-  número sequencial de OS, simplificação de status, botão Encerrar OS, split de pagamento) **sem
-  nenhuma tag nova publicada ainda** — mesma decisão de sempre: só publicar a próxima versão do
-  instalador **quando a emissão de nota fiscal também estiver pronta**. Até lá, ela usa a loja
-  rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com `.env` configurado
-  nesse PC também) em vez do instalador. A versão aparece pequena no canto inferior direito do app
-  (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive
-  login.
+  (ela baixou e testou o instalador dessa versão). **Decisão antiga revista nesta sessão**: a
+  regra era só publicar o próximo instalador quando a nota fiscal estivesse pronta — a usuária
+  confirmou que quer publicar a `v0.9.2` mesmo sem isso. Passo a passo já passado pra ela rodar no
+  próprio terminal (`git checkout main && git pull origin main && git tag v0.9.2 && git push
+  origin v0.9.2` — a sessão remota não tem permissão de git pra empurrar tags, só pra branch
+  normal); **ainda sem confirmação de que ela rodou**. Depois de publicada, bastante coisa segue
+  sem ir pro instalador ainda (Contas a Receber, número sequencial de OS, split de pagamento,
+  desfazer pagamento, redefinir senha, Fornecedores — tudo isso só entra na próxima tag). Até lá,
+  ela usa a loja rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com
+  `.env` configurado nesse PC também) em vez do instalador. A versão aparece pequena no canto
+  inferior direito do app (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em
+  toda tela, inclusive login.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -684,29 +716,23 @@ normal (quebra de linha).
    (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
    homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
    campos**.
-2. **Redefinir senha de operador esquecida** (precisaria de Edge Function com service role key) e
-   **site externo de assinatura** que cria a primeira conta de cada loja automaticamente (hoje é
+2. **Site externo de assinatura** que cria a primeira conta de cada loja automaticamente (hoje é
    manual, pelo painel do Supabase) — combinado que fica pra quando pensarem na versão comercial.
+   (Redefinir senha de operador esquecida já existe — ver seção 7, "Login e permissões".)
 3. **Logo oficial** — pegar o arquivo `.svg` real da usuária como **anexo** (não colado no chat) e
    aplicar no lugar dos SVGs feitos à mão (ver seção 2 pras duas pendências de upload já vistas).
 4. Refinamentos possíveis no Início e demais módulos, conforme feedback da usuária.
-5. **Itens do menu de estoque de um sistema de referência (S3Auto/Comsis) ainda não avaliados** —
-   dependem de Fornecedores/multi-local, precisam de decisão da usuária antes de codar (opções +
-   recomendação, ver seção 1):
-   - Pedido de Compra / Cotações de Peças por fornecedor (implica cadastro de Fornecedor)
+5. **Funcionalidades avançadas de estoque que dependem de Fornecedores** — o cadastro básico de
+   Fornecedores já existe (migration `0038`, ver seção 7), mas nenhuma dessas 3 foi construída
+   ainda; qual vem em seguida é decisão da usuária (opções + recomendação, ver seção 1):
+   - Pedido de Compra / Cotações de Peças por fornecedor
    - Entrada de Produtos via NFe (importação de XML de nota fiscal do **fornecedor**, diferente do
      "Importar por foto" que já existe — aquele é leitura de foto por IA, esse seria importação de
      um XML estruturado de verdade)
    - Cadastro de Depósito (múltiplos locais físicos de estoque)
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
-     implementada — depende do módulo de Fornecedores ainda não construído)
-6. **Sistema de notificação de conta a vencer** — a usuária mencionou a ideia, mas confirmou que é
-   pra depois. `contas_pagar` já tem o campo `vencimento` pronto pra isso. Nenhuma decisão de como
-   notificar (dentro do app? e-mail? Windows notification?) foi tomada — apresentar opções antes
-   de codar.
-7. **"Desfazer pagamento" de uma conta paga** (módulo Contas a Pagar) — hoje não existe pelo app;
-   se marcar uma conta como paga por engano, precisa corrigir direto no Supabase.
-8. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
+     implementada)
+6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
    configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas que um dia
    usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio projeto
    Supabase, a Edge Function e o secret `ANTHROPIC_API_KEY` ficam dentro do projeto de cada loja,
@@ -722,17 +748,20 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão**: a migration `0037` já está rodando no Supabase real dela
-(número sequencial de OS, simplificação de status, split de pagamento e a policy de exclusão de
-loja que faltava) — falta só ela **testar na prática** os fluxos novos (abrir uma OS nova e
-confirmar que nasce "Em andamento" com número sequencial, usar o botão "Encerrar OS", faturar
-dividindo entre 2 formas de pagamento, excluir uma loja de teste vazia em Configurações → Lojas) —
-confirmar isso no início da sessão, e só então seguir com pedidos novos. Depois disso confirmado
-funcionando, ela mesma vai puxar a **emissão de nota fiscal** (Focus NFe, item 1 desta seção) —
-combinado numa sessão anterior ("na outra sessão eu faço a inclusão da emissão de nota fiscal").
-Ela só publica a próxima versão do instalador quando isso estiver pronto (ver aviso na seção 7,
-"Empacotamento"). Antes de codar a emissão de verdade, ela precisa ter criado a conta/token de
-homologação do Focus NFe (ver item 1).
+**Prioridade da próxima sessão**: a `0037` já foi confirmada por ela na prática (número sequencial
+de OS, "Encerrar OS", split de pagamento, exclusão de loja vazia — todos testados e funcionando).
+Nesta sessão foram implementados: "desfazer pagamento" em Contas a Pagar, redefinir senha de
+operador esquecida (Configurações), e o cadastro de Fornecedores — tudo validado localmente
+(`tsc`/`build`/`lint` + migrations rodadas duas vezes num Postgres local pra confirmar
+idempotência), mas **ainda não testado por ela no Supabase real**. Passos manuais que faltam antes
+de considerar isso pronto (ver seção 9): (a) rodar a migration `0038` no Supabase; (b) publicar a
+Edge Function `redefinir-senha-operador` (mesmo processo da `ler-notas-fiscais`, sem secret
+nenhum pra configurar dessa vez). Depois disso: ela decide qual das 3 funcionalidades avançadas de
+estoque que dependem de Fornecedores quer construir em seguida (seção 8, item 5), e/ou puxa a
+**emissão de nota fiscal** (Focus NFe, item 1) assim que tiver o token de homologação — combinado
+que ela mesma avisa quando estiver pronta pra essa etapa. Ver seção 7, "Empacotamento", pro
+estado atual da publicação do instalador (decisão de esperar a nota fiscal foi revista nesta
+sessão).
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -747,28 +776,26 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
 URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0037` já foram confirmadas
 rodando sem erro nesse projeto (incluindo a fundação multi-loja e as correções/módulos novos
-`0034`-`0037`, todas já testadas por ela de verdade).
+`0034`-`0037`, todas já testadas por ela de verdade). **`0038` (cria `fornecedores`) ainda não foi
+rodada por ela** — só validada localmente nesta sessão (ver seção 5).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0037`. Todas são idempotentes.
+até `0038`. Todas são idempotentes.
 
-### Coisas pra confirmar que `0037` está funcionando na prática
+### Coisas pra confirmar que `0038` e as novidades desta sessão estão funcionando na prática
 
-Migration já rodada; falta ela testar na prática se os fluxos novos funcionam (ver "Prioridade da
-próxima sessão" acima):
-1. Ordens de Serviço → abrir uma OS nova — deve nascer com status "Em andamento" direto (sem
-   "Aberta") e um número sequencial (ex: "OS 1", "OS 2"...) em vez de código grande.
-2. Abrir uma OS em andamento → botão "Encerrar OS" → deve marcar como concluída e já abrir a tela
-   de faturamento.
-3. Faturar marcando "Dividir em mais de uma forma de pagamento" com 2 formas — deve dar pra
-   confirmar só quando a soma bater com o total, e devem aparecer 2 lançamentos no Caixa.
-4. Configurações → "Lojas" → criar uma loja de teste vazia (sem nada lançado nela) e excluir de
-   verdade — antes não fazia nada (bug silencioso), agora deve sumir da lista. Tentar excluir uma
-   loja com dado de verdade deve dar uma mensagem clara explicando por que não dá, sugerindo
-   inativar.
+`0037` já foi confirmada por ela (número sequencial de OS, "Encerrar OS", split de pagamento,
+exclusão de loja vazia — todos testados). Falta ela rodar a migration `0038` no Supabase (passo
+acima) e testar o que foi implementado nesta sessão:
+1. Contas a Pagar → marcar uma conta como paga, depois usar "Desfazer pagamento" na lista "Pagas
+   recentemente" — deve voltar pra pendente e a Saída correspondente deve sumir do Caixa.
+2. Configurações → Operadores → "Redefinir senha" num operador (não o que está logado) — só
+   funciona depois de publicar a Edge Function nova (ver seção abaixo). Definir uma senha nova e
+   confirmar que dá pra entrar com ela.
+3. Fornecedores (novo item no menu lateral) → cadastrar um fornecedor de teste, editar, inativar.
 
 Passos manuais únicos de configuração de Auth (documentados também dentro da migration
 `0007_operadores.sql`):
@@ -797,6 +824,22 @@ chave de API. Feito pelo painel do Supabase, sem instalar nada no computador:
 3. **Configurar o secret**: na função criada, aba **Secrets** (ou Project Settings → Edge
    Functions → "Add new secret") → nome `ANTHROPIC_API_KEY`, valor a chave do passo 1.
 4. Testar: **Estoque → Produtos → "Importar por foto/PDF"**.
+
+### Ativar "Redefinir senha de operador esquecida"
+
+Também depende de publicar uma Edge Function — mas essa **não precisa de nenhuma chave/conta
+externa** (só usa credenciais que o próprio Supabase já fornece pra função):
+
+1. Painel do projeto → **Edge Functions** → **"Deploy a new function"** → **"Via Editor"** →
+   digitar o nome `redefinir-senha-operador` **no campo "Function name" antes de clicar em
+   Deploy** (mesma pegadinha do nome descasado do endereço, ver abaixo) → apagar o código de
+   exemplo e colar todo o conteúdo de `supabase/functions/redefinir-senha-operador/index.ts` →
+   **Deploy function**.
+2. Não precisa configurar secret nenhum — a função usa `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
+   `SUPABASE_SERVICE_ROLE_KEY`, que o Supabase já injeta automaticamente em toda Edge Function.
+3. Testar: **Configurações → Operadores → "Redefinir senha"** num operador que não seja você
+   mesma (só funciona pra quem administra aquele operador — admin de uma loja que ele também
+   acessa).
 
 **Se a função já estava publicada antes** (leitura só de fotos) e agora quer aceitar PDF também:
 volta no passo 2 e cola o conteúdo **atualizado** de `supabase/functions/ler-notas-fiscais/index.ts`
@@ -862,12 +905,13 @@ sempre antes da tag, nunca depois.
   (descrição, o que mudou, quando foi confirmado) já fica registrado no próprio GitHub — não
   precisa duplicar aqui PR por PR; o que importa pra uma sessão nova é o **estado atual**, que
   está na seção 7.
-- **Branch de trabalho atual desta sessão**: `claude/ultimos-passos-v1-0-vmrzht`.
-- `package.json` em `"version": "0.9.0"` (bump feito nesta sessão) — tag publicada mais recente
-  ainda é `v0.1.3` (instalador baixado pela usuária, mas **sem confirmação de ter rodado/testado o
-  instalador de verdade**, só o download/build funcionou). Bastante coisa foi implementada depois
-  dessa tag sem nova versão publicada ainda, incluindo a fundação multi-loja desta sessão (ver
-  aviso no fim da seção 7 e prioridade da próxima sessão na seção 8).
+- **Branch de trabalho atual desta sessão**: `claude/ssae-contexto-atual-jaqur8`.
+- `package.json` em `"version": "0.9.2"`. Tag publicada mais recente é `v0.9.0` (instalador
+  baixado e testado por ela). A `v0.9.2` foi combinada nesta sessão (ela decidiu publicar mesmo
+  sem a nota fiscal pronta, revendo a decisão antiga) — passo a passo do `git tag`/`git push` já
+  passado pra ela rodar no terminal dela, mas **ainda sem confirmação de que rodou** (a sessão
+  remota não tem permissão de git pra empurrar tags). Ver seção 7, "Empacotamento", e seção 8,
+  "Prioridade da próxima sessão".
 
 ## 11. Trabalhando de outro computador
 

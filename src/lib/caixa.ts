@@ -44,3 +44,8 @@ export async function criarMovimentoCaixa(
   if (error) throw error;
   return data as MovimentoCaixa;
 }
+
+export async function excluirMovimentoCaixa(id: string): Promise<void> {
+  const { error } = await supabase.from("caixa_movimentos").delete().eq("id", id);
+  if (error) throw error;
+}

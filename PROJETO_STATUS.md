@@ -188,9 +188,14 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/am
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
 │   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
-│   │                             # contagens.ts, garantias.ts, contasPagar.ts, lojas.ts — lojas.ts
-│   │                             # e todo lib de tabela per-loja recebem `lojaId` explícito nas
-│   │                             # funções de listar/criar, ver seção 5) + feriados.ts (feriados
+│   │                             # contagens.ts, garantias.ts, contasPagar.ts, lojas.ts, depositos.ts
+│   │                             # (locais físicos de estoque dentro de uma loja — mesmo padrão CRUD
+│   │                             # de lojas.ts, mas sem exclusão de verdade; expõe também
+│   │                             # buscarDepositoPadraoId(), usada por lib/estoque.ts e por qualquer
+│   │                             # fluxo que baixa/dá entrada em estoque sozinho sem perguntar "em
+│   │                             # qual depósito" pro operador, ver seção 5) — lojas.ts e todo lib de
+│   │                             # tabela per-loja recebem `lojaId` explícito nas funções de
+│   │                             # listar/criar) + feriados.ts (feriados
 │   │                             # nacionais, Páscoa calculada) + configuracoes.ts (juros de
 │   │                             # parcelamento + texto de garantia + dados fiscais da loja, agora
 │   │                             # uma linha por loja, filtradas por `lojaId`) +
@@ -424,6 +429,17 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   (`operadores`, `pecas`, `servicos`, `caixa_movimentos`, `contas_pagar`, `contas_receber`,
   `ordens_servico`, `clientes`, `fornecedores`, `pedidos_compra`, `lojas`). Ver "Auditoria" na
   seção 7.
+- `0041` (criada e validada localmente nesta sessão — Postgres local, rodada duas vezes pra provar
+  idempotência, e com um teste manual de RLS trocando de papel/`auth.uid()` simulado pra confirmar
+  que balconista só vê depósito da própria loja e só admin cria/edita; **ainda não confirmada por
+  ela no Supabase real**): cria o cadastro de Depósito — tabela `depositos` (locais físicos de
+  estoque dentro de uma loja, ex: "Depósito Principal", "Fundos") + `deposito_id` em
+  `estoque_movimentos` e `contagens_estoque` (mesmo padrão nullable → backfill → not null das
+  migrations 0031-0033 pra `loja_id`). Toda loja (já existente, via backfill dinâmico por loja —
+  testado com 2 lojas simuladas, não só a Loja 1 — ou criada depois desta migration, via
+  `lib/lojas.ts` → `criarLoja()`) já nasce com um "Depósito Principal" sozinho, então nada muda pra
+  quem usa um só lugar físico. Ver "Depósitos" na seção 7 e a subseção logo abaixo dos tipos de
+  `estoque_movimentos`/`contagens_estoque`.
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -528,8 +544,21 @@ outro projeto Supabase do zero (ver seção 9).
   quantidade_pedida, preco_unitario (opcional), quantidade_recebida (default 0, soma conforme a
   usuária confirma recebimentos — pode ser parcial, em mais de uma vez). Sem `loja_id` próprio,
   herda via `pedido_compra_id` (mesmo padrão de `ordens_servico_itens`).
-- **`estoque_movimentos`**: id, loja_id (FK lojas), peca_id (FK), tipo (`entrada`/`saida`),
-  quantidade, motivo (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em
+- **`depositos`** (migration `0041`): id, loja_id (FK lojas), nome, ativo, criado_em. Locais
+  físicos de estoque dentro de uma loja (ex: "Depósito Principal", "Fundos") — gerenciado em
+  Configurações (admin), igual padrão de `categorias`/`categorias_caixa` (sem exclusão de verdade,
+  só inativar). Toda loja já nasce com um "Depósito Principal" sozinho (backfill na migration pras
+  já existentes, `criarLoja()` pras novas), então quem usa um só lugar físico nunca precisa criar
+  nada — só quem tiver mais de um depósito passa a escolher entre eles.
+- **`estoque_movimentos`**: id, loja_id (FK lojas), deposito_id (FK depositos — em qual depósito
+  aconteceu), peca_id (FK), tipo (`entrada`/`saida`),
+  quantidade, motivo (`compra`/`venda`/`ajuste`/`uso_em_os`), referencia, criado_em. Fluxos que
+  lançam movimentação sozinhos (baixa automática ao usar peça numa OS, entrada ao receber Pedido de
+  Compra, importação de nota por foto) não perguntam "em qual depósito" pro operador — caem sempre
+  no depósito padrão da loja (`buscarDepositoPadraoId()` em `lib/depositos.ts`); só os fluxos onde o
+  operador ativamente escolhe (Movimentações → Nova movimentação, Contagem) pedem o depósito na
+  tela. Decisão de escopo pra manter o v1 do Depósito enxuto — se um dia fizer falta escolher
+  depósito também nesses fluxos automáticos, é extensão aditiva.
 - **`ordens_servico`**: id, **numero** (int, sequencial **por loja** — 1, 2, 3..., atribuído
   sozinho por trigger no insert; é como a OS aparece pra usuária em todo o app, nunca o `id`), loja_id
   (FK lojas), cliente_id (FK), veiculo_id (FK, opcional), status
@@ -568,9 +597,10 @@ outro projeto Supabase do zero (ver seção 9).
   escolha explícita (dado sensível, cuidado de LGPD).
 - **`funcionario_filhos`**: id, funcionario_id (FK, `on delete cascade`), nome, data_nascimento
   (opcional), criado_em. `FuncionarioForm.tsx` salva a lista inteira de uma vez (substitui tudo).
-- **`contagens_estoque`**: id, loja_id (FK lojas), peca_id (FK), quantidade_contada,
+- **`contagens_estoque`**: id, loja_id (FK lojas), deposito_id (FK depositos — a contagem física é
+  sempre de um depósito específico), peca_id (FK), quantidade_contada,
   saldo_sistema, diferenca, observacao, operador_id (FK operadores), criado_em. Ao salvar com
-  diferença, gera automaticamente um ajuste em `estoque_movimentos`.
+  diferença, gera automaticamente um ajuste em `estoque_movimentos` (nesse mesmo depósito).
 - **`configuracoes_garantia`**: 1 linha **por loja** (`loja_id` é a PK) com `texto` — template do
   texto de garantia, placeholders `{cliente}`/`{veiculo}`/`{itens}`/`{data}` substituídos na hora
   (`lib/garantiaTexto.ts`). Editável só pelo admin.
@@ -807,8 +837,15 @@ normal (quebra de linha).
   Funcionários — ver "Padrão de formulário" na seção 4); comportamento pro usuário não mudou.
 - **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
   categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
-  produto), Contagem (inventário físico, gera ajuste automático na diferença), Relatórios (estoque
-  físico-financeiro, saldo por situação, produtos sem movimentação). **`PecaForm.tsx` migrado nesta
+  produto e, **desde esta sessão**, campo/coluna de Depósito), Contagem (inventário físico, agora
+  **por depósito** — mostra o saldo do sistema daquele depósito específico, não o total da loja —,
+  gera ajuste automático na diferença), Relatórios (estoque físico-financeiro, saldo por situação,
+  produtos sem movimentação — esses três continuam olhando pro saldo total da loja, somando todos
+  os depósitos, sem mudança). **Depósito (novo nesta sessão)**: cadastro em Configurações → seção
+  "Depósitos" (locais físicos de estoque, ex: "Depósito Principal", "Fundos" — ver seção 5/8); toda
+  loja já nasce com um, então quem usa um só lugar físico não percebe diferença nenhuma no dia a
+  dia — só quem criar um segundo depósito passa a escolher entre eles nas telas de Movimentações e
+  Contagem. **`PecaForm.tsx` migrado nesta
   sessão** pro padrão `react-hook-form` + `zod` (terceiro módulo — ver "Padrão de formulário" na
   seção 4); ainda só cria produto, não edita (não mudou nesta migração — só existia criação antes
   também). **Importar por foto/PDF**:
@@ -838,8 +875,9 @@ normal (quebra de linha).
   sozinho (motivo "Compra"), soma na quantidade recebida do item, e recalcula o status do pedido
   inteiro. **Não é** importação de XML de nota fiscal do fornecedor — é conferência manual (ver
   item correspondente na seção 8, é um passo maior separado se um dia for pedido). Sem
-  cotação/comparação de preço entre fornecedores diferentes ainda, sem cadastro de Depósito
-  (múltiplos locais físicos), sem garantia do fornecedor na compra — todos ainda pendentes.
+  cotação/comparação de preço entre fornecedores diferentes ainda, sem garantia do fornecedor na
+  compra — ambos ainda pendentes (cadastro de Depósito, que também estava nessa lista, já foi
+  construído — ver "Depósitos" em Estoque, seção 7).
 - **Ordens de Serviço**: cada OS tem um número sequencial **por loja** (`numero`, 1/2/3...,
   atribuído por trigger no insert) — é como a OS é identificada em toda tela ("OS 12"), nunca mais
   o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
@@ -958,21 +996,25 @@ normal (quebra de linha).
    à mão (ver seção 2) até ela decidir trocar no futuro. Não sugerir/perguntar sobre isso de
    novo por conta própria; só retomar se ela trouxer o assunto.
 4. Refinamentos possíveis no Início e demais módulos, conforme feedback da usuária.
-5. **Módulo de Fornecedores — construído nesta sessão** (cadastro + Pedido de Compra + Receber
-   pedido, ver seção 7 "Fornecedores"). Restam, do que um sistema de referência (S3Auto/Comsis)
-   também costuma ter — nenhum decidido ainda, precisam de opções + recomendação antes de codar:
-   - **Entrada de Produtos via NFe de verdade** (importar o **arquivo XML** da nota fiscal do
-     fornecedor e extrair os itens automaticamente) — o que existe hoje é diferente: "Receber
-     pedido" é conferência manual (a usuária digita/confirma as quantidades que chegaram, sem ler
-     nenhum arquivo). Importar XML de verdade é viável (é um formato público/estável, ao contrário
-     da API do Focus NFe), mas é trabalho considerável à parte — avaliar quando a usuária sentir
-     falta disso no dia a dia.
-   - **Cotação de Peças por fornecedor** (comparar preço do mesmo item entre fornecedores diferentes
-     antes de decidir onde comprar) — não existe ainda, Pedido de Compra hoje já assume qual
-     fornecedor foi escolhido.
-   - Cadastro de Depósito (múltiplos locais físicos de estoque dentro da mesma loja)
+5. **Módulo de Fornecedores — construído numa sessão anterior** (cadastro + Pedido de Compra +
+   Receber pedido, ver seção 7 "Fornecedores"). A usuária pediu pra completar, nessa ordem, três
+   funcionalidades que um sistema de referência (S3Auto/Comsis) também costuma ter, antes de
+   atacar a emissão de nota fiscal (item 1 desta seção):
+   1. ✅ **Cadastro de Depósito** (múltiplos locais físicos de estoque dentro da mesma loja) —
+      **construído nesta sessão**, ver "Depósitos" na seção 7 e migration `0041` na seção 5.
+      **Falta ela rodar a migration `0041` no Supabase real** (ver seção 9) antes de usar de
+      verdade.
+   2. **Cotação de Peças por fornecedor** (comparar preço do mesmo item entre fornecedores
+      diferentes antes de decidir onde comprar) — não existe ainda, Pedido de Compra hoje já
+      assume qual fornecedor foi escolhido. Próximo item da lista.
+   3. **Entrada de Produtos via NFe de verdade** (importar o **arquivo XML** da nota fiscal do
+      fornecedor e extrair os itens automaticamente) — o que existe hoje é diferente: "Receber
+      pedido" é conferência manual (a usuária digita/confirma as quantidades que chegaram, sem
+      ler nenhum arquivo). Importar XML de verdade é viável (é um formato público/estável, ao
+      contrário da API do Focus NFe) — pensado pra se apoiar no Depósito (escolher onde a
+      mercadoria entrou) e na Cotação (registrar o preço automaticamente) já prontos antes dela.
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
-     implementada)
+     implementada) — sem ordem definida ainda, fica pra depois dessas três.
 6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
    configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas que um dia
    usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio projeto
@@ -1029,13 +1071,15 @@ rodando sem erro nesse projeto (incluindo a fundação multi-loja, as correçõe
 `0034`-`0037`, e `0038`/`0039`/`0040` — apesar do histórico confuso de duas sessões de trabalho
 paralelas que rodaram nomes de migration conflitantes, ver seção 10, o resultado final já foi
 confirmado funcionando de verdade por ela: Fornecedores com endereço completo, redefinir senha, e
-Auditoria, todos testados na prática).
+Auditoria, todos testados na prática). **`0041` (Depósito) ainda não foi rodada por ela** — só
+validada localmente nesta sessão (Postgres local, idempotência + RLS testadas de verdade, ver
+seção 5) — falta rodar no SQL Editor do Supabase real antes de usar o cadastro de Depósito.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0040`. Todas são idempotentes.
+até `0041`. Todas são idempotentes.
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 

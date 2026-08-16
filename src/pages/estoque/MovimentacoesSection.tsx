@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { criarMovimento } from "@/lib/estoque";
+import type { Deposito } from "@/types/deposito";
 import type { MovimentoEstoque, NovoMovimentoEstoque } from "@/types/estoque";
 import type { Peca } from "@/types/peca";
 import { MovimentoForm } from "./MovimentoForm";
@@ -8,6 +9,7 @@ import { MovimentoForm } from "./MovimentoForm";
 interface MovimentacoesSectionProps {
   pecas: Peca[];
   movimentos: MovimentoEstoque[];
+  depositos: Deposito[];
   lojaId: string;
   onRecarregar: () => Promise<void>;
 }
@@ -22,6 +24,7 @@ const motivoLabel: Record<string, string> = {
 export function MovimentacoesSection({
   pecas,
   movimentos,
+  depositos,
   lojaId,
   onRecarregar,
 }: MovimentacoesSectionProps) {
@@ -60,6 +63,7 @@ export function MovimentacoesSection({
       {mostrarFormulario && (
         <MovimentoForm
           pecas={pecas}
+          depositos={depositos}
           onSalvar={handleSalvar}
           onCancelar={() => setMostrarFormulario(false)}
         />
@@ -98,6 +102,7 @@ export function MovimentacoesSection({
                 <tr>
                   <th className="px-4 py-3 font-medium">Data</th>
                   <th className="px-4 py-3 font-medium">Produto</th>
+                  <th className="px-4 py-3 font-medium">Depósito</th>
                   <th className="px-4 py-3 font-medium">Tipo</th>
                   <th className="px-4 py-3 font-medium">Quantidade</th>
                   <th className="px-4 py-3 font-medium">Motivo</th>
@@ -107,12 +112,14 @@ export function MovimentacoesSection({
               <tbody>
                 {movimentosFiltrados.map((movimento) => {
                   const peca = pecas.find((p) => p.id === movimento.peca_id);
+                  const deposito = depositos.find((d) => d.id === movimento.deposito_id);
                   return (
                     <tr key={movimento.id} className="border-t border-sakura-gray/20">
                       <td className="px-4 py-3">
                         {new Date(movimento.criado_em).toLocaleString("pt-BR")}
                       </td>
                       <td className="px-4 py-3">{peca?.descricao ?? "—"}</td>
+                      <td className="px-4 py-3">{deposito?.nome ?? "—"}</td>
                       <td className="px-4 py-3">
                         {movimento.tipo === "entrada" ? "Entrada" : "Saída"}
                       </td>

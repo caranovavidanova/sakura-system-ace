@@ -5,6 +5,7 @@ export type MotivoMovimento = "compra" | "venda" | "ajuste" | "uso_em_os";
 export interface MovimentoEstoque {
   id: string;
   loja_id: string;
+  deposito_id: string;
   peca_id: string;
   tipo: TipoMovimento;
   quantidade: number;

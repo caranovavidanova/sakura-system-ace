@@ -10,11 +10,13 @@ import {
   paraNovoMovimentoEstoque,
   type MovimentoFormValues,
 } from "@/schemas/movimentoEstoque";
+import type { Deposito } from "@/types/deposito";
 import type { NovoMovimentoEstoque } from "@/types/estoque";
 import type { Peca } from "@/types/peca";
 
 interface MovimentoFormProps {
   pecas: Peca[];
+  depositos: Deposito[];
   onSalvar: (movimento: NovoMovimentoEstoque) => Promise<void>;
   onCancelar: () => void;
 }
@@ -26,7 +28,7 @@ const motivos = [
   { valor: "uso_em_os", rotulo: "Uso em ordem de serviço" },
 ] as const;
 
-export function MovimentoForm({ pecas, onSalvar, onCancelar }: MovimentoFormProps) {
+export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: MovimentoFormProps) {
   const [erro, setErro] = useState<string | null>(null);
 
   const {
@@ -37,7 +39,7 @@ export function MovimentoForm({ pecas, onSalvar, onCancelar }: MovimentoFormProp
     formState: { errors, isSubmitting },
   } = useForm<MovimentoFormValues>({
     resolver: zodResolver(movimentoFormSchema),
-    defaultValues: movimentoFormVazio(pecas[0]?.id ?? ""),
+    defaultValues: movimentoFormVazio(pecas[0]?.id ?? "", depositos[0]?.id ?? ""),
   });
 
   async function aoSubmeter(valores: MovimentoFormValues) {
@@ -70,6 +72,20 @@ export function MovimentoForm({ pecas, onSalvar, onCancelar }: MovimentoFormProp
             onMudar={(v) => setValue("peca_id", v)}
             placeholder={pecas.length === 0 ? "Nenhuma peça cadastrada" : "Selecione a peça"}
           />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-sakura-purple-dark/80">Depósito</span>
+          <select
+            {...register("deposito_id")}
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+          >
+            {depositos.map((deposito) => (
+              <option key={deposito.id} value={deposito.id}>
+                {deposito.nome}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="flex flex-col gap-1 text-sm">

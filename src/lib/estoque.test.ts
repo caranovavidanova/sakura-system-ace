@@ -6,6 +6,7 @@ function movimento(sobrescreve: Partial<MovimentoEstoque>): MovimentoEstoque {
   return {
     id: "mov-1",
     loja_id: "loja-1",
+    deposito_id: "deposito-1",
     peca_id: "peca-1",
     tipo: "entrada",
     quantidade: 1,

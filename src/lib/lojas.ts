@@ -1,3 +1,4 @@
+import { criarDeposito } from "./depositos";
 import { supabase } from "./supabase";
 import type { Loja, NovaLoja } from "@/types/loja";
 
@@ -40,6 +41,10 @@ export async function criarLoja(
     .from("operador_lojas")
     .insert({ operador_id: operadorCriadorId, loja_id: loja.id });
   if (erroVinculo) throw erroVinculo;
+
+  // Sem isso, a loja nasceria sem nenhum depósito — e todo lançamento de
+  // estoque dela (manual ou automático) precisa de um `deposito_id` válido.
+  await criarDeposito({ loja_id: loja.id, nome: "Depósito Principal", ativo: true });
 
   return loja;
 }

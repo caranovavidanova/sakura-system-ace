@@ -2,11 +2,17 @@ import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
+import { listarDepositos } from "@/lib/depositos";
 import { mensagemDeErro } from "@/lib/errors";
-import { calcularSaldoPorPeca, listarMovimentos } from "@/lib/estoque";
+import {
+  calcularSaldoPorPeca,
+  calcularSaldoPorPecaEDeposito,
+  listarMovimentos,
+} from "@/lib/estoque";
 import { listarPecas } from "@/lib/pecas";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
+import type { Deposito } from "@/types/deposito";
 import type { MovimentoEstoque } from "@/types/estoque";
 import type { Peca } from "@/types/peca";
 import { ContagemSection } from "./ContagemSection";
@@ -22,6 +28,7 @@ export function EstoquePage() {
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [movimentos, setMovimentos] = useState<MovimentoEstoque[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [depositos, setDepositos] = useState<Deposito[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -33,14 +40,17 @@ export function EstoquePage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [pecasCarregadas, movimentosCarregados, categoriasCarregadas] = await Promise.all([
-        listarPecas(),
-        listarMovimentos(lojaAtual.id),
-        listarCategorias(),
-      ]);
+      const [pecasCarregadas, movimentosCarregados, categoriasCarregadas, depositosCarregados] =
+        await Promise.all([
+          listarPecas(),
+          listarMovimentos(lojaAtual.id),
+          listarCategorias(),
+          listarDepositos(lojaAtual.id),
+        ]);
       setPecas(pecasCarregadas);
       setMovimentos(movimentosCarregados);
       setCategorias(categoriasCarregadas);
+      setDepositos(depositosCarregados);
     } catch (err) {
       console.error("Erro ao carregar estoque:", err);
       setErro(mensagemDeErro(err));
@@ -55,6 +65,7 @@ export function EstoquePage() {
   }, [lojaAtual?.id]);
 
   const saldos = calcularSaldoPorPeca(movimentos);
+  const saldosPorDeposito = calcularSaldoPorPecaEDeposito(movimentos);
 
   return (
     <div className="space-y-6">
@@ -121,13 +132,15 @@ export function EstoquePage() {
         <MovimentacoesSection
           pecas={pecas}
           movimentos={movimentos}
+          depositos={depositos}
           lojaId={lojaAtual.id}
           onRecarregar={carregar}
         />
       ) : aba === "contagem" ? (
         <ContagemSection
           pecas={pecas}
-          saldos={saldos}
+          depositos={depositos}
+          saldosPorDeposito={saldosPorDeposito}
           lojaId={lojaAtual.id}
           onRecarregar={carregar}
         />

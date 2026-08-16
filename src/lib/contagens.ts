@@ -15,6 +15,7 @@ export async function listarContagens(lojaId: string): Promise<ContagemEstoque[]
 
 export async function registrarContagem(
   pecaId: string,
+  depositoId: string,
   quantidadeContada: number,
   saldoSistema: number,
   observacao: string | null,
@@ -25,6 +26,7 @@ export async function registrarContagem(
 
   const { error } = await supabase.from("contagens_estoque").insert({
     peca_id: pecaId,
+    deposito_id: depositoId,
     quantidade_contada: quantidadeContada,
     saldo_sistema: saldoSistema,
     diferenca,
@@ -38,6 +40,7 @@ export async function registrarContagem(
     await criarMovimento(
       {
         peca_id: pecaId,
+        deposito_id: depositoId,
         tipo: diferenca > 0 ? "entrada" : "saida",
         quantidade: Math.abs(diferenca),
         motivo: "ajuste",

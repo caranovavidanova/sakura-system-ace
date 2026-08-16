@@ -41,9 +41,13 @@ export async function buscarDepositoPadraoId(lojaId: string): Promise<string> {
     .eq("loja_id", lojaId)
     .eq("ativo", true)
     .order("criado_em", { ascending: true })
-    .limit(1)
-    .single();
+    .limit(1);
 
   if (error) throw error;
-  return data.id as string;
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Nenhum depósito ativo encontrado pra essa loja. Cadastre ou reative um depósito em Configurações antes de continuar.",
+    );
+  }
+  return data[0].id as string;
 }

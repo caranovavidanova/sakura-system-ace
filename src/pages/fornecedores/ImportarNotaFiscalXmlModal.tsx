@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { mensagemDeErro } from "@/lib/errors";
 import { criarFornecedor } from "@/lib/fornecedores";
-import { extrairNotaFiscalXml, normalizarCnpj } from "@/lib/notaFiscalXmlFornecedor";
+import { extrairNotaFiscalXml, lerTextoXml, normalizarCnpj } from "@/lib/notaFiscalXmlFornecedor";
 import { criarPeca } from "@/lib/pecas";
 import { importarNotaFiscalCompra } from "@/lib/pedidosCompra";
 import type { Deposito } from "@/types/deposito";
@@ -63,7 +63,7 @@ export function ImportarNotaFiscalXmlModal({
     setLendo(true);
     setErro(null);
     try {
-      const texto = await arquivo.text();
+      const texto = await lerTextoXml(arquivo);
       const extraida = extrairNotaFiscalXml(texto);
       const cnpjNota = normalizarCnpj(extraida.fornecedor_cnpj);
       const fornecedor = cnpjNota

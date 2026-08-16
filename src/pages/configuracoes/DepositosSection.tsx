@@ -46,6 +46,19 @@ export function DepositosSection({ depositos, lojaId, onSalvo }: DepositosSectio
   }
 
   async function handleAlternarStatus(deposito: Deposito) {
+    setErro(null);
+
+    // Baixa automática de estoque (OS, recebimento de pedido, importação por
+    // foto/XML) sempre cai no depósito padrão da loja — sem nenhum ativo,
+    // esses fluxos quebram. Nunca deixar inativar o último.
+    const ativosRestantes = depositos.filter((d) => d.ativo && d.id !== deposito.id).length;
+    if (deposito.ativo && ativosRestantes === 0) {
+      setErro(
+        "Esse é o último depósito ativo da loja. Cadastre outro depósito antes de inativar este.",
+      );
+      return;
+    }
+
     try {
       await atualizarStatusDeposito(deposito.id, !deposito.ativo);
       await onSalvo();

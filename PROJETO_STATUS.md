@@ -1071,30 +1071,47 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Prioridade da próxima sessão — pedido explícito da usuária**: antes de atacar a emissão de nota
-fiscal, ela quer uma **passada de revisão/limpeza no código inteiro** — não só nos três módulos
-novos desta sessão (Depósito, Cotação de Peças, Importar XML — ver seção 7), no projeto todo —
-caçando bugs e problemas antes de seguir em frente. Só depois dessa revisão: emissão de nota fiscal
-(Focus NFe, item 1 da seção 8) → testar tudo → lançar de verdade na loja do pai dela. Como abordar:
+**Revisão de código pedida pela usuária — concluída nesta sessão**: rodada a skill `/code-review`
+em nível `xhigh` apontando pro repositório inteiro (branch `main`, não só o diff da sessão), com
+atenção especial aos três módulos novos (Depósito, Cotação de Peças, Importar XML). Achou 4 bugs
+reais, todos verificados contra o código de verdade (não só a leitura do reviewer) e **já
+corrigidos, validados por `tsc`/lint/testes/build nesta sessão**:
 
-- Usar a skill `/code-review` (nível de esforço alto — `high` ou `xhigh`) e/ou `/simplify`,
-  apontando pro repositório inteiro (branch `main`), não só o diff desta sessão — o pedido é
-  "revisar o código", não só revisar o que acabou de mudar.
-- **Atenção especial aos três módulos novos desta sessão**: validados por `tsc`/lint/testes/build
-  e as migrations testadas de verdade num Postgres local (idempotência + RLS conferida trocando de
-  papel) — mas **nunca vistos rodando visualmente** (o sandbox não alcança o Supabase real dela,
-  ver item 6 da seção 6), então o primeiro teste visual de verdade só acontece quando ela roda na
-  própria máquina. Vale checar com mais cuidado.
-- **Edge case não testado**: o que acontece se ela inativar *todos* os depósitos de uma loja —
-  `buscarDepositoPadraoId()` (`lib/depositos.ts`) provavelmente quebra sem depósito ativo nenhum
-  pra cair como padrão (fluxos automáticos como baixa em OS ficariam sem conseguir lançar).
-- Reler as dívidas técnicas já conhecidas na seção 6 (principalmente item 1 — permissão só na
-  interface, sem RLS por módulo — e item 4 — sem teste de UI/integração) e decidir com ela se algo
-  ali precisa de atenção antes do lançamento real, ou se continua aceitável pro tamanho da operação
-  dela.
+1. `buscarDepositoPadraoId()` (`lib/depositos.ts`) quebrava com erro cru se a loja ficasse sem
+   nenhum depósito ativo — exatamente o edge case que já estava anotado como "não testado" na
+   revisão anterior. Corrigido em duas frentes: `DepositosSection.tsx` agora impede inativar o
+   último depósito ativo pela interface, e `buscarDepositoPadraoId()` ganhou uma mensagem amigável
+   como segunda trava, caso aconteça por outro caminho.
+2. `excluirLoja()` (`lib/lojas.ts`) tinha ficado impossível de usar em qualquer loja de verdade
+   vazia desde a migration `0041` — toda loja sempre tem um "Depósito Principal", e
+   `depositos.loja_id` não tem `ON DELETE CASCADE`, então o delete sempre batia num erro de FK.
+   Corrigido apagando os depósitos da loja antes de apagar a loja (se houver movimentação de
+   estoque vinculada a esse depósito, o delete continua falhando e caindo na mesma mensagem
+   amigável de sempre).
+3. `registrarCotacoes()` podia ser chamada com preço 0 (usuária digitando "0" num Pedido de Compra
+   manual, ou XML de fornecedor sem a tag `vUnCom`), mas `cotacoes_pecas.preco` tem
+   `check (preco > 0)` — o insert quebrava depois do pedido/itens (e, no caso do XML, da entrada de
+   estoque) já terem sido gravados, arriscando pedido duplicado ou estoque duplicado numa segunda
+   tentativa. Corrigido filtrando preço 0 antes de registrar cotação (`lib/pedidosCompra.ts`, dois
+   pontos: `criarPedido()` e `importarNotaFiscalCompra()`).
+4. `ImportarNotaFiscalXmlModal.tsx` lia o XML com `File.text()`, que sempre decodifica como UTF-8
+   — mas XML de NFe às vezes vem em ISO-8859-1 (comum em ERPs mais antigos), corrompendo acento e
+   cedilha em silêncio, sem erro nenhum. Corrigido com `lerTextoXml()` novo em
+   `lib/notaFiscalXmlFornecedor.ts`, que lê o encoding declarado no próprio prólogo do XML antes de
+   decodificar o arquivo inteiro.
 
-Ela só publica a próxima versão do instalador quando a nota fiscal estiver pronta (ver aviso na
-seção 7, "Empacotamento").
+**Ainda não verificado rodando de verdade** (o sandbox não alcança o Supabase real dela, ver item
+6 da seção 6) — vale ela reconferir na prática, especialmente o fluxo de inativar/reativar
+depósito e o de excluir uma loja vazia, antes de considerar 100% fechado.
+
+**Dívidas técnicas conhecidas não atacadas nesta revisão** (ficam pra decidir com calma, não são
+bug): item 1 da seção 6 (permissão só checada na interface, sem RLS por módulo) e item 4 (sem
+teste de UI/integração, só função pura). Seguem como estavam.
+
+**Próximo passo combinado**: com a revisão feita, o caminho livre é atacar a emissão de nota fiscal
+(Focus NFe, item 1 da seção 8) → testar tudo → lançar de verdade na loja do pai dela. Ela só
+publica a próxima versão do instalador quando a nota fiscal estiver pronta (ver aviso na seção 7,
+"Empacotamento").
 
 ## 9. Como rodar / configurar (resumo)
 

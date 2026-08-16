@@ -1,5 +1,21 @@
 import type { ItemNotaFiscalXml, NotaFiscalXmlExtraida } from "@/types/notaFiscalXmlFornecedor";
 
+// `File.text()` sempre decodifica como UTF-8, mas boa parte dos emissores de
+// NFe (ERPs mais antigos, algumas SEFAZ) gera o XML em ISO-8859-1 — decodificar
+// errado não dá erro nenhum, só corrompe acento/cedilha silenciosamente. O
+// prólogo do XML (`<?xml ... encoding="..."?>`) é sempre ASCII puro, então dá
+// pra ler ele primeiro pra descobrir qual encoding usar no arquivo inteiro.
+export async function lerTextoXml(arquivo: File): Promise<string> {
+  const buffer = await arquivo.arrayBuffer();
+  const prefixo = new TextDecoder("utf-8").decode(buffer.slice(0, 200));
+  const encoding = prefixo.match(/encoding=["']([^"']+)["']/i)?.[1] ?? "utf-8";
+  try {
+    return new TextDecoder(encoding).decode(buffer);
+  } catch {
+    return new TextDecoder("utf-8").decode(buffer);
+  }
+}
+
 // Só dígitos — pra comparar CNPJ do XML (sempre só números) com o CNPJ
 // cadastrado no fornecedor (a usuária pode ter digitado com ponto/barra/traço
 // ou não, ver schemas/fornecedor.ts, que não aplica máscara nenhuma).

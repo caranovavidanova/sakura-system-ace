@@ -1065,6 +1065,23 @@ normal (quebra de linha).
    chato de repetir por loja. Quando a usuária estiver mais perto de vender pra outras lojas de
    verdade, vale reconsiderar um backend central (ela paga uma conta só, cobra o uso de IA dentro
    da assinatura do sistema) — decidir com calma nessa hora, não agora que só a loja dela usa.
+7. **Vibecodar em equipe** — a usuária pretende, no futuro (sem data definida, ainda em fase de
+   "pensar possibilidades", não começa com isso agora), trazer amigos pra ajudar no projeto como
+   desenvolvedores, cada um provavelmente também operando via IA. Ainda não é hora de montar nada
+   disso — só documentando o ponto de atenção já identificado pra quando a hora chegar: hoje existe
+   **um projeto Supabase só** (produção, com dado real da loja do pai dela) e um único `.env` — se
+   mais gente rodar `npm run dev` e testar coisas, estaria todo mundo mexendo direto no banco de
+   verdade. **Primeiro passo prático quando for montar a equipe**: criar um projeto Supabase de
+   teste/staging separado (rodar as migrations `0001`-`0042` nele, mesmo processo já documentado na
+   seção 9 pra "montar um projeto do zero") pra quem for novo no projeto testar sem risco. O resto
+   do fluxo já usado hoje (branch → PR → merge, `PROJETO_STATUS.md` como memória compartilhada,
+   `/code-review` antes de mesclar) já escala razoavelmente bem pra mais gente, sem precisar mudar
+   nada estrutural. Também recebi de leitura um "prompt de contexto" gerado pelo Gemini,
+   descrevendo uma estrutura de squads (Backend/Frontend/Testers) e uma arquitetura de API
+   separada do Supabase — **ela confirmou que isso é só visão de longo prazo, não fato hoje**: a
+   arquitetura continua "app fala direto com Supabase via RLS", sem backend próprio, e não deve
+   mudar sem ela pedir explicitamente e decisão conjunta (ver seção 3, "não reabrir sem motivo
+   forte").
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,

@@ -62,8 +62,13 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    usar de verdade lá é como ela pretende achar bugs reais (os que só aparecem usando de verdade,
    não em teste) e descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a
    emissão de nota fiscal (seção 8, item 1). **Em andamento nesta sessão**: ela decidiu instalar o
-   app na loja mesmo sem a nota fiscal pronta, publicou a tag `v0.9.2` (instalador novo no GitHub
-   Releases, ver seção 7 "Empacotamento") e está baixando/instalando agora — o "gatilho" começou.
+   app na loja mesmo sem a nota fiscal pronta. Publicou a tag `v0.9.2` e, ao longo da mesma sessão,
+   mais três (`v0.9.3`, `v0.9.4`, `v0.9.5` — ver seção 7 "Empacotamento" pro que cada uma corrigiu).
+   **Banco de produção já limpo de dado de teste**: rodou o script `limpar-dados-de-teste.sql`
+   atualizado (ver seção 9) e excluiu a "Loja 2" de teste que tinha sobrado de sessões anteriores —
+   hoje só existe uma loja de verdade no Supabase real, "Pneus Amigão" (Araraquara). Instalou o
+   `.exe` na própria máquina (pessoal, em casa) pra testar antes de levar pra loja do pai — ainda
+   **não confirmado se já instalou na máquina da loja de verdade**. O "gatilho" começou.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
    grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
@@ -938,6 +943,13 @@ normal (quebra de linha).
   ser publicada por engano no Supabase real dela numa sessão separada. **Antes de considerar isso
   pronto, é preciso redeployar a Edge Function com o código atual** (passo a passo na seção 9) —
   mesmo que a função já exista publicada, o código de lá ainda pode ser o da versão simples.
+  **Pendência identificada nesta sessão (ainda não feita)**: como o perfil "Pneus Amigão" (que o
+  pai dela vai usar) é admin, ele enxerga a lista completa de operadores — inclusive o
+  "Administrador" (login de dev da usuária, `@sakura`) e o "Operador Teste" (`@teste`, resíduo sem
+  uso real, só permissão de Início). Sugestão dada e ainda não confirmada como feita: inativar o
+  "Operador Teste" e renomear "Administrador" pra algo tipo "Suporte Técnico", pra não confundir o
+  pai dela olhando a tela. Baixo risco, sem pressa — só retomar se ela trouxer o assunto nas
+  próximas sessões.
 - **Clientes**: CRUD completo (**edição** adicionada nesta sessão — antes só criava/excluía) +
   múltiplos veículos por cliente, pessoa física/jurídica (rótulos de campo mudam conforme o tipo),
   aniversário do cliente no calendário do Início, tipo de veículo (ícone 2D por carroceria, pintado
@@ -1074,28 +1086,46 @@ normal (quebra de linha).
   `UPDATE`/`DELETE` (não criação) num conjunto de tabelas sensíveis — ver lista completa na seção
   5, tabela `auditoria`. É gravado por trigger de banco, não pelo código do app — funciona mesmo
   se a alteração vier de outro lugar (SQL Editor manual, por exemplo).
-- **Multi-loja** — já aplicada e testada de verdade no Supabase real da usuária (criou uma 2ª loja,
-  o que revelou o bug corrigido na migration 0034). 1 projeto Supabase serve 2+ lojas com um painel
-  único (não instalações separadas). Catálogo compartilhado (clientes, peças, serviços, categorias);
+- **Multi-loja** — já aplicada e testada de verdade no Supabase real da usuária (criou uma 2ª loja
+  de teste pra validar o fluxo, o que revelou o bug corrigido na migration 0034 — essa loja de teste
+  foi excluída nesta sessão, ver abaixo). 1 projeto Supabase serve 2+ lojas com um painel único (não
+  instalações separadas). Catálogo compartilhado (clientes, peças, serviços, categorias);
   estoque/caixa/OS/contas a pagar/contas a receber/notas fiscais/funcionários/configurações
   separados por loja. Um operador pode ter acesso a 1 ou mais lojas (`operador_lojas`);
   `LojaSwitcher.tsx` na Sidebar deixa trocar de loja ativa, só aparece pra quem tem 2+. Detalhe
-  completo do desenho na seção 5, subseção "Multi-loja".
+  completo do desenho na seção 5, subseção "Multi-loja". **Hoje só existe uma loja de verdade no
+  Supabase real: "Pneus Amigão" (Araraquara)** — a "Loja 2" de teste (que tinha ficado com o UUID
+  original/fixo da migration 0031, sem cidade preenchida — nome enganoso, não era a mais nova) foi
+  excluída nesta sessão depois de limpar o dado de negócio vinculado e mover o funcionário
+  "Administrador" pra "Pneus Amigão".
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
-  enviada. **Tag `v0.9.2` publicada nesta sessão** (build automático disparado por ela no terminal)
-  — decisão revista: **ela decidiu lançar na loja do pai dela mesmo sem a emissão de nota fiscal
-  pronta**, seguindo o plano original da fase 1 (seção 1: usar de verdade pra achar bugs reais,
-  nota fiscal continua sendo emitida por fora até a integração Focus NFe ficar pronta). Fluxo
-  confirmado funcionando: ela mesma rodou `git tag v0.9.2` + `git push origin v0.9.2`, o GitHub
-  Actions buildou e publicou o instalador sozinho. **Auto-update via `electron-updater` é o
-  mecanismo real de distribuição daqui pra frente** — ela não precisa mais baixar o instalador
-  manualmente a cada versão nova; o app já embarca `autoUpdater.checkForUpdatesAndNotify()`
-  (`electron/main.ts`), que roda sozinho toda vez que o app abre (só em build de produção, não em
-  `npm run dev`) e atualiza em segundo plano. A versão aparece pequena no canto inferior direito do
-  app (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive
-  login. **Pendente confirmar**: se ela já baixou/instalou o `.exe` da `v0.9.2` na própria máquina e
-  depois na loja do pai — ver seção 1 pra o combinado de testar na própria máquina antes.
+  enviada. **Decisão revista nesta sessão**: ela decidiu lançar na loja do pai dela mesmo sem a
+  emissão de nota fiscal pronta, seguindo o plano original da fase 1 (seção 1) — nota fiscal
+  continua sendo emitida por fora até a integração Focus NFe ficar pronta. **Quatro tags publicadas
+  na mesma sessão**, cada uma corrigindo algo achado testando o lançamento de verdade:
+  - `v0.9.2`: primeira versão publicada de verdade desde o início do projeto (a `v0.9.0` anterior
+    estava bem desatualizada). Inclui os 4 bugs da revisão de código (ver seção 8) mais tudo
+    construído nas sessões anteriores.
+  - `v0.9.3`: corrige o texto invisível ao editar Loja/Depósito e atualiza o script de limpeza de
+    dados de teste (ver itens 17 e a nota sobre `limpar-dados-de-teste.sql` na seção 9).
+  - `v0.9.4`: corrige o número da versão nunca aparecendo no app instalado (`VersaoApp.tsx` sempre
+    dependeu de `process.env.npm_package_version`, que só existe rodando via `npm run ...`) e
+    adiciona log do `autoUpdater` em arquivo (ver itens 18 e 19).
+  - `v0.9.5`: corrige `excluirLoja()` de vez — faltavam 4 tabelas de configuração além de
+    `depositos` (ver item 20).
+  Fluxo confirmado funcionando de ponta a ponta: ela roda `git tag vX.Y.Z` + `git push origin
+  vX.Y.Z` no terminal, o GitHub Actions builda e publica o instalador sozinho (~5-10 min). A versão
+  aparece pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —
+  só passou a funcionar de verdade a partir da `v0.9.4`.
+  **Auto-update não confirmado funcionando ainda**: mesmo com a `v0.9.3` publicada com sucesso no
+  GitHub, o app instalado (`v0.9.2`) não pareceu se atualizar sozinho ao fechar/abrir — ela acabou
+  instalando manualmente a `v0.9.4` (mesmo processo de sempre, baixar o `.exe` das Releases) em vez
+  de esperar o auto-update. Como o log do `autoUpdater` (item 19) só existe a partir da `v0.9.4`,
+  não dá pra saber ainda se foi falha real ou só timing/rede — **próxima sessão: se ela publicar uma
+  `v0.9.6`+ e o app (já na `v0.9.4`/`v0.9.5`) não se atualizar sozinho, o arquivo
+  `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log` é o primeiro lugar pra olhar**, em
+  vez de instalar manualmente de novo sem saber o motivo.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -1196,9 +1226,12 @@ corrigidos, validados por `tsc`/lint/testes/build nesta sessão**:
 2. `excluirLoja()` (`lib/lojas.ts`) tinha ficado impossível de usar em qualquer loja de verdade
    vazia desde a migration `0041` — toda loja sempre tem um "Depósito Principal", e
    `depositos.loja_id` não tem `ON DELETE CASCADE`, então o delete sempre batia num erro de FK.
-   Corrigido apagando os depósitos da loja antes de apagar a loja (se houver movimentação de
-   estoque vinculada a esse depósito, o delete continua falhando e caindo na mesma mensagem
-   amigável de sempre).
+   Corrigido apagando os depósitos da loja antes de apagar a loja. **Correção incompleta — extendida
+   depois na mesma sessão** (item 20 da seção 6): faltavam mais 4 tabelas de configuração por loja
+   (`configuracoes_garantia`, `configuracoes_fiscais_loja`, `configuracoes_painel_inicio`,
+   `configuracoes_juros_parcelas`) com o mesmo problema, descoberto só quando a usuária tentou
+   excluir uma loja de teste de verdade no Supabase real e o erro continuou aparecendo mesmo com
+   todo dado de negócio já limpo.
 3. `registrarCotacoes()` podia ser chamada com preço 0 (usuária digitando "0" num Pedido de Compra
    manual, ou XML de fornecedor sem a tag `vUnCom`), mas `cotacoes_pecas.preco` tem
    `check (preco > 0)` — o insert quebrava depois do pedido/itens (e, no caso do XML, da entrada de
@@ -1211,18 +1244,24 @@ corrigidos, validados por `tsc`/lint/testes/build nesta sessão**:
    `lib/notaFiscalXmlFornecedor.ts`, que lê o encoding declarado no próprio prólogo do XML antes de
    decodificar o arquivo inteiro.
 
-**Ainda não verificado rodando de verdade** (o sandbox não alcança o Supabase real dela, ver item
-6 da seção 6) — vale ela reconferir na prática, especialmente o fluxo de inativar/reativar
-depósito e o de excluir uma loja vazia, antes de considerar 100% fechado.
+**Já verificado rodando de verdade, na mesma sessão**: o fluxo de excluir uma loja vazia foi
+testado no Supabase real (excluindo a "Loja 2" de teste) — revelou que a correção original só
+cuidava de `depositos`, faltavam mais 4 tabelas de configuração (item 20 da seção 6, já corrigido e
+publicado na `v0.9.5`). O fluxo de inativar/reativar depósito ainda não foi testado por ela na
+prática.
 
 **Dívidas técnicas conhecidas não atacadas nesta revisão** (ficam pra decidir com calma, não são
 bug): item 1 da seção 6 (permissão só checada na interface, sem RLS por módulo) e item 4 (sem
 teste de UI/integração, só função pura). Seguem como estavam.
 
-**Próximo passo combinado**: com a revisão feita, o caminho livre é atacar a emissão de nota fiscal
-(Focus NFe, item 1 da seção 8) → testar tudo → lançar de verdade na loja do pai dela. Ela só
-publica a próxima versão do instalador quando a nota fiscal estiver pronta (ver aviso na seção 7,
-"Empacotamento").
+**Decisão revista sobre o próximo passo**: o plano original era só publicar o instalador depois da
+nota fiscal pronta — **ela decidiu lançar antes**, mesmo sem isso (ver seção 1, fase 1). O
+lançamento de verdade já começou nesta sessão: banco de produção limpo, loja real ("Pneus Amigão")
+configurada sozinha no Supabase, quatro versões publicadas (`v0.9.2` a `v0.9.5`) corrigindo bugs
+achados testando o lançamento de verdade. Falta confirmar a instalação na máquina da loja (só
+testado na máquina pessoal dela até agora) e resolver a incerteza do auto-update (ver seção 7,
+"Empacotamento"). A nota fiscal (Focus NFe, item 1 desta seção) continua sendo o próximo passo
+grande, mas sem bloquear o uso real do sistema — ela já está usando por fora até lá.
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -1418,13 +1457,15 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.2"`. **Tag `v0.9.2` publicada de verdade** (ela rodou
-  `git tag v0.9.2` + `git push origin v0.9.2` no próprio terminal, o GitHub Actions buildou e
-  publicou o instalador sozinho) — decisão tomada nesta sessão de **lançar na loja do pai dela
-  mesmo sem a nota fiscal pronta** (fase 1 do plano de expansão, seção 1), em vez de esperar o
-  Focus NFe primeiro como planejado antes. Auto-update via `electron-updater` cuida das próximas
-  versões sozinho a partir daqui — não precisa mais desse processo manual de "baixar de novo" pra
-  quem já instalou essa versão.
+- `package.json` em `"version": "0.9.5"`. **Quatro tags publicadas de verdade nesta sessão**
+  (`v0.9.2`, `v0.9.3`, `v0.9.4`, `v0.9.5` — ela sempre rodou `git tag vX.Y.Z` + `git push origin
+  vX.Y.Z` no próprio terminal, o GitHub Actions buildou e publicou o instalador sozinho todas as
+  vezes) — decisão tomada nesta sessão de **lançar na loja do pai dela mesmo sem a nota fiscal
+  pronta** (fase 1 do plano de expansão, seção 1), em vez de esperar o Focus NFe primeiro como
+  planejado antes. Cada tag corrigiu um bug achado testando o lançamento de verdade — ver lista
+  completa em "Empacotamento" na seção 7. **Auto-update via `electron-updater` ainda não confirmado
+  funcionando** (ela precisou instalar a `v0.9.4` manualmente) — a partir da `v0.9.4` existe um log
+  (`atualizacoes.log`) que deve esclarecer o motivo na próxima vez que isso for testado.
 
 ## 11. Trabalhando de outro computador
 

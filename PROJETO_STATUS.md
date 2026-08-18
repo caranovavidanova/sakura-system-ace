@@ -61,14 +61,14 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 1. **Lançar na borracharia do pai dela** (ver seção 1), em **Araraquara**, com tudo funcionando —
    usar de verdade lá é como ela pretende achar bugs reais (os que só aparecem usando de verdade,
    não em teste) e descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a
-   emissão de nota fiscal (seção 8, item 1). **Em andamento nesta sessão**: ela decidiu instalar o
-   app na loja mesmo sem a nota fiscal pronta. Publicou a tag `v0.9.2` e, ao longo da mesma sessão,
-   mais três (`v0.9.3`, `v0.9.4`, `v0.9.5` — ver seção 7 "Empacotamento" pro que cada uma corrigiu).
-   **Banco de produção já limpo de dado de teste**: rodou o script `limpar-dados-de-teste.sql`
-   atualizado (ver seção 9) e excluiu a "Loja 2" de teste que tinha sobrado de sessões anteriores —
-   hoje só existe uma loja de verdade no Supabase real, "Pneus Amigão" (Araraquara). Instalou o
-   `.exe` na própria máquina (pessoal, em casa) pra testar antes de levar pra loja do pai — ainda
-   **não confirmado se já instalou na máquina da loja de verdade**. O "gatilho" começou.
+   emissão de nota fiscal (seção 8, item 1). **Em andamento**: instalador publicado (`v0.9.2` a
+   `v0.9.5`, ver seção 7 "Empacotamento") e testado por ela na própria máquina (pessoal, em casa) —
+   **ainda não confirmado se já instalou na máquina da loja de verdade**. Banco de produção limpo,
+   só existe uma loja real no Supabase: "Pneus Amigão" (Araraquara). Auto-update via GitHub Releases
+   confirmado funcionando de ponta a ponta (ver item 21 da seção 6). **Plano dela pra esta semana**:
+   usar o sistema no dia a dia (cadastrar peça, abrir OS etc.) o resto da semana pra pegar bug real
+   de uso; **quinta ou sexta ela decide/assina o Focus NFe** e a partir daí ataca a emissão de nota
+   fiscal (seção 8, item 1) — até lá, nota fiscal continua sendo emitida por fora do sistema.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
    grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
@@ -1147,34 +1147,28 @@ normal (quebra de linha).
   vX.Y.Z` no terminal, o GitHub Actions builda e publica o instalador sozinho (~5-10 min). A versão
   aparece pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —
   só passou a funcionar de verdade a partir da `v0.9.4`.
-  **Causa raiz do auto-update nunca ter funcionado, achada e corrigida nesta sessão**: nem a
-  `v0.9.3` nem a `v0.9.4` chegaram a se instalar sozinhas no app já rodando — não era timing/rede,
-  era o repositório `amigao` (hoje `sakura-system-ace`) estar **privado**. O `electron-updater`
-  baixa o `latest.yml` da release sem nenhuma autenticação, e um repositório privado devolve 404 pra
-  isso (confirmado testando o link direto) — o app nunca teve como saber que existia uma versão
-  nova. Corrigido **tornando o repositório público** (ver item 21 da seção 6 pro detalhe completo e
-  as alternativas descartadas). **Confirmado por ela rodando de verdade, ainda nesta sessão**: com o
-  app já em `v0.9.4` aberto na própria máquina, fechou e abriu de novo — a `v0.9.5` (já publicada,
-  esperando) se instalou sozinha, sem precisar baixar o `.exe` manualmente. Auto-update via GitHub
-  Releases funcionando de ponta a ponta a partir de agora. Se algum dia parar de funcionar de novo,
-  `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log` continua sendo o primeiro lugar
-  pra olhar (a partir da
-  `v0.9.4`, esse arquivo já existe e registra cada tentativa de checagem/erro).
+  **Auto-update confirmado funcionando de ponta a ponta** (validado por ela: app em `v0.9.4`
+  aberto, fechou e abriu de novo, `v0.9.5` se instalou sozinha, sem baixar `.exe` manualmente). A
+  causa de `v0.9.3`/`v0.9.4` nunca terem se instalado sozinhas não era timing/rede — era o
+  repositório estar **privado** (`electron-updater` baixa o `latest.yml` sem autenticação, e um
+  repo privado sempre devolve 404 pra isso). Corrigido tornando o repositório público e renomeando
+  pra `sakura-system-ace` (detalhe completo e alternativas descartadas no item 21 da seção 6). Se
+  parar de funcionar de novo, `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log`
+  continua sendo o primeiro lugar pra olhar.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
-1. **Parte fiscal (NÃO bloqueia o uso na loja — ver ordem de prioridade da usuária logo abaixo)**:
-   emissão de NFC-e (peças) e NFS-e (serviço). **Provedor escolhido: Focus NFe, plano básico** —
-   usuária ainda não assinou, pediu pra deixar o código "semi pronto" antes. Já feito: modelagem
-   dos dados fiscais da loja (`configuracoes_fiscais_loja`) + tela em Configurações + a "casca" da
-   integração HTTP (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a função de
-   emissão de verdade (`emitirNFCe()`) — não foi possível confirmar o formato exato do corpo da
-   requisição (CFOP/NCM/ICMS por item) contra a documentação oficial do Focus NFe a partir deste
-   ambiente (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa de um token real de
-   homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
-   campos**. **Ela só vai atacar isso quando estiver com tudo pronto pra lançar a primeira versão
-   de verdade na loja do pai dela** — não tem pressa, é o último passo antes do lançamento real,
-   não um bloqueio do dia a dia (ver seção 1).
+1. **Parte fiscal (NÃO bloqueia o uso na loja — é o único módulo que falta, o resto já está pronto
+   pra uso real)**: emissão de NFC-e (peças) e NFS-e (serviço). **Provedor escolhido: Focus NFe,
+   plano básico** — usuária ainda não assinou. **Plano dela**: assinar quinta ou sexta desta semana
+   (ver seção 1, fase 1) e me passar o **token de homologação** assim que tiver em mãos. Já feito:
+   modelagem dos dados fiscais da loja (`configuracoes_fiscais_loja`) + tela em Configurações + a
+   "casca" da integração HTTP (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a
+   função de emissão de verdade (`emitirNFCe()`) — não foi possível confirmar o formato exato do
+   corpo da requisição (CFOP/NCM/ICMS por item) contra a documentação oficial do Focus NFe a partir
+   deste ambiente (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa do token real
+   de homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
+   campos**.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.
@@ -1246,56 +1240,17 @@ arquitetura aberta): integração com maquininha de cartão (TEF), assistente de
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
 (ex: Supermarket Edition).
 
-**Revisão de código pedida pela usuária — concluída nesta sessão**: rodada a skill `/code-review`
-em nível `xhigh` apontando pro repositório inteiro (branch `main`, não só o diff da sessão), com
-atenção especial aos três módulos novos (Depósito, Cotação de Peças, Importar XML). Achou 4 bugs
-reais, todos verificados contra o código de verdade (não só a leitura do reviewer) e **já
-corrigidos, validados por `tsc`/lint/testes/build nesta sessão**:
+**Revisão de código** (`/code-review` nível `xhigh`, repositório inteiro): achou 4 bugs reais, todos
+já corrigidos e validados (`buscarDepositoPadraoId()` sem depósito ativo, `excluirLoja()` incompleto
+— ver item 20 da seção 6 pro detalhe completo —, `registrarCotacoes()` com preço 0 batendo no
+`check (preco > 0)`, `ImportarNotaFiscalXmlModal.tsx` lendo XML sempre como UTF-8 mesmo quando o
+prólogo declara ISO-8859-1). **Dívidas técnicas conhecidas, fora de escopo dessa revisão** (ficam
+pra decidir com calma, não são bug): item 1 da seção 6 (permissão só checada na interface, sem RLS
+por módulo) e item 4 (sem teste de UI/integração, só função pura).
 
-1. `buscarDepositoPadraoId()` (`lib/depositos.ts`) quebrava com erro cru se a loja ficasse sem
-   nenhum depósito ativo — exatamente o edge case que já estava anotado como "não testado" na
-   revisão anterior. Corrigido em duas frentes: `DepositosSection.tsx` agora impede inativar o
-   último depósito ativo pela interface, e `buscarDepositoPadraoId()` ganhou uma mensagem amigável
-   como segunda trava, caso aconteça por outro caminho.
-2. `excluirLoja()` (`lib/lojas.ts`) tinha ficado impossível de usar em qualquer loja de verdade
-   vazia desde a migration `0041` — toda loja sempre tem um "Depósito Principal", e
-   `depositos.loja_id` não tem `ON DELETE CASCADE`, então o delete sempre batia num erro de FK.
-   Corrigido apagando os depósitos da loja antes de apagar a loja. **Correção incompleta — extendida
-   depois na mesma sessão** (item 20 da seção 6): faltavam mais 4 tabelas de configuração por loja
-   (`configuracoes_garantia`, `configuracoes_fiscais_loja`, `configuracoes_painel_inicio`,
-   `configuracoes_juros_parcelas`) com o mesmo problema, descoberto só quando a usuária tentou
-   excluir uma loja de teste de verdade no Supabase real e o erro continuou aparecendo mesmo com
-   todo dado de negócio já limpo.
-3. `registrarCotacoes()` podia ser chamada com preço 0 (usuária digitando "0" num Pedido de Compra
-   manual, ou XML de fornecedor sem a tag `vUnCom`), mas `cotacoes_pecas.preco` tem
-   `check (preco > 0)` — o insert quebrava depois do pedido/itens (e, no caso do XML, da entrada de
-   estoque) já terem sido gravados, arriscando pedido duplicado ou estoque duplicado numa segunda
-   tentativa. Corrigido filtrando preço 0 antes de registrar cotação (`lib/pedidosCompra.ts`, dois
-   pontos: `criarPedido()` e `importarNotaFiscalCompra()`).
-4. `ImportarNotaFiscalXmlModal.tsx` lia o XML com `File.text()`, que sempre decodifica como UTF-8
-   — mas XML de NFe às vezes vem em ISO-8859-1 (comum em ERPs mais antigos), corrompendo acento e
-   cedilha em silêncio, sem erro nenhum. Corrigido com `lerTextoXml()` novo em
-   `lib/notaFiscalXmlFornecedor.ts`, que lê o encoding declarado no próprio prólogo do XML antes de
-   decodificar o arquivo inteiro.
-
-**Já verificado rodando de verdade, na mesma sessão**: o fluxo de excluir uma loja vazia foi
-testado no Supabase real (excluindo a "Loja 2" de teste) — revelou que a correção original só
-cuidava de `depositos`, faltavam mais 4 tabelas de configuração (item 20 da seção 6, já corrigido e
-publicado na `v0.9.5`). O fluxo de inativar/reativar depósito ainda não foi testado por ela na
-prática.
-
-**Dívidas técnicas conhecidas não atacadas nesta revisão** (ficam pra decidir com calma, não são
-bug): item 1 da seção 6 (permissão só checada na interface, sem RLS por módulo) e item 4 (sem
-teste de UI/integração, só função pura). Seguem como estavam.
-
-**Decisão revista sobre o próximo passo**: o plano original era só publicar o instalador depois da
-nota fiscal pronta — **ela decidiu lançar antes**, mesmo sem isso (ver seção 1, fase 1). O
-lançamento de verdade já começou nesta sessão: banco de produção limpo, loja real ("Pneus Amigão")
-configurada sozinha no Supabase, quatro versões publicadas (`v0.9.2` a `v0.9.5`) corrigindo bugs
-achados testando o lançamento de verdade. Falta confirmar a instalação na máquina da loja (só
-testado na máquina pessoal dela até agora) e resolver a incerteza do auto-update (ver seção 7,
-"Empacotamento"). A nota fiscal (Focus NFe, item 1 desta seção) continua sendo o próximo passo
-grande, mas sem bloquear o uso real do sistema — ela já está usando por fora até lá.
+**Estado geral**: o sistema está pronto pro uso real no dia a dia (cadastro, OS, estoque, caixa,
+fornecedores etc.) — o único módulo que falta é a emissão de nota fiscal (item 1 desta seção), que
+não bloqueia o uso, só é emitida por fora enquanto isso.
 
 ## 9. Como rodar / configurar (resumo)
 

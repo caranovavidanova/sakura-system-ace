@@ -473,8 +473,20 @@ na seção 9).
 Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
 (não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
 apagar os dados de negócio de teste (clientes, veículos, peças, serviços, OS, caixa, estoque,
-contas a pagar) mantendo o login de operador e as configurações da loja. Ver comentário no topo
-do próprio arquivo pra ordem exata de execução.
+contas a pagar, contas a receber, notas fiscais, fornecedores, pedidos de compra, cotações de
+peças) mantendo o login de operador, as lojas/depósitos e as configurações da loja. **Atualizado
+nesta sessão** pra cobrir as tabelas que não existiam quando foi escrito originalmente
+(Fornecedores/Pedidos de Compra/Cotação de Peças, migrations `0039`/`0042`) — sem isso, rodar o
+script antigo quebraria com erro de chave estrangeira assim que tocasse em `pecas`/`fornecedores`
+com pedido ou cotação vinculada. Validado num Postgres local com dado de teste inserido em todas
+as tabelas novas, rodando o script de verdade e conferindo zero erro + contagem final exata (só os
+17 serviços/5 categorias/6 categorias de serviço padrão sobrando). Usado nesta sessão pra limpar o
+resquício de teste da loja real dela (Pneus Amigão) antes do lançamento de verdade, e pra deixar a
+"Loja 2" de teste sem nenhum dado vinculado — depois de rodar, ela conseguiu excluir a "Loja 2"
+direto pela tela (Configurações → Lojas → 🗑), sem precisar de SQL manual pra isso (a única exceção
+documentada no próprio arquivo é se a exclusão pela tela continuar reclamando de dado vinculado,
+sinal de algo não coberto pelo script). Ver comentário no topo do próprio arquivo pra ordem exata
+de execução.
 
 Todas as migrations são idempotentes — seguro rodar de novo caso precise reconectar ou montar
 outro projeto Supabase do zero (ver seção 9).
@@ -823,6 +835,21 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     seleção precisa acontecer no **próprio `onMouseDown`** do item (com `preventDefault()` pra não
     perder o foco), nunca separada num `onClick` posterior — `mousedown` sempre dispara antes de
     qualquer `blur` resultante da mesma interação, então a seleção fica imune a essa corrida.
+17. **Reincidência do "campo sem digitar" (item 10), causa nova**: `globals.css` força
+    `input, select, textarea { color: #fff }` fora de `@layer` (vira letra branca em todo campo do
+    app, prioridade maior que qualquer classe Tailwind — mesma regra do item 14). Isso é correto na
+    maioria das telas (cards escuros), mas `LinhaEdicaoLoja` (`LojasSection.tsx`) e
+    `LinhaEdicaoDeposito` (`DepositosSection.tsx`) — as duas linhas de edição inline de Loja/Depósito
+    — envolviam o formulário num `bg-white/10` (fundo **claro** translúcido, resquício do tema claro
+    antigo que sobrou na migração pro tema escuro/neon). Letra branca forçada + fundo quase branco =
+    texto invisível, tanto o valor já preenchido quanto o que a usuária digitava — ela relatou como
+    "dá pra apagar, mas não dá pra escrever" (o apagar parecia funcionar porque o campo ficava
+    "vazio" visualmente do mesmo jeito antes e depois; o digitar "não funcionava" porque o texto novo
+    também nascia invisível). Corrigido trocando `bg-white/10` por `bg-black/20` nos dois
+    componentes. **Lição**: qualquer fundo `bg-white/*` sobrando de layout antigo é suspeito nº 1
+    quando um campo "não aceita digitação" — confirmado que não existe mais nenhum `bg-white/*`
+    envolvendo `<input>`/`<select>`/`<textarea>` no restante do app (os `bg-white/*` que sobraram são
+    hover de botão/aba/dropdown, sem input dentro, então seguros).
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

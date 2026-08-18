@@ -850,6 +850,39 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     quando um campo "não aceita digitação" — confirmado que não existe mais nenhum `bg-white/*`
     envolvendo `<input>`/`<select>`/`<textarea>` no restante do app (os `bg-white/*` que sobraram são
     hover de botão/aba/dropdown, sem input dentro, então seguros).
+18. **Padrão de bug: `process.env.npm_package_version` não existe no app empacotado** —
+    `VersaoApp.tsx` (canto inferior direito, em toda tela) sempre dependeu dessa variável, que o npm
+    só injeta quando o processo é lançado via `npm run ...`. No `.exe` instalado (aberto direto,
+    sem `npm` por trás), ela nunca existiu — o número da versão nunca apareceu de verdade pra
+    usuária, só passou despercebido até ela usar o instalador real pela primeira vez (antes disso,
+    sempre rodava via `npm run dev`). **Corrigido** (`electron/main.ts` + `electron/preload.ts`):
+    `main.ts` seta `process.env.SAKURA_APP_VERSION = app.getVersion()` (API do próprio Electron,
+    funciona igual em dev e empacotado) antes de criar a janela, e o preload repassa essa variável
+    pro app via `contextBridge`. **Cuidado testado e descartado**: a primeira tentativa de correção
+    usou `createRequire(import.meta.url)` pra ler `package.json` direto do preload — parecia certo,
+    mas quebrava em silêncio (o helper que o Vite gera pra resolver `import.meta.url` num preload
+    empacotado como `.mjs` calcula a URL base errado nesse contexto, então o `require` relativo
+    nunca achava o arquivo e o preload inteiro parava de rodar **antes** de chegar no
+    `contextBridge.exposeInMainWorld` — nem `window.sakuraApp` existia mais). Só foi pego testando
+    de verdade com Electron real (`playwright._electron.launch`, ver item 6 da seção 6) — leitura de
+    código sozinha não teria achado. **Lição de teste**: `app.getVersion()` só lê a versão certa do
+    `package.json` quando o Electron é apontado pra **raiz do app** (onde está o `package.json` com
+    o campo `main`) — apontar direto pro arquivo `dist-electron/main.js` (em vez de `.` ou da pasta)
+    faz o Electron cair no fallback e devolver a própria versão do Electron, não a do app; só
+    descoberto comparando os dois jeitos de lançar o teste.
+19. **Padrão de bug: `autoUpdater` roda "no escuro"** — `checkForUpdatesAndNotify()` nunca teve
+    nenhum listener de evento, então sucesso, download e erro eram tudo invisível — sem log, sem
+    mensagem, nada. Isso vira um problema real na hora de diagnosticar "por que não atualizou":
+    nem dá pra abrir o DevTools do processo principal (onde o `autoUpdater` roda) pelo Console do
+    renderer, que é uma **outra** parte do processo — e um app aberto por duplo clique não tem
+    terminal nenhum visível pra pegar `console.log`. **Corrigido**: `electron/main.ts` agora escreve
+    cada evento (`checking-for-update`, `update-available`, `update-not-available`,
+    `download-progress`, `update-downloaded`, `error`) num arquivo de texto simples
+    (`atualizacoes.log`, em `app.getPath("userData")` — no Windows, algo como
+    `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log`) em vez de puxar uma
+    dependência nova só pra log. Se um `v0.9.3` não tiver sido instalado sozinho na loja mesmo com
+    o build publicado com sucesso no GitHub, esse arquivo (a partir da próxima versão que já tiver
+    esse log) é o primeiro lugar pra olhar.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

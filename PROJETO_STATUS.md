@@ -43,7 +43,7 @@
 - **Este arquivo carrega sozinho em toda sessão nova** — `CLAUDE.md` importa `AGENTS.md` e
   `PROJETO_STATUS.md` (`@AGENTS.md` / `@PROJETO_STATUS.md`), então não é preciso a usuária colar
   ou anexar este arquivo de novo pra eu ter esse contexto. Basta abrir uma sessão nova apontando
-  pro repositório `caranovavidanova/amigao`.
+  pro repositório `caranovavidanova/sakura-system-ace`.
 
 ## 2. O que é o projeto
 
@@ -164,7 +164,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 ## 4. Estrutura de pastas
 
 ```
-amigao/                        (raiz do repositório GitHub: caranovavidanova/amigao)
+amigao/                        (raiz do repositório GitHub: caranovavidanova/sakura-system-ace —
+                                 renomeado nesta sessão, era "amigao"; a pasta local pode continuar
+                                 se chamando "amigao" sem problema, é só o nome no GitHub que mudou)
 ├── electron/main.ts            # processo principal (janela, autoUpdater, abre DevTools em modo dev)
 ├── electron/preload.ts         # bridge (hoje só expõe versão do app)
 ├── src/
@@ -905,6 +907,33 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     conferir a lista **completa** de tabelas que referenciam Y do mesmo jeito, não só a que
     apareceu no primeiro relato — meio-corrigir um bug desses é pior que não mexer, porque parece
     resolvido até alguém testar de novo com dado real.
+21. **Padrão de bug: auto-update via GitHub Releases não funciona com repositório privado** — a
+    `v0.9.5` foi publicada com sucesso (release completa, com `.exe` e `latest.yml`), mas o app
+    instalado (`v0.9.4`) não se atualizou sozinho, do mesmo jeito que já tinha acontecido da `v0.9.2`
+    pra `v0.9.3`. Causa: o repositório `amigao` (hoje `sakura-system-ace`) era **privado**, e o
+    `electron-updater` checa atualização baixando o `latest.yml` da release **sem nenhuma
+    autenticação** — confirmado testando direto: `curl` no link de download da release dava **404**
+    sem estar logado, exatamente como o app instalado tentaria acessar. Corrigido nesta sessão
+    **tornando o repositório público** (Settings → General → "Change visibility") — depois da
+    mudança, o mesmo link passou a responder **302** (redireciona pro arquivo) em vez de 404.
+    **Alternativas descartadas**: embutir um token de acesso dentro do `.exe` pra continuar privado
+    (rejeitado — qualquer pessoa consegue extrair esse token do instalador, dando acesso de leitura
+    ao repositório inteiro pra quem tiver o instalador em mãos) e manter um repositório-espelho
+    separado só com os binários (mais seguro que o token, mas mais complexo de manter; não usado
+    porque não há segredo real dentro do repositório principal — chaves reais como
+    `ANTHROPIC_API_KEY` e a chave `sb_secret_...` nunca ficaram commitadas, só a chave
+    `anon`/publishable do Supabase, que é feita pra ser pública). **Lição**: `electron-updater` com
+    provider `github` **exige repositório público** pra funcionar sem configuração extra — se um dia
+    o repositório precisar voltar a ser privado (ex: código sensível de verdade), rever esse
+    mecanismo de atualização antes, não depois de publicar uma tag.
+22. **Repositório renomeado nesta sessão**: `amigao` → `sakura-system-ace` (pedido da usuária, nome
+    antigo era resquício do projeto anterior em Next.js). O GitHub redireciona automaticamente o
+    nome antigo pro novo por um tempo (não quebra na hora), mas `package.json` →
+    `build.publish.repo` foi atualizado pro nome novo nesta sessão porque é usado ativamente toda
+    vez que uma tag é publicada — deixar apontando pro nome antigo arriscaria depender do
+    redirecionamento indefinidamente. **Se `git pull`/`git push` local parar de funcionar depois
+    dessa mudança**, rodar `git remote set-url origin
+    https://github.com/caranovavidanova/sakura-system-ace.git` no terminal.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1118,14 +1147,17 @@ normal (quebra de linha).
   vX.Y.Z` no terminal, o GitHub Actions builda e publica o instalador sozinho (~5-10 min). A versão
   aparece pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —
   só passou a funcionar de verdade a partir da `v0.9.4`.
-  **Auto-update não confirmado funcionando ainda**: mesmo com a `v0.9.3` publicada com sucesso no
-  GitHub, o app instalado (`v0.9.2`) não pareceu se atualizar sozinho ao fechar/abrir — ela acabou
-  instalando manualmente a `v0.9.4` (mesmo processo de sempre, baixar o `.exe` das Releases) em vez
-  de esperar o auto-update. Como o log do `autoUpdater` (item 19) só existe a partir da `v0.9.4`,
-  não dá pra saber ainda se foi falha real ou só timing/rede — **próxima sessão: se ela publicar uma
-  `v0.9.6`+ e o app (já na `v0.9.4`/`v0.9.5`) não se atualizar sozinho, o arquivo
-  `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log` é o primeiro lugar pra olhar**, em
-  vez de instalar manualmente de novo sem saber o motivo.
+  **Causa raiz do auto-update nunca ter funcionado, achada e corrigida nesta sessão**: nem a
+  `v0.9.3` nem a `v0.9.4` chegaram a se instalar sozinhas no app já rodando — não era timing/rede,
+  era o repositório `amigao` (hoje `sakura-system-ace`) estar **privado**. O `electron-updater`
+  baixa o `latest.yml` da release sem nenhuma autenticação, e um repositório privado devolve 404 pra
+  isso (confirmado testando o link direto) — o app nunca teve como saber que existia uma versão
+  nova. Corrigido **tornando o repositório público** (ver item 21 da seção 6 pro detalhe completo e
+  as alternativas descartadas). **Ainda não confirmado por ela rodando de verdade** — o teste
+  natural é: da próxima vez que uma tag nova for publicada, o app já instalado (`v0.9.4`) deve
+  passar a se atualizar sozinho ao ser reaberto; se não acontecer, `%APPDATA%\Sakura System -
+  AutoCenter Edition\atualizacoes.log` continua sendo o primeiro lugar pra olhar (a partir da
+  `v0.9.4`, esse arquivo já existe e registra cada tentativa de checagem/erro).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -1194,7 +1226,7 @@ normal (quebra de linha).
    Supabase via RLS", sem backend próprio, e não deve mudar sem ela pedir explicitamente e decisão
    conjunta (ver seção 3, "não reabrir sem motivo forte").
 
-   **Plano concreto de teste, decidido nesta sessão (fora do repositório `amigao`)**: antes de trazer
+   **Plano concreto de teste, decidido nesta sessão (fora do repositório `sakura-system-ace`)**: antes de trazer
    os amigos pro Sakura System de verdade, ela vai treinar o fluxo de equipe num **projeto separado
    e descartável** — um sistema de gestão pra um restaurante de comida japonesa de um conhecido do
    pai dela. Time: ela + 3 amigos programadores (4 no total, divididos entre backend/frontend, sem
@@ -1266,8 +1298,8 @@ grande, mas sem bloquear o uso real do sistema — ela já está usando por fora
 ## 9. Como rodar / configurar (resumo)
 
 ```bash
-git clone https://github.com/caranovavidanova/amigao.git
-cd amigao
+git clone https://github.com/caranovavidanova/sakura-system-ace.git
+cd sakura-system-ace
 npm install
 cp .env.example .env   # preencher com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave anon/publishable)
 npm run dev            # abre o app Electron com hot reload + DevTools
@@ -1390,7 +1422,7 @@ Só precisa da migration — sem Edge Function, sem secret.
 Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar — os apps já
 instalados se atualizam sozinhos quando sai uma versão nova.
 
-**Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/amigao` → Settings →
+**Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/sakura-system-ace` → Settings →
 Secrets and variables → Actions → criar `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; e Settings
 → Actions → General → "Workflow permissions" → "Read and write permissions".
 
@@ -1410,7 +1442,7 @@ Secrets and variables → Actions → criar `VITE_SUPABASE_URL` e `VITE_SUPABASE
    (o número da tag precisa ser **exatamente igual** ao `"version"` do `package.json`.)
 
 Isso dispara o build automaticamente no GitHub — demora uns 5 a 10 minutos. O instalador aparece
-em `github.com/caranovavidanova/amigao/releases`. O Windows/SmartScreen deve avisar "editor
+em `github.com/caranovavidanova/sakura-system-ace/releases`. O Windows/SmartScreen deve avisar "editor
 desconhecido" (normal sem certificado pago — "Mais informações → Executar assim mesmo"). PCs já
 atualizados se atualizam sozinhos na próxima tag.
 
@@ -1423,9 +1455,11 @@ sempre antes da tag, nunca depois.
 
 ## 10. Estado do Git
 
-- Repositório: `caranovavidanova/amigao` (era um projeto antigo "Pneus Amigão" em Next.js,
-  completamente substituído). `main` é o Sakura System — um `git clone` simples já traz a versão
-  certa, não precisa trocar de branch.
+- Repositório: `caranovavidanova/sakura-system-ace` (era um projeto antigo "Pneus Amigão" em
+  Next.js, completamente substituído; e o próprio nome do repositório era `amigao` até esta sessão —
+  renomeado pra `sakura-system-ace` e **tornado público**, ver "Auto-update via GitHub Releases não
+  funciona com repositório privado" logo abaixo). `main` é o Sakura System — um `git clone` simples
+  já traz a versão certa, não precisa trocar de branch.
 - **Fluxo de trabalho** (ver decisão na seção 3): cada sessão cria/reusa uma branch de trabalho
   designada pelo ambiente, commita, abre PR contra `main` e **já mergeia direto**, sem esperar
   aprovação manual — enquanto não existir uma v1.0 publicada. O histórico completo de PRs

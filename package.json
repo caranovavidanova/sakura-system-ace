@@ -70,7 +70,7 @@
     "publish": {
       "provider": "github",
       "owner": "caranovavidanova",
-      "repo": "amigao",
+      "repo": "sakura-system-ace",
       "releaseType": "release"
     }
   }

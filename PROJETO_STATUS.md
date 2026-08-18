@@ -1153,10 +1153,12 @@ normal (quebra de linha).
   baixa o `latest.yml` da release sem nenhuma autenticação, e um repositório privado devolve 404 pra
   isso (confirmado testando o link direto) — o app nunca teve como saber que existia uma versão
   nova. Corrigido **tornando o repositório público** (ver item 21 da seção 6 pro detalhe completo e
-  as alternativas descartadas). **Ainda não confirmado por ela rodando de verdade** — o teste
-  natural é: da próxima vez que uma tag nova for publicada, o app já instalado (`v0.9.4`) deve
-  passar a se atualizar sozinho ao ser reaberto; se não acontecer, `%APPDATA%\Sakura System -
-  AutoCenter Edition\atualizacoes.log` continua sendo o primeiro lugar pra olhar (a partir da
+  as alternativas descartadas). **Confirmado por ela rodando de verdade, ainda nesta sessão**: com o
+  app já em `v0.9.4` aberto na própria máquina, fechou e abriu de novo — a `v0.9.5` (já publicada,
+  esperando) se instalou sozinha, sem precisar baixar o `.exe` manualmente. Auto-update via GitHub
+  Releases funcionando de ponta a ponta a partir de agora. Se algum dia parar de funcionar de novo,
+  `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log` continua sendo o primeiro lugar
+  pra olhar (a partir da
   `v0.9.4`, esse arquivo já existe e registra cada tentativa de checagem/erro).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
@@ -1497,9 +1499,11 @@ sempre antes da tag, nunca depois.
   vezes) — decisão tomada nesta sessão de **lançar na loja do pai dela mesmo sem a nota fiscal
   pronta** (fase 1 do plano de expansão, seção 1), em vez de esperar o Focus NFe primeiro como
   planejado antes. Cada tag corrigiu um bug achado testando o lançamento de verdade — ver lista
-  completa em "Empacotamento" na seção 7. **Auto-update via `electron-updater` ainda não confirmado
-  funcionando** (ela precisou instalar a `v0.9.4` manualmente) — a partir da `v0.9.4` existe um log
-  (`atualizacoes.log`) que deve esclarecer o motivo na próxima vez que isso for testado.
+  completa em "Empacotamento" na seção 7. **Auto-update via `electron-updater` confirmado
+  funcionando** — a causa de `v0.9.3` e `v0.9.4` não terem se instalado sozinhas era o repositório
+  estar privado (ver item 21 da seção 6); depois de torná-lo público e renomeá-lo pra
+  `sakura-system-ace` (item 22 da seção 6), ela fechou e abriu o app já em `v0.9.4` e a `v0.9.5` se
+  instalou sozinha, sem precisar baixar o `.exe` manualmente.
 
 ## 11. Trabalhando de outro computador
 

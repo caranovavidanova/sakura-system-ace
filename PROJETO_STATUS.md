@@ -61,7 +61,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 1. **Lançar na borracharia do pai dela** (ver seção 1), em **Araraquara**, com tudo funcionando —
    usar de verdade lá é como ela pretende achar bugs reais (os que só aparecem usando de verdade,
    não em teste) e descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a
-   emissão de nota fiscal (seção 8, item 1).
+   emissão de nota fiscal (seção 8, item 1). **Em andamento nesta sessão**: ela decidiu instalar o
+   app na loja mesmo sem a nota fiscal pronta, publicou a tag `v0.9.2` (instalador novo no GitHub
+   Releases, ver seção 7 "Empacotamento") e está baixando/instalando agora — o "gatilho" começou.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
    grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
@@ -1004,17 +1006,19 @@ normal (quebra de linha).
   completo do desenho na seção 5, subseção "Multi-loja".
 - **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
   `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
-  enviada. **Versão atual do `package.json`: `0.9.2`**. Última tag publicada de verdade é `v0.9.0`
-  (ela baixou e testou o instalador dessa versão) — bastante coisa foi implementada depois dela
-  (correção do bug de criar loja, edição/exclusão de loja, atalho de OS no Início e em Contas a
-  Receber, filtro/busca/cores/colunas na lista de OS, custo de serviço, módulo Contas a Receber,
-  número sequencial de OS, simplificação de status, botão Encerrar OS, split de pagamento) **sem
-  nenhuma tag nova publicada ainda** — mesma decisão de sempre: só publicar a próxima versão do
-  instalador **quando a emissão de nota fiscal também estiver pronta**. Até lá, ela usa a loja
-  rodando o código-fonte direto (`git clone` + `npm install` + `npm run dev`, com `.env` configurado
-  nesse PC também) em vez do instalador. A versão aparece pequena no canto inferior direito do app
-  (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive
-  login.
+  enviada. **Tag `v0.9.2` publicada nesta sessão** (build automático disparado por ela no terminal)
+  — decisão revista: **ela decidiu lançar na loja do pai dela mesmo sem a emissão de nota fiscal
+  pronta**, seguindo o plano original da fase 1 (seção 1: usar de verdade pra achar bugs reais,
+  nota fiscal continua sendo emitida por fora até a integração Focus NFe ficar pronta). Fluxo
+  confirmado funcionando: ela mesma rodou `git tag v0.9.2` + `git push origin v0.9.2`, o GitHub
+  Actions buildou e publicou o instalador sozinho. **Auto-update via `electron-updater` é o
+  mecanismo real de distribuição daqui pra frente** — ela não precisa mais baixar o instalador
+  manualmente a cada versão nova; o app já embarca `autoUpdater.checkForUpdatesAndNotify()`
+  (`electron/main.ts`), que roda sozinho toda vez que o app abre (só em build de produção, não em
+  `npm run dev`) e atualiza em segundo plano. A versão aparece pequena no canto inferior direito do
+  app (`VersaoApp.tsx`, lê `window.sakuraApp.version` exposto pelo preload) em toda tela, inclusive
+  login. **Pendente confirmar**: se ela já baixou/instalou o `.exe` da `v0.9.2` na própria máquina e
+  depois na loja do pai — ver seção 1 pra o combinado de testar na própria máquina antes.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
@@ -1044,9 +1048,9 @@ normal (quebra de linha).
    1. ✅ **Cadastro de Depósito** — **confirmado por ela funcionando de verdade** (rodou a
       migration `0041` e testou o cadastro), ver "Depósitos" na seção 7 e migration `0041` na
       seção 5.
-   2. ✅ **Cotação de Peças por fornecedor** — **construída nesta sessão**, ver "Cotação de
-      peças" na seção 7 e migration `0042` na seção 5. **Falta ela rodar a migration `0042` no
-      Supabase real** (ver seção 9) antes de aparecer o histórico de preço nos Pedidos de Compra.
+   2. ✅ **Cotação de Peças por fornecedor** — ver "Cotação de peças" na seção 7 e migration
+      `0042` na seção 5. **Migration `0042` já rodada e confirmada no Supabase real dela** — o
+      histórico de preço por fornecedor já aparece nos Pedidos de Compra.
    3. ✅ **Importar XML de nota fiscal do fornecedor** — **construído nesta sessão**, ver a
       descrição completa em "Fornecedores" na seção 7. Não precisa de migration nova (só reaproveita
       tabelas já existentes: `pedidos_compra`, `fornecedores`, `pecas`, `cotacoes_pecas`,
@@ -1065,23 +1069,36 @@ normal (quebra de linha).
    chato de repetir por loja. Quando a usuária estiver mais perto de vender pra outras lojas de
    verdade, vale reconsiderar um backend central (ela paga uma conta só, cobra o uso de IA dentro
    da assinatura do sistema) — decidir com calma nessa hora, não agora que só a loja dela usa.
-7. **Vibecodar em equipe** — a usuária pretende, no futuro (sem data definida, ainda em fase de
-   "pensar possibilidades", não começa com isso agora), trazer amigos pra ajudar no projeto como
+7. **Vibecodar em equipe** — a usuária pretende, no futuro (sem data definida ainda pro Sakura
+   System em si — ver plano de teste concreto abaixo), trazer amigos pra ajudar no projeto como
    desenvolvedores, cada um provavelmente também operando via IA. Ainda não é hora de montar nada
-   disso — só documentando o ponto de atenção já identificado pra quando a hora chegar: hoje existe
-   **um projeto Supabase só** (produção, com dado real da loja do pai dela) e um único `.env` — se
-   mais gente rodar `npm run dev` e testar coisas, estaria todo mundo mexendo direto no banco de
-   verdade. **Primeiro passo prático quando for montar a equipe**: criar um projeto Supabase de
-   teste/staging separado (rodar as migrations `0001`-`0042` nele, mesmo processo já documentado na
-   seção 9 pra "montar um projeto do zero") pra quem for novo no projeto testar sem risco. O resto
-   do fluxo já usado hoje (branch → PR → merge, `PROJETO_STATUS.md` como memória compartilhada,
-   `/code-review` antes de mesclar) já escala razoavelmente bem pra mais gente, sem precisar mudar
-   nada estrutural. Também recebi de leitura um "prompt de contexto" gerado pelo Gemini,
-   descrevendo uma estrutura de squads (Backend/Frontend/Testers) e uma arquitetura de API
-   separada do Supabase — **ela confirmou que isso é só visão de longo prazo, não fato hoje**: a
-   arquitetura continua "app fala direto com Supabase via RLS", sem backend próprio, e não deve
-   mudar sem ela pedir explicitamente e decisão conjunta (ver seção 3, "não reabrir sem motivo
-   forte").
+   disso **no repositório do Sakura System** — só documentando o ponto de atenção já identificado
+   pra quando a hora chegar: hoje existe **um projeto Supabase só** (produção, com dado real da
+   loja do pai dela) e um único `.env` — se mais gente rodar `npm run dev` e testar coisas, estaria
+   todo mundo mexendo direto no banco de verdade. **Primeiro passo prático quando for montar a
+   equipe aqui**: criar um projeto Supabase de teste/staging separado (rodar as migrations
+   `0001`-`0042` nele, mesmo processo já documentado na seção 9 pra "montar um projeto do zero")
+   pra quem for novo no projeto testar sem risco. O resto do fluxo já usado hoje (branch → PR →
+   merge, `PROJETO_STATUS.md` como memória compartilhada, `/code-review` antes de mesclar) já
+   escala razoavelmente bem pra mais gente, sem precisar mudar nada estrutural. Também recebi de
+   leitura um "prompt de contexto" gerado pelo Gemini, descrevendo uma estrutura de squads
+   (Backend/Frontend/Testers) e uma arquitetura de API separada do Supabase — **ela confirmou que
+   isso é só visão de longo prazo, não fato hoje**: a arquitetura continua "app fala direto com
+   Supabase via RLS", sem backend próprio, e não deve mudar sem ela pedir explicitamente e decisão
+   conjunta (ver seção 3, "não reabrir sem motivo forte").
+
+   **Plano concreto de teste, decidido nesta sessão (fora do repositório `amigao`)**: antes de trazer
+   os amigos pro Sakura System de verdade, ela vai treinar o fluxo de equipe num **projeto separado
+   e descartável** — um sistema de gestão pra um restaurante de comida japonesa de um conhecido do
+   pai dela. Time: ela + 3 amigos programadores (4 no total, divididos entre backend/frontend, sem
+   divisão exata definida ainda) + 1 "coletor de referência" (não programa — só junta cardápio,
+   fotos e preços do restaurante num documento pros devs usarem, sem custo de IA). Plano contratado:
+   **Claude Team, 4 assentos Standard, cobrança mensal** (R$138/assento = R$552/mês total — optou
+   por mensal em vez de anual por ainda ser fase de teste, sem compromisso de 1 ano). Repositório
+   GitHub, projeto Supabase e arquivo de contexto (tipo `PROJETO_STATUS.md`) desse projeto teste
+   ainda não foram criados — ela recebeu um `.txt` com esse resumo pra colar como primeira mensagem
+   quando abrir a sessão de IA desse projeto novo. **Isso é 100% separado do Sakura System — nenhum
+   código, dado ou decisão de arquitetura desse teste deve vazar pra cá sem ela pedir.**
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -1141,16 +1158,15 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. Migrations `0001` a `0041` já foram confirmadas
-rodando sem erro nesse projeto (incluindo a fundação multi-loja, as correções/módulos novos
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. **Migrations `0001` a `0042` já foram confirmadas
+rodando sem erro nesse projeto** (incluindo a fundação multi-loja, as correções/módulos novos
 `0034`-`0037`, `0038`/`0039`/`0040` — apesar do histórico confuso de duas sessões de trabalho
 paralelas que rodaram nomes de migration conflitantes, ver seção 10, o resultado final já foi
 confirmado funcionando de verdade por ela: Fornecedores com endereço completo, redefinir senha, e
-Auditoria, todos testados na prática — e `0041`, o cadastro de Depósito, também já rodada e
-testada por ela). **`0042` (Cotação de peças) ainda não foi rodada por ela** — só validada
-localmente nesta sessão (Postgres local, idempotência + RLS testadas de verdade, ver seção 5) —
-falta rodar no SQL Editor do Supabase real antes do histórico de cotação aparecer nos Pedidos de
-Compra.
+Auditoria, todos testados na prática — `0041`, o cadastro de Depósito, também já rodada e testada
+por ela — e `0042`, Cotação de peças, rodada por ela nesta sessão, depois de um susto com a query
+dando erro "relation pecas does not exist" por estar apontando pro projeto Supabase errado no SQL
+Editor; rodando no projeto certo, funcionou de primeira).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
@@ -1322,15 +1338,16 @@ sempre antes da tag, nunca depois.
   grande de arquivos modificados que a sessão não reconhece, é sinal de trabalho feito por fora do
   Claude Code (outra ferramenta, ou direto pela usuária) — nunca descartar, sempre perguntar e
   usar `git stash` antes de qualquer `pull`/`checkout` destrutivo.
-- **Branch de trabalho atual desta sessão**: `antigravity-trabalho-local` (mesclada na `main` ao
-  final desta sessão — ver PR aberta a partir dela).
-- `package.json` em `"version": "0.9.2"`. Tag publicada mais recente é `v0.9.0` (instalador
-  baixado e testado por ela). Bastante coisa foi implementada depois dessa tag sem nova versão
-  publicada ainda (toda a lista de módulos novos desta seção). Ela só publica a próxima versão do
-  instalador quando a nota fiscal estiver pronta (ver seção 7, "Empacotamento") — decisão revista
-  numa sessão anterior pra publicar mesmo sem isso, mas sem confirmação de que a tag `v0.9.2`
-  chegou a ser criada; como esta sessão trouxe bastante coisa nova por cima (o trabalho do
-  Antigravity), vale re-perguntar antes de publicar qualquer tag.
+- **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
+  sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
+  designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
+- `package.json` em `"version": "0.9.2"`. **Tag `v0.9.2` publicada de verdade** (ela rodou
+  `git tag v0.9.2` + `git push origin v0.9.2` no próprio terminal, o GitHub Actions buildou e
+  publicou o instalador sozinho) — decisão tomada nesta sessão de **lançar na loja do pai dela
+  mesmo sem a nota fiscal pronta** (fase 1 do plano de expansão, seção 1), em vez de esperar o
+  Focus NFe primeiro como planejado antes. Auto-update via `electron-updater` cuida das próximas
+  versões sozinho a partir daqui — não precisa mais desse processo manual de "baixar de novo" pra
+  quem já instalou essa versão.
 
 ## 11. Trabalhando de outro computador
 

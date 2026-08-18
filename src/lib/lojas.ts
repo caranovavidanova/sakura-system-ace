@@ -64,16 +64,28 @@ export async function atualizarStatusLoja(id: string, ativo: boolean): Promise<v
 const ERRO_LOJA_COM_DADOS =
   "Não é possível excluir: essa loja ainda tem dados vinculados (estoque, caixa, ordens de serviço, funcionários...). Deixe-a inativa em vez de excluir.";
 
+// As 4 tabelas de configuração viraram "1 linha por loja" na fundação
+// multi-loja (migration 0033) — toda loja sempre tem uma linha em cada uma
+// (backfill/criação automática), e nenhuma tem ON DELETE CASCADE pra
+// loja_id. Diferente de estoque/caixa/OS (dado de negócio, que a gente
+// quer que bloqueie a exclusão de propósito), essas são só configuração —
+// sempre seguro apagar junto ao excluir a loja, nunca fica "presa" por
+// causa delas.
+const TABELAS_CONFIG_POR_LOJA = [
+  "depositos",
+  "configuracoes_garantia",
+  "configuracoes_fiscais_loja",
+  "configuracoes_painel_inicio",
+  "configuracoes_juros_parcelas",
+] as const;
+
 export async function excluirLoja(id: string): Promise<void> {
-  // Toda loja nasce com um "Depósito Principal" (criarLoja()) e depositos.loja_id
-  // não tem ON DELETE CASCADE — sem apagar isso primeiro, uma loja genuinamente
-  // vazia nunca conseguiria ser excluída. Se houver movimentação de estoque
-  // registrada nesse depósito, esse delete falha por FK (estoque_movimentos →
-  // depositos) e cai no mesmo erro amigável de "loja com dados vinculados".
-  const { error: erroDepositos } = await supabase.from("depositos").delete().eq("loja_id", id);
-  if (erroDepositos) {
-    if (erroDepositos.code === "23503") throw new Error(ERRO_LOJA_COM_DADOS);
-    throw erroDepositos;
+  for (const tabela of TABELAS_CONFIG_POR_LOJA) {
+    const { error } = await supabase.from(tabela).delete().eq("loja_id", id);
+    if (error) {
+      if (error.code === "23503") throw new Error(ERRO_LOJA_COM_DADOS);
+      throw error;
+    }
   }
 
   const { error } = await supabase.from("lojas").delete().eq("id", id);

@@ -883,6 +883,23 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     dependência nova só pra log. Se um `v0.9.3` não tiver sido instalado sozinho na loja mesmo com
     o build publicado com sucesso no GitHub, esse arquivo (a partir da próxima versão que já tiver
     esse log) é o primeiro lugar pra olhar.
+20. **Continuação do item 15 (`excluirLoja()`): faltavam 4 tabelas, não só `depositos`** — a
+    correção da sessão anterior (que apaga `depositos` antes da loja) não foi suficiente na prática:
+    testando a exclusão de uma loja de teste de verdade (a usuária tentando excluir a "Loja 2"),
+    o erro genérico "ainda tem dados vinculados" continuou aparecendo mesmo depois de limpar todo
+    dado de negócio e mover os funcionários pra outra loja. Causa: as 4 tabelas de configuração
+    "1 linha por loja" da fundação multi-loja (`configuracoes_garantia`,
+    `configuracoes_fiscais_loja`, `configuracoes_painel_inicio`, `configuracoes_juros_parcelas`,
+    migration 0033) também referenciam `loja_id` sem `ON DELETE CASCADE` — toda loja sempre tem uma
+    linha em cada uma (exceto `configuracoes_juros_parcelas`, só criada quando o admin configura um
+    juro de verdade), então **qualquer exclusão de loja sempre bateria nesse mesmo bloqueio**, não
+    só a de teste. Corrigido generalizando `excluirLoja()` pra apagar as 5 tabelas de configuração
+    por loja (`depositos` + as 4 acima) antes de tentar apagar a loja em si — validado de ponta a
+    ponta num Postgres local (mesmo cenário: loja com depósito + as 4 configs, exclusão bem
+    sucedida sem erro de FK). **Lição**: ao corrigir um bug de "tabela X sem cascade bloqueando Y",
+    conferir a lista **completa** de tabelas que referenciam Y do mesmo jeito, não só a que
+    apareceu no primeiro relato — meio-corrigir um bug desses é pior que não mexer, porque parece
+    resolvido até alguém testar de novo com dado real.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

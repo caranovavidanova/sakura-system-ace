@@ -176,7 +176,7 @@ function LinhaEdicaoDeposito({
   return (
     <form
       onSubmit={handleSubmit(aoSalvar)}
-      className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-white/10 px-3 py-1.5"
+      className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-black/20 px-3 py-1.5"
     >
       <input
         type="text"

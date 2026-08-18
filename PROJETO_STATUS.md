@@ -934,6 +934,24 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     redirecionamento indefinidamente. **Se `git pull`/`git push` local parar de funcionar depois
     dessa mudança**, rodar `git remote set-url origin
     https://github.com/caranovavidanova/sakura-system-ace.git` no terminal.
+23. **Continuação do item 15: operador sem loja vinculada trava "Inativar"/"Excluir" em silêncio** —
+    mesma família de bug (RLS sem policy cobrindo o caso vira "botão não faz nada", sem erro).
+    Editar/inativar/excluir um operador exige `operador_administra(id)`, que só é verdadeiro se
+    quem está logado for admin de **alguma loja que o operador-alvo também tenha acesso**
+    (`operador_lojas`, migration 0031). O "Operador Teste" (resíduo de antes da fundação
+    multi-loja, só permissão de Início) nunca teve vínculo nenhum em `operador_lojas` — então
+    nenhum admin, de nenhuma loja, conseguia mais administrá-lo: o clique em "Inativar" não dava
+    erro nenhum, só não mudava nada (update filtrado a 0 linhas pela RLS). **Resolvido excluindo
+    esse operador direto pelo painel do Supabase** (Authentication → Users → Delete user) — isso
+    ignora a trava de loja (é ação de admin do próprio Supabase) e já arrasta a exclusão da linha
+    em `operadores` sozinho, porque `operadores.id` referencia `auth.users(id) on delete cascade`.
+    O `funcionarios` espelhado desse operador **não** é apagado junto (a FK
+    `funcionarios.operador_id` é `on delete set null`, não cascade) — fica órfão, mas inofensivo;
+    dá pra inativar normalmente pela tela de Funcionários, que não tem essa trava de loja. **Não
+    foi feita nenhuma mudança de código** — a usuária decidiu não mexer na regra de RLS (o mesmo
+    problema pode se repetir no futuro se um admin remover um operador de todas as lojas ao
+    editá-lo, deixando-o "órfão" de novo; se isso voltar a acontecer, a solução é a mesma: excluir
+    pelo painel do Supabase, não precisa de migration nem correção de RLS a menos que ela peça).
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -972,13 +990,12 @@ normal (quebra de linha).
   ser publicada por engano no Supabase real dela numa sessão separada. **Antes de considerar isso
   pronto, é preciso redeployar a Edge Function com o código atual** (passo a passo na seção 9) —
   mesmo que a função já exista publicada, o código de lá ainda pode ser o da versão simples.
-  **Pendência identificada nesta sessão (ainda não feita)**: como o perfil "Pneus Amigão" (que o
-  pai dela vai usar) é admin, ele enxerga a lista completa de operadores — inclusive o
-  "Administrador" (login de dev da usuária, `@sakura`) e o "Operador Teste" (`@teste`, resíduo sem
-  uso real, só permissão de Início). Sugestão dada e ainda não confirmada como feita: inativar o
-  "Operador Teste" e renomear "Administrador" pra algo tipo "Suporte Técnico", pra não confundir o
-  pai dela olhando a tela. Baixo risco, sem pressa — só retomar se ela trouxer o assunto nas
-  próximas sessões.
+  **Resolvido**: o login de dev `@sakura` já aparece renomeado como "Suporte" na lista de
+  operadores, e o "Operador Teste" (`@teste`, resíduo sem uso real) foi **excluído de verdade**
+  pelo painel do Supabase (Authentication → Users) — não só inativado. Ver item 23 da seção 6 pro
+  detalhe do bug que impedia excluir/inativar esse operador pela tela do app (RLS bloqueando em
+  silêncio por ele não ter loja vinculada) e por que a correção foi feita direto no Supabase, sem
+  mudar código.
 - **Clientes**: CRUD completo (**edição** adicionada nesta sessão — antes só criava/excluía) +
   múltiplos veículos por cliente, pessoa física/jurídica (rótulos de campo mudam conforme o tipo),
   aniversário do cliente no calendário do Início, tipo de veículo (ícone 2D por carroceria, pintado

@@ -1177,11 +1177,25 @@ normal (quebra de linha).
   - `v0.9.5`: corrige `excluirLoja()` de vez — faltavam 4 tabelas de configuração além de
     `depositos` (ver item 20).
   - `v0.9.6`: corrige "Importar por foto/PDF" travando com erro genérico ao ler certos arquivos de
-    imagem (ex: `.jfif`) — ver item 24 da seção 6. Versão preparada nesta sessão, **ainda não
-    publicada** (falta ela rodar `git tag v0.9.6` + `git push origin v0.9.6`).
-  Fluxo confirmado funcionando de ponta a ponta: ela roda `git tag vX.Y.Z` + `git push origin
-  vX.Y.Z` no terminal, o GitHub Actions builda e publica o instalador sozinho (~5-10 min). A versão
-  aparece pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —
+    imagem (ex: `.jfif`) — ver item 24 da seção 6. **Publicada** — desta vez sem terminal: ela
+    estava longe do computador dela, então publicou direto pela tela do GitHub
+    (`github.com/.../releases/new`, digitando a tag `v0.9.6` e clicando "Publish release") —
+    confirmado que isso dispara o mesmo workflow de build que a tag por terminal, sem diferença
+    nenhuma no resultado. **Novo aprendizado sobre tag**: uma tag já publicada não se move — depois
+    de publicar a `v0.9.6`, mais dois ajustes pequenos foram feitos (menu nativo do Electron e
+    badge de status na lista de OS, ver logo abaixo) e ela tentou "postar de novo na mesma
+    versão 0.9.6", mas como a tag já existia isso não gerou build nova nenhuma — precisou virar
+    `v0.9.7`. **Lição pra sessões futuras**: cada leva de mudança que precisa chegar até o app
+    instalado exige um número de versão novo, nunca republicar a mesma tag.
+  - `v0.9.7`: remove a barra de menu nativa do Electron (File/Edit/View/Window/Help, sem função
+    nenhuma pro app, aparecia como uma faixa branca feia no topo mesmo em tela cheia —
+    `Menu.setApplicationMenu(null)`) e corrige o badge de status da lista de Ordens de Serviço
+    quebrando em duas linhas quando o rótulo tem mais de uma palavra (ex: "Em andamento") por
+    faltar `whitespace-nowrap`. Versão preparada nesta sessão, **ainda não publicada**.
+  Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
+  origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
+  Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
+  pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —
   só passou a funcionar de verdade a partir da `v0.9.4`.
   **Auto-update confirmado funcionando de ponta a ponta** (validado por ela: app em `v0.9.4`
   aberto, fechou e abriu de novo, `v0.9.5` se instalou sozinha, sem baixar `.exe` manualmente). A

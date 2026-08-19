@@ -373,7 +373,7 @@ export function OrdensServicoPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COR[ordem.status]}`}
+                      className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COR[ordem.status]}`}
                     >
                       {STATUS_LABEL[ordem.status]}
                     </span>

@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -16,6 +16,13 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
 let mainWindow: BrowserWindow | null = null;
+
+// Sem isso, o Electron mostra a barra de menu padrão (File/Edit/View/
+// Window/Help) — itens genéricos em inglês sem função nenhuma pro app,
+// que só ocupam uma faixa branca feia no topo da janela, inclusive em tela
+// cheia. O app já tem sua própria navegação (Sidebar); não precisa dessa
+// barra nativa.
+Menu.setApplicationMenu(null);
 
 function createWindow() {
   mainWindow = new BrowserWindow({

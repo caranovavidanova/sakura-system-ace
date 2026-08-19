@@ -17,7 +17,13 @@ export function useLimparDataAoApagar() {
 
       const alvo = evento.target;
       if (!(alvo instanceof HTMLInputElement) || alvo.type !== "date") return;
-      if (alvo.disabled || alvo.readOnly || !alvo.value) return;
+      // Não checar `alvo.value` aqui: o navegador só preenche essa
+      // propriedade quando as 3 caixinhas (dia/mês/ano) já estão completas
+      // e válidas — no meio da digitação (o momento mais comum de querer
+      // corrigir um dígito errado) ela fica vazia mesmo com algo digitado,
+      // e um `if (!alvo.value) return` faria o Backspace não fazer nada
+      // bem no caso que a gente mais quer resolver.
+      if (alvo.disabled || alvo.readOnly) return;
 
       evento.preventDefault();
 

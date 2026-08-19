@@ -193,10 +193,16 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # inteira, mas deixa filtrar digitando; usado em todo select do
 │   │                             # app cuja lista vem de dado dinâmico — peça, serviço, cliente,
 │   │                             # veículo, técnico/vendedor, categoria etc. — ver seção 6 sobre o
-│   │                             # bug de clique já corrigido nele)
+│   │                             # bug de clique já corrigido nele; ganhou a opção `permitirLivre`
+│   │                             # nesta sessão — quando ligada, aceita digitar um valor que não
+│   │                             # está na lista de sugestões em vez de exigir escolher uma opção,
+│   │                             # usado hoje só na Marca do veículo, ver seção 7 "Clientes")
 │   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
 │   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
-│   │                             # globalmente, em App.tsx
+│   │                             # globalmente, em App.tsx + useLimparDataAoApagar.ts (nesta
+│   │                             # sessão — Backspace/Delete num campo de data limpa o campo
+│   │                             # inteiro em vez de não fazer nada, mesmo padrão de aplicação
+│   │                             # global em App.tsx; ver item 27 da seção 6)
 │   ├── lib/                     # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
@@ -228,7 +234,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # 7; módulo de Fornecedores) +
 │   │                             # auditoria.ts (só leitura — `listarAuditoria`, filtra por
 │   │                             # tabela/operador; a escrita é 100% via trigger de banco, ver
-│   │                             # seção 5)
+│   │                             # seção 5) + marcasVeiculo.ts (nesta sessão — lista estática de
+│   │                             # ~80 montadoras, usada só como sugestão no Combobox de Marca do
+│   │                             # veículo, ver seção 7 "Clientes")
 │   ├── pages/<modulo>/           # uma pasta por módulo: painel, clientes, estoque, fornecedores,
 │   │                             # servicos, ordens-servico, caixa, contas-pagar, relatorios (rota
 │   │                             # /relatorios, label "Relações" — abas Gráficos/Lucratividade,
@@ -468,12 +476,18 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   `lib/lojas.ts` → `criarLoja()`) já nasce com um "Depósito Principal" sozinho, então nada muda pra
   quem usa um só lugar físico. Ver "Depósitos" na seção 7 e a subseção logo abaixo dos tipos de
   `estoque_movimentos`/`contagens_estoque`.
-- `0042` (criada e validada localmente nesta sessão — Postgres local, rodada duas vezes pra provar
-  idempotência, RLS conferida com `authenticated`/`auth.uid()` simulado; **ainda não confirmada por
-  ela no Supabase real**): cria `cotacoes_pecas` — histórico de preço por fornecedor (peça,
-  fornecedor, preço, data), compartilhado entre lojas (mesmo padrão RLS de `fornecedores`: qualquer
-  logado lê/grava, sem escopo de loja). Gravado sozinho pelo app a cada Pedido de Compra com preço
-  (não tem formulário próprio) — ver "Cotação de peças" na seção 7.
+- `0042` (criada e validada localmente numa sessão anterior — Postgres local, rodada duas vezes pra
+  provar idempotência, RLS conferida com `authenticated`/`auth.uid()` simulado; **já confirmada
+  rodando no Supabase real dela**): cria `cotacoes_pecas` — histórico de preço por fornecedor
+  (peça, fornecedor, preço, data), compartilhado entre lojas (mesmo padrão RLS de `fornecedores`:
+  qualquer logado lê/grava, sem escopo de loja). Gravado sozinho pelo app a cada Pedido de Compra
+  com preço (não tem formulário próprio) — ver "Cotação de peças" na seção 7.
+- `0043` (criada nesta sessão, validada localmente num Postgres local — rodada duas vezes pra
+  provar idempotência — e **já confirmada rodando no Supabase real dela**): adiciona
+  `contas_pagar.recorrente_ate` (date, opcional). Sem valor, uma conta recorrente continua sendo
+  recriada pra sempre ao pagar (comportamento de sempre); preenchido, `pagarConta()`
+  (`lib/contasPagar.ts`) para de criar a próxima ocorrência quando o próximo vencimento passar
+  dessa data. Ver "Contas a Pagar" na seção 7.
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -987,6 +1001,27 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     "Importar por foto" de novo — só isso falta pro item 24 acima ficar 100% confirmado. Se quiser
     evitar que isso se repita, dá pra criar uma chave separada só pro Sakura System (ideia
     oferecida, não pedida ainda).
+26. **Padrão de bug: filtro client-side descarta linha parcialmente preenchida sem avisar** — em
+    `ClienteForm.tsx`, a função que decide quais veículos salvar só mantinha um veículo se o campo
+    Placa estivesse preenchido; um carro com Marca/Modelo já digitados mas Placa em branco era
+    descartado no clique de "Salvar alterações" sem erro nenhum — parecia ter salvo, mas o veículo
+    nunca chegava no banco. O motivo de existir era evitar salvar a linha 100% vazia que todo
+    formulário de veículo nasce com; a correção foi trocar "tem placa?" por "tem **qualquer** campo
+    preenchido?" (`veiculoTemAlgumDadoPreenchido()` em `schemas/cliente.ts`). **Lição**: um filtro
+    client-side que decide "isso conta como preenchido?" olhando só pra UM campo é arriscado quando
+    o formulário tem vários campos opcionais — testar o caso de preencher só os outros campos, não
+    só o caso feliz de preencher tudo.
+27. **Padrão de bug: `.value` de `input[type=date]` fica vazio até a data estar completa** — o
+    seletor de data nativo do Chromium só preenche a propriedade `.value` em JS quando as 3
+    "caixinhas" (dia/mês/ano) já formam uma data válida; no meio da digitação (ex: só o dia
+    preenchido) `.value` já volta `""`, mesmo com algo visível na tela — e o navegador não deixa o
+    Backspace apagar cruzando de uma caixinha pra outra (não tem API pra controlar isso). O hook
+    novo desta sessão que faz Backspace/Delete limpar o campo de data inteiro
+    (`useLimparDataAoApagar.ts`, ver seção 7) tinha um `if (!alvo.value) return` que parecia uma
+    guarda inofensiva ("só limpar se tiver algo pra limpar"), mas na prática bloqueava o caso mais
+    comum: corrigir um dígito errado ainda no meio de digitar a data. **Lição**: não confiar em
+    `.value` pra saber se um campo de data "tem alguma coisa digitada" — só serve pra saber se tem
+    uma data **completa e válida**.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1006,6 +1041,14 @@ Enter confirma). Implementado uma única vez, globalmente (`src/hooks/useEnterPa
 usado em `App.tsx`) — não precisa de nada especial em cada tela nova, funciona em qualquer
 `<form>`. Campos de texto multilinha (`<textarea>`, ex: "Observação" da OS) continuam com Enter
 normal (quebra de linha).
+
+**Backspace limpa o campo de data inteiro** (nesta sessão): campos `type="date"` usam o seletor
+nativo do Chromium, dividido em "caixinhas" (dia/mês/ano) que o navegador não deixa apagar
+cruzando uma pra outra via JS — Backspace/Delete num campo de data agora limpa o campo inteiro,
+deixando redigitar sem precisar do mouse. Implementado uma única vez, globalmente
+(`src/hooks/useLimparDataAoApagar.ts`, mesmo padrão do Enter acima). Ver item 27 da seção 6 pro
+bug corrigido no próprio fix (checar `.value` bloqueava o caso mais comum, corrigir um dígito
+ainda no meio da digitação).
 
 - **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
   do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
@@ -1041,6 +1084,11 @@ normal (quebra de linha).
   null`, então o dado não quebraria, mas o vínculo se perderia silenciosamente). **Formulário
   migrado nesta sessão** pro padrão `react-hook-form` + `zod` (segundo módulo, depois de
   Funcionários — ver "Padrão de formulário" na seção 4); comportamento pro usuário não mudou.
+  **Numa sessão posterior**: corrigido um bug real onde um veículo com Marca/Modelo preenchidos
+  mas Placa em branco era descartado em silêncio ao salvar (ver item 26 da seção 6); campo "Marca"
+  agora sugere uma lista de ~80 montadoras via Combobox, mas aceita digitar qualquer coisa que não
+  esteja na lista (`permitirLivre`, ver seção 4); "Modelo" continua texto livre sem sugestão (tem
+  modelo demais no mundo pra listar, pedido explícito da usuária).
 - **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
   categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
   produto e, **desde esta sessão**, campo/coluna de Depósito), Contagem (inventário físico, agora
@@ -1133,7 +1181,10 @@ normal (quebra de linha).
   branch separada que trabalhou em paralelo — ver seção 10, já testado por ela de verdade): botão
   na lista "Pagas recentemente" — volta a conta pra pendente e remove a Saída gerada (se a conta
   era recorrente, a próxima
-  ocorrência já criada continua existindo, pendente).
+  ocorrência já criada continua existindo, pendente). **"Recorrente até" (nesta sessão)**: campo
+  opcional que só aparece quando "Conta mensal recorrente" está marcado — em branco, continua
+  recorrendo pra sempre (como sempre foi); preenchido com um mês, `pagarConta()` para de criar a
+  próxima ocorrência depois dessa data (migration `0043`, já rodada por ela no Supabase real).
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
   cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
   vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
@@ -1212,6 +1263,16 @@ normal (quebra de linha).
     quebrando em duas linhas quando o rótulo tem mais de uma palavra (ex: "Em andamento") por
     faltar `whitespace-nowrap`. **Publicada** (build confirmada com sucesso no GitHub Actions) —
     ainda não confirmada visualmente por ela na loja.
+  - `v0.9.8`: inclui as correções de uma sessão posterior — veículo sem placa não salvava, Marca
+    do veículo com sugestão de montadoras, Backspace limpando campo de data inteiro, e "Recorrente
+    até" em Contas a Pagar (itens 26/27 da seção 6). **Publicada pela tela do GitHub** (ela estava
+    longe do terminal) e **já baixada por ela via auto-update, confirmado no chat**. **Pendência**:
+    logo depois de publicar, ela reportou que o Backspace só limpava a data quando as 3 caixinhas já
+    estavam completas — bug no próprio hook novo (`useLimparDataAoApagar.ts` checava `.value`, que
+    fica vazio até a data estar completa, ver item 27 da seção 6). Corrigido e já mesclado na
+    `main`, mas **ainda não publicado em nenhuma tag** — ela decidiu acumular com outras mudanças
+    antes da próxima versão. **Se uma sessão futura for publicar a próxima tag, lembrar de incluir
+    essa correção** (já está em `main`, só falta o número de versão novo).
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1336,21 +1397,22 @@ npm run dev            # abre o app Electron com hot reload + DevTools
 ```
 
 Projeto Supabase da usuária: nome "Sakura System", ref `rlgdjiowvnfzsedehyga`, região São Paulo,
-URL `https://rlgdjiowvnfzsedehyga.supabase.co`. **Migrations `0001` a `0042` já foram confirmadas
+URL `https://rlgdjiowvnfzsedehyga.supabase.co`. **Migrations `0001` a `0043` já foram confirmadas
 rodando sem erro nesse projeto** (incluindo a fundação multi-loja, as correções/módulos novos
 `0034`-`0037`, `0038`/`0039`/`0040` — apesar do histórico confuso de duas sessões de trabalho
 paralelas que rodaram nomes de migration conflitantes, ver seção 10, o resultado final já foi
 confirmado funcionando de verdade por ela: Fornecedores com endereço completo, redefinir senha, e
 Auditoria, todos testados na prática — `0041`, o cadastro de Depósito, também já rodada e testada
-por ela — e `0042`, Cotação de peças, rodada por ela nesta sessão, depois de um susto com a query
-dando erro "relation pecas does not exist" por estar apontando pro projeto Supabase errado no SQL
-Editor; rodando no projeto certo, funcionou de primeira).
+por ela — `0042`, Cotação de peças, rodada por ela numa sessão anterior, depois de um susto com a
+query dando erro "relation pecas does not exist" por estar apontando pro projeto Supabase errado
+no SQL Editor (rodando no projeto certo, funcionou de primeira) — e `0043`, "Recorrente até" em
+Contas a Pagar, rodada e confirmada por ela nesta sessão).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0042`. Todas são idempotentes.
+até `0043`. Todas são idempotentes.
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 
@@ -1521,7 +1583,9 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.5"`. **Quatro tags publicadas de verdade nesta sessão**
+- `package.json` em `"version": "0.9.8"` (o parágrafo abaixo é histórico de uma sessão anterior — a
+  lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
+  "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
   (`v0.9.2`, `v0.9.3`, `v0.9.4`, `v0.9.5` — ela sempre rodou `git tag vX.Y.Z` + `git push origin
   vX.Y.Z` no próprio terminal, o GitHub Actions buildou e publicou o instalador sozinho todas as
   vezes) — decisão tomada nesta sessão de **lançar na loja do pai dela mesmo sem a nota fiscal

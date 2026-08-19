@@ -61,14 +61,18 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 1. **Lançar na borracharia do pai dela** (ver seção 1), em **Araraquara**, com tudo funcionando —
    usar de verdade lá é como ela pretende achar bugs reais (os que só aparecem usando de verdade,
    não em teste) e descobrir que funções novas fazem falta no dia a dia. É o gatilho pra atacar a
-   emissão de nota fiscal (seção 8, item 1). **Em andamento**: instalador publicado (`v0.9.2` a
-   `v0.9.5`, ver seção 7 "Empacotamento") e testado por ela na própria máquina (pessoal, em casa) —
-   **ainda não confirmado se já instalou na máquina da loja de verdade**. Banco de produção limpo,
-   só existe uma loja real no Supabase: "Pneus Amigão" (Araraquara). Auto-update via GitHub Releases
-   confirmado funcionando de ponta a ponta (ver item 21 da seção 6). **Plano dela pra esta semana**:
-   usar o sistema no dia a dia (cadastrar peça, abrir OS etc.) o resto da semana pra pegar bug real
-   de uso; **quinta ou sexta ela decide/assina o Focus NFe** e a partir daí ataca a emissão de nota
-   fiscal (seção 8, item 1) — até lá, nota fiscal continua sendo emitida por fora do sistema.
+   emissão de nota fiscal (seção 8, item 1). **Em andamento, e já rodando na loja de verdade**:
+   instalador publicado (`v0.9.2` a `v0.9.7`, ver seção 7 "Empacotamento") — confirmado nesta
+   sessão que já está em uso real na loja (não só na máquina pessoal dela): ela reportou telas com
+   OS de cliente de verdade (ex: "OS 1", cliente "Silvio Criscolin") e pegou bugs de uso real
+   (Operador Teste travado, "Importar por foto" com erro genérico, menu nativo do Electron, badge
+   de status quebrando linha — ver itens 23-25 da seção 6), exatamente o tipo de bug que só aparece
+   usando pra valer. Banco de produção limpo, só existe uma loja real no Supabase: "Pneus Amigão"
+   (Araraquara). Auto-update via GitHub Releases confirmado funcionando de novo nesta sessão
+   (`v0.9.5` → `v0.9.6` sozinho, ver item 21 da seção 6). **Plano dela pra esta semana**: continuar
+   usando o sistema no dia a dia pra pegar mais bug real de uso; **quinta ou sexta ela
+   decide/assina o Focus NFe** e a partir daí ataca a emissão de nota fiscal (seção 8, item 1) —
+   até lá, nota fiscal continua sendo emitida por fora do sistema.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
    grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
@@ -962,12 +966,27 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     `lerNotasFiscais()` lançava só a mensagem genérica do `supabase-js` (`FunctionsHttpError`) sem
     ler o corpo da resposta, que já vinha com o motivo real (mesmo padrão do item 11 — erro
     engolido, ação parece "sem efeito"); agora lê `error.context.json()` antes de desistir.
-    **Corrigido no código (commit + PR + merge, validado com `tsc`/`lint`/`build`/testes no
-    sandbox), mas ainda não confirmado por ela rodando de verdade** — precisa de uma versão nova do
-    instalador pra chegar na loja (ver "Empacotamento" na seção 7), já que o `.exe` de lá não
-    atualiza sozinho a partir de código só mesclado no GitHub. Enquanto isso, checar
-    **Supabase → Edge Functions → `ler-notas-fiscais` → Logs** mostra o erro real imediatamente,
-    sem esperar release nova.
+    **Corrigido no código e já confirmado em parte na prática**: depois da `v0.9.6` chegar
+    (auto-update), ela tentou de novo e, em vez do erro genérico de antes, apareceu a mensagem real
+    vinda da Anthropic (`"Your credit balance is too low..."`, ver item 25) — prova de que a
+    correção do item (b) funcionou (o motivo real agora aparece) e evidência forte de que o (a)
+    também funcionou (o pedido chegou até a checagem de crédito da Anthropic, não voltou como
+    "media_type inválido"). **Falta só confirmar a leitura de uma nota de verdade** depois que ela
+    recarregar o crédito (item 25) — o mecanismo em si (chegar até a IA e ler a resposta) já está
+    validado.
+25. **Crédito da Anthropic pode acabar sem nenhum uso real no Sakura System, se a mesma chave for
+    usada em outro projeto** — logo depois da `v0.9.6` chegar, o "Importar por foto" passou a
+    falhar com o erro real da Anthropic: *"Your credit balance is too low to access the Anthropic
+    API"*. A usuária tinha colocado US$ 5 de crédito, mas o saldo estava negativo (-US$ 0,06,
+    recarga automática desligada) — foi consumido em outro uso da mesma chave da Anthropic, não
+    pelo Sakura System. **Não é bug do sistema** — é só um lembrete de que a chave configurada no
+    secret `ANTHROPIC_API_KEY` (Supabase → Edge Functions) é a mesma usada em qualquer outro
+    projeto/teste que compartilhe essa conta da Anthropic; um consumo em outro lugar derruba o
+    crédito do Sakura System sem aviso nenhum na hora. **Pendência em aberto**: ela ainda precisa
+    recarregar o crédito (`console.anthropic.com` → Billing → "Comprar créditos") pra destravar o
+    "Importar por foto" de novo — só isso falta pro item 24 acima ficar 100% confirmado. Se quiser
+    evitar que isso se repita, dá pra criar uma chave separada só pro Sakura System (ideia
+    oferecida, não pedida ainda).
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1191,7 +1210,8 @@ normal (quebra de linha).
     nenhuma pro app, aparecia como uma faixa branca feia no topo mesmo em tela cheia —
     `Menu.setApplicationMenu(null)`) e corrige o badge de status da lista de Ordens de Serviço
     quebrando em duas linhas quando o rótulo tem mais de uma palavra (ex: "Em andamento") por
-    faltar `whitespace-nowrap`. Versão preparada nesta sessão, **ainda não publicada**.
+    faltar `whitespace-nowrap`. **Publicada** (build confirmada com sucesso no GitHub Actions) —
+    ainda não confirmada visualmente por ela na loja.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1202,7 +1222,10 @@ normal (quebra de linha).
   causa de `v0.9.3`/`v0.9.4` nunca terem se instalado sozinhas não era timing/rede — era o
   repositório estar **privado** (`electron-updater` baixa o `latest.yml` sem autenticação, e um
   repo privado sempre devolve 404 pra isso). Corrigido tornando o repositório público e renomeando
-  pra `sakura-system-ace` (detalhe completo e alternativas descartadas no item 21 da seção 6). Se
+  pra `sakura-system-ace` (detalhe completo e alternativas descartadas no item 21 da seção 6).
+  **Confirmado de novo nesta sessão**: `v0.9.6` se instalou sozinha na loja logo depois de
+  publicada (o "Importar por foto" passou a mostrar o erro real da Anthropic em vez do genérico de
+  antes — só possível já rodando o código novo, ver item 24 da seção 6). Se
   parar de funcionar de novo, `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log`
   continua sendo o primeiro lugar pra olhar.
 

@@ -1176,6 +1176,9 @@ normal (quebra de linha).
     adiciona log do `autoUpdater` em arquivo (ver itens 18 e 19).
   - `v0.9.5`: corrige `excluirLoja()` de vez — faltavam 4 tabelas de configuração além de
     `depositos` (ver item 20).
+  - `v0.9.6`: corrige "Importar por foto/PDF" travando com erro genérico ao ler certos arquivos de
+    imagem (ex: `.jfif`) — ver item 24 da seção 6. Versão preparada nesta sessão, **ainda não
+    publicada** (falta ela rodar `git tag v0.9.6` + `git push origin v0.9.6`).
   Fluxo confirmado funcionando de ponta a ponta: ela roda `git tag vX.Y.Z` + `git push origin
   vX.Y.Z` no terminal, o GitHub Actions builda e publica o instalador sozinho (~5-10 min). A versão
   aparece pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —

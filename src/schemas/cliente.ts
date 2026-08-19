@@ -98,11 +98,27 @@ export function paraNovoCliente(valores: ClienteFormValues): NovoCliente {
 
 const paraNumeroOuNulo = (valor: string) => (valor.trim() === "" ? null : Number(valor));
 
+// Um veículo entra no salvamento se tiver qualquer campo preenchido (não só a
+// placa) — evita descartar em silêncio um carro que o operador já começou a
+// cadastrar mas ainda não sabe a placa. Só a linha 100% vazia (o veículo em
+// branco que todo formulário nasce com, ver veiculoFormVazio) é ignorada.
+function veiculoTemAlgumDadoPreenchido(veiculo: ClienteFormValues["veiculos"][number]): boolean {
+  return Boolean(
+    veiculo.placa.trim() ||
+      veiculo.marca.trim() ||
+      veiculo.modelo.trim() ||
+      veiculo.ano.trim() ||
+      veiculo.cor.trim() ||
+      veiculo.tipo.trim() ||
+      veiculo.km_atual.trim(),
+  );
+}
+
 export function paraVeiculosPreenchidos(
   veiculos: ClienteFormValues["veiculos"],
 ): VeiculoFormulario[] {
   return veiculos
-    .filter((veiculo) => veiculo.placa.trim())
+    .filter(veiculoTemAlgumDadoPreenchido)
     .map((veiculo) => ({
       id: veiculo.id,
       placa: veiculo.placa,

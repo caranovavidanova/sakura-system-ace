@@ -47,7 +47,8 @@ interface PagarContaParams {
 
 // Marca a conta como paga, lança a Saída correspondente no Caixa (mesmo
 // padrão do faturamento de OS gerando Entrada) e, se a conta for
-// recorrente, já cria a próxima ocorrência (vencimento um mês depois).
+// recorrente, já cria a próxima ocorrência (vencimento um mês depois) — a
+// menos que o próximo vencimento já passe de `recorrente_ate` (opcional).
 export async function pagarConta({
   conta,
   valorPago,
@@ -77,13 +78,17 @@ export async function pagarConta({
     .eq("id", conta.id);
   if (erroConta) throw erroConta;
 
-  if (conta.recorrente) {
+  const proxima = conta.recorrente ? proximoVencimento(conta.vencimento) : null;
+  const passouDoFim = conta.recorrente_ate !== null && proxima !== null && proxima > conta.recorrente_ate;
+
+  if (proxima && !passouDoFim) {
     const { error: erroProxima } = await supabase.from("contas_pagar").insert({
       descricao: conta.descricao,
       valor: conta.valor,
-      vencimento: proximoVencimento(conta.vencimento),
+      vencimento: proxima,
       categoria_id: conta.categoria_id,
       recorrente: true,
+      recorrente_ate: conta.recorrente_ate,
       loja_id: conta.loja_id,
     });
     if (erroProxima) throw erroProxima;

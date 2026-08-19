@@ -15,6 +15,14 @@ interface ComboboxProps {
   desabilitado?: boolean;
   className?: string;
   id?: string;
+  /**
+   * Quando `true`, o campo não fica preso à lista de `opcoes`: se o que foi
+   * digitado não bater com nenhuma opção, o texto digitado vira o próprio
+   * valor ao sair do campo (ex: marca de veículo — a lista é só sugestão,
+   * não cadastro fechado). Sem essa flag, sair do campo sem escolher uma
+   * opção da lista desfaz o que foi digitado (comportamento de sempre).
+   */
+  permitirLivre?: boolean;
 }
 
 // Remove acento pra busca em português não exigir digitar "ç"/"ã" certinho
@@ -47,6 +55,7 @@ export function Combobox({
   desabilitado,
   className,
   id,
+  permitirLivre,
 }: ComboboxProps) {
   const [aberto, setAberto] = useState(false);
   const [filtro, setFiltro] = useState("");
@@ -54,7 +63,12 @@ export function Combobox({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const rotuloSelecionado =
-    opcoes.find((o) => o.valor === valor)?.rotulo ?? (valor === "" ? opcaoVazia : undefined);
+    opcoes.find((o) => o.valor === valor)?.rotulo ??
+    (valor === ""
+      ? opcaoVazia
+      : permitirLivre && valor
+        ? valor
+        : undefined);
 
   const opcoesFiltradas = useMemo(() => {
     if (filtro.trim() === "") return opcoes;
@@ -98,7 +112,13 @@ export function Combobox({
         selecionar("");
       } else {
         const opcao = opcoesFiltradas[indiceAtivo - (mostrarOpcaoVazia ? 1 : 0)];
-        if (opcao) selecionar(opcao.valor);
+        if (opcao) {
+          selecionar(opcao.valor);
+        } else if (permitirLivre && filtro.trim()) {
+          // Nenhuma opção da lista bate com o que foi digitado — usa o
+          // próprio texto digitado como valor (ex: marca fora da lista).
+          selecionar(filtro.trim());
+        }
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -113,6 +133,9 @@ export function Combobox({
       className={`relative ${className ?? ""}`}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          if (permitirLivre && filtro.trim()) {
+            onMudar(filtro.trim());
+          }
           setAberto(false);
           setFiltro("");
         }
@@ -163,7 +186,20 @@ export function Combobox({
             </button>
           )}
           {opcoesFiltradas.length === 0 ? (
-            <p className="px-3 py-1.5 text-sm text-sakura-muted">Nenhum resultado encontrado</p>
+            permitirLivre && filtro.trim() ? (
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  selecionar(filtro.trim());
+                }}
+                className="block w-full px-3 py-1.5 text-left text-sm text-sakura-pink hover:bg-white/5"
+              >
+                Usar "{filtro.trim()}"
+              </button>
+            ) : (
+              <p className="px-3 py-1.5 text-sm text-sakura-muted">Nenhum resultado encontrado</p>
+            )
           ) : (
             opcoesFiltradas.map((opcao, indice) => {
               const indiceReal = indice + (mostrarOpcaoVazia ? 1 : 0);

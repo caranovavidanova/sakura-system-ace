@@ -8,6 +8,7 @@ export interface ContaPagar {
   vencimento: string;
   categoria_id: string | null;
   recorrente: boolean;
+  recorrente_ate: string | null;
   status: StatusContaPagar;
   data_pagamento: string | null;
   caixa_movimento_id: string | null;
@@ -18,5 +19,5 @@ export interface ContaPagar {
 
 export type NovaContaPagar = Pick<
   ContaPagar,
-  "descricao" | "valor" | "vencimento" | "categoria_id" | "recorrente"
+  "descricao" | "valor" | "vencimento" | "categoria_id" | "recorrente" | "recorrente_ate"
 >;

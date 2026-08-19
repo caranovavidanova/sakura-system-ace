@@ -74,7 +74,7 @@ export function ClienteForm({
         tipoPessoa={watch("tipo_pessoa")}
       />
       <EnderecoFields register={register} setValue={setValue} />
-      <VeiculosFields control={control} register={register} />
+      <VeiculosFields control={control} register={register} watch={watch} setValue={setValue} />
 
       <div className="flex justify-end gap-3">
         <button

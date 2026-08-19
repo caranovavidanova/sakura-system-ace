@@ -1,15 +1,23 @@
-import type { Control, UseFormRegister } from "react-hook-form";
+import type { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
+import { Combobox } from "@/components/Combobox";
+import { MARCAS_VEICULO } from "@/lib/marcasVeiculo";
 import { type ClienteFormValues, veiculoFormVazio } from "@/schemas/cliente";
 import { TIPO_VEICULO_LABEL, type TipoVeiculo } from "@/types/cliente";
 import { Campo, inputClasse, Secao } from "./FormCompartilhado";
 
+const OPCOES_MARCA = MARCAS_VEICULO.map((marca) => ({ valor: marca, rotulo: marca }));
+
 export function VeiculosFields({
   control,
   register,
+  watch,
+  setValue,
 }: {
   control: Control<ClienteFormValues>;
   register: UseFormRegister<ClienteFormValues>;
+  watch: UseFormWatch<ClienteFormValues>;
+  setValue: UseFormSetValue<ClienteFormValues>;
 }) {
   const { fields, append, remove } = useFieldArray({ control, name: "veiculos" });
 
@@ -46,10 +54,13 @@ export function VeiculosFields({
                   />
                 </Campo>
                 <Campo label="Marca">
-                  <input
-                    type="text"
-                    {...register(`veiculos.${index}.marca`)}
-                    className={inputClasse}
+                  <Combobox
+                    opcoes={OPCOES_MARCA}
+                    valor={watch(`veiculos.${index}.marca`)}
+                    onMudar={(v) => setValue(`veiculos.${index}.marca`, v)}
+                    opcaoVazia="Sem marca"
+                    placeholder="Selecione ou digite..."
+                    permitirLivre
                   />
                 </Campo>
                 <Campo label="Modelo">

@@ -7,6 +7,7 @@ export const contaPagarFormSchema = z.object({
   vencimento: z.string().min(1, "Vencimento é obrigatório."),
   categoria_id: z.string(),
   recorrente: z.boolean(),
+  recorrente_ate: z.string(),
 });
 
 export type ContaPagarFormValues = z.infer<typeof contaPagarFormSchema>;
@@ -17,6 +18,7 @@ export const contaPagarFormVazio: ContaPagarFormValues = {
   vencimento: "",
   categoria_id: "",
   recorrente: false,
+  recorrente_ate: "",
 };
 
 export function paraNovaContaPagar(valores: ContaPagarFormValues): NovaContaPagar {
@@ -26,5 +28,9 @@ export function paraNovaContaPagar(valores: ContaPagarFormValues): NovaContaPaga
     vencimento: valores.vencimento,
     categoria_id: valores.categoria_id || null,
     recorrente: valores.recorrente,
+    // Só faz sentido salvar o "até quando" se a conta for de fato recorrente
+    // — evita ficar um valor esquecido caso o operador preencha e depois
+    // desmarque "Conta mensal recorrente" sem limpar o campo.
+    recorrente_ate: valores.recorrente ? valores.recorrente_ate || null : null,
   };
 }

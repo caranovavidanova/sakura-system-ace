@@ -111,7 +111,7 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
           />
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+        <label className="col-span-2 flex items-center gap-2 text-sm text-sakura-purple-dark/80">
           <input
             type="checkbox"
             {...register("recorrente")}
@@ -119,6 +119,20 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
           />
           Conta mensal recorrente (ao pagar, já cria a próxima automaticamente)
         </label>
+
+        {watch("recorrente") && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-sakura-purple-dark/80">Recorrente até (opcional)</span>
+            <input
+              type="date"
+              {...register("recorrente_ate")}
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            />
+            <span className="text-xs text-sakura-muted">
+              Deixe em branco pra continuar repetindo sem data pra parar.
+            </span>
+          </label>
+        )}
       </div>
 
       <div className="flex justify-end gap-3">

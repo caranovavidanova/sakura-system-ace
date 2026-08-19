@@ -5,6 +5,7 @@ import { Sidebar } from "./components/Sidebar";
 import { VersaoApp } from "./components/VersaoApp";
 import { useAuth } from "./contexts/AuthContext";
 import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
+import { useLimparDataAoApagar } from "./hooks/useLimparDataAoApagar";
 import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
@@ -53,6 +54,7 @@ function PaginaInicial() {
 export default function App() {
   const { carregando, session, operador } = useAuth();
   useEnterParaProximoCampo();
+  useLimparDataAoApagar();
 
   if (carregando) {
     return (

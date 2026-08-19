@@ -952,6 +952,22 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     problema pode se repetir no futuro se um admin remover um operador de todas as lojas ao
     editá-lo, deixando-o "órfão" de novo; se isso voltar a acontecer, a solução é a mesma: excluir
     pelo painel do Supabase, não precisa de migration nem correção de RLS a menos que ela peça).
+24. **"Importar por foto/PDF" falhava com erro genérico e sem causa visível** — a usuária reportou
+    (print da loja de verdade) o erro "Edge Function returned a non-2xx status code" tentando ler
+    uma foto `.jfif` de nota de peça. Duas correções aplicadas em `src/lib/iaNotaFiscal.ts`: (a)
+    `arquivoParaConteudoNota()` mandava `arquivo.type` direto pra API do Claude sem checar se é um
+    dos 4 valores aceitos (`image/jpeg`/`png`/`gif`/`webp`) — um `.jfif` no Windows pode reportar
+    `image/pjpeg` ou string vazia, que a API rejeita; agora cai pro `image/jpeg` (compatível com o
+    conteúdo real do arquivo) sempre que o tipo não é um dos aceitos nem `application/pdf`. (b)
+    `lerNotasFiscais()` lançava só a mensagem genérica do `supabase-js` (`FunctionsHttpError`) sem
+    ler o corpo da resposta, que já vinha com o motivo real (mesmo padrão do item 11 — erro
+    engolido, ação parece "sem efeito"); agora lê `error.context.json()` antes de desistir.
+    **Corrigido no código (commit + PR + merge, validado com `tsc`/`lint`/`build`/testes no
+    sandbox), mas ainda não confirmado por ela rodando de verdade** — precisa de uma versão nova do
+    instalador pra chegar na loja (ver "Empacotamento" na seção 7), já que o `.exe` de lá não
+    atualiza sozinho a partir de código só mesclado no GitHub. Enquanto isso, checar
+    **Supabase → Edge Functions → `ler-notas-fiscais` → Logs** mostra o erro real imediatamente,
+    sem esperar release nova.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

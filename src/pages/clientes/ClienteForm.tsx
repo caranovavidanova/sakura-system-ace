@@ -51,10 +51,7 @@ export function ClienteForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(aoSubmeter)}
-      className="space-y-6 sakura-card p-6 shadow-sm"
-    >
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-6">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <h2 className="text-lg font-semibold text-sakura-purple-dark">
@@ -68,13 +65,18 @@ export function ClienteForm({
         </p>
       )}
 
-      <DadosClienteFields
-        register={register}
-        errors={errors}
-        tipoPessoa={watch("tipo_pessoa")}
-      />
-      <EnderecoFields register={register} setValue={setValue} />
-      <VeiculosFields control={control} register={register} watch={watch} setValue={setValue} />
+      <div className="space-y-6 sakura-card p-6 shadow-sm">
+        <DadosClienteFields
+          register={register}
+          errors={errors}
+          tipoPessoa={watch("tipo_pessoa")}
+        />
+        <EnderecoFields register={register} setValue={setValue} />
+      </div>
+
+      <div className="sakura-card p-6 shadow-sm">
+        <VeiculosFields control={control} register={register} watch={watch} setValue={setValue} />
+      </div>
 
       <div className="flex justify-end gap-3">
         <button

@@ -110,16 +110,6 @@ Três fases, nessa ordem, sem pressa de pular etapa:
   próprio `sakura-card` no bloco de login em vez de um vidro à parte). Cartões de tendência do
   Início não usam mais gráfico/sparkline — só valor grande + seta `›`, com um leve glow interno por
   métrica (ver seção 7).
-- **Flor decorativa de fundo** (`src/components/FundoFlor.tsx` + `public/sakura-flor-fundo.png`):
-  um ramalhado de flores de sakura (3 flores + 3 pétalas soltas) fixo no canto inferior direito de
-  toda tela do app já autenticado (Início, Clientes, OS etc. — não aparece no Login/Troca de senha,
-  que já têm o próprio fundo `sakura-login-bg-premium.png`), atrás da Sidebar e dos cards, na frente
-  do gradiente rosa/roxo do `sakura-shell-bg`. Fica **parado** enquanto a tela rola, porque é
-  `position: fixed` fora da área que o `<AreaRolavel>` rola. A imagem veio de um PNG/JPEG fornecido
-  (fundo branco recortado até virar transparente) — usada exatamente como enviada, sem redesenhar.
-  **Pegadinha resolvida nessa implementação**: um z-index negativo sozinho não bastava pra ficar
-  atrás do conteúdo — ver item 30 da seção 6 (precisou de `isolation: isolate` no
-  `.sakura-shell-bg`).
 - **Barra de rolagem 100% customizada** (`src/components/AreaRolavel.tsx`): a barra nativa do
   Windows/Chromium não respeita `border-radius`, então nunca fica "dentro" de um card de vidro —
   a solução foi esconder a nativa por completo (`scrollbar-width: none` +
@@ -1074,23 +1064,6 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     API libera CORS pra navegador — a maioria das APIs fiscais/financeiras B2B não libera, porque
     são pensadas pra uso servidor-a-servidor. Nesses casos, IPC pro processo principal (esse mesmo
     padrão) é o jeito certo de contornar, não um workaround improvisado.
-30. **Padrão de bug: elemento com z-index negativo some atrás do próprio fundo do
-    container-pai** — ao colocar a flor decorativa (ver seção 2, "Flor decorativa de fundo") como
-    filho **fixo** de `.sakura-shell-bg` com `z-index` negativo (pra ficar atrás da Sidebar/cards),
-    ela simplesmente não aparecia — nem atrás nem na frente, sumia por completo. Causa: sem um
-    contexto de empilhamento próprio, o **fundo do próprio `.sakura-shell-bg`** (cor + gradiente)
-    conta como parte do mesmo "passo de pintura" do conteúdo normal (Sidebar/main), que a
-    especificação do CSS pinta **depois** de qualquer filho com z-index negativo — ou seja, o
-    gradiente de fundo do container pintava por cima da flor, escondendo-a completamente (bug
-    "irmão" do item 14: também é uma regra de **ordem de pintura** do CSS que não é sobre
-    especificidade). **Corrigido** adicionando `isolation: isolate` na própria classe utilitária
-    `sakura-shell-bg` (`globals.css`) — isso faz esse container virar a raiz do seu próprio
-    contexto de empilhamento, e aí a ordem passa a ser a esperada: 1) fundo/gradiente do shell, 2)
-    filhos com z-index negativo (a flor), 3) conteúdo normal (Sidebar/main) por cima. **Lição**:
-    sempre que um elemento decorativo precisar ficar "atrás do conteúdo mas na frente do fundo" de
-    um container pai, esse container precisa isolar seu próprio contexto de empilhamento
-    (`isolation: isolate` ou `position: relative`) — sem isso, z-index negativo pode ficar atrás
-    até do fundo do próprio pai, não só do conteúdo.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

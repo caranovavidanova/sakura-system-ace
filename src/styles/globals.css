@@ -90,17 +90,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
-/* Fundo dark do app inteiro. "isolation: isolate" cria um contexto de
-   empilhamento próprio pra esse container — sem isso, um filho com z-index
-   negativo (ex: a flor decorativa em FundoFlor.tsx) pinta ANTES do fundo
-   deste próprio elemento (regra de pintura do CSS: fundo do container é um
-   passo só junto com o resto do conteúdo normal, que vem depois de
-   z-index negativo), ficando escondido atrás da cor/gradiente de fundo em
-   vez de na frente dela. Com isolamento, a ordem vira: 1) fundo/gradiente
-   deste container, 2) filhos com z-index negativo, 3) conteúdo normal
-   (Sidebar/main) — exatamente "atrás do conteúdo, na frente do gradiente". */
+/* Fundo dark do app inteiro */
 @utility sakura-shell-bg {
-  isolation: isolate;
   background-color: var(--color-sakura-bg);
   background-image:
     radial-gradient(circle at 10% 10%, rgba(255, 77, 206, 0.08), transparent 45%),

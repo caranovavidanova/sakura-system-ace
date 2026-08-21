@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AreaRolavel } from "./components/AreaRolavel";
+import { FundoFlor } from "./components/FundoFlor";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
 import { Sidebar } from "./components/Sidebar";
 import { VersaoApp } from "./components/VersaoApp";
@@ -85,6 +86,7 @@ export default function App() {
 
   return (
     <div className="sakura-shell-bg flex h-screen gap-4 overflow-hidden p-4">
+      <FundoFlor />
       <VersaoApp />
       <Sidebar />
       <main className="min-h-0 flex-1">

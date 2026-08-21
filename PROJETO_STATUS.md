@@ -1046,6 +1046,24 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     adicionar item novo" via `upsert` batendo numa coluna `uuid`. **Corrigido no código, ainda não
     confirmado por ela rodando de novo na loja** (só o print do erro foi visto nesta sessão) — vale
     confirmar quando a próxima tag for publicada.
+29. **Padrão de bug: `fetch()` direto na tela do Electron pra uma API externa dá "Failed to
+    fetch"** — reportado pela usuária testando a emissão de NFS-e de verdade pela primeira vez
+    (com o token de homologação): a tela mostrou só `Failed to fetch`, sem detalhe nenhum.
+    Causa: a tela do app (processo **renderer** do Electron) é Chromium por baixo — se comporta
+    como um navegador comum, inclusive respeitando CORS. APIs feitas pra ser chamadas de servidor
+    pra servidor (como a do Focus NFe) normalmente não liberam CORS pra chamada direta de
+    navegador, então o `fetch()` é bloqueado **antes** de qualquer resposta chegar — `Failed to
+    fetch` é exatamente essa assinatura (diferente de um erro HTTP de verdade, que viria com
+    status e corpo). **Corrigido** movendo a chamada de verdade pro **processo principal** do
+    Electron (`electron/main.ts`, roda em Node.js — sem CORS, essa restrição é só de navegador),
+    exposta pra tela via IPC: `ipcMain.handle("http:fetchComAuth", ...)` no principal,
+    `window.sakuraApp.fetchComAuth(...)` repassado pelo preload (`contextBridge`/`ipcRenderer`), e
+    `lib/focusNfe.ts` chama essa ponte em vez de `fetch()` direto. **Lição pra qualquer integração
+    externa futura** (não só Focus NFe): se for chamar a API de terceiro **direto da tela** (não
+    via Edge Function do Supabase, que já roda fora do navegador), primeiro confirmar se aquela
+    API libera CORS pra navegador — a maioria das APIs fiscais/financeiras B2B não libera, porque
+    são pensadas pra uso servidor-a-servidor. Nesses casos, IPC pro processo principal (esse mesmo
+    padrão) é o jeito certo de contornar, não um workaround improvisado.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

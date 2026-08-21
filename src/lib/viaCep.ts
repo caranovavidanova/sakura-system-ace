@@ -3,6 +3,7 @@ export interface EnderecoViaCep {
   bairro: string;
   localidade: string;
   uf: string;
+  ibge: string;
 }
 
 // API pública do ViaCEP — sem chave, sem custo. Devolve null se o CEP não
@@ -22,6 +23,7 @@ export async function buscarEnderecoPorCep(cep: string): Promise<EnderecoViaCep 
       bairro: dados.bairro ?? "",
       localidade: dados.localidade ?? "",
       uf: dados.uf ?? "",
+      ibge: dados.ibge ?? "",
     };
   } catch {
     return null;

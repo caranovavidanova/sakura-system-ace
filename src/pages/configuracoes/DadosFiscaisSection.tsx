@@ -71,6 +71,7 @@ export function DadosFiscaisSection({
       bairro: endereco.bairro,
       cidade: endereco.localidade,
       uf: endereco.uf,
+      codigo_municipio: endereco.ibge || atual.codigo_municipio,
     }));
   }
 

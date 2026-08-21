@@ -1022,6 +1022,25 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     comum: corrigir um dígito errado ainda no meio de digitar a data. **Lição**: não confiar em
     `.value` pra saber se um campo de data "tem alguma coisa digitada" — só serve pra saber se tem
     uma data **completa e válida**.
+28. **Padrão de bug: hidden input de `id` manda `""` (não `undefined`) pra um item novo de
+    `useFieldArray`** — reportado pela usuária (print da loja de verdade): editar um cliente já
+    existente e clicar "+ Adicionar veículo" pra incluir um carro novo dava
+    `invalid input syntax for type uuid: ""` ao salvar, sem gravar nada. Causa: o item novo (sem
+    `id` de banco ainda) tem um `<input type="hidden">` registrado pelo react-hook-form pro campo
+    `id` (ver "Padrão de formulário" na seção 4 — todo item de lista dinâmica com `id` de banco
+    precisa desse hidden input); como HTML não tem como um input "não ter valor", o formulário lê
+    esse campo como string vazia `""`, não `undefined`. `atualizarCliente()`
+    (`src/lib/clientes.ts`) mandava **todos** os veículos pro mesmo `upsert`, inclusive o novo com
+    `id: ""` — o Postgres recusa string vazia numa coluna `uuid`. **Corrigido** separando os
+    veículos em dois grupos antes de gravar: com `id` vão pro `upsert` de sempre (atualiza); sem
+    `id` vão pra um `insert` à parte, sem a chave `id` no payload, deixando o banco gerar o UUID
+    sozinho. **Lição**: em qualquer lista dinâmica (`useFieldArray`) com hidden input de `id` (ver
+    seção 4), nunca mandar esse campo direto pra um `upsert` sem checar se é string vazia — vale
+    conferir os outros módulos que usam esse mesmo padrão (Funcionários/filhos, Ordens de
+    Serviço/itens, Pedidos de Compra/itens) se algum tiver o mesmo tipo de fluxo de "editar e
+    adicionar item novo" via `upsert` batendo numa coluna `uuid`. **Corrigido no código, ainda não
+    confirmado por ela rodando de novo na loja** (só o print do erro foi visto nesta sessão) — vale
+    confirmar quando a próxima tag for publicada.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1271,8 +1290,10 @@ ainda no meio da digitação).
     estavam completas — bug no próprio hook novo (`useLimparDataAoApagar.ts` checava `.value`, que
     fica vazio até a data estar completa, ver item 27 da seção 6). Corrigido e já mesclado na
     `main`, mas **ainda não publicado em nenhuma tag** — ela decidiu acumular com outras mudanças
-    antes da próxima versão. **Se uma sessão futura for publicar a próxima tag, lembrar de incluir
-    essa correção** (já está em `main`, só falta o número de versão novo).
+    antes da próxima versão. Depois dessa correção, também mesclado na `main` sem tag ainda: erro
+    `invalid input syntax for type uuid: ""` ao adicionar um veículo novo num cliente já existente
+    (item 28 da seção 6). **Se uma sessão futura for publicar a próxima tag, lembrar de incluir
+    as duas correções** (já estão em `main`, só falta o número de versão novo).
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece

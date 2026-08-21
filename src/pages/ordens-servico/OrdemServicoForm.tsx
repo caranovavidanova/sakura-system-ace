@@ -17,16 +17,13 @@ import type {
   NovoItemOS,
   OrdemServico,
   PatchOrdemServico,
-  StatusOS,
 } from "@/types/os";
-import { STATUS_LABEL, nomeOrdem } from "@/types/os";
+import { STATUS_COM_FECHAMENTO, STATUS_LABEL, nomeOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { DetalhesFields } from "./campos/DetalhesFields";
 import { ItensFields } from "./campos/ItensFields";
 import { FechamentoTab } from "./FechamentoTab";
-
-const STATUS_COM_FECHAMENTO: StatusOS[] = ["concluida", "faturada"];
 
 interface OrdemServicoFormProps {
   clientes: Cliente[];
@@ -35,6 +32,7 @@ interface OrdemServicoFormProps {
   funcionarios: Funcionario[];
   funcionarioAtualId: string;
   ordemExistente?: OrdemServico;
+  abaInicial?: "detalhes" | "fechamento";
   onSalvarNova: (ordem: NovaOrdemServico, itens: NovoItemOS[]) => Promise<void>;
   onSalvarEdicao: (
     id: string,
@@ -63,6 +61,7 @@ export function OrdemServicoForm({
   funcionarios,
   funcionarioAtualId,
   ordemExistente,
+  abaInicial = "detalhes",
   onSalvarNova,
   onSalvarEdicao,
   onEncerrar,
@@ -72,7 +71,9 @@ export function OrdemServicoForm({
   const [encerrando, setEncerrando] = useState(false);
   const temFechamento =
     !!ordemExistente && STATUS_COM_FECHAMENTO.includes(ordemExistente.status);
-  const [aba, setAba] = useState<"detalhes" | "fechamento">("detalhes");
+  const [aba, setAba] = useState<"detalhes" | "fechamento">(
+    temFechamento ? abaInicial : "detalhes",
+  );
 
   const {
     register,

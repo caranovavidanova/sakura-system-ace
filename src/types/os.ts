@@ -70,6 +70,11 @@ export type PatchOrdemServico = Partial<
   >
 >;
 
+// Status em que a aba "Fechamento" (garantia + emissão de nota fiscal) fica
+// disponível — usado tanto pelo form da OS (pra decidir se mostra a aba)
+// quanto pela lista (pra decidir se mostra o atalho direto pra ela).
+export const STATUS_COM_FECHAMENTO: StatusOS[] = ["concluida", "faturada"];
+
 export const STATUS_LABEL: Record<StatusOS, string> = {
   em_andamento: "Em andamento",
   concluida: "Concluída",

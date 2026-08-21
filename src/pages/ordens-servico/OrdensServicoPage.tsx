@@ -27,7 +27,14 @@ import type {
   OrdemServico,
   PatchOrdemServico,
 } from "@/types/os";
-import { STATUS_COR, STATUS_LABEL, nomeOrdem, totalOrdem, totalPorTipo } from "@/types/os";
+import {
+  STATUS_COM_FECHAMENTO,
+  STATUS_COR,
+  STATUS_LABEL,
+  nomeOrdem,
+  totalOrdem,
+  totalPorTipo,
+} from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { FaturamentoCard } from "./FaturamentoCard";
@@ -60,6 +67,7 @@ export function OrdensServicoPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [ordemEmEdicao, setOrdemEmEdicao] = useState<OrdemServico | null>(null);
+  const [abaInicialEdicao, setAbaInicialEdicao] = useState<"detalhes" | "fechamento">("detalhes");
   const [ordemFaturando, setOrdemFaturando] = useState<OrdemServico | null>(null);
   const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes());
   const [dataFim, setDataFim] = useState(hojeStr());
@@ -266,6 +274,7 @@ export function OrdensServicoPage() {
           funcionarios={funcionarios}
           funcionarioAtualId={funcionarioAtualId}
           ordemExistente={ordemEmEdicao}
+          abaInicial={abaInicialEdicao}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
           onEncerrar={handleEncerrar}
@@ -361,6 +370,7 @@ export function OrdensServicoPage() {
                   key={ordem.id}
                   onClick={() => {
                     setMostrarFormulario(false);
+                    setAbaInicialEdicao("detalhes");
                     setOrdemEmEdicao(ordem);
                   }}
                   className="cursor-pointer border-t border-sakura-gray/20 hover:bg-sakura-pink-soft/30"
@@ -385,17 +395,32 @@ export function OrdensServicoPage() {
                   <td className="px-4 py-3">{formatarMoeda(totalOrdem(ordem.itens ?? []))}</td>
                   <td className="px-4 py-3">{formatarMoeda(lucroOrdem(ordem))}</td>
                   <td className="px-4 py-3 text-right">
-                    {ordem.status !== "faturada" && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOrdemFaturando(ordem);
-                        }}
-                        className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
-                      >
-                        Faturar
-                      </button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {STATUS_COM_FECHAMENTO.includes(ordem.status) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMostrarFormulario(false);
+                            setAbaInicialEdicao("fechamento");
+                            setOrdemEmEdicao(ordem);
+                          }}
+                          className="rounded-full border border-sakura-purple px-3 py-1.5 text-xs font-medium text-sakura-purple-dark hover:bg-sakura-pink-soft/40"
+                        >
+                          Fechamento
+                        </button>
+                      )}
+                      {ordem.status !== "faturada" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOrdemFaturando(ordem);
+                          }}
+                          className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+                        >
+                          Faturar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

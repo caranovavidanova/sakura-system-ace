@@ -488,7 +488,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   (`lib/contasPagar.ts`) para de criar a próxima ocorrência quando o próximo vencimento passar
   dessa data. Ver "Contas a Pagar" na seção 7.
 - `0044` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
-  idempotência —, **ainda não rodada no Supabase real dela**): adiciona 4 colunas opcionais a
+  idempotência —, **já confirmada rodando no Supabase real dela**): adiciona 4 colunas opcionais a
   `configuracoes_fiscais_loja`, só usadas na emissão de NFS-e — `codigo_municipio` (IBGE da
   cidade da loja), `item_lista_servico` (código da LC 116/2003, default `'14.01'`),
   `aliquota_iss`, `codigo_tributario_municipio`. NFC-e não depende de nenhuma delas. Ver item 1 da
@@ -1301,10 +1301,10 @@ ainda no meio da digitação).
     `invalid input syntax for type uuid: ""` ao adicionar um veículo novo num cliente já existente
     (item 28 da seção 6) e a emissão de NFC-e/NFS-e via Focus NFe (item 1 da seção 8) — ela pediu
     explicitamente pra segurar a publicação e sair tudo junto como **`0.9.9`** (decisão registrada
-    nesta sessão). **Antes de publicar essa tag**: (a) rodar a migration `0044` no Supabase real
-    (campos novos de NFS-e em `configuracoes_fiscais_loja`) e (b) testar uma emissão de verdade em
-    homologação — a chamada contra a API do Focus NFe não pôde ser testada a partir do sandbox
-    (rede bloqueada), então essa é a primeira vez que o código roda contra a API de verdade.
+    nesta sessão). Migration `0044` já rodada e confirmada por ela no Supabase real. **Antes de
+    publicar essa tag**: testar uma emissão de verdade em homologação — a chamada contra a API do
+    Focus NFe não pôde ser testada a partir do sandbox (rede bloqueada), então essa é a primeira
+    vez que o código roda contra a API de verdade.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1340,8 +1340,9 @@ ainda no meio da digitação).
    Notas Fiscais já existente). NFS-e precisa de 4 dados novos por loja (código IBGE do município,
    item da lista de serviço LC 116 — padrão `"14.01"`, cobre "manutenção e conservação de
    veículos" —, alíquota do ISS, código tributário do município se a prefeitura exigir) —
-   migration `0044`, campos em Configurações → "Dados fiscais da loja"; o código do município do
-   **cliente** (tomador da NFS-e) é pedido na hora da emissão, não fica salvo em lugar nenhum.
+   migration `0044` (**já rodada e confirmada por ela no Supabase real**), campos em Configurações
+   → "Dados fiscais da loja"; o código do município do **cliente** (tomador da NFS-e) é pedido na
+   hora da emissão, não fica salvo em lugar nenhum.
    **Pendência real, não bloqueante**: a chamada de verdade contra a API do Focus NFe não pôde ser
    testada a partir deste ambiente (rede bloqueada pro domínio deles, mesma limitação de sempre) —
    o formato da **resposta** da NFC-e foi confirmado contra a documentação; o da NFS-e é melhor
@@ -1457,9 +1458,10 @@ query dando erro "relation pecas does not exist" por estar apontando pro projeto
 no SQL Editor (rodando no projeto certo, funcionou de primeira) — e `0043`, "Recorrente até" em
 Contas a Pagar, rodada e confirmada por ela nesta sessão). **`0044`** (campos novos em
 `configuracoes_fiscais_loja` pra NFS-e — código do município, item da lista de serviço, alíquota
-ISS, código tributário do município), criada nesta sessão e validada num Postgres local (roda
-limpo e é idempotente), **ainda não confirmada rodando no Supabase real dela** — precisa rodar
-antes de testar a emissão de NFS-e (a de NFC-e não depende dela).
+ISS, código tributário do município), criada nesta sessão, validada num Postgres local e **já
+confirmada rodando no Supabase real dela** — falta só ela preencher esses campos novos em
+Configurações → "Dados fiscais da loja" antes de testar a emissão de NFS-e (a de NFC-e não
+depende dela).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 

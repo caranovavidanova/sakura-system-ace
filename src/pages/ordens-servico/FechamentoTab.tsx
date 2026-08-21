@@ -107,14 +107,14 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
             <button
               type="button"
               onClick={() => setNotaParaEmitir("NFC-e")}
-              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
+              className="flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
             >
               Emitir NFC-e
             </button>
             <button
               type="button"
               onClick={() => setNotaParaEmitir("NFS-e")}
-              className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
+              className="flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
             >
               Emitir NFS-e
             </button>
@@ -126,7 +126,7 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <button
             type="button"
             onClick={() => setPreviewGarantiaAberta(true)}
-            className="w-full rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
+            className="w-full rounded-xl bg-sakura-pink px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(255,77,206,0.35)] transition-all hover:bg-sakura-pink/90 hover:shadow-[0_0_22px_rgba(255,77,206,0.6)]"
           >
             Ver garantia
           </button>

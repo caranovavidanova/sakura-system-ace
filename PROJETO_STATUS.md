@@ -1319,10 +1319,15 @@ ainda no meio da digitação).
     `invalid input syntax for type uuid: ""` ao adicionar um veículo novo num cliente já existente
     (item 28 da seção 6) e a emissão de NFC-e/NFS-e via Focus NFe (item 1 da seção 8) — ela pediu
     explicitamente pra segurar a publicação e sair tudo junto como **`0.9.9`** (decisão registrada
-    nesta sessão). Migration `0044` já rodada e confirmada por ela no Supabase real. **Antes de
-    publicar essa tag**: testar uma emissão de verdade em homologação — a chamada contra a API do
-    Focus NFe não pôde ser testada a partir do sandbox (rede bloqueada), então essa é a primeira
-    vez que o código roda contra a API de verdade.
+    nesta sessão). Migration `0044` já rodada e confirmada por ela no Supabase real. **Também
+    mesclado na `main` sem tag ainda, na mesma sessão da NFC-e/NFS-e**: código do município
+    preenchido sozinho no cadastro de cliente (item novo em `clientes.codigo_municipio`, migration
+    `0045`, **já rodada e confirmada por ela**), atalho "Fechamento" na lista de OS, e o fix de
+    CORS que corrigia o "Failed to fetch" da primeira tentativa de emissão (ver item 1 da seção 8
+    e item 29 da seção 6). **Antes de publicar essa tag**: ainda falta validar a emissão de
+    verdade em homologação de ponta a ponta — NFS-e está barrada esperando a Focus NFe habilitar a
+    empresa dela pra Araraquara (fora do nosso controle), e NFC-e ainda nem foi tentada (ver
+    pendências detalhadas no item 1 da seção 8, é o próximo passo).
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1361,16 +1366,36 @@ ainda no meio da digitação).
    migration `0044` (**já rodada e confirmada por ela no Supabase real**), campos em Configurações
    → "Dados fiscais da loja"; o código do município do **cliente** (tomador da NFS-e) é pedido na
    hora da emissão, não fica salvo em lugar nenhum.
-   **Pendência real, não bloqueante**: a chamada de verdade contra a API do Focus NFe não pôde ser
-   testada a partir deste ambiente (rede bloqueada pro domínio deles, mesma limitação de sempre) —
-   o formato da **resposta** da NFC-e foi confirmado contra a documentação; o da NFS-e é melhor
-   esforço (reusa os mesmos nomes de campo da NFC-e, prática comum da Focus NFe, mas não 100%
-   confirmado). **Antes de considerar isso pronto, ela precisa testar uma emissão de verdade em
-   homologação** (Estoque tem peça cadastrada com NCM/CFOP/ICMS? OS faturada com peça e/ou
-   serviço? clicar "Emitir NFC-e"/"Emitir NFS-e" na aba Fechamento) e me contar o que aconteceu —
-   se dermos erro de campo/formato, corrijo contra a resposta real da API. Token de **produção**
-   (a assinatura já é paga, então ela tem os dois) só deve ir pra Configurações quando a emissão em
-   homologação estiver validada de ponta a ponta.
+   **Testado por ela nesta sessão, em homologação, pela primeira vez — três achados, nessa
+   ordem**:
+   1. `Failed to fetch` logo na primeira tentativa (NFS-e) — bug real de arquitetura, **corrigido**:
+      `fetch()` direto da tela do Electron é bloqueado por CORS (a API do Focus NFe não libera
+      chamada de navegador, só servidor-a-servidor). Corrigido roteando a chamada pelo processo
+      principal do Electron via IPC (`electron/main.ts` → `http:fetchComAuth`, repassado por
+      `electron/preload.ts` → `window.sakuraApp.fetchComAuth`, usado em `lib/focusNfe.ts`). Ver
+      item 29 da seção 6 pro detalhe completo — lição válida pra qualquer integração externa
+      futura chamada direto da tela, não só Focus NFe.
+   2. Depois do fix acima, próximo erro: `Parâmetros "prestador.cnpj" ou "prestador.cpf" não
+      informados` — **não era bug**, o campo CNPJ em Configurações → "Dados fiscais da loja"
+      (a seção de cima, não a de NFS-e) estava vazio. Ela preencheu (`66.217.744/0001-70`) e
+      salvou.
+   3. Próximo erro, ainda tentando NFS-e: `Empresa ainda não habilitada para emissão de NFSe, por
+      favor contate o suporte técnico` — **também não é bug do sistema**, é a própria Focus NFe
+      avisando que a empresa dela ainda não tem NFS-e liberada na plataforma deles pra Araraquara
+      (diferente da NFC-e, que segue um padrão nacional único da SEFAZ, a NFS-e depende de
+      credenciamento específico por município do lado da Focus NFe).
+   **Pendências reais, em aberto — retomar numa sessão futura**:
+   - **NFS-e**: ela precisa **contatar o suporte da Focus NFe** (chat/WhatsApp no painel deles)
+     pedindo pra habilitar a emissão de NFS-e pra Araraquara/SP na empresa dela. Sem isso, não dá
+     pra validar o formato da resposta da NFS-e (ainda é melhor esforço, não confirmado — ver
+     acima).
+   - **NFC-e**: ainda **não foi testada de verdade** — a sessão foi pausada logo depois do
+     terceiro erro (NFS-e), antes dela tentar "Emitir NFC-e" numa OS com peça faturada. É o
+     próximo passo natural (não depende do suporte da Focus NFe, deve funcionar independente da
+     NFS-e). **Primeira coisa a fazer numa sessão futura sobre esse assunto.**
+   - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
+     Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e e
+     NFS-e ainda não estão.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.

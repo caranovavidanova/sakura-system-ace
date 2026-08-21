@@ -1,4 +1,7 @@
+import { baixarArquivoFocusNfe } from "./focusNfe";
 import { supabase } from "./supabase";
+import type { AmbienteFocusNfe } from "@/types/configuracao";
+import type { RespostaFocusNfe } from "@/types/focusNfe";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 
 const SELECT_ARQUIVO =
@@ -52,6 +55,65 @@ export async function enviarArquivo({
     ordem_servico_id: ordemServicoId,
     operador_id: operadorId,
     loja_id: lojaId,
+  });
+  if (erroMetadados) {
+    await supabase.storage.from("notas-fiscais").remove([caminho]);
+    throw erroMetadados;
+  }
+}
+
+interface SalvarArquivoEmitidoParams {
+  tipo: TipoNotaFiscal;
+  resposta: RespostaFocusNfe;
+  ordemServicoId: string;
+  operadorId: string;
+  lojaId: string;
+  token: string;
+  ambiente: AmbienteFocusNfe;
+}
+
+// Depois de uma emissão automática autorizada (via emitirNFCe/emitirNFSe),
+// baixa o XML que a Focus NFe hospeda e grava no mesmo bucket/tabela das
+// notas enviadas manualmente — origem="automatica" é o que diferencia uma da
+// outra na listagem (ver NotasFiscaisPage.tsx).
+export async function salvarArquivoEmitido({
+  tipo,
+  resposta,
+  ordemServicoId,
+  operadorId,
+  lojaId,
+  token,
+  ambiente,
+}: SalvarArquivoEmitidoParams): Promise<void> {
+  if (!resposta.caminho_xml_nota_fiscal) {
+    throw new Error(
+      "A nota foi autorizada, mas a Focus NFe não devolveu o caminho do XML — não deu pra " +
+        "guardar o arquivo. Consulte a nota direto no painel do Focus NFe.",
+    );
+  }
+
+  const competencia = new Date().toISOString().slice(0, 10);
+  const nomeArquivo = `${tipo}-${resposta.numero ?? resposta.ref ?? "sem-numero"}.xml`;
+  const caminho = `${tipo}/${competencia.slice(0, 7)}/${crypto.randomUUID()}-${nomeArquivo}`;
+
+  const xml = await baixarArquivoFocusNfe(resposta.caminho_xml_nota_fiscal, token, ambiente);
+  const { error: erroUpload } = await supabase.storage
+    .from("notas-fiscais")
+    .upload(caminho, xml, { contentType: "application/xml" });
+  if (erroUpload) throw erroUpload;
+
+  const { error: erroMetadados } = await supabase.from("notas_fiscais_arquivos").insert({
+    tipo,
+    competencia,
+    nome_arquivo: nomeArquivo,
+    storage_path: caminho,
+    ordem_servico_id: ordemServicoId,
+    operador_id: operadorId,
+    loja_id: lojaId,
+    origem: "automatica",
+    numero: resposta.numero ?? null,
+    chave_acesso: resposta.chave_nfe ?? null,
+    status: resposta.status,
   });
   if (erroMetadados) {
     await supabase.storage.from("notas-fiscais").remove([caminho]);

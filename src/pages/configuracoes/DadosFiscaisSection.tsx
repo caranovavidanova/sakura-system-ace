@@ -35,6 +35,13 @@ function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFi
     email: configuracao?.email ?? "",
     focus_nfe_token: configuracao?.focus_nfe_token ?? "",
     focus_nfe_ambiente: configuracao?.focus_nfe_ambiente ?? "homologacao",
+    codigo_municipio: configuracao?.codigo_municipio ?? "",
+    item_lista_servico: configuracao?.item_lista_servico ?? "14.01",
+    aliquota_iss:
+      configuracao?.aliquota_iss !== undefined && configuracao?.aliquota_iss !== null
+        ? configuracao.aliquota_iss
+        : null,
+    codigo_tributario_municipio: configuracao?.codigo_tributario_municipio ?? "",
   };
 }
 
@@ -88,6 +95,9 @@ export function DadosFiscaisSection({
         telefone: valores.telefone || null,
         email: valores.email || null,
         focus_nfe_token: valores.focus_nfe_token || null,
+        codigo_municipio: valores.codigo_municipio || null,
+        item_lista_servico: valores.item_lista_servico || null,
+        codigo_tributario_municipio: valores.codigo_tributario_municipio || null,
       });
       await onSalvo();
       setSalvo(true);
@@ -265,6 +275,53 @@ export function DadosFiscaisSection({
               <option value="homologacao">Homologação (teste)</option>
               <option value="producao">Produção</option>
             </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-sakura-gray/20 pt-4">
+        <p className="text-xs font-medium text-sakura-purple-dark/90">Emissão de NFS-e (serviço)</p>
+        <p className="mt-1 text-xs text-sakura-muted">
+          Só usados na emissão de NFS-e — a de NFC-e (peça) não precisa de nenhum destes. O código
+          do município é o código IBGE da cidade da loja; o item da lista de serviço já vem com o
+          padrão de oficina/autocenter ("14.01"), mas confira com seu contador se é o certo pra sua
+          atividade. O código tributário do município varia de prefeitura pra prefeitura — só
+          preencha se a sua exigir (a emissão vai avisar se faltar algo obrigatório).
+        </p>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+            Código IBGE do município
+            <input
+              value={valores.codigo_municipio ?? ""}
+              onChange={(e) => set("codigo_municipio", e.target.value)}
+              className={campoClasse}
+            />
+          </label>
+          <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+            Item lista de serviço (LC 116)
+            <input
+              value={valores.item_lista_servico ?? ""}
+              onChange={(e) => set("item_lista_servico", e.target.value)}
+              className={campoClasse}
+            />
+          </label>
+          <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+            Alíquota ISS (%)
+            <input
+              type="number"
+              step="0.01"
+              value={valores.aliquota_iss ?? ""}
+              onChange={(e) => set("aliquota_iss", e.target.value === "" ? null : Number(e.target.value))}
+              className={campoClasse}
+            />
+          </label>
+          <label className="col-span-2 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+            Código tributário do município (se a prefeitura exigir)
+            <input
+              value={valores.codigo_tributario_municipio ?? ""}
+              onChange={(e) => set("codigo_tributario_municipio", e.target.value)}
+              className={campoClasse}
+            />
           </label>
         </div>
       </div>

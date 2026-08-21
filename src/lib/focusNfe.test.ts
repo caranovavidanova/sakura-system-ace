@@ -72,6 +72,7 @@ function clientePessoaFisica(sobrescrever: Partial<Cliente> = {}): Cliente {
     bairro: "Jardim Bouganville",
     cidade: "Araraquara",
     uf: "SP",
+    codigo_municipio: "3503208",
     data_nascimento: null,
     criado_em: new Date().toISOString(),
     ...sobrescrever,

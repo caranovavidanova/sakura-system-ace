@@ -20,6 +20,7 @@ export function EnderecoFields({
     setValue("bairro", endereco.bairro);
     setValue("cidade", endereco.localidade);
     setValue("uf", endereco.uf);
+    if (endereco.ibge) setValue("codigo_municipio", endereco.ibge);
   }
 
   return (
@@ -58,6 +59,9 @@ export function EnderecoFields({
             }}
             className={inputClasse}
           />
+        </Campo>
+        <Campo label="Código IBGE do município (só p/ NFS-e)">
+          <input type="text" {...register("codigo_municipio")} className={inputClasse} />
         </Campo>
       </div>
     </Secao>

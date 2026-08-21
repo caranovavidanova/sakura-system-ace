@@ -71,6 +71,9 @@ export function EmitirNotaFiscalModal({
         ]);
         setConfiguracaoFiscal(config);
         setCliente(clienteCompleto);
+        if (clienteCompleto.codigo_municipio) {
+          setCodigoMunicipioCliente(clienteCompleto.codigo_municipio);
+        }
       } catch (err) {
         setErro(mensagemDeErro(err));
       } finally {

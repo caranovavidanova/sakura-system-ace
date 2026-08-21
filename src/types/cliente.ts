@@ -36,6 +36,10 @@ export interface Cliente {
   bairro: string | null;
   cidade: string | null;
   uf: string | null;
+  // Código IBGE do município — só usado na emissão de NFS-e (identifica o
+  // tomador do serviço). Preenchido sozinho junto com o resto do endereço
+  // quando o CEP é buscado, ver lib/viaCep.ts.
+  codigo_municipio: string | null;
   data_nascimento: string | null;
   criado_em: string;
   veiculos?: Veiculo[];

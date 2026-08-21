@@ -69,10 +69,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    de status quebrando linha — ver itens 23-25 da seção 6), exatamente o tipo de bug que só aparece
    usando pra valer. Banco de produção limpo, só existe uma loja real no Supabase: "Pneus Amigão"
    (Araraquara). Auto-update via GitHub Releases confirmado funcionando de novo nesta sessão
-   (`v0.9.5` → `v0.9.6` sozinho, ver item 21 da seção 6). **Plano dela pra esta semana**: continuar
-   usando o sistema no dia a dia pra pegar mais bug real de uso; **quinta ou sexta ela
-   decide/assina o Focus NFe** e a partir daí ataca a emissão de nota fiscal (seção 8, item 1) —
-   até lá, nota fiscal continua sendo emitida por fora do sistema.
+   (`v0.9.5` → `v0.9.6` sozinho, ver item 21 da seção 6). **Assinou o Focus NFe** (ver item 1 da
+   seção 8 pro estado atual da emissão fiscal) — até a emissão automática estar validada de ponta
+   a ponta, nota fiscal continua sendo emitida por fora do sistema.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
    grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
@@ -220,8 +219,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # uma linha por loja, filtradas por `lojaId`) +
 │   │                             # garantiaTexto.ts + garantiaDocumento.ts (HTML da garantia) +
 │   │                             # notaFiscalXml.ts (recibo HTML "versão para o cliente" a partir
-│   │                             # do XML) + focusNfe.ts (casca da integração Focus NFe, emissão
-│   │                             # ainda não implementada) + corVeiculo.ts (nome de cor em
+│   │                             # do XML) + focusNfe.ts (integração com o Focus NFe — emissão
+│   │                             # de NFC-e/NFS-e, ver seção 8 item 1) + corVeiculo.ts (nome de cor em
 │   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
@@ -488,6 +487,12 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   recriada pra sempre ao pagar (comportamento de sempre); preenchido, `pagarConta()`
   (`lib/contasPagar.ts`) para de criar a próxima ocorrência quando o próximo vencimento passar
   dessa data. Ver "Contas a Pagar" na seção 7.
+- `0044` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
+  idempotência —, **ainda não rodada no Supabase real dela**): adiciona 4 colunas opcionais a
+  `configuracoes_fiscais_loja`, só usadas na emissão de NFS-e — `codigo_municipio` (IBGE da
+  cidade da loja), `item_lista_servico` (código da LC 116/2003, default `'14.01'`),
+  `aliquota_iss`, `codigo_tributario_municipio`. NFC-e não depende de nenhuma delas. Ver item 1 da
+  seção 8.
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -1181,10 +1186,12 @@ ainda no meio da digitação).
   Caixa na hora, como sempre foi) ou "A receber depois" (não lança nada no Caixa ainda, cria uma
   pendência em Contas a Receber — ver módulo abaixo; aqui não dá pra dividir forma de pagamento,
   só ao receber depois). Aba "Fechamento" (só aparece com status concluída/faturada): botões "Emitir
-  NFC-e"/"Emitir NFS-e" (ainda placeholder, com preview do rascunho — emissão de verdade depende do
-  Focus NFe, ver seção 8) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja,
-  dados de cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com
-  opção de baixar HTML/imprimir via `iframe`).
+  NFC-e"/"Emitir NFS-e" (nesta sessão — antes só mostravam preview do rascunho, agora abrem
+  `EmitirNotaFiscalModal.tsx` e emitem de verdade via Focus NFe, aguardando a autorização da
+  SEFAZ/prefeitura em polling — ver item 1 da seção 8 pro que ainda falta validar com uma emissão
+  de teste real) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
+  cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com opção de
+  baixar HTML/imprimir via `iframe`).
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
   abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
   **Formulário refatorado nesta sessão** pro padrão novo `react-hook-form` + `zod` (ver "Padrão de
@@ -1292,8 +1299,12 @@ ainda no meio da digitação).
     `main`, mas **ainda não publicado em nenhuma tag** — ela decidiu acumular com outras mudanças
     antes da próxima versão. Depois dessa correção, também mesclado na `main` sem tag ainda: erro
     `invalid input syntax for type uuid: ""` ao adicionar um veículo novo num cliente já existente
-    (item 28 da seção 6). **Se uma sessão futura for publicar a próxima tag, lembrar de incluir
-    as duas correções** (já estão em `main`, só falta o número de versão novo).
+    (item 28 da seção 6) e a emissão de NFC-e/NFS-e via Focus NFe (item 1 da seção 8) — ela pediu
+    explicitamente pra segurar a publicação e sair tudo junto como **`0.9.9`** (decisão registrada
+    nesta sessão). **Antes de publicar essa tag**: (a) rodar a migration `0044` no Supabase real
+    (campos novos de NFS-e em `configuracoes_fiscais_loja`) e (b) testar uma emissão de verdade em
+    homologação — a chamada contra a API do Focus NFe não pôde ser testada a partir do sandbox
+    (rede bloqueada), então essa é a primeira vez que o código roda contra a API de verdade.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1313,17 +1324,34 @@ ainda no meio da digitação).
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
-1. **Parte fiscal (NÃO bloqueia o uso na loja — é o único módulo que falta, o resto já está pronto
-   pra uso real)**: emissão de NFC-e (peças) e NFS-e (serviço). **Provedor escolhido: Focus NFe,
-   plano básico** — usuária ainda não assinou. **Plano dela**: assinar quinta ou sexta desta semana
-   (ver seção 1, fase 1) e me passar o **token de homologação** assim que tiver em mãos. Já feito:
-   modelagem dos dados fiscais da loja (`configuracoes_fiscais_loja`) + tela em Configurações + a
-   "casca" da integração HTTP (`lib/focusNfe.ts` — auth, URLs por ambiente). **Ainda falta**: a
-   função de emissão de verdade (`emitirNFCe()`) — não foi possível confirmar o formato exato do
-   corpo da requisição (CFOP/NCM/ICMS por item) contra a documentação oficial do Focus NFe a partir
-   deste ambiente (`doc.focusnfe.com.br` bloqueou acesso automatizado, 403); precisa do token real
-   de homologação pra validar contra a API de verdade — **não implementar chutando os nomes dos
-   campos**.
+1. **Parte fiscal (NÃO bloqueia o uso na loja)**: emissão de NFC-e (peças) e NFS-e (serviço) via
+   Focus NFe, plano básico. **Assinado nesta sessão** — a usuária criou a conta pelo celular
+   (estava fora de casa) e me passou o **token de homologação** (via print de tela, achado em
+   Painel API → Empresas → editar a empresa → "Token Homologação"). **A emissão de verdade foi
+   implementada nesta sessão** (`emitirNFCe()`/`emitirNFSe()` em `lib/focusNfe.ts`, substituindo a
+   "casca" que só tinha auth/URL por ambiente) — o formato do corpo da requisição foi confirmado
+   contra os exemplos oficiais do repositório `github.com/FocusNFe/javascript` (não foi
+   "chutado"), já que `doc.focusnfe.com.br` continua bloqueado pra acesso automatizado neste
+   ambiente. Fluxo completo: `EmitirNotaFiscalModal.tsx`, aberto pelos botões "Emitir
+   NFC-e"/"Emitir NFS-e" na aba Fechamento da OS (que antes só mostravam uma pré-visualização) —
+   emite, espera a SEFAZ/prefeitura autorizar (a emissão é assíncrona, o app consulta em polling
+   por até ~30s), baixa o XML que a Focus NFe hospeda e grava na mesma tabela/Storage das notas
+   enviadas manualmente (`notas_fiscais_arquivos`, `origem="automatica"` — reaproveita a tela de
+   Notas Fiscais já existente). NFS-e precisa de 4 dados novos por loja (código IBGE do município,
+   item da lista de serviço LC 116 — padrão `"14.01"`, cobre "manutenção e conservação de
+   veículos" —, alíquota do ISS, código tributário do município se a prefeitura exigir) —
+   migration `0044`, campos em Configurações → "Dados fiscais da loja"; o código do município do
+   **cliente** (tomador da NFS-e) é pedido na hora da emissão, não fica salvo em lugar nenhum.
+   **Pendência real, não bloqueante**: a chamada de verdade contra a API do Focus NFe não pôde ser
+   testada a partir deste ambiente (rede bloqueada pro domínio deles, mesma limitação de sempre) —
+   o formato da **resposta** da NFC-e foi confirmado contra a documentação; o da NFS-e é melhor
+   esforço (reusa os mesmos nomes de campo da NFC-e, prática comum da Focus NFe, mas não 100%
+   confirmado). **Antes de considerar isso pronto, ela precisa testar uma emissão de verdade em
+   homologação** (Estoque tem peça cadastrada com NCM/CFOP/ICMS? OS faturada com peça e/ou
+   serviço? clicar "Emitir NFC-e"/"Emitir NFS-e" na aba Fechamento) e me contar o que aconteceu —
+   se dermos erro de campo/formato, corrijo contra a resposta real da API. Token de **produção**
+   (a assinatura já é paga, então ela tem os dois) só deve ir pra Configurações quando a emissão em
+   homologação estiver validada de ponta a ponta.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.
@@ -1427,13 +1455,17 @@ Auditoria, todos testados na prática — `0041`, o cadastro de Depósito, tamb�
 por ela — `0042`, Cotação de peças, rodada por ela numa sessão anterior, depois de um susto com a
 query dando erro "relation pecas does not exist" por estar apontando pro projeto Supabase errado
 no SQL Editor (rodando no projeto certo, funcionou de primeira) — e `0043`, "Recorrente até" em
-Contas a Pagar, rodada e confirmada por ela nesta sessão).
+Contas a Pagar, rodada e confirmada por ela nesta sessão). **`0044`** (campos novos em
+`configuracoes_fiscais_loja` pra NFS-e — código do município, item da lista de serviço, alíquota
+ISS, código tributário do município), criada nesta sessão e validada num Postgres local (roda
+limpo e é idempotente), **ainda não confirmada rodando no Supabase real dela** — precisa rodar
+antes de testar a emissão de NFS-e (a de NFC-e não depende dela).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0043`. Todas são idempotentes.
+até `0044`. Todas são idempotentes.
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 

@@ -11,6 +11,13 @@ export async function listarPecas(): Promise<Peca[]> {
   return data as Peca[];
 }
 
+export async function buscarPecasPorIds(ids: string[]): Promise<Peca[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("pecas").select("*").in("id", ids);
+  if (error) throw error;
+  return data as Peca[];
+}
+
 export async function criarPeca(peca: NovaPeca): Promise<Peca> {
   const { data, error } = await supabase
     .from("pecas")

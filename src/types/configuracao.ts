@@ -30,6 +30,15 @@ export interface ConfiguracaoFiscalLoja {
   email: string | null;
   focus_nfe_token: string | null;
   focus_nfe_ambiente: AmbienteFocusNfe;
+  // Usados só na emissão de NFS-e (serviço) — NFC-e (peça) não precisa de
+  // nenhum destes. codigo_municipio é o código IBGE da cidade da loja;
+  // item_lista_servico é o código da LC 116/2003 (padrão "14.01" — manutenção
+  // e conservação de veículos); codigo_tributario_municipio é específico da
+  // prefeitura, só alguns municípios exigem.
+  codigo_municipio: string | null;
+  item_lista_servico: string | null;
+  aliquota_iss: number | null;
+  codigo_tributario_municipio: string | null;
   atualizado_em: string;
 }
 

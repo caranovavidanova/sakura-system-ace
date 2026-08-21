@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Modal } from "@/components/Modal";
-import { buscarConfiguracaoFiscal, buscarTextoGarantia } from "@/lib/configuracoes";
+import { buscarTextoGarantia } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
-import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { OrdemServico } from "@/types/os";
 import { totalOrdem } from "@/types/os";
+import { EmitirNotaFiscalModal } from "./EmitirNotaFiscalModal";
 import { GarantiaVisualModal } from "./GarantiaVisualModal";
 
 interface FechamentoTabProps {
@@ -30,10 +29,7 @@ function formatarMoeda(valor: number): string {
 export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const itens = ordem.itens ?? [];
   const [templateGarantia, setTemplateGarantia] = useState("");
-  const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(
-    null,
-  );
-  const [previewNF, setPreviewNF] = useState<"NFC-e" | "NFS-e" | null>(null);
+  const [notaParaEmitir, setNotaParaEmitir] = useState<"NFC-e" | "NFS-e" | null>(null);
   const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -45,17 +41,9 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         console.error("Erro ao carregar texto de garantia:", err);
         setErro(mensagemDeErro(err));
       }
-      try {
-        setConfiguracaoFiscal(await buscarConfiguracaoFiscal(ordem.loja_id));
-      } catch (err) {
-        console.error("Erro ao carregar dados fiscais da loja:", err);
-        setErro(mensagemDeErro(err));
-      }
     }
     carregar();
   }, [ordem.loja_id]);
-
-  const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_token);
 
   const textoGarantia = useMemo(
     () => (templateGarantia ? montarTextoGarantia(templateGarantia, ordem) : ""),
@@ -118,14 +106,14 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setPreviewNF("NFC-e")}
+              onClick={() => setNotaParaEmitir("NFC-e")}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
             >
               Emitir NFC-e
             </button>
             <button
               type="button"
-              onClick={() => setPreviewNF("NFS-e")}
+              onClick={() => setNotaParaEmitir("NFS-e")}
               className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark/85 hover:bg-sakura-gray/10"
             >
               Emitir NFS-e
@@ -145,69 +133,13 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         </div>
       </section>
 
-      {previewNF && (
-        <Modal titulo={`Pré-visualização — ${previewNF}`} onFechar={() => setPreviewNF(null)}>
-          <div className="space-y-3 text-sm">
-            <div className="grid grid-cols-2 gap-3 rounded-lg bg-sakura-pink-soft/60 p-3">
-              <div>
-                <p className="text-xs text-sakura-purple-dark/85">Cliente</p>
-                <p className="font-medium text-sakura-purple-dark">
-                  {ordem.cliente?.nome ?? "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-sakura-purple-dark/85">Veículo</p>
-                <p className="font-medium text-sakura-purple-dark">
-                  {ordem.veiculo?.placa ?? "—"}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              {itens.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between text-sakura-purple-dark/80"
-                >
-                  <span>
-                    {item.descricao} ({item.quantidade}x)
-                  </span>
-                  <span>{formatarMoeda(item.quantidade * item.preco_unitario - item.desconto)}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-right font-semibold text-sakura-purple-dark">
-              Total: {formatarMoeda(totalOrdem(itens))}
-            </p>
-
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              {focusNfeConfigurado ? (
-                <>
-                  Isto é só uma pré-visualização com os dados da OS — a emissão de {previewNF}{" "}
-                  via Focus NFe ainda não está disponível de verdade. Os dados fiscais da loja já
-                  estão cadastrados, mas a integração ainda precisa ser testada e concluída antes
-                  de emitir de verdade.
-                </>
-              ) : (
-                <>
-                  Isto é só uma pré-visualização com os dados da OS — a emissão de {previewNF}{" "}
-                  ainda não está disponível de verdade. Falta cadastrar o token do Focus NFe (e os
-                  dados fiscais da loja) em Configurações → "Dados fiscais da loja".
-                </>
-              )}
-            </p>
-          </div>
-
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setPreviewNF(null)}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
-            >
-              Entendi
-            </button>
-          </div>
-        </Modal>
+      {notaParaEmitir && (
+        <EmitirNotaFiscalModal
+          ordem={ordem}
+          tipoNota={notaParaEmitir}
+          onFechar={() => setNotaParaEmitir(null)}
+          onEmitido={() => {}}
+        />
       )}
 
       {previewGarantiaAberta && (

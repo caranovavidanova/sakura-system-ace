@@ -50,9 +50,10 @@ export async function atualizarCliente(
     .eq("id", id);
   if (erroCliente) throw erroCliente;
 
-  const idsParaManter = veiculos
-    .map((veiculo) => veiculo.id)
-    .filter((veiculoId): veiculoId is string => Boolean(veiculoId));
+  const veiculosExistentes = veiculos.filter((veiculo) => Boolean(veiculo.id));
+  const veiculosNovos = veiculos.filter((veiculo) => !veiculo.id);
+
+  const idsParaManter = veiculosExistentes.map((veiculo) => veiculo.id as string);
 
   const exclusao = supabase.from("veiculos").delete().eq("cliente_id", id);
   const { error: erroExclusao } =
@@ -61,11 +62,31 @@ export async function atualizarCliente(
       : await exclusao;
   if (erroExclusao) throw erroExclusao;
 
-  if (veiculos.length > 0) {
-    const { error: erroVeiculos } = await supabase
+  if (veiculosExistentes.length > 0) {
+    const { error: erroAtualizacao } = await supabase
       .from("veiculos")
-      .upsert(veiculos.map((veiculo) => ({ ...veiculo, cliente_id: id })));
-    if (erroVeiculos) throw erroVeiculos;
+      .upsert(veiculosExistentes.map((veiculo) => ({ ...veiculo, cliente_id: id })));
+    if (erroAtualizacao) throw erroAtualizacao;
+  }
+
+  // Veículo novo não tem `id` ainda — não pode ir no upsert acima (o hidden
+  // input do formulário manda "" em vez de undefined pra esse campo, e o
+  // Postgres recusa "" numa coluna uuid); precisa de um insert à parte, sem a
+  // chave `id`, pra o banco gerar o UUID sozinho.
+  if (veiculosNovos.length > 0) {
+    const { error: erroInsercao } = await supabase.from("veiculos").insert(
+      veiculosNovos.map((veiculo) => ({
+        placa: veiculo.placa,
+        marca: veiculo.marca,
+        modelo: veiculo.modelo,
+        ano: veiculo.ano,
+        cor: veiculo.cor,
+        tipo: veiculo.tipo,
+        km_atual: veiculo.km_atual,
+        cliente_id: id,
+      })),
+    );
+    if (erroInsercao) throw erroInsercao;
   }
 }
 

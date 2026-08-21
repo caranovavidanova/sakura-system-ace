@@ -34,10 +34,20 @@ export class FocusNfeError extends Error {
   }
 }
 
-// Focus NFe autentica via HTTP Basic Auth, usando o token de acesso como
-// usuário e senha em branco.
-function montarCabecalhoAutenticacao(token: string): string {
-  return `Basic ${btoa(`${token}:`)}`;
+// A API do Focus NFe é feita pra ser chamada de servidor pra servidor, sem
+// CORS liberado — um fetch() direto na tela do app (Chromium/renderer) é
+// bloqueado sempre com "Failed to fetch", antes mesmo de qualquer resposta
+// chegar. Por isso a chamada de verdade acontece no processo principal do
+// Electron (Node.js, sem essa restrição), repassada aqui via IPC — ver o
+// handler "http:fetchComAuth" em electron/main.ts.
+function requererPonteElectron(): NonNullable<Window["sakuraApp"]> {
+  if (typeof window === "undefined" || !window.sakuraApp) {
+    throw new FocusNfeError(
+      "Emissão de nota fiscal só funciona dentro do aplicativo Sakura System instalado — não " +
+        "funciona rodando fora do Electron.",
+    );
+  }
+  return window.sakuraApp;
 }
 
 interface ChamarFocusNfeOpcoes {
@@ -57,16 +67,14 @@ export async function chamarFocusNfe<T>({
 }: ChamarFocusNfeOpcoes): Promise<T> {
   const url = `${BASE_URL_POR_AMBIENTE[ambiente]}${caminho}`;
 
-  const resposta = await fetch(url, {
-    method: metodo,
-    headers: {
-      Authorization: montarCabecalhoAutenticacao(token),
-      "Content-Type": "application/json",
-    },
-    body: corpo ? JSON.stringify(corpo) : undefined,
-  });
+  const resposta = await requererPonteElectron().fetchComAuth({ url, metodo, token, corpo });
 
-  const dados = await resposta.json().catch(() => null);
+  let dados: unknown = null;
+  try {
+    dados = JSON.parse(new TextDecoder("utf-8").decode(resposta.bytes));
+  } catch {
+    dados = null;
+  }
 
   if (!resposta.ok) {
     throw new FocusNfeError(
@@ -82,20 +90,23 @@ export async function chamarFocusNfe<T>({
 
 // Baixa um arquivo hospedado pela própria Focus NFe (XML ou DANFE, pelos
 // caminhos que vêm em RespostaFocusNfe.caminho_xml_nota_fiscal/caminho_danfe)
-// — mesma autenticação Basic Auth das outras chamadas.
+// — mesma ponte via IPC das outras chamadas.
 export async function baixarArquivoFocusNfe(
   caminho: string,
   token: string,
   ambiente: AmbienteFocusNfe,
 ): Promise<Blob> {
   const url = caminho.startsWith("http") ? caminho : `${BASE_URL_POR_AMBIENTE[ambiente]}${caminho}`;
-  const resposta = await fetch(url, {
-    headers: { Authorization: montarCabecalhoAutenticacao(token) },
-  });
+  const resposta = await requererPonteElectron().fetchComAuth({ url, metodo: "GET", token });
   if (!resposta.ok) {
-    throw new FocusNfeError(`Não foi possível baixar o arquivo da nota (HTTP ${resposta.status})`, resposta.status);
+    throw new FocusNfeError(
+      `Não foi possível baixar o arquivo da nota (HTTP ${resposta.status})`,
+      resposta.status,
+    );
   }
-  return resposta.blob();
+  return new Blob([resposta.bytes] as BlobPart[], {
+    type: resposta.contentType || "application/octet-stream",
+  });
 }
 
 function aguardar(ms: number): Promise<void> {

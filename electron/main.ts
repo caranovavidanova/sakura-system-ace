@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -16,6 +16,48 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
 let mainWindow: BrowserWindow | null = null;
+
+// A tela do app (Chromium/renderer) trata fetch() como um navegador comum —
+// a API do Focus NFe é feita pra ser chamada de servidor pra servidor, não
+// tem CORS liberado pra chamada direta do navegador, então um fetch() feito
+// na tela sempre falha com "Failed to fetch" (bloqueado antes de qualquer
+// resposta chegar). Aqui no processo principal, que roda em Node.js, não
+// existe essa restrição — por isso a chamada de verdade acontece aqui,
+// exposta pro preload/tela via IPC (ver preload.ts e src/lib/focusNfe.ts).
+interface FetchComAuthOpcoes {
+  url: string;
+  metodo: string;
+  token: string;
+  corpo?: unknown;
+}
+
+interface FetchComAuthResultado {
+  ok: boolean;
+  status: number;
+  contentType: string;
+  bytes: Uint8Array;
+}
+
+ipcMain.handle(
+  "http:fetchComAuth",
+  async (_evento, opcoes: FetchComAuthOpcoes): Promise<FetchComAuthResultado> => {
+    const resposta = await fetch(opcoes.url, {
+      method: opcoes.metodo,
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${opcoes.token}:`).toString("base64")}`,
+        "Content-Type": "application/json",
+      },
+      body: opcoes.corpo ? JSON.stringify(opcoes.corpo) : undefined,
+    });
+    const arrayBuffer = await resposta.arrayBuffer();
+    return {
+      ok: resposta.ok,
+      status: resposta.status,
+      contentType: resposta.headers.get("content-type") ?? "",
+      bytes: new Uint8Array(arrayBuffer),
+    };
+  },
+);
 
 // Sem isso, o Electron mostra a barra de menu padrão (File/Edit/View/
 // Window/Help) — itens genéricos em inglês sem função nenhuma pro app,

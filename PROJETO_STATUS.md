@@ -1453,6 +1453,45 @@ ainda no meio da digitação).
    de prometer automação 100% em qualquer cidade, confirmar direto com o suporte da Focus NFe: (a)
    se dá pra cadastrar CNPJ de cliente numa conta só sem ele precisar logar lá, e (b) o que muda de
    cidade pra cidade na NFS-e.
+
+   **Concorrentes da Focus NFe checados nesta sessão** (Webmania, NFe.io — prints reais dos
+   planos): nos planos públicos de autosserviço, ambos ficam **piores** que Focus NFe no volume
+   considerado — Webmania cobra R$0,45/nota excedente (vs R$0,12 do Growth), e a NFe.io tem teto
+   baixo de notas mesmo no maior plano público (5.000/mês pra NFC-e, 1.000/mês pra NFS-e — bem
+   abaixo do que a operação em escala (30 lojas) precisaria). **Lição geral pra comparar qualquer
+   provedor novo no futuro**: sempre conferir se o plano mais barato **tem API de integração** —
+   nos dois casos, o plano de entrada mais barato **não tinha** (só emissão manual pelo painel
+   deles ou por planilha), inútil pro Sakura System, que precisa emitir automaticamente. Preço
+   negociado ("sob consulta") só faz sentido buscar **com volume real comprovado** (fase 2/3, não
+   agora com 1 loja só) — sem histórico de uso, não tem alavancagem de negociação nenhuma.
+
+   **Preço decidido pra fase 2 (3 lojas: Pneus Amigão + as 2 lojas do amigo do pai dela,
+   confirmado que ele vai conhecer o sistema numa segunda-feira)**: **R$350/loja/mês**, calculado
+   como o dobro do custo de infraestrutura por loja (fórmula da usuária: preço bruto = 2x custo,
+   ~50% de margem por construção). Volume real dessas 3 lojas é bem menor que a média de 30
+   carros/dia do mercado-alvo futuro — Pneus Amigão raramente passa de 4 carros/dia, as lojas do
+   amigo não devem passar de 15/dia cada; a conta usou esses números com uma margem de crescimento
+   de 30% aplicada por cima. Composição do custo mensal considerado (~R$521,30 pras 3 lojas
+   juntas, ~R$173,77/loja):
+   - Focus NFe (plano Start, até 3 CNPJs, consolidado numa conta só da usuária): R$113,90 base +
+     excedente de nota ≈ R$256,30 total.
+   - Supabase Pro (upgrade do Free considerado como reserva de segurança, não confirmado que já
+     seja necessário no volume atual): ≈ R$145,00 (US$25).
+   - IA/Anthropic ("Importar por foto"): ≈ R$10,00 (uso baixo, 1-3 centavos por leitura).
+   - Assinatura Claude Pro da própria usuária (ferramenta de desenvolvimento, custo fixo que não
+     escala com número de lojas — a fração por loja vai encolher conforme mais lojas entrarem):
+     ≈ R$110,00 (faixa R$100-120).
+   **Pré-requisito de código, ainda não construído**: pra esse número (Focus NFe consolidado numa
+   conta só, invisível pro dono da loja) funcionar de verdade, falta trocar a arquitetura de
+   "token por loja" (hoje, cada loja guarda o próprio token em `configuracoes_fiscais_loja`,
+   chamado via IPC do Electron) por um **token compartilhado da usuária**, chamado através de uma
+   Edge Function (nunca exposto ao app instalado — mesma regra já usada pro `ANTHROPIC_API_KEY`),
+   com o CNPJ de cada loja identificando qual empresa está emitindo dentro da conta única. Sem essa
+   mudança, cada loja precisaria da própria assinatura Focus NFe (mais caro e mais fricção — ver
+   comparativo de custo com/sem token compartilhado nesta mesma sessão). **Ordem combinada**:
+   primeiro terminar de validar a emissão de NFC-e na loja do pai dela (pendência já registrada no
+   item 1 desta seção), só depois construir a arquitetura de token compartilhado — não é urgente
+   pra demonstração de segunda-feira, que não depende de nota fiscal automatizada funcionando.
 7. **Vibecodar em equipe** — a usuária pretende, no futuro (sem data definida ainda pro Sakura
    System em si — ver plano de teste concreto abaixo), trazer amigos pra ajudar no projeto como
    desenvolvedores, cada um provavelmente também operando via IA. Ainda não é hora de montar nada

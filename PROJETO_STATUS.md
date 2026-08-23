@@ -1421,16 +1421,38 @@ ainda no meio da digitação).
    - Peças em Garantia **do fornecedor na compra** (diferente da garantia ao cliente já
      implementada) — não fazia parte da lista de 3 combinada com ela; sem ordem definida, fica
      pra quando ela sentir falta.
-6. **Custo da IA (Anthropic) por loja, quando vender pra terceiros** — a usuária perguntou, ao
-   configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas que um dia
-   usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio projeto
-   Supabase, a Edge Function e o secret `ANTHROPIC_API_KEY` ficam dentro do projeto de cada loja,
-   então cada uma cria sua própria conta na Anthropic e paga pelo próprio uso (mesmo modelo já
-   aceito pro Focus NFe). **Mas isso cria fricção**: pedir pra cada dono de autocenter (sem
-   experiência técnica) criar conta na Anthropic e publicar uma Edge Function é um trabalho manual
-   chato de repetir por loja. Quando a usuária estiver mais perto de vender pra outras lojas de
-   verdade, vale reconsiderar um backend central (ela paga uma conta só, cobra o uso de IA dentro
-   da assinatura do sistema) — decidir com calma nessa hora, não agora que só a loja dela usa.
+6. **Custo da IA (Anthropic) e da Focus NFe por loja, quando vender pra terceiros** — a usuária
+   perguntou, ao configurar o "Importar por foto", se ela pagaria pelas leituras de todas as lojas
+   que um dia usarem o Sakura System. **Resposta atual**: não — como cada loja tem seu próprio
+   projeto Supabase, a Edge Function e o secret `ANTHROPIC_API_KEY` ficam dentro do projeto de
+   cada loja, então cada uma cria sua própria conta na Anthropic e paga pelo próprio uso (mesmo
+   modelo hoje também usado pro Focus NFe — cada loja assina o próprio plano). **Mas isso cria
+   fricção**: pedir pra cada dono de autocenter (sem experiência técnica) criar conta na Anthropic
+   e publicar uma Edge Function — ou criar conta na Focus NFe, escolher plano e colar token — é
+   trabalho manual chato de repetir por loja, e destoa da visão de um site de assinatura estilo
+   Netflix (100% self-service, ver item 2 abaixo). Quando a usuária estiver mais perto de vender
+   pra outras lojas de verdade, vale reconsiderar um backend central pros dois casos (ela paga uma
+   conta só de cada serviço, cobra o uso dentro da assinatura do sistema) — decidir com calma
+   nessa hora, não agora que só a loja do pai dela usa.
+
+   **Sobre a Focus NFe especificamente** (discutido nesta sessão, ainda sem decisão fechada — só
+   direção): os próprios planos da Focus NFe (Start/Growth/Retail+, "para empresas com muitos
+   CNPJs") parecem feitos exatamente pro caso de um software house/ERP emitir nota em nome de
+   várias empresas clientes numa conta só — é o modelo usado por contadores e ERPs, não é
+   gambiarra. Conta feita nesta sessão com o volume real que ela descreveu pras 30 lojas-alvo
+   (~30 carros/dia em média, ~1.170 notas/mês/loja estimado): consolidar tudo numa conta Growth
+   sairia ~14-19% da receita de R$1000/loja, contra ~20-24% mantendo 30 assinaturas Solo
+   separadas — mais barato consolidado, e principalmente **mais profissional** (dono da loja nunca
+   precisa saber que a Focus NFe existe, só usa o Sakura System). **Ponto em aberto, não verificado
+   ainda** (o site de documentação da Focus NFe fica bloqueado no ambiente sandbox, não dá pra
+   confirmar por aqui): pra emitir nota normalmente é preciso certificado digital vinculado ao
+   CNPJ — NFC-e (peça) muitos estados dispensam certificado do lojista via CSC do próprio software
+   house, então dá pra automatizar de ponta a ponta; **NFS-e (serviço) varia por prefeitura** —
+   algumas cidades pedem certificado digital da própria loja, outras só usuário/senha do portal
+   municipal (mesma variável de ICMS/ISS por estado/município já citada na seção 1, fase 3). Antes
+   de prometer automação 100% em qualquer cidade, confirmar direto com o suporte da Focus NFe: (a)
+   se dá pra cadastrar CNPJ de cliente numa conta só sem ele precisar logar lá, e (b) o que muda de
+   cidade pra cidade na NFS-e.
 7. **Vibecodar em equipe** — a usuária pretende, no futuro (sem data definida ainda pro Sakura
    System em si — ver plano de teste concreto abaixo), trazer amigos pra ajudar no projeto como
    desenvolvedores, cada um provavelmente também operando via IA. Ainda não é hora de montar nada

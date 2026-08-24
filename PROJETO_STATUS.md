@@ -1492,6 +1492,29 @@ ainda no meio da digitação).
    primeiro terminar de validar a emissão de NFC-e na loja do pai dela (pendência já registrada no
    item 1 desta seção), só depois construir a arquitetura de token compartilhado — não é urgente
    pra demonstração de segunda-feira, que não depende de nota fiscal automatizada funcionando.
+
+   **Referência de custo por escala** (calculado numa sessão seguinte, método reaproveitável):
+   volume estimado = carros/dia × dias/mês × 1,5 (mistura peça+serviço por carro). Fórmula de
+   preço da usuária: preço bruto = 2x custo → lucro = preço − custo = o próprio valor do custo
+   (50% de margem por construção; "o dobro do custo" é o **preço**, não o lucro).
+
+   | Cenário | Volume assumido | Plano Focus NFe | Custo total | Custo/loja | Preço (2x) |
+   |---|---|---|---|---|---|
+   | Pneus Amigão real (3 carros/dia, todo dia do mês) | 90 OS/mês, 135 notas/mês | Solo | R$358,40 | R$358,40 | R$716,80 |
+   | 1 loja dimensionada certinho (30 carros/dia, 26 dias úteis) | 780 OS/mês, 1.170 notas/mês | Solo | R$461,90 | R$461,90 | R$923,80 |
+   | 3 lojas fase 2 (4+15+15 carros/dia reais, +30% margem crescimento) | ~1.150 OS/mês, ~1.724 notas/mês | Start | R$521,30 | R$173,77 | **R$350,00** (decidido) |
+   | 30 lojas (30 carros/dia média, sem margem extra) | 23.400 OS/mês, 35.100 notas/mês | Growth | R$5.626,00 | R$187,53 | R$375,07 |
+
+   Composição de custo fixo usada em cada linha (além do Focus NFe, que varia por volume):
+   Supabase Pro ≈ R$145 (cenários 1 loja/Pneus Amigão/3 lojas) ou Pro + compute add-on "Large"
+   ≈ R$756 (cenário 30 lojas, câmbio ~R$5,60/USD); Claude Pro ≈ R$110 (cenários menores) ou
+   Claude Max 5x ≈ R$560 (cenário 30 lojas — confirmado nesta sessão: Max existe em 5x
+   US$100/mês e 20x US$200/mês); IA/Anthropic ≈ R$10-30 conforme volume. **Custo por loja não
+   cai de forma linear com a escala** — desce bastante de 1 pra 3 lojas (diluição dos custos
+   fixos) e depois fica estável entre 3 e 30 (o que muda ali é o plano Focus NFe acompanhando
+   CNPJs/volume, não uma economia de escala grande). Nenhum desses valores é decisão fechada
+   exceto o R$350/loja da fase 2 — são referência de método pra recalcular rápido quando a hora
+   chegar, sem precisar refazer a pesquisa de preço dos concorrentes do zero.
 7. **Vibecodar em equipe** — a usuária pretende, no futuro (sem data definida ainda pro Sakura
    System em si — ver plano de teste concreto abaixo), trazer amigos pra ajudar no projeto como
    desenvolvedores, cada um provavelmente também operando via IA. Ainda não é hora de montar nada

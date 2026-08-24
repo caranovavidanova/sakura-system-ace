@@ -1384,15 +1384,25 @@ ainda no meio da digitação).
       avisando que a empresa dela ainda não tem NFS-e liberada na plataforma deles pra Araraquara
       (diferente da NFC-e, que segue um padrão nacional único da SEFAZ, a NFS-e depende de
       credenciamento específico por município do lado da Focus NFe).
+   **Atualização de uma sessão posterior**: a conta da Focus NFe estava em **modo teste
+   grátis** e bateu no limite de emissões de teste (mensagem de falta de crédito ao tentar
+   emitir) — ela **assinou o plano pago** (contrato 265740, confirmado ativo no painel "Minha
+   Conta" da Focus NFe, emitente CNPJ 66.217.744/0001-70 "Amigao Pneus e Servicos Automotivos
+   Ltda"). Testando **NFC-e** pela primeira vez depois da assinatura (em homologação, mesmo
+   `npm run dev` — essa parte do código ainda não foi publicada em nenhuma tag), veio o mesmo
+   tipo de erro que já era conhecido só da NFS-e: **"Empresa ainda não habilitada para emissão
+   de NFCe, por favor contate o suporte técnico"** — ou seja, **as duas** (NFC-e e NFS-e) estão
+   travadas no mesmo ponto agora, não só a NFS-e como se pensava antes. Confirmado que não é bug
+   do sistema: o modal mostra a mensagem de erro real vinda da própria Focus NFe (mesmo padrão de
+   sempre — nunca esconder o erro real, ver item 11/24 da seção 6), e a assinatura paga por si só
+   não habilita a emissão — é um cadastro à parte que a Focus NFe faz olhando CNPJ/UF/município.
+
    **Pendências reais, em aberto — retomar numa sessão futura**:
-   - **NFS-e**: ela precisa **contatar o suporte da Focus NFe** (chat/WhatsApp no painel deles)
-     pedindo pra habilitar a emissão de NFS-e pra Araraquara/SP na empresa dela. Sem isso, não dá
-     pra validar o formato da resposta da NFS-e (ainda é melhor esforço, não confirmado — ver
-     acima).
-   - **NFC-e**: ainda **não foi testada de verdade** — a sessão foi pausada logo depois do
-     terceiro erro (NFS-e), antes dela tentar "Emitir NFC-e" numa OS com peça faturada. É o
-     próximo passo natural (não depende do suporte da Focus NFe, deve funcionar independente da
-     NFS-e). **Primeira coisa a fazer numa sessão futura sobre esse assunto.**
+   - **NFC-e e NFS-e**: ela precisa **contatar o suporte da Focus NFe** (chat/WhatsApp no painel
+     deles) pedindo pra habilitarem a emissão das **duas** pra empresa dela (CNPJ
+     66.217.744/0001-70) em Araraquara/SP — já mencionando que a assinatura está ativa (contrato
+     265740) mas ambas aparecem como "não habilitada" ao tentar emitir em homologação. Sem isso,
+     não dá pra validar nenhuma das duas de ponta a ponta.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e e
      NFS-e ainda não estão.

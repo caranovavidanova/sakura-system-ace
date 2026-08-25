@@ -2,7 +2,6 @@ import { supabase } from "./supabase";
 import type {
   Cliente,
   NovoCliente,
-  NovoVeiculo,
   Veiculo,
   VeiculoFormulario,
 } from "@/types/cliente";
@@ -19,7 +18,7 @@ export async function listarClientes(): Promise<Cliente[]> {
 
 export async function criarCliente(
   cliente: NovoCliente,
-  veiculos: NovoVeiculo[],
+  veiculos: VeiculoFormulario[],
 ): Promise<Cliente> {
   const { data: clienteCriado, error: erroCliente } = await supabase
     .from("clientes")
@@ -30,8 +29,23 @@ export async function criarCliente(
   if (erroCliente) throw erroCliente;
 
   if (veiculos.length > 0) {
+    // Todo veículo do formulário (mesmo num cliente novo) tem o hidden input
+    // de `id` registrado (ver VeiculosFields.tsx) — sem `id` de banco ainda,
+    // ele manda "" em vez de undefined. `...veiculo` espalharia esse `id: ""`
+    // pro insert e o Postgres recusa string vazia numa coluna uuid, mesmo
+    // aqui sendo sempre um veículo novo. Mesmo cuidado já aplicado em
+    // atualizarCliente() pros veículos novos adicionados na edição.
     const { error: erroVeiculos } = await supabase.from("veiculos").insert(
-      veiculos.map((veiculo) => ({ ...veiculo, cliente_id: clienteCriado.id })),
+      veiculos.map((veiculo) => ({
+        placa: veiculo.placa,
+        marca: veiculo.marca,
+        modelo: veiculo.modelo,
+        ano: veiculo.ano,
+        cor: veiculo.cor,
+        tipo: veiculo.tipo,
+        km_atual: veiculo.km_atual,
+        cliente_id: clienteCriado.id,
+      })),
     );
     if (erroVeiculos) throw erroVeiculos;
   }

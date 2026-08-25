@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { buscarClientePorId } from "@/lib/clientes";
@@ -53,7 +53,10 @@ export function EmitirNotaFiscalModal({
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [codigoMunicipioCliente, setCodigoMunicipioCliente] = useState("");
   const [resultado, setResultado] = useState<RespostaFocusNfe | null>(null);
-  const [baixandoDanfe, setBaixandoDanfe] = useState(false);
+  const [danfeUrl, setDanfeUrl] = useState<string | null>(null);
+  const [carregandoPreview, setCarregandoPreview] = useState(false);
+  const [erroPreview, setErroPreview] = useState("");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const itensPeca = (ordem.itens ?? []).filter((item) => item.tipo === "peca");
   const itensServico = (ordem.itens ?? []).filter((item) => item.tipo === "servico");
@@ -153,6 +156,22 @@ export function EmitirNotaFiscalModal({
 
       setResultado(resposta);
       onEmitido();
+
+      if (resposta.caminho_danfe && configuracaoFiscal.focus_nfe_token) {
+        setCarregandoPreview(true);
+        try {
+          const blob = await baixarArquivoFocusNfe(
+            resposta.caminho_danfe,
+            configuracaoFiscal.focus_nfe_token,
+            configuracaoFiscal.focus_nfe_ambiente,
+          );
+          setDanfeUrl(URL.createObjectURL(blob));
+        } catch (erroPreviewCapturado) {
+          setErroPreview(mensagemDeErro(erroPreviewCapturado));
+        } finally {
+          setCarregandoPreview(false);
+        }
+      }
     } catch (err) {
       setErro(mensagemDeErro(err));
     } finally {
@@ -160,23 +179,22 @@ export function EmitirNotaFiscalModal({
     }
   }
 
-  async function handleBaixarDanfe() {
-    if (!resultado?.caminho_danfe || !configuracaoFiscal?.focus_nfe_token) return;
-    setBaixandoDanfe(true);
-    try {
-      const blob = await baixarArquivoFocusNfe(
-        resultado.caminho_danfe,
-        configuracaoFiscal.focus_nfe_token,
-        configuracaoFiscal.focus_nfe_ambiente,
-      );
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (err) {
-      setErro(mensagemDeErro(err));
-    } finally {
-      setBaixandoDanfe(false);
-    }
+  useEffect(() => {
+    return () => {
+      if (danfeUrl) URL.revokeObjectURL(danfeUrl);
+    };
+  }, [danfeUrl]);
+
+  function handleImprimir() {
+    iframeRef.current?.contentWindow?.print();
+  }
+
+  function handleBaixarPdf() {
+    if (!danfeUrl) return;
+    const link = document.createElement("a");
+    link.href = danfeUrl;
+    link.download = `${tipoNota}-${resultado?.numero ?? resultado?.ref ?? "nota"}.pdf`;
+    link.click();
   }
 
   const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_token);
@@ -262,23 +280,59 @@ export function EmitirNotaFiscalModal({
           {resultado.chave_nfe && (
             <p className="break-all text-xs text-sakura-muted">Chave: {resultado.chave_nfe}</p>
           )}
+
+          {carregandoPreview && (
+            <p className="text-sm text-sakura-muted">Gerando pré-visualização do PDF...</p>
+          )}
+
+          {!carregandoPreview && erroPreview && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              A nota foi emitida e o XML já está salvo em Notas Fiscais, mas não deu pra carregar a
+              pré-visualização do PDF: {erroPreview}
+            </p>
+          )}
+
+          {!carregandoPreview && !erroPreview && !resultado.caminho_danfe && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              A nota foi emitida e o XML já está salvo em Notas Fiscais — esse tipo de nota não
+              trouxe um PDF de pré-visualização.
+            </p>
+          )}
+
+          {danfeUrl && (
+            <iframe
+              ref={iframeRef}
+              title="Pré-visualização da nota fiscal"
+              src={danfeUrl}
+              className="h-96 w-full rounded-lg border border-sakura-gray/30 bg-white"
+            />
+          )}
+
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onFechar}
               className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
-              Fechar
+              OK
             </button>
-            {resultado.caminho_danfe && (
-              <button
-                type="button"
-                onClick={handleBaixarDanfe}
-                disabled={baixandoDanfe}
-                className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-              >
-                {baixandoDanfe ? "Abrindo..." : "Ver DANFE"}
-              </button>
+            {danfeUrl && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBaixarPdf}
+                  className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+                >
+                  Baixar PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={handleImprimir}
+                  className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+                >
+                  Imprimir
+                </button>
+              </>
             )}
           </div>
         </div>

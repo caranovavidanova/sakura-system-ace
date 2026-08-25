@@ -1058,6 +1058,23 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     adicionar item novo" via `upsert` batendo numa coluna `uuid`. **Corrigido no código, ainda não
     confirmado por ela rodando de novo na loja** (só o print do erro foi visto nesta sessão) — vale
     confirmar quando a próxima tag for publicada.
+    **Continuação (sessão seguinte)**: a mesma correção tinha ficado incompleta — cobria só
+    `atualizarCliente()` (editar cliente existente), não `criarCliente()` (cliente novo). Como o
+    hidden input de `id` é registrado pra **todo** veículo do formulário, não só em edição, cadastrar
+    um cliente **novo** já com um veículo preenchido caía no mesmo erro
+    (`invalid input syntax for type uuid: ""`) — `criarCliente()` espalhava `...veiculo` (com
+    `id: ""`) direto no `insert()`. A assinatura da função também estava com o tipo errado
+    (`veiculos: NovoVeiculo[]`, sem `id`), mascarando o problema: o TypeScript não acusa erro porque
+    `ClientesPage.tsx` passa uma variável já tipada `VeiculoFormulario[]` (com `id?: string`) pro
+    parâmetro, e checagem de excesso de propriedade só vale pra literais de objeto, não variáveis.
+    Corrigido montando o payload do insert campo a campo (mesmo padrão já usado no `insert` de
+    veículos novos dentro de `atualizarCliente()`), e corrigido o tipo do parâmetro pra
+    `VeiculoFormulario[]`, batendo com a realidade. Reportado pela usuária no chat (sem print, ela
+    não conseguiu reproduzir de novo pra capturar — a caixa de veículo "ficou invisível" depois do
+    erro, mas não achei nenhum `bg-white`/`bg-*` claro novo em `VeiculosFields.tsx`/`Combobox.tsx`
+    que explicasse isso; pode ter sido só o estado visual truncado do próprio erro, vale confirmar
+    se voltar a acontecer). Corrigido no código (PR #128, mesclado direto na `main`), **ainda não
+    publicado em tag nem confirmado por ela rodando de novo**.
 29. **Padrão de bug: `fetch()` direto na tela do Electron pra uma API externa dá "Failed to
     fetch"** — reportado pela usuária testando a emissão de NFS-e de verdade pela primeira vez
     (com o token de homologação): a tela mostrou só `Failed to fetch`, sem detalhe nenhum.

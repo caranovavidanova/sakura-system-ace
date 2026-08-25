@@ -17,6 +17,15 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
 let mainWindow: BrowserWindow | null = null;
 
+// Sem isso, o Chromium detecta que a janela ficou "oculta" atrás de outra
+// (ex: alt-tab, mesmo que por poucos segundos) e descarta/recarrega a tela
+// pra economizar recursos — do lado da usuária isso parece a tela "resetar"
+// sozinha, perdendo o que estava sendo digitado. Esses dois parâmetros
+// (precisam ser setados antes de `app.whenReady()`) desligam essa otimização
+// — não faz sentido pra um app de uso o dia todo, sempre em primeiro plano.
+app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
+app.commandLine.appendSwitch("disable-renderer-backgrounding");
+
 // A tela do app (Chromium/renderer) trata fetch() como um navegador comum —
 // a API do Focus NFe é feita pra ser chamada de servidor pra servidor, não
 // tem CORS liberado pra chamada direta do navegador, então um fetch() feito
@@ -75,6 +84,7 @@ function createWindow() {
     backgroundColor: "#FFF7FC",
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
+      backgroundThrottling: false,
     },
   });
 

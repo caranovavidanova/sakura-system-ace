@@ -6,23 +6,24 @@ import { mensagemDeErro } from "@/lib/errors";
 import {
   paraNovaPeca,
   paraQuantidadeInicial,
+  paraValoresFormulario,
   pecaFormSchema,
-  pecaFormVazio,
   type PecaFormValues,
 } from "@/schemas/peca";
 import type { Categoria } from "@/types/categoria";
-import type { NovaPeca } from "@/types/peca";
+import type { NovaPeca, Peca } from "@/types/peca";
 import { DadosCadastraisFields } from "./campos/DadosCadastraisFields";
 import { PrecosFields } from "./campos/PrecosFields";
 import { TributosFields } from "./campos/TributosFields";
 
 interface PecaFormProps {
+  pecaExistente?: Peca;
   categorias: Categoria[];
   onSalvar: (peca: NovaPeca, quantidadeInicial: number | null) => Promise<void>;
   onCancelar: () => void;
 }
 
-export function PecaForm({ categorias, onSalvar, onCancelar }: PecaFormProps) {
+export function PecaForm({ pecaExistente, categorias, onSalvar, onCancelar }: PecaFormProps) {
   const [erro, setErro] = useState<string | null>(null);
 
   const {
@@ -33,7 +34,7 @@ export function PecaForm({ categorias, onSalvar, onCancelar }: PecaFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<PecaFormValues>({
     resolver: zodResolver(pecaFormSchema),
-    defaultValues: pecaFormVazio,
+    defaultValues: paraValoresFormulario(pecaExistente),
   });
 
   async function aoSubmeter(valores: PecaFormValues) {
@@ -50,7 +51,9 @@ export function PecaForm({ categorias, onSalvar, onCancelar }: PecaFormProps) {
     <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-6 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
-        <h2 className="text-lg font-semibold text-sakura-purple-dark">Novo produto</h2>
+        <h2 className="text-lg font-semibold text-sakura-purple-dark">
+          {pecaExistente ? "Editar produto" : "Novo produto"}
+        </h2>
       </div>
 
       {erro && (
@@ -65,7 +68,12 @@ export function PecaForm({ categorias, onSalvar, onCancelar }: PecaFormProps) {
         categorias={categorias}
       />
       <TributosFields register={register} errors={errors} />
-      <PrecosFields register={register} watch={watch} setValue={setValue} />
+      <PrecosFields
+        register={register}
+        watch={watch}
+        setValue={setValue}
+        editando={Boolean(pecaExistente)}
+      />
 
       <div className="flex justify-end gap-3">
         <button
@@ -80,7 +88,11 @@ export function PecaForm({ categorias, onSalvar, onCancelar }: PecaFormProps) {
           disabled={isSubmitting}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? "Salvando..." : "Salvar peça"}
+          {isSubmitting
+            ? "Salvando..."
+            : pecaExistente
+              ? "Salvar alterações"
+              : "Salvar peça"}
         </button>
       </div>
     </form>

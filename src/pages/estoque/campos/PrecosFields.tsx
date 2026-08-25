@@ -6,10 +6,12 @@ export function PrecosFields({
   register,
   watch,
   setValue,
+  editando = false,
 }: {
   register: UseFormRegister<PecaFormValues>;
   watch: UseFormWatch<PecaFormValues>;
   setValue: UseFormSetValue<PecaFormValues>;
+  editando?: boolean;
 }) {
   const custo = register("preco_custo");
   const margem = register("margem");
@@ -56,14 +58,16 @@ export function PrecosFields({
             className={inputClasse}
           />
         </Campo>
-        <Campo label="Qtde. estoque inicial">
-          <input
-            type="number"
-            step="0.01"
-            {...register("quantidade_inicial")}
-            className={inputClasse}
-          />
-        </Campo>
+        {!editando && (
+          <Campo label="Qtde. estoque inicial">
+            <input
+              type="number"
+              step="0.01"
+              {...register("quantidade_inicial")}
+              className={inputClasse}
+            />
+          </Campo>
+        )}
       </div>
     </Secao>
   );

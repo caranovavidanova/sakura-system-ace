@@ -29,6 +29,18 @@ export async function criarPeca(peca: NovaPeca): Promise<Peca> {
   return data as Peca;
 }
 
+export async function atualizarPeca(id: string, peca: NovaPeca): Promise<Peca> {
+  const { data, error } = await supabase
+    .from("pecas")
+    .update(peca)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Peca;
+}
+
 export async function excluirPeca(id: string): Promise<void> {
   const { error } = await supabase.from("pecas").delete().eq("id", id);
   if (error) throw error;

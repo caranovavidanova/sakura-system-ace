@@ -1520,33 +1520,53 @@ ainda no meio da digitação).
      Documentos Fiscais → NFSe, que ela deixou em branco). Não é algo que a Focus NFe fornece.
      **Pergunta enviada pra contabilidade** (Lucrare, contato Rafaela Forti) perguntando se eles já
      têm esse login cadastrado pra essa empresa — **aguardando resposta**.
-   - **NFC-e — IBS/CBS — bloqueio novo, ainda pendente**: depois de corrigir o CSOSN, apareceu
-     rejeição **diferente** tentando emitir de novo: *"Rejeição: Grupo IBS/CBS não informado
-     [nItem: 1]"* (rejeição SEFAZ nº 1115). É a **Reforma Tributária** (os impostos novos IBS/CBS
-     entrando em vigor a par do ICMS/ISS antigo) — não é bug, é exigência fiscal nova que o código
-     desta sessão não tinha motivo de já cobrir. **Pesquisado nesta sessão** (busca na web, já que
-     `doc.focusnfe.com.br` e `focusnfe.com.br` continuam bloqueados pro sandbox — mesma limitação
-     de sempre, ver item 6 da seção 6): existe uma informação conflitante — uma Nota Técnica da
-     Receita (NT 2025.002, versão dez/2025) teria **adiado** essa exigência específica pra "data
-     futura a definir", então em teoria essa rejeição nem deveria estar ativa ainda — mas ela
-     apareceu no teste de verdade, então ou a Focus NFe já exige preventivamente, ou já ativaram
-     antes do esperado. **Decisão tomada**: não implementar o formato do campo (`gIBSCBS`,
-     `cClassTrib` etc.) sem confirmação oficial — risco fiscal real de mandar dado errado. **Ticket
-     de suporte aberto na Focus NFe** (mesmo painel "Novo suporte" de antes) perguntando o formato
-     exato dos campos JSON pro grupo IBS/CBS num item de NFC-e — **aguardando resposta**.
+   - **NFC-e — IBS/CBS — bloqueio novo, parcialmente respondido, ainda pendente**: depois de
+     corrigir o CSOSN, apareceu rejeição **diferente** tentando emitir de novo: *"Rejeição: Grupo
+     IBS/CBS não informado [nItem: 1]"* (rejeição SEFAZ nº 1115). É a **Reforma Tributária** (os
+     impostos novos IBS/CBS entrando em vigor a par do ICMS/ISS antigo) — não é bug, é exigência
+     fiscal nova que o código desta sessão não tinha motivo de já cobrir. **Decisão tomada**: não
+     implementar o formato do campo sem confirmação oficial — risco fiscal real de mandar dado
+     errado. **Ticket de suporte respondido numa sessão posterior** (Lucas F Cano, suporte Focus
+     NFe) — confirmou os **nomes exatos dos campos** que precisam ser enviados no item da NFC-e:
+     `ibs_cbs_situacao_tributaria` (CST do IBS/CBS), `ibs_cbs_classificacao_tributaria` (cClassTrib
+     — Classificação Tributária, ligada a um artigo da LC 214/2025), `ibs_cbs_base_calculo`,
+     `cbs_aliquota`, `cbs_valor`, `ibs_uf_aliquota`, `ibs_uf_valor`, `ibs_mun_aliquota`,
+     `ibs_mun_valor`, `ibs_valor_total`. **Mas a resposta também deixou claro**: *"a definição
+     fiscal e tributária da operação não faz parte do escopo do nosso suporte"* — ou seja, a Focus
+     NFe confirmou **quais campos** existem, não **quais valores/códigos** usar (isso depende do
+     enquadramento tributário da loja e é decisão de contabilidade, não técnica). **Ainda não deu
+     pra confirmar isso com o sandbox**: os links de documentação que eles mandaram
+     (`campos.focusnfe.com.br`, `focusnfe.com.br/guides/reforma-tributaria`) continuam bloqueados
+     pro ambiente onde rodo (mesma limitação de sempre, ver item 6 da seção 6) — tentei também
+     nfe.io, tributos.io e blog.tecnospeed.com.br via busca na web, todos bloqueados igual; só
+     consegui confirmar o *significado* de `ibs_cbs_situacao_tributaria`/`ibs_cbs_classificacao_
+     tributaria` (CST e cClassTrib) por snippet de busca, não o conteúdo completo das páginas.
+     **Próximo passo, ainda não feito**: perguntar pra Rafaela/Lucrare (contabilidade) qual
+     CST/cClassTrib usar numa venda comum de peça (Simples Nacional) e se as alíquotas de IBS/CBS
+     já são cobradas de verdade em 2026 ou ainda é um valor de teste/zero nesse período de
+     transição — só depois disso implementar em `src/lib/focusNfe.ts`.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
 
-   **Como retomar na próxima sessão** (ela vai fechar esta sessão agora e abrir uma nova quando
-   tiver resposta da Focus NFe e/ou da contabilidade): ao abrir a sessão nova, **perguntar direto**
-   se já veio resposta do ticket de suporte da Focus NFe (formato dos campos IBS/CBS) e/ou da
-   Rafaela/Lucrare (CSOSN — já resolvido, não precisa mais perguntar — e login da prefeitura de
-   Araraquara). Se a resposta do IBS/CBS já chegou: implementar o campo certo em
+   **Estado atualizado numa sessão posterior**: a Rafaela/Lucrare já respondeu o login da
+   prefeitura de Araraquara (usuário `30016580`, senha `1234` — ela mesma avisou "por favor, tente
+   esse usuário e senha", sem certeza total) — a usuária ainda precisa **preencher isso no painel
+   da Focus NFe** (Empresas → Documentos Fiscais → NFSe → campo "Login prefeitura") e testar de
+   novo. Na primeira tentativa depois de receber esse login, a emissão de NFS-e voltou só
+   `"erro_autorizacao"` genérico, sem detalhe — mas isso já foi corrigido: o modal de emissão só
+   olhava `mensagem_sefaz`/`mensagem` da resposta da Focus NFe, não o campo `erros` (onde o motivo
+   real costuma vir) — corrigido em `EmitirNotaFiscalModal.tsx`. **Ainda falta**: testar de novo a
+   emissão de NFS-e (com o login da prefeitura preenchido) pra ver a mensagem real, e mandar pra
+   Rafaela a pergunta sobre CST/cClassTrib/alíquotas do IBS/CBS (rascunho pronto, ver acima) —
+   nenhuma das duas coisas foi feita ainda.
+
+   **Como retomar na próxima sessão**: perguntar direto se: (a) ela já preencheu o login da
+   prefeitura no painel da Focus NFe e testou a NFS-e de novo — se sim, a mensagem de erro real
+   (se ainda der erro) já deve aparecer detalhada; (b) ela já mandou a pergunta do IBS/CBS pra
+   Rafaela e teve resposta. Com a resposta do IBS/CBS em mãos: implementar o campo certo em
    `src/lib/focusNfe.ts` (função que monta o item da NFC-e, perto de `icms_situacao_tributaria`,
-   ver linha ~190) e testar de novo. Se a resposta da prefeitura já chegou: ela mesma preenche o
-   campo "Login prefeitura" direto no painel da Focus NFe (não precisa de código). Sem nenhuma das
-   duas respostas ainda: não tem o que fazer aqui além de aguardar — não insistir tentando emitir
+   ver linha ~190) e testar de novo. Sem nenhuma resposta nova ainda: não insistir tentando emitir
    de novo sem a informação, os erros são os mesmos até ter os dados certos. **Só depois que a
    emissão de teste estiver validada de ponta a ponta** (ou quando ela decidir que não vai testar
    mais por enquanto): lembrar de rodar `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de

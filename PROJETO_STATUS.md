@@ -1574,20 +1574,31 @@ ainda no meio da digitação).
    prefeitura**, não do nosso código (`lib/focusNfe.ts` já decodifica a resposta como UTF-8
    corretamente) — não mexido, sem confirmação de que a causa é mesmo nossa.
 
-   Sobre o IBS/CBS: a pergunta pra Rafaela (CST/cClassTrib/alíquotas pra uma venda comum de peça em
-   2026, ver rascunho acima — combinada nesta mesma mensagem com a confirmação do CSOSN `'500'`,
-   que também nunca foi validado com ela, só usado por hábito do sistema antigo) ainda **não foi
-   enviada** até o fim desta sessão.
+   Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
+   nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
+   não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou
+   mandar mensagem pra explicar certinho. **Preparada nesta sessão** (ainda não enviada — é pra
+   usar na ligação/conversa com a Rayana, formato de checklist objetivo em vez de mensagem corrida,
+   a pedido da usuária) uma lista específica com:
+   - Pergunta 1 (CSOSN): pra uma venda comum de peça (Simples Nacional), o CSOSN certo é `'500'`
+     mesmo ou depende do produto/situação?
+   - Pergunta 2 (IBS/CBS): uma tabela com os 10 campos exigidos pela Focus NFe
+     (`ibs_cbs_situacao_tributaria`/CST, `ibs_cbs_classificacao_tributaria`/cClassTrib,
+     `ibs_cbs_base_calculo`, `cbs_aliquota`, `cbs_valor`, `ibs_uf_aliquota`, `ibs_uf_valor`,
+     `ibs_mun_aliquota`, `ibs_mun_valor`, `ibs_valor_total`) com 3 perguntas: (a) qual código vai em
+     CST e cClassTrib numa venda comum de peça; (b) em 2026 (fase de transição) as alíquotas de
+     CBS/IBS já são cobradas de verdade ou ainda é zero/teste; (c) se for zero, ainda precisa
+     mandar `0` nesses campos ou dá pra deixar em branco/não enviar.
 
-   **Como retomar na próxima sessão**: perguntar direto se: (a) já veio resposta do novo ticket
-   sobre "Lote RPS" (Focus NFe); (b) ela já mandou a pergunta combinada de CSOSN + IBS/CBS pra
-   Rafaela e teve resposta. Com a resposta do "Lote RPS": ajustar `montarCorpoNFSe()` em
-   `src/lib/focusNfe.ts` conforme o campo indicado e testar de novo. Com a resposta do IBS/CBS:
-   implementar o campo certo em `src/lib/focusNfe.ts` (função que monta o item da NFC-e, perto de
-   `icms_situacao_tributaria`, ver linha ~190) e testar de novo. Sem nenhuma resposta nova ainda:
-   não insistir tentando emitir de novo sem a informação, os erros são os mesmos até ter os dados
-   certos. **Só depois que a emissão de teste estiver validada de ponta a ponta** (ou quando ela
-   decidir que não vai testar mais por enquanto): lembrar de rodar
+   **Como retomar na próxima sessão**: perguntar direto se: (a) já veio resposta do ticket sobre
+   "Lote RPS" (Focus NFe); (b) a Rayana já ligou/mandou mensagem, e se sim, o que ela respondeu
+   pras perguntas de CSOSN e IBS/CBS (lista acima). Com a resposta do "Lote RPS": ajustar
+   `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o campo indicado e testar de novo. Com a
+   resposta do IBS/CBS: implementar o campo certo em `src/lib/focusNfe.ts` (função que monta o item
+   da NFC-e, perto de `icms_situacao_tributaria`, ver linha ~190) e testar de novo. Sem nenhuma
+   resposta nova ainda: não insistir tentando emitir de novo sem a informação, os erros são os
+   mesmos até ter os dados certos. **Só depois que a emissão de teste estiver validada de ponta a
+   ponta** (ou quando ela decidir que não vai testar mais por enquanto): lembrar de rodar
    `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de teste em nome de "Eduarda Cristina"
    ainda está lá na loja real, sendo reusada pra cada nova tentativa de emissão; não apagar antes
    dela terminar de testar.

@@ -338,7 +338,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
-│                                  # preserva login/config; ver seção 5)
+│                                  # preserva login/config; ver seção 5) + excluir-os-teste-eduarda.sql
+│                                  # (uso único, criado numa sessão pra apagar as OS de teste abertas
+│                                  # em nome de "Eduarda Cristina" na loja real, sem tocar no cadastro
+│                                  # do cliente/veículo — ver "Empacotamento"/nota fiscal na seção 7/8)
 ├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts: lê fotos ou
 │                                  # PDFs de nota fiscal via Claude/Anthropic e devolve os produtos
 │                                  # estruturados (a ANTHROPIC_API_KEY fica só como secret dessa
@@ -1427,31 +1430,60 @@ ainda no meio da digitação).
    — **confirmado que resolveu o erro de "empresa não habilitada"** nas duas. Testando de novo,
    apareceram dois erros **novos e diferentes**, um pra cada tipo de nota — não são mais o mesmo
    bloqueio, são dois problemas reais e separados:
-   - **NFC-e**: rejeição da SEFAZ — *"Informado CST para emissor do Simples Nacional (CRT=1 ou
-     4)"* — no item testado (peça "PNEU 175/70R14-ROVELLO RHP-A68"). Não é bug do sistema: a loja
-     é Simples Nacional, que exige código **CSOSN** no campo de tributação da peça (não **CST**,
-     que é só pra regime normal) — o cadastro dessa peça específica está com o código errado pro
-     regime. **Descoberto no caminho**: `Estoque → Produtos` nunca teve edição, só cadastro — sem
-     isso não dava nem pra corrigir esse campo pela tela. **Construído nesta sessão**: edição de
-     produto (mesmo padrão já usado em Clientes — `paraValoresFormulario`/`atualizarPeca`/botão
-     "Editar" na lista; o campo "Qtde. estoque inicial" some ao editar, ajuste de estoque continua
-     só por Movimentações/Contagem). Já mesclado na `main`, ainda **não publicado em tag** — pra
-     testar precisa de `npm run dev`.
-   - **NFS-e**: erro diferente — *"É necessário configurar a senha desta empresa neste
-     município."* — Araraquara exige login/senha do **sistema da própria prefeitura** pra emitir
-     nota de serviço (tem um campo "Login prefeitura" na mesma tela de Documentos Fiscais → NFSe,
-     que ela deixou em branco). Não é algo que a Focus NFe fornece.
-   - **Enviado pra contabilidade (Lucrare, contato Rafaela Forti), aguardando resposta**: ela
-     mandou uma mensagem perguntando (1) qual código CSOSN usar nas peças (Simples Nacional) e
-     (2) se a contabilidade já tem o login/senha da Prefeitura de Araraquara cadastrado pra essa
-     empresa. **Enquanto isso**: a Rafaela também já tinha mandado, à parte, o Certificado Digital
-     da empresa (arquivo `.pfx`/`.p12` + senha) e a Inscrição Municipal (`30016580`) — mas isso já
-     estava anexado no Focus NFe desde antes (o pedido à contadora foi só pra ter os dados em mãos,
-     não porque estava faltando anexar; a Inscrição Municipal já batia com o que já estava
-     cadastrado). Nenhuma ação pendente sobre o certificado.
+   - **NFC-e — CST/CSOSN — RESOLVIDO**: rejeição da SEFAZ *"Informado CST para emissor do Simples
+     Nacional (CRT=1 ou 4)"* no item testado (peça "PNEU 175/70R14-ROVELLO RHP-A68", código interno
+     `7`). Não era bug do sistema: a loja é Simples Nacional, que exige código **CSOSN** no campo
+     de tributação da peça (não **CST**, que é só pra regime normal) — o cadastro dessa peça
+     específica estava com o código errado pro regime. **Descoberto no caminho**: `Estoque →
+     Produtos` nunca teve edição, só cadastro — sem isso não dava nem pra corrigir esse campo pela
+     tela. **Construído nesta sessão**: edição de produto (mesmo padrão já usado em Clientes —
+     `paraValoresFormulario`/`atualizarPeca`/botão "Editar" na lista; o campo "Qtde. estoque
+     inicial" some ao editar, ajuste de estoque continua só por Movimentações/Contagem) — já
+     mesclado na `main`, ainda **não publicado em tag** (pra usar a tela é preciso `npm run dev`).
+     **Correção do dado em si já foi feita direto no banco** (ela não estava no PC, então rodou um
+     `update` no SQL Editor do Supabase em vez de esperar poder usar a tela nova): a usuária
+     confirmou que no sistema antigo sempre preenchia os dois campos (CST 60 e CSOSN 500 —
+     "ICMS cobrado anteriormente por substituição") — trocou `cst_ou_csosn` da peça pra `'500'`.
+     **Confirmado que resolveu**: o próximo teste já não repetiu esse erro, passou pro bloqueio
+     seguinte (IBS/CBS, abaixo).
+   - **NFS-e — login da prefeitura — ainda pendente**: erro *"É necessário configurar a senha
+     desta empresa neste município."* — Araraquara exige login/senha do **sistema da própria
+     prefeitura** pra emitir nota de serviço (tem um campo "Login prefeitura" na mesma tela de
+     Documentos Fiscais → NFSe, que ela deixou em branco). Não é algo que a Focus NFe fornece.
+     **Pergunta enviada pra contabilidade** (Lucrare, contato Rafaela Forti) perguntando se eles já
+     têm esse login cadastrado pra essa empresa — **aguardando resposta**.
+   - **NFC-e — IBS/CBS — bloqueio novo, ainda pendente**: depois de corrigir o CSOSN, apareceu
+     rejeição **diferente** tentando emitir de novo: *"Rejeição: Grupo IBS/CBS não informado
+     [nItem: 1]"* (rejeição SEFAZ nº 1115). É a **Reforma Tributária** (os impostos novos IBS/CBS
+     entrando em vigor a par do ICMS/ISS antigo) — não é bug, é exigência fiscal nova que o código
+     desta sessão não tinha motivo de já cobrir. **Pesquisado nesta sessão** (busca na web, já que
+     `doc.focusnfe.com.br` e `focusnfe.com.br` continuam bloqueados pro sandbox — mesma limitação
+     de sempre, ver item 6 da seção 6): existe uma informação conflitante — uma Nota Técnica da
+     Receita (NT 2025.002, versão dez/2025) teria **adiado** essa exigência específica pra "data
+     futura a definir", então em teoria essa rejeição nem deveria estar ativa ainda — mas ela
+     apareceu no teste de verdade, então ou a Focus NFe já exige preventivamente, ou já ativaram
+     antes do esperado. **Decisão tomada**: não implementar o formato do campo (`gIBSCBS`,
+     `cClassTrib` etc.) sem confirmação oficial — risco fiscal real de mandar dado errado. **Ticket
+     de suporte aberto na Focus NFe** (mesmo painel "Novo suporte" de antes) perguntando o formato
+     exato dos campos JSON pro grupo IBS/CBS num item de NFC-e — **aguardando resposta**.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
-     Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e e
-     NFS-e ainda não estão, esperando as respostas acima.
+     Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
+     causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
+
+   **Como retomar na próxima sessão** (ela vai fechar esta sessão agora e abrir uma nova quando
+   tiver resposta da Focus NFe e/ou da contabilidade): ao abrir a sessão nova, **perguntar direto**
+   se já veio resposta do ticket de suporte da Focus NFe (formato dos campos IBS/CBS) e/ou da
+   Rafaela/Lucrare (CSOSN — já resolvido, não precisa mais perguntar — e login da prefeitura de
+   Araraquara). Se a resposta do IBS/CBS já chegou: implementar o campo certo em
+   `src/lib/focusNfe.ts` (função que monta o item da NFC-e, perto de `icms_situacao_tributaria`,
+   ver linha ~190) e testar de novo. Se a resposta da prefeitura já chegou: ela mesma preenche o
+   campo "Login prefeitura" direto no painel da Focus NFe (não precisa de código). Sem nenhuma das
+   duas respostas ainda: não tem o que fazer aqui além de aguardar — não insistir tentando emitir
+   de novo sem a informação, os erros são os mesmos até ter os dados certos. **Só depois que a
+   emissão de teste estiver validada de ponta a ponta** (ou quando ela decidir que não vai testar
+   mais por enquanto): lembrar de rodar `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de
+   teste em nome de "Eduarda Cristina" ainda está lá na loja real, sendo reusada pra cada nova
+   tentativa de emissão; não apagar antes dela terminar de testar.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.

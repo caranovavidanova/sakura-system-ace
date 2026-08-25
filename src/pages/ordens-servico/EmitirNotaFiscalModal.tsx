@@ -129,8 +129,15 @@ export function EmitirNotaFiscalModal({
       }
 
       if (resposta.status !== "autorizado") {
+        const mensagensErros = (resposta.erros ?? [])
+          .map((e) => (e.campo ? `${e.campo}: ${e.mensagem}` : e.mensagem))
+          .filter((m): m is string => Boolean(m))
+          .join(" | ");
         throw new FocusNfeError(
-          resposta.mensagem_sefaz ?? resposta.mensagem ?? `A nota voltou com status "${resposta.status}".`,
+          resposta.mensagem_sefaz ??
+            (mensagensErros || undefined) ??
+            resposta.mensagem ??
+            `A nota voltou com status "${resposta.status}".`,
         );
       }
 

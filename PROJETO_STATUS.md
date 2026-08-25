@@ -1509,11 +1509,16 @@ ainda no meio da digitação).
      inicial" some ao editar, ajuste de estoque continua só por Movimentações/Contagem) — já
      mesclado na `main`, ainda **não publicado em tag** (pra usar a tela é preciso `npm run dev`).
      **Correção do dado em si já foi feita direto no banco** (ela não estava no PC, então rodou um
-     `update` no SQL Editor do Supabase em vez de esperar poder usar a tela nova): a usuária
-     confirmou que no sistema antigo sempre preenchia os dois campos (CST 60 e CSOSN 500 —
-     "ICMS cobrado anteriormente por substituição") — trocou `cst_ou_csosn` da peça pra `'500'`.
-     **Confirmado que resolveu**: o próximo teste já não repetiu esse erro, passou pro bloqueio
-     seguinte (IBS/CBS, abaixo).
+     `update` no SQL Editor do Supabase em vez de esperar poder usar a tela nova): a usuária usou o
+     CSOSN `'500'` ("ICMS cobrado anteriormente por substituição") por ser o que ela sempre digitava
+     no sistema antigo de cabeça — **não foi confirmado com a Rafaela/contabilidade**, é só um valor
+     de hábito, não uma validação fiscal de verdade. **Confirmado que resolveu o erro da SEFAZ**
+     (que só rejeita CST/CSOSN incompatível com o regime, não confere se é o código correto pra
+     aquele produto específico): o próximo teste já não repetiu esse erro, passou pro bloqueio
+     seguinte (IBS/CBS, abaixo). **Risco em aberto**: `'500'` é o CSOSN certo só quando o produto
+     tem ICMS-ST de verdade — pode não ser o código certo pra toda peça do catálogo; vale confirmar
+     com a contabilidade caso apareça alguma rejeição fiscal diferente no futuro, ou revisar o
+     cadastro das outras peças antes de emitir nota de produção pra valer.
    - **NFS-e — login da prefeitura — ainda pendente**: erro *"É necessário configurar a senha
      desta empresa neste município."* — Araraquara exige login/senha do **sistema da própria
      prefeitura** pra emitir nota de serviço (tem um campo "Login prefeitura" na mesma tela de

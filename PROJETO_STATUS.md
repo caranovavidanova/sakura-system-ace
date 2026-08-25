@@ -1093,6 +1093,26 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     API libera CORS pra navegador — a maioria das APIs fiscais/financeiras B2B não libera, porque
     são pensadas pra uso servidor-a-servidor. Nesses casos, IPC pro processo principal (esse mesmo
     padrão) é o jeito certo de contornar, não um workaround improvisado.
+30. **Padrão de bug: tela "recarrega sozinha" ao voltar de alt-tab, perdendo o que estava sendo
+    digitado** — reportado pela usuária (numa sessão posterior): dar alt-tab por só alguns
+    segundos e voltar pro app fazia a mesma tela resetar sozinha. Não era o auto-updater (só
+    checa uma vez na abertura do app e só instala ao fechar — não bate com "poucos segundos de
+    alt-tab", e ela confirmou que é a mesma tela recarregando, não a tela de login voltando).
+    Causa real: um comportamento do Chromium (base do Electron) chamado "window occlusion" — ele
+    detecta quando a janela fica oculta atrás de outra, mesmo brevemente, e descarta/recarrega a
+    página pra economizar recursos (pensado pra navegador com várias abas em segundo plano, não
+    faz sentido pra um app desktop de uso o dia todo, sempre em primeiro plano). **Corrigido**
+    desligando essa otimização em `electron/main.ts` via dois parâmetros do Chromium
+    (`disable-backgrounding-occluded-windows`, `disable-renderer-backgrounding`, setados antes de
+    `app.whenReady()`) + `backgroundThrottling: false` no `BrowserWindow`. **Lição de teste**: o
+    bug em si é específico de Windows (a detecção de "occlusion" vem do DWM do próprio Windows) —
+    não reproduz no sandbox Linux deste ambiente, só dá pra confirmar a correção de verdade
+    testando alt-tab na loja. **Junto nesta mesma leva**: um auto-save de rascunho local (a cada
+    30s, sem substituir o botão de Salvar) foi adicionado em `OrdemServicoForm.tsx`
+    (`src/hooks/useRascunhoFormulario.ts`) como rede de segurança pra esse tipo de perda de
+    progresso (e também serve pra fechamento repentino do programa, não só pra esse bug
+    específico) — ver "Ordens de Serviço" na seção 7. **Nenhum dos dois foi confirmado por ela
+    rodando de verdade ainda** (mesclado na `main`, sem tag publicada).
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1221,7 +1241,14 @@ ainda no meio da digitação).
   faturamento na sequência, num fluxo só. **`OrdemServicoForm.tsx` migrado nesta sessão** pro
   padrão `react-hook-form` + `zod` (quarto módulo — ver "Padrão de formulário" na seção 4);
   comportamento pro usuário não mudou (mesmos campos, mesma regra de só acrescentar item, não
-  editar/remover o que já foi lançado). Técnico por item + vendedor/atendente da OS (ambos listam
+  editar/remover o que já foi lançado). **Auto-save de rascunho local** (numa sessão posterior,
+  `src/hooks/useRascunhoFormulario.ts`): salva uma cópia local do formulário a cada 30s enquanto
+  ele está aberto (não é um "salvar" de verdade, não mexe no banco nem no botão de Salvar) — se a
+  tela recarregar sozinha (ver item 30 da seção 6) ou o programa fechar de repente, reabrir a
+  mesma OS mostra "Encontramos um rascunho não salvo... Restaurar?"; ao salvar com sucesso, o
+  rascunho é descartado. Só implementado nesse formulário por enquanto (o mais longo, mais exposto
+  a interrupção no balcão) — dá pra estender pros outros formulários depois de validado de
+  verdade. Técnico por item + vendedor/atendente da OS (ambos listam
   `funcionarios`, não só operadores). Lista de OS tem filtro de período (De/Até) e busca por
   cliente/placa — OS em aberto sempre aparecem, não importa a data (só o histórico já faturado é
   filtrado por período, pra lista não crescer sem controle); colunas de Nº/Peças/Serviços/Total/Lucro

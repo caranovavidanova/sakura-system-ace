@@ -2,6 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import {
+  lerRascunhoFormulario,
+  limparRascunhoFormulario,
+  useRascunhoFormulario,
+} from "@/hooks/useRascunhoFormulario";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   ordemServicoFormSchema,
@@ -80,12 +85,30 @@ export function OrdemServicoForm({
     control,
     watch,
     setValue,
+    reset,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<OrdemServicoFormValues>({
     resolver: zodResolver(ordemServicoFormSchema),
     defaultValues: paraValoresFormulario(ordemExistente, funcionarioAtualId),
   });
+
+  const chaveRascunho = `rascunho-os-${ordemExistente?.id ?? "nova"}`;
+  const [rascunho, setRascunho] = useState(() =>
+    lerRascunhoFormulario<OrdemServicoFormValues>(chaveRascunho),
+  );
+  useRascunhoFormulario(chaveRascunho, watch);
+
+  function restaurarRascunho() {
+    if (!rascunho) return;
+    reset(rascunho);
+    setRascunho(null);
+  }
+
+  function descartarRascunho() {
+    limparRascunhoFormulario(chaveRascunho);
+    setRascunho(null);
+  }
 
   const itensExistentes = ordemExistente?.itens ?? [];
 
@@ -99,6 +122,7 @@ export function OrdemServicoForm({
       } else {
         await onSalvarNova(camposComuns, itensValidos);
       }
+      limparRascunhoFormulario(chaveRascunho);
     } catch (err) {
       console.error("Erro ao salvar ordem de serviço:", err);
       setErro(mensagemDeErro(err));
@@ -161,6 +185,28 @@ export function OrdemServicoForm({
 
       {erro && (
         <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+      )}
+
+      {rascunho && (
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-800">
+          <span>Encontramos um rascunho não salvo desta ordem de serviço. Restaurar?</span>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={descartarRascunho}
+              className="rounded-lg px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+            >
+              Descartar
+            </button>
+            <button
+              type="button"
+              onClick={restaurarRascunho}
+              className="rounded-lg bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+            >
+              Restaurar
+            </button>
+          </div>
+        </div>
       )}
 
       {temFechamento && (

@@ -1554,29 +1554,43 @@ ainda no meio da digitação).
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
 
-   **Estado atualizado numa sessão posterior**: a Rafaela/Lucrare já respondeu o login da
-   prefeitura de Araraquara (usuário `30016580`, senha `1234` — ela mesma avisou "por favor, tente
-   esse usuário e senha", sem certeza total) — a usuária ainda precisa **preencher isso no painel
-   da Focus NFe** (Empresas → Documentos Fiscais → NFSe → campo "Login prefeitura") e testar de
-   novo. Na primeira tentativa depois de receber esse login, a emissão de NFS-e voltou só
-   `"erro_autorizacao"` genérico, sem detalhe — mas isso já foi corrigido: o modal de emissão só
-   olhava `mensagem_sefaz`/`mensagem` da resposta da Focus NFe, não o campo `erros` (onde o motivo
-   real costuma vir) — corrigido em `EmitirNotaFiscalModal.tsx`. **Ainda falta**: testar de novo a
-   emissão de NFS-e (com o login da prefeitura preenchido) pra ver a mensagem real, e mandar pra
-   Rafaela a pergunta sobre CST/cClassTrib/alíquotas do IBS/CBS (rascunho pronto, ver acima) —
-   nenhuma das duas coisas foi feita ainda.
+   **Estado atualizado numa sessão posterior**: a Rafaela/Lucrare respondeu o login da prefeitura
+   de Araraquara (usuário `30016580`, senha `1234`) — a usuária preencheu no painel da Focus NFe
+   (Empresas → Documentos Fiscais → NFSe → "Login prefeitura") e testou de novo. O erro genérico
+   `"erro_autorizacao"` sumiu (confirma que a correção do item acima — ler `resposta.erros`, não só
+   `mensagem_sefaz`/`mensagem` — funcionou: agora aparece o motivo real). **Bloqueio novo,
+   diferente**: *"Lote RPS não pode ser nulo"* — Araraquara usa o conceito de "lote de RPS"
+   (agrupamento de notas, padrão ABRASF comum em várias prefeituras) e a Focus NFe está recusando
+   por faltar algo relacionado a isso. **Pesquisado nesta sessão** (mesma limitação de sempre —
+   `focusnfe.com.br` bloqueado pro sandbox, só busca na web): não achei o nome exato do campo;
+   encontrei indício de que, em várias cidades, emitir por API exige a empresa estar **credenciada
+   no regime de lote junto à prefeitura** primeiro (não é só um campo JSON que falta enviar) — não
+   quis arriscar inventar um valor sem confirmação, mesma cautela já usada com o IBS/CBS. **Ticket
+   de suporte já aberto na Focus NFe pela usuária** perguntando se a empresa está credenciada nesse
+   regime e que campo de lote/RPS falta enviar — **aguardando resposta**. **Bug cosmético
+   encontrado junto**: a mensagem desse erro aparece com acentuação quebrada ("Lote RPS nÃ£o pode
+   ser nulo" em vez de "não") — o padrão exato desse tipo de mojibake (bytes UTF-8 corretos lidos
+   como Latin-1) é consistente com a mensagem já chegando corrompida **do lado da Focus NFe ou da
+   prefeitura**, não do nosso código (`lib/focusNfe.ts` já decodifica a resposta como UTF-8
+   corretamente) — não mexido, sem confirmação de que a causa é mesmo nossa.
 
-   **Como retomar na próxima sessão**: perguntar direto se: (a) ela já preencheu o login da
-   prefeitura no painel da Focus NFe e testou a NFS-e de novo — se sim, a mensagem de erro real
-   (se ainda der erro) já deve aparecer detalhada; (b) ela já mandou a pergunta do IBS/CBS pra
-   Rafaela e teve resposta. Com a resposta do IBS/CBS em mãos: implementar o campo certo em
-   `src/lib/focusNfe.ts` (função que monta o item da NFC-e, perto de `icms_situacao_tributaria`,
-   ver linha ~190) e testar de novo. Sem nenhuma resposta nova ainda: não insistir tentando emitir
-   de novo sem a informação, os erros são os mesmos até ter os dados certos. **Só depois que a
-   emissão de teste estiver validada de ponta a ponta** (ou quando ela decidir que não vai testar
-   mais por enquanto): lembrar de rodar `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de
-   teste em nome de "Eduarda Cristina" ainda está lá na loja real, sendo reusada pra cada nova
-   tentativa de emissão; não apagar antes dela terminar de testar.
+   Sobre o IBS/CBS: a pergunta pra Rafaela (CST/cClassTrib/alíquotas pra uma venda comum de peça em
+   2026, ver rascunho acima — combinada nesta mesma mensagem com a confirmação do CSOSN `'500'`,
+   que também nunca foi validado com ela, só usado por hábito do sistema antigo) ainda **não foi
+   enviada** até o fim desta sessão.
+
+   **Como retomar na próxima sessão**: perguntar direto se: (a) já veio resposta do novo ticket
+   sobre "Lote RPS" (Focus NFe); (b) ela já mandou a pergunta combinada de CSOSN + IBS/CBS pra
+   Rafaela e teve resposta. Com a resposta do "Lote RPS": ajustar `montarCorpoNFSe()` em
+   `src/lib/focusNfe.ts` conforme o campo indicado e testar de novo. Com a resposta do IBS/CBS:
+   implementar o campo certo em `src/lib/focusNfe.ts` (função que monta o item da NFC-e, perto de
+   `icms_situacao_tributaria`, ver linha ~190) e testar de novo. Sem nenhuma resposta nova ainda:
+   não insistir tentando emitir de novo sem a informação, os erros são os mesmos até ter os dados
+   certos. **Só depois que a emissão de teste estiver validada de ponta a ponta** (ou quando ela
+   decidir que não vai testar mais por enquanto): lembrar de rodar
+   `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de teste em nome de "Eduarda Cristina"
+   ainda está lá na loja real, sendo reusada pra cada nova tentativa de emissão; não apagar antes
+   dela terminar de testar.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.

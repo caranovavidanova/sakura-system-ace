@@ -1368,6 +1368,26 @@ ainda no meio da digitação).
     está longe do terminal) e o build passou — instalador e `latest.yml` confirmados na release.
     **Lição pra sessões futuras**: publicar a tag/release final continua sendo sempre manual dela
     (terminal ou tela do GitHub), mesmo com acesso de push a branches/PRs.
+  - `v0.9.10`: leva a edição de produto em Estoque (que corrigiu o CST/CSOSN, ver item 1 da seção
+    8) e a correção do erro `invalid input syntax for type uuid` ao cadastrar um cliente **novo**
+    já com veículo preenchido (reportado por ela no chat, sem print — a mesma causa do item 28 da
+    seção 6, só que faltando cobrir `criarCliente()`, não só `atualizarCliente()`; ver item 28 pro
+    detalhe completo). **Publicação teve um incidente real, resolvido na mesma sessão**: ela
+    publicou pela tela do GitHub (longe do PC de novo) digitando a tag `v0.9.10`, mas o GitHub
+    reaproveitou silenciosamente um **rascunho de release não publicado que já existia com esse
+    mesmo nome de tag**, criado 4 dias antes por uma sessão anterior (target apontando pra um
+    branch antigo, `claude/visual-adjustments-fiscal-grjker`, sem nenhuma das correções atuais) —
+    o build começou a rodar em cima do commit errado. Eu cancelei o build a tempo (`workflow_run`
+    ainda em andamento, nenhum instalador chegou a ser publicado) e orientei ela a apagar a release
+    **e** a tag manualmente (são coisas separadas no GitHub — apagar a release pela lixeirinha não
+    apaga a tag; foi preciso ir em `.../tags`, achar a `v0.9.10` e apagar por lá também) antes de
+    recriar do zero, dessa vez conferindo que o campo "Target" da tela de criar release mostrava
+    `main`. Build refeita, publicada certinho (`d1e1f17`, o commit real do bump de versão) —
+    instalador + `latest.yml` confirmados na release. **Lição nova pra sessões futuras**: antes de
+    orientar ela a criar uma release pela tela do GitHub, vale conferir por API
+    (`get_release_by_tag`) se já existe uma release/rascunho com aquele nome de tag — se existir e
+    o `target_commitish` não for `main`, é sinal de resíduo de sessão anterior, apagar antes dela
+    tentar publicar em cima.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1879,7 +1899,7 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.9"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+- `package.json` em `"version": "0.9.10"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**

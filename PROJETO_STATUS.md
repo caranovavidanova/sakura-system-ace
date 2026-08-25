@@ -1237,7 +1237,11 @@ ainda no meio da digitação).
   NFC-e"/"Emitir NFS-e" (nesta sessão — antes só mostravam preview do rascunho, agora abrem
   `EmitirNotaFiscalModal.tsx` e emitem de verdade via Focus NFe, aguardando a autorização da
   SEFAZ/prefeitura em polling — ver item 1 da seção 8 pro que ainda falta validar com uma emissão
-  de teste real) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
+  de teste real; assim que autorizada, o PDF/DANFE já carrega direto num preview embutido dentro
+  do próprio modal — mesmo padrão de `iframe` já usado em "Ver garantia"/"Versão para o cliente" —
+  com botões "Baixar PDF", "Imprimir" e "OK", em vez do antigo botão único "Ver DANFE" que abria
+  numa aba separada; mesclado numa sessão posterior, **ainda não testado com uma emissão real**
+  porque depende dos bloqueios do item 1 da seção 8 estarem resolvidos) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
   cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com opção de
   baixar HTML/imprimir via `iframe`).
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,

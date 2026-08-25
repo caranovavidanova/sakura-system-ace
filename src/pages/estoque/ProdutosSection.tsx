@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { atualizarStatusPeca, criarPeca, excluirPeca } from "@/lib/pecas";
+import { atualizarPeca, atualizarStatusPeca, criarPeca, excluirPeca } from "@/lib/pecas";
 import { criarMovimento } from "@/lib/estoque";
 import { mensagemDeErro } from "@/lib/errors";
 import type { Categoria } from "@/types/categoria";
@@ -45,25 +45,41 @@ export function ProdutosSection({
   onRecarregar,
 }: ProdutosSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [pecaEmEdicao, setPecaEmEdicao] = useState<Peca | null>(null);
   const [mostrarImportar, setMostrarImportar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   async function handleSalvar(peca: NovaPeca, quantidadeInicial: number | null) {
-    const pecaCriada = await criarPeca(peca);
-    if (quantidadeInicial && quantidadeInicial > 0) {
-      await criarMovimento(
-        {
-          peca_id: pecaCriada.id,
-          tipo: "entrada",
-          quantidade: quantidadeInicial,
-          motivo: "ajuste",
-          referencia: "Estoque inicial (cadastro do produto)",
-        },
-        lojaId,
-      );
+    if (pecaEmEdicao) {
+      await atualizarPeca(pecaEmEdicao.id, peca);
+    } else {
+      const pecaCriada = await criarPeca(peca);
+      if (quantidadeInicial && quantidadeInicial > 0) {
+        await criarMovimento(
+          {
+            peca_id: pecaCriada.id,
+            tipo: "entrada",
+            quantidade: quantidadeInicial,
+            motivo: "ajuste",
+            referencia: "Estoque inicial (cadastro do produto)",
+          },
+          lojaId,
+        );
+      }
     }
     setMostrarFormulario(false);
+    setPecaEmEdicao(null);
     await onRecarregar();
+  }
+
+  function handleFecharFormulario() {
+    setMostrarFormulario(false);
+    setPecaEmEdicao(null);
+  }
+
+  function handleEditar(peca: Peca) {
+    setPecaEmEdicao(peca);
+    setMostrarFormulario(true);
   }
 
   async function handleExcluir(id: string) {
@@ -109,9 +125,10 @@ export function ProdutosSection({
 
       {mostrarFormulario && (
         <PecaForm
+          pecaExistente={pecaEmEdicao ?? undefined}
           categorias={categorias}
           onSalvar={handleSalvar}
-          onCancelar={() => setMostrarFormulario(false)}
+          onCancelar={handleFecharFormulario}
         />
       )}
 
@@ -175,6 +192,12 @@ export function ProdutosSection({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleEditar(peca)}
+                        className="text-xs font-medium text-sakura-purple hover:underline"
+                      >
+                        Editar
+                      </button>
                       <button
                         onClick={() => handleAlternarStatus(peca)}
                         className="text-xs font-medium text-sakura-purple hover:underline"

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { NovaPeca } from "@/types/peca";
+import type { NovaPeca, Peca } from "@/types/peca";
 
 // Mesma ideia dos outros schemas: formulário trabalha só com strings (mesmo
 // pros campos number | null no banco) — a conversão pra NovaPeca acontece só
@@ -51,6 +51,34 @@ export const pecaFormVazio: PecaFormValues = {
   preco_venda: "",
   quantidade_inicial: "",
 };
+
+export function paraValoresFormulario(peca?: Peca): PecaFormValues {
+  if (!peca) return pecaFormVazio;
+  return {
+    descricao: peca.descricao,
+    codigo_barras: peca.codigo_barras ?? "",
+    codigo_interno: peca.codigo_interno ?? "",
+    marca: peca.marca ?? "",
+    modelo: peca.modelo ?? "",
+    unidade: peca.unidade ?? "UN",
+    categoria_id: peca.categoria_id ?? "",
+    prazo_garantia_dias: peca.prazo_garantia_dias?.toString() ?? "",
+    aplicacao: peca.aplicacao ?? "",
+    ncm: peca.ncm ?? "",
+    cest: peca.cest ?? "",
+    cfop_padrao: peca.cfop_padrao ?? "",
+    origem: peca.origem ?? "",
+    cst_ou_csosn: peca.cst_ou_csosn ?? "",
+    aliquota_icms: peca.aliquota_icms?.toString() ?? "",
+    preco_custo: peca.preco_custo?.toString() ?? "",
+    margem: margemAPartirDoPreco(
+      peca.preco_custo?.toString() ?? "",
+      peca.preco_venda?.toString() ?? "",
+    ),
+    preco_venda: peca.preco_venda?.toString() ?? "",
+    quantidade_inicial: "",
+  };
+}
 
 const paraTextoOuNulo = (valor: string) => (valor.trim() === "" ? null : valor.trim());
 const paraNumeroOuNulo = (valor: string) => (valor.trim() === "" ? null : Number(valor));

@@ -74,10 +74,19 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    a ponta, nota fiscal continua sendo emitida por fora do sistema.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
-   grande. Como essas lojas são de donos diferentes (não é a mesma empresa do pai dela), o modelo
-   esperado é cada uma com seu próprio projeto Supabase — diferente da fundação **multi-loja** já
-   construída (que é pra **uma empresa com várias lojas**, não várias empresas diferentes). Não
-   assumir automaticamente qual modelo usar aqui sem confirmar com ela quando chegar a hora.
+   grande. **Primeiro caso real surgiu numa sessão posterior**: o pai dela contou que um amigo dele
+   provavelmente vai comprar o sistema pras **duas lojas** que esse amigo tem. Como é uma empresa
+   diferente da do pai dela (não é a mesma razão social), o modelo confirmado é: **cada empresa
+   (dono diferente) = 1 projeto Supabase próprio**, totalmente isolado — diferente da fundação
+   **multi-loja** já construída (essa é pra **uma empresa com várias lojas**, e continua servindo
+   normalmente dentro do projeto Supabase do amigo, já que ele tem 2 lojas próprias).
+   **Decisão tomada, ainda não implementada**: hoje o instalador só sabe conectar num Supabase só
+   (URL/chave gravadas no build via secret do GitHub) — pra servir uma empresa nova sem gerar um
+   instalador separado pra cada uma, é preciso trocar isso por uma **tela de configuração de
+   conexão dentro do próprio app** (URL/chave do Supabase digitadas e salvas localmente, em vez de
+   embutidas no build) — opção escolhida em vez de manter builds separados por cliente, porque
+   também serve de base pro modelo self-service da fase 3 (site de assinatura). **Ainda não
+   construída** — é o próximo passo antes de conseguir instalar de verdade pra esse amigo.
 3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema**
    — essa fase **já envolve estados diferentes** (não fica só em Araraquara/SP como as fases
    anteriores) — o que pode importar pra emissão fiscal (regras de ICMS/ISS variam por
@@ -1143,8 +1152,9 @@ ainda no meio da digitação).
   dia — só quem criar um segundo depósito passa a escolher entre eles nas telas de Movimentações e
   Contagem. **`PecaForm.tsx` migrado nesta
   sessão** pro padrão `react-hook-form` + `zod` (terceiro módulo — ver "Padrão de formulário" na
-  seção 4); ainda só cria produto, não edita (não mudou nesta migração — só existia criação antes
-  também). **Importar por foto/PDF**:
+  seção 4); **ganhou edição numa sessão posterior** (antes só cadastrava, nunca editava — precisou
+  ser resolvido pra corrigir cadastro de peça com CST/CSOSN errado, ver item 1 da seção 8), mesmo
+  padrão de edição já usado em Clientes. **Importar por foto/PDF**:
   botão ao lado de "+ Novo produto" (ícone de câmera, SVG) — lê uma ou mais fotos **ou PDFs** de
   nota fiscal (pode ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através
   da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
@@ -1328,6 +1338,16 @@ ainda no meio da digitação).
     verdade em homologação de ponta a ponta — NFS-e está barrada esperando a Focus NFe habilitar a
     empresa dela pra Araraquara (fora do nosso controle), e NFC-e ainda nem foi tentada (ver
     pendências detalhadas no item 1 da seção 8, é o próximo passo).
+  - `v0.9.9`: publicou tudo isso — decidiu não esperar mais a validação completa da emissão fiscal
+    (ver item 1 da seção 8 pro estado real: habilitação da Focus NFe resolvida depois desta tag,
+    ainda com dois bloqueios abertos). **Publicada pela tela do GitHub** (ela estava longe do PC) —
+    eu preparei o bump de versão (PR mesclado) mas **não consegui empurrar a tag/criar a release
+    direto** (o ambiente onde rodo bloqueia `git push` de tag com erro 403 — parece trava de
+    segurança proposital, não bug de proxy; nenhuma ferramenta de GitHub disponível aqui também
+    permite criar tag/release diretamente). Ela publicou pela tela (mesmo fluxo de sempre quando
+    está longe do terminal) e o build passou — instalador e `latest.yml` confirmados na release.
+    **Lição pra sessões futuras**: publicar a tag/release final continua sendo sempre manual dela
+    (terminal ou tela do GitHub), mesmo com acesso de push a branches/PRs.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1397,15 +1417,41 @@ ainda no meio da digitação).
    sempre — nunca esconder o erro real, ver item 11/24 da seção 6), e a assinatura paga por si só
    não habilita a emissão — é um cadastro à parte que a Focus NFe faz olhando CNPJ/UF/município.
 
-   **Pendências reais, em aberto — retomar numa sessão futura**:
-   - **NFC-e e NFS-e**: ela precisa **contatar o suporte da Focus NFe** (chat/WhatsApp no painel
-     deles) pedindo pra habilitarem a emissão das **duas** pra empresa dela (CNPJ
-     66.217.744/0001-70) em Araraquara/SP — já mencionando que a assinatura está ativa (contrato
-     265740) mas ambas aparecem como "não habilitada" ao tentar emitir em homologação. Sem isso,
-     não dá pra validar nenhuma das duas de ponta a ponta.
+   **Atualização de uma sessão ainda mais recente — habilitação resolvida, dois bloqueios novos e
+   mais específicos encontrados**: ela abriu um chamado de suporte da Focus NFe (não é o chat, é
+   "Novo suporte" dentro do próprio painel) pedindo a habilitação das duas — a resposta do suporte
+   (Natan Coelho) explicou que a habilitação **não é feita pelo suporte**, é self-service: painel
+   da Focus NFe → **Empresas → (a empresa) → Documentos Fiscais** → tem uma lista (NFe, NFCe,
+   NFCom, DCe, NFSe, CTe, MDFe etc.) e cada uma tem um interruptor pra ligar. Ela achou a tela,
+   ligou **NFCe** e **NFSe** (ficaram com a bolinha laranja, diferente das outras cinza/desligadas)
+   — **confirmado que resolveu o erro de "empresa não habilitada"** nas duas. Testando de novo,
+   apareceram dois erros **novos e diferentes**, um pra cada tipo de nota — não são mais o mesmo
+   bloqueio, são dois problemas reais e separados:
+   - **NFC-e**: rejeição da SEFAZ — *"Informado CST para emissor do Simples Nacional (CRT=1 ou
+     4)"* — no item testado (peça "PNEU 175/70R14-ROVELLO RHP-A68"). Não é bug do sistema: a loja
+     é Simples Nacional, que exige código **CSOSN** no campo de tributação da peça (não **CST**,
+     que é só pra regime normal) — o cadastro dessa peça específica está com o código errado pro
+     regime. **Descoberto no caminho**: `Estoque → Produtos` nunca teve edição, só cadastro — sem
+     isso não dava nem pra corrigir esse campo pela tela. **Construído nesta sessão**: edição de
+     produto (mesmo padrão já usado em Clientes — `paraValoresFormulario`/`atualizarPeca`/botão
+     "Editar" na lista; o campo "Qtde. estoque inicial" some ao editar, ajuste de estoque continua
+     só por Movimentações/Contagem). Já mesclado na `main`, ainda **não publicado em tag** — pra
+     testar precisa de `npm run dev`.
+   - **NFS-e**: erro diferente — *"É necessário configurar a senha desta empresa neste
+     município."* — Araraquara exige login/senha do **sistema da própria prefeitura** pra emitir
+     nota de serviço (tem um campo "Login prefeitura" na mesma tela de Documentos Fiscais → NFSe,
+     que ela deixou em branco). Não é algo que a Focus NFe fornece.
+   - **Enviado pra contabilidade (Lucrare, contato Rafaela Forti), aguardando resposta**: ela
+     mandou uma mensagem perguntando (1) qual código CSOSN usar nas peças (Simples Nacional) e
+     (2) se a contabilidade já tem o login/senha da Prefeitura de Araraquara cadastrado pra essa
+     empresa. **Enquanto isso**: a Rafaela também já tinha mandado, à parte, o Certificado Digital
+     da empresa (arquivo `.pfx`/`.p12` + senha) e a Inscrição Municipal (`30016580`) — mas isso já
+     estava anexado no Focus NFe desde antes (o pedido à contadora foi só pra ter os dados em mãos,
+     não porque estava faltando anexar; a Inscrição Municipal já batia com o que já estava
+     cadastrado). Nenhuma ação pendente sobre o certificado.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e e
-     NFS-e ainda não estão.
+     NFS-e ainda não estão, esperando as respostas acima.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.
@@ -1555,6 +1601,15 @@ ainda no meio da digitação).
    ainda não foram criados — ela recebeu um `.txt` com esse resumo pra colar como primeira mensagem
    quando abrir a sessão de IA desse projeto novo. **Isso é 100% separado do Sakura System — nenhum
    código, dado ou decisão de arquitetura desse teste deve vazar pra cá sem ela pedir.**
+8. **Tela de configuração de conexão Supabase (multi-empresa)** — decidida numa sessão posterior,
+   ainda não construída. Motivada pelo primeiro caso real da fase 2 (item 2 da seção 1): um amigo
+   do pai dela provavelmente vai comprar o sistema pras duas lojas dele, uma empresa diferente que
+   precisa de projeto Supabase próprio, isolado. Hoje o instalador tem a conexão (URL/chave)
+   gravada no build (secrets do GitHub), então um instalador só serve uma empresa — pra vender pra
+   uma segunda empresa sem gerar build/instalador separado por cliente, o app precisa de uma tela
+   (provavelmente antes do login) onde a URL/chave do Supabase daquela empresa são digitadas e
+   salvas localmente no computador, não embutidas no build. Ver seção 1, item 2 da fase 2, pro
+   raciocínio completo da decisão.
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -1775,7 +1830,8 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.8"` (o parágrafo abaixo é histórico de uma sessão anterior — a
+- `package.json` em `"version": "0.9.9"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+  pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
   (`v0.9.2`, `v0.9.3`, `v0.9.4`, `v0.9.5` — ela sempre rodou `git tag vX.Y.Z` + `git push origin

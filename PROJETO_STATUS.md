@@ -1567,7 +1567,14 @@ ainda no meio da digitação).
    no regime de lote junto à prefeitura** primeiro (não é só um campo JSON que falta enviar) — não
    quis arriscar inventar um valor sem confirmação, mesma cautela já usada com o IBS/CBS. **Ticket
    de suporte já aberto na Focus NFe pela usuária** perguntando se a empresa está credenciada nesse
-   regime e que campo de lote/RPS falta enviar — **aguardando resposta**. **Bug cosmético
+   regime e que campo de lote/RPS falta enviar. **Resposta do suporte (Gustavo Peres, numa sessão
+   posterior)**: não confirmou credenciamento nem nome de campo — a hipótese dele foi que pode ser
+   **instabilidade no ambiente de homologação**, e pediu pra ela tentar emitir em **produção** pra
+   ver se funciona lá. **Decisão da usuária: esperar mais informação antes de testar em produção**
+   (não vale a pena arriscar gerar uma NFS-e real só pra validar isso agora) — segue **aguardando**,
+   sem teste novo por enquanto. Se decidir aceitar a sugestão dele no futuro, lembrar que testar em
+   produção significa nota fiscal de verdade (não simulada) e exige trocar o token de homologação
+   pelo de produção em Configurações → Dados fiscais da loja antes. **Bug cosmético
    encontrado junto**: a mensagem desse erro aparece com acentuação quebrada ("Lote RPS nÃ£o pode
    ser nulo" em vez de "não") — o padrão exato desse tipo de mojibake (bytes UTF-8 corretos lidos
    como Latin-1) é consistente com a mensagem já chegando corrompida **do lado da Focus NFe ou da
@@ -1590,8 +1597,9 @@ ainda no meio da digitação).
      CBS/IBS já são cobradas de verdade ou ainda é zero/teste; (c) se for zero, ainda precisa
      mandar `0` nesses campos ou dá pra deixar em branco/não enviar.
 
-   **Como retomar na próxima sessão**: perguntar direto se: (a) já veio resposta do ticket sobre
-   "Lote RPS" (Focus NFe); (b) a Rayana já ligou/mandou mensagem, e se sim, o que ela respondeu
+   **Como retomar na próxima sessão**: perguntar direto se: (a) ela decidiu testar em produção como
+   o Gustavo (suporte Focus NFe) sugeriu, ou se surgiu alguma resposta nova e mais específica sobre
+   o campo de lote/RPS; (b) a Rayana já ligou/mandou mensagem, e se sim, o que ela respondeu
    pras perguntas de CSOSN e IBS/CBS (lista acima). Com a resposta do "Lote RPS": ajustar
    `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o campo indicado e testar de novo. Com a
    resposta do IBS/CBS: implementar o campo certo em `src/lib/focusNfe.ts` (função que monta o item

@@ -1,8 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { AvisoRascunho } from "@/components/AvisoRascunho";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { Combobox } from "@/components/Combobox";
+import { useRascunho } from "@/hooks/useRascunhoFormulario";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   itemPedidoVazio,
@@ -40,6 +42,7 @@ export function PedidoCompraForm({
     control,
     watch,
     setValue,
+    reset,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<PedidoCompraFormValues>({
@@ -49,10 +52,13 @@ export function PedidoCompraForm({
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
+  const rascunho = useRascunho("rascunho-pedido-compra-novo", watch, reset);
+
   async function aoSubmeter(valores: PedidoCompraFormValues) {
     setErro(null);
     try {
       await onSalvar(paraNovoPedidoCompra(valores), paraItensPedido(valores.itens));
+      rascunho.limpar();
     } catch (err) {
       console.error("Erro ao criar pedido de compra:", err);
       setErro(mensagemDeErro(err));
@@ -67,6 +73,14 @@ export function PedidoCompraForm({
       </div>
 
       {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+
+      {rascunho.rascunho && (
+        <AvisoRascunho
+          descricao="deste pedido de compra"
+          onRestaurar={rascunho.restaurar}
+          onDescartar={rascunho.descartar}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <label className="flex flex-col gap-1 text-sm">

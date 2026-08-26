@@ -14,7 +14,8 @@
     "electron:build": "tsc -b && vite build && electron-builder",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "contraste": "node scripts/varredura-contraste.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

@@ -313,8 +313,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │   notas-fiscais/  # NotasFiscaisPage.tsx com abas NFe/NFS-e + ArquivosSection.tsx +
 │   │                   # NotaFiscalVisualModal.tsx (recibo "versão para o cliente")
 │   │   contas-pagar/   # ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx
-│   │   contas-receber/ # ContasReceberPage.tsx + ReceberContaModal.tsx (sem form de criação manual
-│   │                   # — só nasce automaticamente ao faturar uma OS escolhendo "a receber")
+│   │   contas-receber/ # ContasReceberPage.tsx + ReceberContaModal.tsx + ContaReceberForm.tsx
+│   │                   # (nasce sozinha ao faturar uma OS escolhendo "a receber", e desde esta
+│   │                   # sessão também dá pra lançar à mão, igual Contas a Pagar)
 │   │   relatorios/     # RelatoriosPage.tsx (orquestrador de abas) + GraficosSection.tsx (barras +
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
 │   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado, agora conta o
@@ -722,11 +723,18 @@ outro projeto Supabase do zero (ver seção 9).
   ordens_servico, opcional e único — 1 conta a receber por OS faturada), descricao, valor,
   vencimento (date, aqui é "previsão de recebimento"), status (`pendente`/`recebido`),
   data_recebimento (opcional), caixa_movimento_id (FK, opcional — a Entrada gerada ao marcar como
-  recebido), operador_id (FK operadores), criado_em. **Nasce só automaticamente**: ao faturar uma OS
-  (`FaturamentoCard.tsx`) escolhendo "A receber depois" em vez de "Recebido agora", não lança Entrada
-  no Caixa na hora — cria uma linha aqui, pendente; marcar como recebido (`ReceberContaModal.tsx`)
-  é que gera a Entrada. **Sem cadastro manual** pelo app ainda (diferente de Contas a Pagar, que tem
-  "+ Nova conta") — se um dia precisar de conta a receber sem OS por trás, adicionar isso é aditivo.
+  recebido), operador_id (FK operadores), criado_em. Nasce de dois jeitos: (a) **automaticamente**,
+  ao faturar uma OS (`FaturamentoCard.tsx`) escolhendo "A receber depois" em vez de "Recebido
+  agora" — não lança Entrada no Caixa na hora, cria uma linha aqui, pendente; marcar como recebido
+  (`ReceberContaModal.tsx`) é que gera a Entrada; (b) **à mão** (desde esta sessão), pelo botão
+  "+ Nova conta" da própria tela (`ContaReceberForm.tsx`, mesmo padrão do Contas a Pagar), pra
+  cobrança que não passou por OS nenhuma. **Detalhe que valeu conferir antes de construir (b)**: a
+  tabela tem `constraint contas_receber_ordem_id_unique unique (ordem_servico_id)`, que à primeira
+  vista pareceria impedir mais de uma conta manual (todas com `ordem_servico_id` nulo) — mas o
+  Postgres não trata dois nulos como repetidos numa constraint `unique` comum (só com
+  `nulls not distinct`, que não foi usado aqui), então cabem quantas contas avulsas forem precisas.
+  **Não precisou de migration nova.** `cliente_id` continua obrigatório, então o formulário exige
+  escolher o cliente.
 - **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
   (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
   Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
@@ -801,6 +809,19 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    login/dados reais sem essa rede, uma alternativa que funcionou bem foi recriar a estrutura HTML
    isolada (sem app inteiro) reaproveitando o CSS já compilado do `dist/`, pra testes puramente
    visuais/CSS que não dependem de dado real.
+   **Melhor que isso (descoberto numa sessão posterior): dá pra renderizar o componente React de
+   verdade**, não uma imitação em HTML. Receita, pra qualquer componente que receba os dados por
+   `props` (ou seja, que não chame o Supabase sozinho — todo `<Modulo>Form.tsx` do app se encaixa):
+   criar um `preview-temp.tsx` que monta só esse componente com dados falsos (dentro de um
+   `<MemoryRouter>`, senão `BotaoVoltar` quebra) + um `vite.preview.config.ts` mínimo (só
+   `react()` + `tailwindcss()` + o alias `@`, **sem** os plugins de Electron), buildar com
+   `npx vite build --config vite.preview.config.ts` e tirar screenshot com Playwright. Pega
+   layout/contraste/estilo de verdade, com o CSS real do tema. **Duas pegadinhas que custaram duas
+   tentativas em branco**: precisa de `base: "./"` no config (senão o asset sai com caminho
+   absoluto e não carrega) e precisa **servir por HTTP**, não abrir via `file://` (o Chromium
+   bloqueia `<script type="module">` em `file://` por CORS — e o sintoma é uma página branca **sem
+   erro nenhum** no console, fácil de confundir com bug do componente). Apagar os arquivos
+   temporários depois, não commitar.
    **Descoberto nesta sessão**: o sandbox já vem com um cluster **Postgres 16 local** instalado
    (`service postgresql start`, usuário `postgres` via `sudo -u postgres psql`) — dá pra validar
    migrations novas de verdade (não só ler o SQL): criar um banco de teste, aplicar um stub mínimo
@@ -892,6 +913,22 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     quando um campo "não aceita digitação" — confirmado que não existe mais nenhum `bg-white/*`
     envolvendo `<input>`/`<select>`/`<textarea>` no restante do app (os `bg-white/*` que sobraram são
     hover de botão/aba/dropdown, sem input dentro, então seguros).
+
+    **Terceira reincidência da mesma família, achada numa varredura sistemática (não por relato
+    dela)**: os dois gráficos de Relações (`GraficoBarras.tsx`, `GraficoRadar.tsx`) desenhavam a
+    caixinha de valor que aparece ao passar o mouse com `bg-sakura-purple-dark` + `text-white`.
+    **A armadilha está no nome do token**: `sakura-purple-dark` era roxo escuro no tema claro
+    antigo (letra branca em cima fazia todo sentido) e virou uma cor **clara** (`#e8d5e5`) na
+    migração pro tema escuro — ou seja, virou branco sobre branco, contraste **1,39:1** contra o
+    mínimo legível de 4,5:1 do WCAG. Corrigido pra `bg-sakura-pink-soft` (`#1a1018`) + borda sutil,
+    subindo pra 18,56:1. **Lição maior que o bug**: `bg-white/*` não é o único suspeito — qualquer
+    uso de `sakura-purple-dark` como **fundo** é candidato pelo mesmo motivo, e o nome do token
+    ativamente engana quem lê o código. Por isso a varredura virou ferramenta permanente:
+    **`npm run contraste`** (`scripts/varredura-contraste.mjs`) lê toda string de `className` do
+    app e aponta combinação de fundo claro + letra clara (ou fundo escuro + letra escura). Rodar
+    depois de qualquer mexida grande de estilo — hoje passa limpo. Ele não enxerga fundo e texto
+    declarados em elementos diferentes, então continua valendo olhar a tela; serve pra pegar de
+    graça o caso mais comum, que é fundo e cor na mesma classe.
 18. **Padrão de bug: `process.env.npm_package_version` não existe no app empacotado** —
     `VersaoApp.tsx` (canto inferior direito, em toda tela) sempre dependeu dessa variável, que o npm
     só injeta quando o processo é lançado via `npm run ...`. No `.exe` instalado (aberto direto,
@@ -1330,11 +1367,13 @@ ainda no meio da digitação).
   opcional que só aparece quando "Conta mensal recorrente" está marcado — em branco, continua
   recorrendo pra sempre (como sempre foi); preenchido com um mês, `pagarConta()` para de criar a
   próxima ocorrência depois dessa data (migration `0043`, já rodada por ela no Supabase real).
-- **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
-  cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
-  vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
-  Contas a Pagar). Pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o
-  cliente ter pago tudo na hora.
+- **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Nasce
+  automaticamente quando uma OS é faturada escolhendo "A receber depois" em vez de "Recebido
+  agora" — pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o cliente
+  ter pago tudo na hora. **Desde esta sessão também aceita cadastro manual** ("+ Nova conta", igual
+  Contas a Pagar): cliente, descrição, valor e previsão de recebimento — pra cobrança que não
+  passou por OS nenhuma. Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
+  Contas a Pagar), venha a conta de qual dos dois jeitos for.
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
   (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
   e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code).
@@ -1818,6 +1857,63 @@ ainda no meio da digitação).
    uma **OS de teste nova** nesse mesmo cliente, já com peça e serviço juntos, e foi testando essa
    nova OS que apareceu o bug do item 32 da seção 6 (pagamento cheio da OS mandado como se fosse só
    da peça). Testes seguem nessa OS nova depois que a próxima tag (com a correção do item 32) sair.
+
+   ### Playbook de habilitação fiscal por loja nova (lições da primeira)
+
+   Escrito a pedido da usuária **enquanto a primeira loja ainda está travada**, justamente pra que
+   toda essa descoberta na marra não precise ser refeita do zero na loja 2, 3... 30. A lição
+   central é que os bloqueios encontrados **não são todos do mesmo tipo** — e só um dos três tipos
+   some sozinho quando uma loja nova entra:
+
+   **(A) Igual pra toda loja — já resolvido no código, custo zero por loja nova.** Formato do JSON
+   da NFC-e/NFS-e (confirmado contra os exemplos oficiais do repo `FocusNFe/javascript`); os 10
+   campos de IBS/CBS e as alíquotas de teste de 2026 (`cbs_aliquota = 0.90`,
+   `ibs_uf_aliquota = 0.10`, `ibs_mun_aliquota = 0.00` — regra **nacional** fixada por lei, não
+   decisão de contabilidade de nenhuma loja específica); o rateio proporcional do pagamento em OS
+   com peça + serviço; a chamada via IPC do Electron pra fugir de CORS; e a exibição do erro real
+   vindo da Focus NFe em vez de mensagem genérica. **Nada disso se repete por loja.**
+
+   **(B) Muda por loja, mas é só preencher uma tela — minutos, self-service.** Em Configurações →
+   "Dados fiscais da loja": CNPJ, razão social, inscrição estadual/municipal, regime tributário,
+   endereço, telefone, token da Focus NFe, e (só pra NFS-e) código IBGE do município, item da lista
+   de serviço LC 116, alíquota de ISS e código tributário do município. **Cuidado aprendido**: campo
+   em branco aqui vira erro que *parece* bug do sistema — o `prestador.cnpj não informado` da
+   primeira tentativa era só o CNPJ vazio nessa tela.
+
+   **(C) Muda por loja e depende de terceiros — é o caro, e é onde a primeira loja está travada.**
+   Nenhum desses é código; são cadastros que levam dias/semanas e passam por gente de fora:
+   1. **Habilitar os documentos no painel da Focus NFe** — Empresas → (empresa) → Documentos
+      Fiscais → ligar NFCe e NFSe. É **self-service** (o suporte deles não faz isso por você —
+      resposta do Natan Coelho), mas ninguém adivinha que existe: custou um ticket pra descobrir.
+   2. **Credenciar o CNPJ na SEFAZ do estado, pra NFC-e** — e **homologação e produção são
+      credenciamentos separados** (rejeição 245, "CNPJ Emitente não cadastrado"). Em SP existe um
+      portal próprio de NFC-e (`nfce.fazenda.sp.gov.br`), diferente do de NF-e/CT-e, possivelmente
+      exigindo certificado digital. **Varia por estado** — direto relevante pra fase 3, que sai de
+      Araraquara/SP (ver seção 1).
+   3. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
+      da loja, não da Focus NFe). **Varia por município**, inclusive o fornecedor do sistema
+      municipal (Araraquara usa "Giap") e o conceito de lote/RPS que ele impõe.
+   4. **Confirmar CST/CSOSN com a contabilidade do cliente** — depende do regime tributário
+      **daquela** empresa (Simples Nacional usa CSOSN, regime normal usa CST). A SEFAZ rejeita o
+      código incompatível com o regime, mas **não** confere se é o código certo pro produto — ou
+      seja, um cadastro errado passa na emissão e só aparece como problema fiscal depois.
+
+   **Consequência estratégica (importante pro item 2 desta seção, o site de assinatura
+   self-service)**: o bucket (C) é o que impede o sonho "loja nova assina no site e já emite nota
+   sozinha". Assinar o sistema pode ser instantâneo; **emitir nota, não** — cada loja nova carrega
+   um onboarding fiscal que envolve SEFAZ estadual, prefeitura e a contabilidade do próprio
+   cliente. Duas implicações práticas pra quando essa hora chegar: (1) tratar "usar o sistema" e
+   "emitir nota fiscal" como **duas etapas de ativação separadas** — a loja começa usando
+   cadastro/OS/estoque/caixa no primeiro dia (exatamente como a Pneus Amigão fez, ver seção 3) e a
+   emissão entra depois, quando o bucket (C) fechar; (2) esse onboarding precisa virar um
+   **checklist operacional que a usuária (ou quem for vender) conduz junto com o cliente**, não uma
+   redescoberta por loja — este playbook é o rascunho dele.
+
+   **Ponto ainda em aberto que muda esse desenho**: se a arquitetura de **token compartilhado**
+   (item 6 desta seção) for construída, o passo (B) deixa de ter "token da Focus NFe" por loja, e o
+   passo (C.1) passa a ser feito pela usuária dentro da conta única dela, em vez de cada dono de
+   loja mexer no painel da Focus NFe — reduz a fricção de (C), mas **não elimina** (C.2), (C.3) nem
+   (C.4), que são cadastros no nome do CNPJ do cliente e não têm como ser feitos por outra empresa.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.

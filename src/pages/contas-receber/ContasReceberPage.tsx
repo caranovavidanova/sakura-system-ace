@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarContasReceber, receberConta } from "@/lib/contasReceber";
+import { listarClientes } from "@/lib/clientes";
+import { criarContaReceber, listarContasReceber, receberConta } from "@/lib/contasReceber";
 import { mensagemDeErro } from "@/lib/errors";
-import type { ContaReceber } from "@/types/contaReceber";
+import type { Cliente } from "@/types/cliente";
+import type { ContaReceber, NovaContaReceber } from "@/types/contaReceber";
+import { ContaReceberForm } from "./ContaReceberForm";
 import { ReceberContaModal } from "./ReceberContaModal";
 
 function formatarMoeda(valor: number): string {
@@ -22,8 +25,10 @@ export function ContasReceberPage() {
   const { operador, lojaAtual } = useAuth();
   const navigate = useNavigate();
   const [contas, setContas] = useState<ContaReceber[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [contaRecebendo, setContaRecebendo] = useState<ContaReceber | null>(null);
 
   async function carregar() {
@@ -34,7 +39,12 @@ export function ContasReceberPage() {
     setCarregando(true);
     setErro(null);
     try {
-      setContas(await listarContasReceber(lojaAtual.id));
+      const [listaContas, listaClientes] = await Promise.all([
+        listarContasReceber(lojaAtual.id),
+        listarClientes(),
+      ]);
+      setContas(listaContas);
+      setClientes(listaClientes);
     } catch (err) {
       console.error("Erro ao carregar contas a receber:", err);
       setErro(mensagemDeErro(err));
@@ -47,6 +57,13 @@ export function ContasReceberPage() {
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lojaAtual?.id]);
+
+  async function handleCadastrar(conta: NovaContaReceber) {
+    if (!lojaAtual) return;
+    await criarContaReceber(conta, lojaAtual.id);
+    setMostrarFormulario(false);
+    await carregar();
+  }
 
   async function handleConfirmarRecebimento(valorRecebido: number, formaPagamento: string) {
     if (!contaRecebendo || !operador) return;
@@ -71,18 +88,36 @@ export function ContasReceberPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center gap-3">
-        <BotaoVoltar />
-        <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Contas a Receber</h1>
-          <p className="text-sm text-sakura-muted">
-            OS faturadas escolhendo "a receber" em vez de recebido na hora — criadas
-            automaticamente ao faturar
-          </p>
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <BotaoVoltar />
+          <div>
+            <h1 className="text-2xl font-semibold text-sakura-purple-dark">Contas a Receber</h1>
+            <p className="text-sm text-sakura-muted">
+              Criadas sozinhas ao faturar uma OS escolhendo "a receber" — ou lançadas à mão,
+              pra cobrança que não passou por OS
+            </p>
+          </div>
         </div>
+        {!mostrarFormulario && (
+          <button
+            onClick={() => setMostrarFormulario(true)}
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+          >
+            + Nova conta
+          </button>
+        )}
       </header>
 
       {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+
+      {mostrarFormulario && (
+        <ContaReceberForm
+          clientes={clientes}
+          onSalvar={handleCadastrar}
+          onCancelar={() => setMostrarFormulario(false)}
+        />
+      )}
 
       {!carregando && (
         <div className="sakura-card p-4">

@@ -1,7 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { AvisoRascunho } from "@/components/AvisoRascunho";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useRascunho } from "@/hooks/useRascunhoFormulario";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   paraNovaPeca,
@@ -30,6 +32,7 @@ export function PecaForm({ pecaExistente, categorias, onSalvar, onCancelar }: Pe
     register,
     watch,
     setValue,
+    reset,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<PecaFormValues>({
@@ -37,10 +40,17 @@ export function PecaForm({ pecaExistente, categorias, onSalvar, onCancelar }: Pe
     defaultValues: paraValoresFormulario(pecaExistente),
   });
 
+  const rascunho = useRascunho(
+    `rascunho-peca-${pecaExistente?.id ?? "nova"}`,
+    watch,
+    reset,
+  );
+
   async function aoSubmeter(valores: PecaFormValues) {
     setErro(null);
     try {
       await onSalvar(paraNovaPeca(valores), paraQuantidadeInicial(valores));
+      rascunho.limpar();
     } catch (err) {
       console.error("Erro ao salvar peça:", err);
       setErro(mensagemDeErro(err));
@@ -58,6 +68,14 @@ export function PecaForm({ pecaExistente, categorias, onSalvar, onCancelar }: Pe
 
       {erro && (
         <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+      )}
+
+      {rascunho.rascunho && (
+        <AvisoRascunho
+          descricao="deste produto"
+          onRestaurar={rascunho.restaurar}
+          onDescartar={rascunho.descartar}
+        />
       )}
 
       <DadosCadastraisFields

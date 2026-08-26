@@ -1557,10 +1557,31 @@ ainda no meio da digitação).
      explicitamente com zero**, não omitidos. **Implementado** em `montarItemNFCe()`
      (`src/lib/focusNfe.ts`, perto de `icms_modalidade_base_calculo`) e nos tipos correspondentes em
      `src/types/focusNfe.ts` (`ItemNFCe`) — `tsc -b`, `npm run lint` e os 55 testes automatizados
-     passando. **Ainda não testado com uma emissão de teste real** (só resolve a rejeição SEFAZ
-     nº 1115 "Grupo IBS/CBS não informado" na teoria — falta confirmar tentando emitir de novo).
-     Só cobre NFC-e — NFS-e não tem grupo IBS/CBS no formato usado hoje, não precisou de mudança
-     equivalente lá.
+     passando.
+
+     **Testado de verdade na `v0.9.11`**: a rejeição nº 1115 ("Grupo IBS/CBS não informado")
+     realmente sumiu, confirmando que os campos certos estavam sendo mandados — mas apareceu uma
+     rejeição **nova e mais específica**: *"Rejeição: Alíquota do IBS da UF inválida [nItem: 1]"*.
+     **Pesquisado com sucesso via busca na web nesta sessão** (a busca funcionou desta vez, mesmo
+     com `focusnfe.com.br` continuando bloqueado pra fetch direto — só pra `WebSearch`, não pra
+     `WebFetch`): essa é a rejeição SEFAZ **nº 1026**, documentada de forma consistente por vários
+     fornecedores de software fiscal (Sankhya, Bling, Treeunfe, TOTVS, Tecnospeed, FazendaNota,
+     CRCMS) — a Nota Técnica NFe 2025.002/LC 214/2025 fixa **alíquotas de teste obrigatórias** pro
+     período de transição de 2026, **diferente de zero**: `ibs_uf_aliquota` tem que ser
+     **exatamente 0,1%** (rejeição 1026 se não for), `cbs_aliquota` **exatamente 0,9%** (rejeição
+     1037), e só o `ibs_mun_aliquota` continua **0%** (rejeição 1036 se não for). São alíquotas
+     **simbólicas** — compensadas com PIS/Cofins/ICMS/ISS já cobrados, sem aumento real de imposto
+     pro cliente — mas a SEFAZ recusa a nota se o valor exato não bater, mesmo sendo só um teste.
+     Ou seja: a orientação da contabilidade (tudo zerado) valia pro *código/CST* (confirmado certo,
+     não mudou) mas não pro *valor numérico* dessas duas alíquotas específicas — isso é uma regra
+     nacional fixada por lei pra 2026, igual pra qualquer empresa, não uma decisão específica da
+     loja que precisasse de confirmação da contabilidade. **Corrigido** em `montarItemNFCe()`:
+     `cbs_aliquota = "0.90"`, `ibs_uf_aliquota = "0.10"` (mantendo `ibs_mun_aliquota = "0.00"`), com
+     `cbs_valor`/`ibs_uf_valor`/`ibs_valor_total` calculados a partir do valor bruto do item —
+     `tsc -b`, `npm run lint` e os 55 testes passando. **Ainda não testado com uma emissão de teste
+     real** (resolve a rejeição 1026 na teoria — falta confirmar tentando emitir de novo depois que
+     ela publicar essa correção numa tag nova). Só cobre NFC-e — NFS-e não tem grupo IBS/CBS no
+     formato usado hoje, não precisou de mudança equivalente lá.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
@@ -1592,6 +1613,19 @@ ainda no meio da digitação).
    prefeitura**, não do nosso código (`lib/focusNfe.ts` já decodifica a resposta como UTF-8
    corretamente) — não mexido, sem confirmação de que a causa é mesmo nossa.
 
+   **Testado de novo na `v0.9.11`** (ainda em homologação, não em produção): o mesmo erro "Lote RPS
+   não pode ser nulo" continua aparecendo, sem mudança — esperado, já que nada mudou no código da
+   NFS-e desde a última tentativa. **Pesquisado de novo nesta sessão** (a busca na web funcionou
+   desta vez, embora `focusnfe.com.br` continue bloqueado pra abrir a página): achei que o padrão
+   ABRASF (usado por várias prefeituras) tem uma rejeição parecida, "E88 — Número de lote não
+   informado", e que a Focus NFe **tem uma página de guia específica pra Araraquara**
+   (`focusnfe.com.br/guides/nfse/municipios-integrados/araraquara-sp/`) que provavelmente documenta
+   o campo certo — mas não consegui abrir (bloqueada, mesma limitação de sempre). **Ainda não deu
+   pra confirmar o nome exato do campo** — mesma cautela de não implementar um valor chutado em
+   dado fiscal. **Próximo passo mais direto**: pedir pra ela (ou pro suporte da Focus NFe) abrir
+   essa página específica do guia de Araraquara e copiar o trecho sobre "lote"/"RPS", em vez de
+   esperar mais respostas genéricas de ticket.
+
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
    não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou
@@ -1604,15 +1638,16 @@ ainda no meio da digitação).
      sessão posterior** (Rafaela encaminhou a tabela da Rayana) e **já implementada em código**, ver
      o item "NFC-e — IBS/CBS — RESOLVIDO" logo acima.
 
-   **Como retomar na próxima sessão**: perguntar direto se: (a) ela decidiu testar em produção como
-   o Gustavo (suporte Focus NFe) sugeriu, ou se surgiu alguma resposta nova e mais específica sobre
+   **Como retomar na próxima sessão**: perguntar direto se: (a) ela conseguiu abrir a página do
+   guia da Focus NFe específica de Araraquara (link acima) ou se surgiu alguma resposta nova sobre
    o campo de lote/RPS (NFS-e); (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se
    sim e o código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e
    revisar as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
-   (Pergunta 2) já está implementado — próximo passo ali é só **testar emitindo de novo** pra
-   confirmar que a rejeição SEFAZ nº 1115 não aparece mais (sem depender de mais nenhuma resposta).
-   Com a resposta do "Lote RPS": ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o
-   campo indicado e testar de novo. **Só depois que a emissão de teste estiver validada de ponta a
+   (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de
+   2026 (rejeição 1026) — próximo passo ali é só **testar emitindo de novo** pra confirmar que
+   nenhuma rejeição de IBS/CBS aparece mais (sem depender de mais nenhuma resposta). Com a resposta
+   do "Lote RPS": ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o campo indicado e
+   testar de novo. **Só depois que a emissão de teste estiver validada de ponta a
    ponta** (ou quando ela decidir que não vai testar mais por enquanto): lembrar de rodar
    `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de teste em nome de "Eduarda Cristina"
    ainda está lá na loja real, sendo reusada pra cada nova tentativa de emissão; não apagar antes

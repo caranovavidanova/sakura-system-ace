@@ -3,10 +3,16 @@ name: Release
 # Dispara quando uma tag de versão (ex: v0.1.0) é enviada ao GitHub. Builda o
 # instalador Windows e publica como GitHub Release — o app instalado nas lojas
 # (via electron-updater) detecta a release nova sozinho e se atualiza.
+#
+# workflow_dispatch é uma saída manual pra quando o gatilho automático da tag
+# não disparar (já aconteceu do GitHub Actions atrasar/travar a fila pro push
+# de uma tag) — nesse caso, dá pra rodar manualmente escolhendo a tag como
+# "Use workflow from" na aba Actions (ou via API), sem precisar recriar a tag.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch: {}
 
 permissions:
   contents: write

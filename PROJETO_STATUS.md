@@ -1132,8 +1132,22 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     **Ponto trazido pela usuária junto**: como faturar virou definitivo pra sempre (não dá mais
     pra corrigir esquecendo um item), o botão "Confirmar faturamento" (`FaturamentoCard.tsx`) ganhou
     uma confirmação explícita (`confirm()`, mesmo padrão de exclusões/cancelamentos já usado no
-    resto do app) avisando dessa consequência antes de faturar de verdade. **Mesclado na `main`,
-    ainda não publicado em tag** — a `v0.9.13` (já publicada) não leva essa correção.
+    resto do app) avisando dessa consequência antes de faturar de verdade. **Publicado na
+    `v0.9.14`** (build disparado direto pelo `workflow_dispatch` novo, ver "Empacotamento" na
+    seção 7 — sem precisar da usuária mexer na tela do GitHub dessa vez).
+32. **Padrão de bug: NFC-e de OS com peça E serviço juntos manda o pagamento cheio da OS, não só
+    da parte de peça** — descoberto testando de novo na `v0.9.14`, depois de corrigir o item 31:
+    rejeição da SEFAZ *"Ausência de troco quando o valor dos pagamentos informados for maior que o
+    total da nota"*. Causa: o lançamento de Caixa (gerado ao faturar) cobre a OS **inteira** (peça +
+    serviço), mas a NFC-e representa só a parte de peça — `buscarPagamentosParaNota()`
+    (`EmitirNotaFiscalModal.tsx`) mandava o valor cheio do lançamento como se fosse só o pagamento
+    da peça, então o total pago informado ficava maior que o total da nota sempre que a OS tinha os
+    dois tipos de item juntos (só peça, sem serviço, nunca teve esse problema — só afeta OS mista).
+    **Corrigido**: escala cada forma de pagamento proporcionalmente (`totalPecas / totalGeralOrdem`),
+    com a última linha absorvendo a diferença de arredondamento pra soma bater exatamente com o
+    total da nota (mesmo cuidado de arredondamento já usado em `calcularValorCobrado`, ver item 4 da
+    seção 6). **Mesclado na `main`, ainda não publicado em tag** — falta uma versão nova pra
+    confirmar que resolveu de verdade.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1462,6 +1476,26 @@ ainda no meio da digitação).
     nome da tag nunca foi usado antes no projeto, seguir normal; (b) se já existiu antes de qualquer
     forma (mesmo já apagada), considerar arriscado reusar o mesmo nome — preferir pular pro próximo
     número.
+  - `v0.9.13`: leva a correção da alíquota de teste do IBS/CBS na NFC-e (rejeição SEFAZ 1026, ver
+    item 1 da seção 8). **Publicação teve mais um episódio, dessa vez de infraestrutura pura, sem
+    relação com rascunho de release**: o build da tag ficou preso em "queued" por mais de 20
+    minutos sem nenhum job atribuído (`list_workflow_jobs` retornando `total_count: 0` o tempo
+    todo), e `cancel_workflow_run` recusava com 409 ("Cannot cancel a workflow run that has not
+    been queued yet") — sinal de instabilidade do lado do GitHub Actions (achei registro de um
+    incidente parecido dias antes via busca na web, `githubstatus.com`). **Resolvido adicionando um
+    gatilho manual** (`workflow_dispatch: {}` em `.github/workflows/release.yml`, além do
+    `push: tags: v*` já existente) — com ele, dá pra rodar a Release direto por API/CLI apontando
+    pro `ref` desejado, sem depender do webhook de push de tag (que é só o que ficou travado,
+    disparar manualmente por `main` funcionou de primeira). **Detalhe de uso**: `workflow_dispatch`
+    só fica disponível quando o próprio arquivo do workflow, na branch **default** (`main`), já
+    declara esse gatilho — dispatch com `ref` apontando pra uma tag antiga (cujo arquivo não tem o
+    gatilho ainda) falha com "Workflow does not have workflow_dispatch trigger"; rodar com
+    `ref: main` funciona porque é lá que o gatilho foi declarado, e o `package.json` de `main` já
+    está na versão certa de qualquer forma.
+  - `v0.9.14`: leva a trava de item pós-fatura + confirmação ao faturar (ver item 31 da seção 6).
+    **Publicada direto via `workflow_dispatch`** (rodado por aqui mesmo, `ref: main`) — primeira
+    vez que uma tag/release nasceu sem a usuária precisar tocar na tela do GitHub, e sem nenhum
+    atraso de fila dessa vez.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -1709,12 +1743,15 @@ ainda no meio da digitação).
    as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
    (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de
    2026 (rejeição 1026) — próximo passo ali é só **testar emitindo de novo** pra confirmar que
-   nenhuma rejeição de IBS/CBS aparece mais (sem depender de mais nenhuma resposta). **Só depois
-   que a emissão de teste estiver validada de ponta a
-   ponta** (ou quando ela decidir que não vai testar mais por enquanto): lembrar de rodar
-   `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de teste em nome de "Eduarda Cristina"
-   ainda está lá na loja real, sendo reusada pra cada nova tentativa de emissão; não apagar antes
-   dela terminar de testar.
+   nenhuma rejeição de IBS/CBS aparece mais (sem depender de mais nenhuma resposta).
+   **`supabase/scripts/excluir-os-teste-eduarda.sql` já foi rodado nesta sessão** — não por ter
+   terminado de testar, mas porque a OS de teste antiga ("Eduarda Cristina", reusada em cada
+   tentativa de emissão) tinha ficado contaminada de vez pelo bug do item 31 da seção 6 (item
+   acrescentado depois de faturada), sem mais servir pra validar NFC-e. O cadastro do cliente
+   "Eduarda Cristina" continua existindo (o script só apaga a OS, não o cliente/veículo) — ela criou
+   uma **OS de teste nova** nesse mesmo cliente, já com peça e serviço juntos, e foi testando essa
+   nova OS que apareceu o bug do item 32 da seção 6 (pagamento cheio da OS mandado como se fosse só
+   da peça). Testes seguem nessa OS nova depois que a próxima tag (com a correção do item 32) sair.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.
@@ -2093,7 +2130,7 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.13"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+- `package.json` em `"version": "0.9.14"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**

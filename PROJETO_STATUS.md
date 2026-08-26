@@ -1682,6 +1682,30 @@ ainda no meio da digitação).
      pra NFC-e — se não estiver, perguntar como pedir esse credenciamento (pode ser algo que a
      própria Focus NFe processa, ou pode exigir contato direto com a SEFAZ/contabilidade). **Ainda
      não investigado a fundo nem resolvido** — só identificado e documentado nesta sessão.
+
+     **Pesquisado mais a fundo, mesma sessão**: a SEFAZ-SP tem um **credenciamento de NFC-e
+     separado** (portal próprio, `nfce.fazenda.sp.gov.br`, diferente do credenciamento de NF-e/CT-e)
+     — segundo fontes de mercado (Jettax, TagPlus, Webmania), se o estabelecimento não foi
+     credenciado automaticamente ("de ofício") pela Secretaria, existe uma opção *"Credenciar só em
+     Homologação"* nesse portal pra liberar testes. **Detalhe que pode ser um bloqueio novo em cima
+     desse**: o acesso a esse portal da SEFAZ normalmente pede **certificado digital** — mas isso não
+     necessariamente contradiz o que já sabíamos (muitos estados, possivelmente incluindo SP, dispensam
+     o certificado **do lojista** pra emitir NFC-e no dia a dia via CSC do software house, ver item 6
+     da seção 8 — a questão é se esse mesmo CSC também cobre o *credenciamento inicial*, ou se esse
+     passo específico exige certificado mesmo). **Não confirmado, só levantado por busca na web** —
+     mesma cautela de sempre: não afirmar isso como certeza sem confirmar direto com a Focus NFe.
+     **Mensagem preparada nesta sessão** (ainda não enviada — pra ela mandar pro suporte da Focus
+     NFe, mesmo canal "Novo suporte"):
+     > Estou testando a emissão de NFC-e em ambiente de homologação pra minha empresa, CNPJ
+     > 66.217.744/0001-70 (Amigao Pneus e Servicos Automotivos Ltda), e recebo sempre o erro
+     > "Rejeição: CNPJ Emitente não cadastrado". Já habilitei a opção "NFCe" em Documentos Fiscais
+     > aqui no painel de vocês, então não deve ser isso que falta. Minhas perguntas: (1) o CNPJ
+     > 66.217.744/0001-70 está credenciado junto à SEFAZ-SP pra emissão de NFC-e no ambiente de
+     > homologação? (2) Se não estiver, como faço esse credenciamento — é algo que a Focus NFe
+     > processa automaticamente, ou preciso fazer diretamente no portal da SEFAZ-SP
+     > (nfce.fazenda.sp.gov.br)? (3) Esse credenciamento exige certificado digital da empresa? Se
+     > sim, é obrigatório mesmo emitindo pelo CSC de vocês (que entendo dispensar certificado
+     > próprio do lojista pra emissão do dia a dia)?
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.

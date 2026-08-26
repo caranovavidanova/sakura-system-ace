@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { mensagemDeErro } from "@/lib/errors";
-import { isSupabaseConfigured } from "@/lib/supabase";
 
-export function LoginPage() {
+interface LoginPageProps {
+  onConfigurarConexao: () => void;
+}
+
+export function LoginPage({ onConfigurarConexao }: LoginPageProps) {
   const { login } = useAuth();
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
@@ -42,14 +45,6 @@ export function LoginPage() {
           Entre com seu usuário para continuar
         </p>
 
-        {!isSupabaseConfigured && (
-          <p className="mb-4 rounded-xl bg-amber-50/90 px-4 py-3 text-sm text-amber-800">
-            O Supabase ainda não está configurado. Defina{" "}
-            <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
-            no arquivo <code>.env</code> para conseguir entrar.
-          </p>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           {erro && (
             <p className="rounded-lg bg-red-50/90 px-4 py-2 text-sm text-red-700">
@@ -86,6 +81,17 @@ export function LoginPage() {
             {entrando ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        {/* Fica aqui, e não em Configurações, de propósito: se a conexão
+            estiver errada ninguém consegue entrar — então o conserto precisa
+            estar acessível de fora do login. */}
+        <button
+          type="button"
+          onClick={onConfigurarConexao}
+          className="mx-auto mt-6 block text-xs text-sakura-muted hover:text-sakura-pink hover:underline"
+        >
+          Configurar conexão com o banco de dados
+        </button>
       </div>
     </div>
   );

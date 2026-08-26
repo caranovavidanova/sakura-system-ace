@@ -17,6 +17,66 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
 let mainWindow: BrowserWindow | null = null;
 
+// --- Conexão com o Supabase, escolhida no próprio app ---------------------
+//
+// Antes, a URL e a chave do Supabase eram gravadas dentro do build (secrets
+// do GitHub), então um instalador só servia uma empresa. Pra vender pra uma
+// segunda empresa (que precisa do banco de dados próprio, separado) sem ter
+// que gerar um instalador diferente por cliente, elas passam a ser digitadas
+// na primeira abertura e guardadas **neste computador**, num arquivo simples
+// dentro da pasta de dados do app.
+//
+// A chave guardada é a "anon"/publishable do Supabase, que é feita pra ser
+// pública (quem protege os dados é a RLS no banco, não o segredo da chave) —
+// por isso não há problema em ela ficar num arquivo de texto na máquina.
+//
+// O valor é repassado pro preload por **variável de ambiente**, o mesmo
+// mecanismo já usado por SAKURA_APP_VERSION acima. Isso é de propósito: o
+// preload precisa desse valor de forma síncrona (o cliente do Supabase é
+// criado assim que a tela carrega, antes de qualquer IPC poder responder), e
+// ler arquivo direto de dentro do preload empacotado já falhou antes de um
+// jeito silencioso (ver PROJETO_STATUS.md, seção 6, item 18).
+interface ConexaoSalva {
+  url: string;
+  chave: string;
+}
+
+const CAMINHO_CONEXAO = () => path.join(app.getPath("userData"), "conexao.json");
+
+function carregarConexaoSalva(): ConexaoSalva | null {
+  try {
+    const conteudo = fs.readFileSync(CAMINHO_CONEXAO(), "utf8");
+    const dados = JSON.parse(conteudo) as Partial<ConexaoSalva>;
+    if (!dados.url || !dados.chave) return null;
+    return { url: dados.url, chave: dados.chave };
+  } catch {
+    // Arquivo ainda não existe (primeira abertura) ou está corrompido — nos
+    // dois casos o app cai na tela de configuração, que é o certo.
+    return null;
+  }
+}
+
+function aplicarConexaoNoAmbiente(conexao: ConexaoSalva | null) {
+  if (conexao) {
+    process.env.SAKURA_SUPABASE_URL = conexao.url;
+    process.env.SAKURA_SUPABASE_ANON_KEY = conexao.chave;
+  } else {
+    delete process.env.SAKURA_SUPABASE_URL;
+    delete process.env.SAKURA_SUPABASE_ANON_KEY;
+  }
+}
+
+aplicarConexaoNoAmbiente(carregarConexaoSalva());
+
+// Grava a conexão escolhida e recarrega a tela: o cliente do Supabase é
+// montado uma vez só, quando a tela carrega, então trocar de banco de dados
+// sem recarregar deixaria o app falando com o banco antigo.
+ipcMain.handle("conexao:salvar", async (_evento, conexao: ConexaoSalva) => {
+  fs.writeFileSync(CAMINHO_CONEXAO(), JSON.stringify(conexao, null, 2), "utf8");
+  aplicarConexaoNoAmbiente(conexao);
+  mainWindow?.webContents.reload();
+});
+
 // Sem isso, o Chromium detecta que a janela ficou "oculta" atrás de outra
 // (ex: alt-tab, mesmo que por poucos segundos) e descarta/recarrega a tela
 // pra economizar recursos — do lado da usuária isso parece a tela "resetar"

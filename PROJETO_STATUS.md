@@ -1113,6 +1113,27 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     progresso (e também serve pra fechamento repentino do programa, não só pra esse bug
     específico) — ver "Ordens de Serviço" na seção 7. **Nenhum dos dois foi confirmado por ela
     rodando de verdade ainda** (mesclado na `main`, sem tag publicada).
+31. **Padrão de bug: item acrescentado numa OS já faturada deixa o total maior que o valor
+    pago** — descoberto testando a NFC-e de verdade na `v0.9.13`: rejeição da SEFAZ *"Total dos
+    pagamentos menor que o total da nota"*. Causa: faturar uma OS grava o pagamento no Caixa (ou
+    Contas a Receber) com o total **daquele momento**, mas nada impedia continuar clicando
+    "+ adicionar item" numa OS já faturada — o total da OS crescia, o valor já pago/lançado ficava
+    pra trás, e a NFC-e (que soma os itens atuais) não batia mais com o pagamento (que ficou
+    congelado no valor antigo). Não é só um problema de nota fiscal: mesmo sem emitir nada, isso já
+    deixava peça baixada do estoque sem entrada correspondente no Caixa. **Decisão tomada com a
+    usuária** (duas opções levantadas: tornar o faturamento editável, ou travar item pós-fatura) —
+    optou pela trava, por ser bem mais simples e sem risco fiscal (editar faturamento exigiria
+    desfazer/refazer Caixa/Contas a Receber, e se a nota já tivesse sido emitida, cancelar e
+    reemitir na SEFAZ). **Corrigido**: o "+ adicionar item" some da tela (`ItensFields.tsx`) e a
+    tentativa é bloqueada também no código (`OrdensServicoPage.tsx` → `handleSalvarEdicao`) quando
+    `status === "faturada"` — precisando de mais peça/serviço depois de faturado, é OS nova. Só
+    afeta OS já **faturada**; enquanto só "concluída" (fechou o serviço mas ainda não faturou)
+    continua dando pra acrescentar item numa boa, porque o Caixa ainda nem foi gravado nessa hora.
+    **Ponto trazido pela usuária junto**: como faturar virou definitivo pra sempre (não dá mais
+    pra corrigir esquecendo um item), o botão "Confirmar faturamento" (`FaturamentoCard.tsx`) ganhou
+    uma confirmação explícita (`confirm()`, mesmo padrão de exclusões/cancelamentos já usado no
+    resto do app) avisando dessa consequência antes de faturar de verdade. **Mesclado na `main`,
+    ainda não publicado em tag** — a `v0.9.13` (já publicada) não leva essa correção.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1236,6 +1257,10 @@ ainda no meio da digitação).
   o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
   "aberta" separada) → **concluída** → **faturada**. Form em duas colunas, reabre pra editar (só
   permite acrescentar itens, não editar/remover item já lançado — evita desfazer baixa de estoque).
+  **Acrescentar item só funciona até a OS estar "faturada"** (numa sessão posterior, ver item 31 da
+  seção 6) — depois de faturada, o "+ adicionar item" some e a peça/serviço esquecido vira uma OS
+  nova; faturar (o botão "Confirmar faturamento") agora pede confirmação explícita antes, avisando
+  que essa trava passa a valer.
   Não existe mais seletor manual de status no form — o cabeçalho mostra o status atual (badge) e,
   enquanto "em_andamento", um botão **"Encerrar OS"** que marca como concluída e já abre a tela de
   faturamento na sequência, num fluxo só. **`OrdemServicoForm.tsx` migrado nesta sessão** pro

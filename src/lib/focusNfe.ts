@@ -198,18 +198,25 @@ function montarItemNFCe(item: ItemParaNFCe, numeroItem: number): ItemNFCe {
     icms_modalidade_base_calculo: "3",
     // Reforma Tributária (IBS/CBS) — período de transição 2026: CST "000"
     // (tributação integral) + cClassTrib "000001" (situação plenamente
-    // tributada), alíquotas e valores ainda zerados (confirmado com a
-    // contabilidade, ver PROJETO_STATUS.md seção 8, item 1).
+    // tributada). As alíquotas de teste (0,9% CBS / 0,1% IBS-UF / 0% IBS-mun)
+    // são fixadas por lei pra 2026 (Nota Técnica NFe 2025.002/LC 214/2025) —
+    // símbolicas, compensadas com PIS/Cofins/ICMS/ISS já cobrados, sem
+    // aumento real de imposto — mas a SEFAZ rejeita a nota se o valor não
+    // bater exatamente com isso (rejeição 1026/1027/1036/1037). A
+    // contabilidade da loja tinha orientado tudo zerado (ver
+    // PROJETO_STATUS.md seção 8, item 1) — essa parte específica (o valor
+    // exato da alíquota de teste) foi corrigida depois de uma rejeição real
+    // da SEFAZ em homologação apontando exatamente pra isso.
     ibs_cbs_situacao_tributaria: "000",
     ibs_cbs_classificacao_tributaria: "000001",
     ibs_cbs_base_calculo: formatarValor(valorBruto),
-    cbs_aliquota: "0.00",
-    cbs_valor: "0.00",
-    ibs_uf_aliquota: "0.00",
-    ibs_uf_valor: "0.00",
+    cbs_aliquota: "0.90",
+    cbs_valor: formatarValor((valorBruto * 0.9) / 100),
+    ibs_uf_aliquota: "0.10",
+    ibs_uf_valor: formatarValor((valorBruto * 0.1) / 100),
     ibs_mun_aliquota: "0.00",
     ibs_mun_valor: "0.00",
-    ibs_valor_total: "0.00",
+    ibs_valor_total: formatarValor((valorBruto * 0.1) / 100),
   };
 }
 

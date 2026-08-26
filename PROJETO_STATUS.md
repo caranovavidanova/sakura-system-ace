@@ -1836,6 +1836,24 @@ ainda no meio da digitação).
      > (nfce.fazenda.sp.gov.br)? (3) Esse credenciamento exige certificado digital da empresa? Se
      > sim, é obrigatório mesmo emitindo pelo CSC de vocês (que entendo dispensar certificado
      > próprio do lojista pra emissão do dia a dia)?
+
+     **RESPONDIDO pelo suporte da Focus NFe (Danilo Gabriel Lopes, 26/08/2026)** — resposta clara,
+     que fecha o diagnóstico e derruba uma suposição minha antiga:
+     1. A rejeição 245 vem **direto da SEFAZ**, quando o emitente ainda não tem credenciamento pra
+        NFC-e **no ambiente usado** (homologação ou produção — são separados, como já suspeitávamos).
+     2. **A Focus NFe não faz esse credenciamento.** É o próprio emitente, direto na SEFAZ do
+        estado dele. Eles sugerem pedir ajuda à contabilidade.
+     3. **Precisa de CSC E certificado digital — os dois.** Isso **derruba a suposição registrada
+        no item 6 desta seção** de que muitos estados dispensariam o certificado do lojista pra
+        NFC-e via CSC do software house: pelo menos em SP, e pela boca da própria Focus NFe, não
+        dispensa. Ver a correção anotada lá.
+     4. **O certificado digital já está corretamente vinculado** no cadastro da empresa deles
+        (ele conferiu) — ou seja, esse pedaço já está pronto, é o único que já estava.
+     5. Falta a loja **gerar o ID token e o CSC direto na SEFAZ-SP**, tanto o de homologação quanto
+        o de produção, e informar os dois no Painel da API da Focus NFe.
+     Feito isso, segundo ele, a empresa fica apta a emitir. **Próximo passo é 100% dela/da
+     contabilidade** (portal da SEFAZ-SP, com certificado digital) — não há nada a mudar no código
+     do Sakura System por causa disso.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
@@ -1976,11 +1994,18 @@ ainda no meio da digitação).
    1. **Habilitar os documentos no painel da Focus NFe** — Empresas → (empresa) → Documentos
       Fiscais → ligar NFCe e NFSe. É **self-service** (o suporte deles não faz isso por você —
       resposta do Natan Coelho), mas ninguém adivinha que existe: custou um ticket pra descobrir.
-   2. **Credenciar o CNPJ na SEFAZ do estado, pra NFC-e** — e **homologação e produção são
-      credenciamentos separados** (rejeição 245, "CNPJ Emitente não cadastrado"). Em SP existe um
-      portal próprio de NFC-e (`nfce.fazenda.sp.gov.br`), diferente do de NF-e/CT-e, possivelmente
-      exigindo certificado digital. **Varia por estado** — direto relevante pra fase 3, que sai de
-      Araraquara/SP (ver seção 1).
+   2. **Credenciar o CNPJ na SEFAZ do estado, pra NFC-e — e gerar CSC + ID token lá** (confirmado
+      pelo suporte da Focus NFe, 26/08/2026, ver item 1 desta seção). São **três coisas** por loja,
+      todas feitas pelo próprio lojista/contabilidade no portal da SEFAZ do estado, nenhuma delas
+      feita pela Focus NFe: (a) o **credenciamento** do CNPJ pra NFC-e — e **homologação e produção
+      são credenciamentos separados** (é a rejeição 245, "CNPJ Emitente não cadastrado"); (b) o
+      **certificado digital** da empresa, que precisa existir e ser vinculado no painel da Focus
+      NFe; (c) o **CSC e o ID token**, gerados na SEFAZ (um par pra homologação, outro pra
+      produção) e informados no painel da Focus NFe. Em SP existe um portal próprio de NFC-e
+      (`nfce.fazenda.sp.gov.br`), diferente do de NF-e/CT-e, e o acesso pede o certificado digital.
+      **Varia por estado** — direto relevante pra fase 3, que sai de Araraquara/SP (ver seção 1).
+      **É o passo mais pesado de todo o onboarding fiscal**: envolve certificado digital pago,
+      portal de governo e, na prática, a contabilidade do cliente.
    3. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
       da loja, não da Focus NFe). **Varia por município**, inclusive o fornecedor do sistema
       municipal (Araraquara usa "Giap") e o conceito de lote/RPS que ele impõe.
@@ -2052,16 +2077,25 @@ ainda no meio da digitação).
    (~30 carros/dia em média, ~1.170 notas/mês/loja estimado): consolidar tudo numa conta Growth
    sairia ~14-19% da receita de R$1000/loja, contra ~20-24% mantendo 30 assinaturas Solo
    separadas — mais barato consolidado, e principalmente **mais profissional** (dono da loja nunca
-   precisa saber que a Focus NFe existe, só usa o Sakura System). **Ponto em aberto, não verificado
-   ainda** (o site de documentação da Focus NFe fica bloqueado no ambiente sandbox, não dá pra
-   confirmar por aqui): pra emitir nota normalmente é preciso certificado digital vinculado ao
-   CNPJ — NFC-e (peça) muitos estados dispensam certificado do lojista via CSC do próprio software
-   house, então dá pra automatizar de ponta a ponta; **NFS-e (serviço) varia por prefeitura** —
-   algumas cidades pedem certificado digital da própria loja, outras só usuário/senha do portal
-   municipal (mesma variável de ICMS/ISS por estado/município já citada na seção 1, fase 3). Antes
-   de prometer automação 100% em qualquer cidade, confirmar direto com o suporte da Focus NFe: (a)
-   se dá pra cadastrar CNPJ de cliente numa conta só sem ele precisar logar lá, e (b) o que muda de
-   cidade pra cidade na NFS-e.
+   precisa saber que a Focus NFe existe, só usa o Sakura System).
+
+   **CORREÇÃO IMPORTANTE (26/08/2026)**: uma suposição registrada aqui antes — de que "NFC-e muitos
+   estados dispensam certificado do lojista via CSC do próprio software house, então dá pra
+   automatizar de ponta a ponta" — **está errada, e foi desmentida pelo próprio suporte da Focus
+   NFe** (ver item 1 desta seção). Pra NFC-e são necessários, **por CNPJ de loja**: certificado
+   digital próprio + credenciamento na SEFAZ do estado + CSC e ID token gerados por lá (um par por
+   ambiente). Nada disso a Focus NFe faz pelo cliente, e nada disso o token compartilhado resolve.
+   **Consequência pro sonho do self-service**: consolidar numa conta só continua valendo pelo preço
+   e por esconder a Focus NFe do dono da loja, mas **não elimina o onboarding fiscal por loja** —
+   ele continua exigindo certificado digital pago, portal de governo e a contabilidade do cliente.
+   Reforça a decisão já registrada no playbook do item 1: tratar "usar o sistema" e "emitir nota"
+   como duas etapas de ativação separadas.
+
+   **Ainda em aberto pra NFS-e** (essa parte não foi respondida): **varia por prefeitura** — algumas
+   cidades pedem certificado digital da própria loja, outras só usuário/senha do portal municipal
+   (Araraquara pediu usuário/senha, ver item 1). Antes de prometer automação 100% em qualquer
+   cidade, confirmar com o suporte da Focus NFe: (a) se dá pra cadastrar CNPJ de cliente numa conta
+   só sem ele precisar logar lá, e (b) o que muda de cidade pra cidade na NFS-e.
 
    **Concorrentes da Focus NFe checados nesta sessão** (Webmania, NFe.io — prints reais dos
    planos): nos planos públicos de autosserviço, ambos ficam **piores** que Focus NFe no volume

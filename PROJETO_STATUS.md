@@ -1935,6 +1935,13 @@ ainda no meio da digitação).
    respondida-por-elas-mesmas como "não" (não é MEI, não se encaixa), então a mensagem pode ser
    simplificada pra focar direto na (3): o que falta pro "Lote RPS" no ambiente municipal mesmo.
 
+   **Mensagem enviada (26/08/2026) — ticket `#238770` na Focus NFe**, título *"Empresa Simples
+   Nacional em Araraquara — preciso migrar pro Ambiente Nacional?"*. Ela cobriu as duas pontas numa
+   mensagem só: se a empresa precisa migrar pro Ambiente Nacional (e como fazer isso no painel
+   deles), **ou**, se não for o caso, o que exatamente falta pra resolver o "Lote RPS não pode ser
+   nulo" no ambiente municipal mesmo. **Aguardando resposta** — o ticket estava sem retorno 3 horas
+   depois de aberto. É o único bloqueio de NFS-e hoje; nada a fazer no código até eles responderem.
+
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
    não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou

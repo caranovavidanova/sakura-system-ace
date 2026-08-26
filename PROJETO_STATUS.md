@@ -85,8 +85,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    gerar um instalador separado por cliente. Agora cada computador escolhe a conexão na primeira
    abertura e o valor fica guardado só naquela máquina — ver "Conexão com o banco (multi-empresa)"
    na seção 7. Serve também de base pro modelo self-service da fase 3 (site de assinatura).
-   **Falta publicar numa tag e ela testar** — e, antes disso, avisar que a loja do pai dela vai
-   precisar digitar a conexão uma vez depois de atualizar (motivo na seção 7).
+   **Publicado na `v0.9.18` e confirmado funcionando por ela** (instalou no notebook, colou URL +
+   chave, entrou normalmente). **Pendência**: avisar a loja do pai dela que, na primeira abertura
+   depois de atualizar, o app vai pedir a conexão uma vez — motivo e valores na seção 7.
 3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema**
    — essa fase **já envolve estados diferentes** (não fica só em Araraquara/SP como as fases
    anteriores) — o que pode importar pra emissão fiscal (regras de ICMS/ISS variam por
@@ -1269,8 +1270,9 @@ deixando redigitar sem precisar do mouse. Implementado uma única vez, globalmen
 bug corrigido no próprio fix (checar `.value` bloqueava o caso mais comum, corrigir um dígito
 ainda no meio da digitação).
 
-- **Conexão com o banco (multi-empresa)** — construída nesta sessão, **ainda não publicada em tag
-  nem testada por ela**. Antes, a URL/chave do Supabase eram gravadas dentro do instalador (secrets
+- **Conexão com o banco (multi-empresa)** — construída nesta sessão e **confirmada funcionando de
+  verdade por ela** (instalou a `v0.9.18` no notebook dela, colou URL + chave, entrou no sistema
+  normalmente). Antes, a URL/chave do Supabase eram gravadas dentro do instalador (secrets
   do GitHub no `release.yml`), então **um instalador servia uma empresa só**. Agora cada computador
   escolhe a conexão na primeira abertura, numa tela própria (`pages/conexao/ConexaoPage.tsx`) que
   aparece no lugar do login enquanto não houver conexão salva; o valor fica guardado **só naquela

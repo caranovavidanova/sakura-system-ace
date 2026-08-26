@@ -1419,6 +1419,24 @@ ainda no meio da digitação).
     (`get_release_by_tag`) se já existe uma release/rascunho com aquele nome de tag — se existir e
     o `target_commitish` não for `main`, é sinal de resíduo de sessão anterior, apagar antes dela
     tentar publicar em cima.
+  - `v0.9.12`: **o mesmo incidente se repetiu numa sessão posterior, e a lição acima não foi
+    suficiente pra evitar** — eu conferi por `get_release_by_tag` antes de orientar ela a publicar
+    e recebi 404 (nenhuma release), mas ela publicou mesmo assim e o GitHub reaproveitou um
+    **rascunho não publicado que já existia com esse nome de tag** (criado quase um mês antes,
+    apontando pra uma branch antiga). **Causa raiz da lição anterior estar errada**:
+    `get_release_by_tag` **não enxerga rascunhos não publicados** — só passa a existir pra essa
+    consulta depois de publicado. Resolvido do mesmo jeito de sempre (apagar release + tag
+    separadamente, recriar conferindo "Target"), mas dessa vez **recriar a tag com o mesmo nome que
+    acabou de ser apagada não disparou o build de novo** (mais um comportamento estranho do GitHub,
+    a tag ficou correta no repositório mas nenhum `workflow_run` novo apareceu, confirmado
+    esperando e checando de novo várias vezes) — precisou pular pra `v0.9.13`, um nome de tag nunca
+    usado antes, pra sair dessa situação. **Lição corrigida**: não existe hoje um jeito confiável de
+    checar por API se uma tag vai colidir com um rascunho antes de publicar — `get_release_by_tag`
+    (só releases publicadas) e `list_releases` (também não mostrou o rascunho na listagem, mesmo
+    com push access) não pegam rascunho não publicado. Na prática, o mais seguro agora é: (a) se o
+    nome da tag nunca foi usado antes no projeto, seguir normal; (b) se já existiu antes de qualquer
+    forma (mesmo já apagada), considerar arriscado reusar o mesmo nome — preferir pular pro próximo
+    número.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -2050,7 +2068,7 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.10"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+- `package.json` em `"version": "0.9.13"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**

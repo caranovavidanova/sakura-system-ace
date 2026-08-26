@@ -892,6 +892,22 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     quando um campo "não aceita digitação" — confirmado que não existe mais nenhum `bg-white/*`
     envolvendo `<input>`/`<select>`/`<textarea>` no restante do app (os `bg-white/*` que sobraram são
     hover de botão/aba/dropdown, sem input dentro, então seguros).
+
+    **Terceira reincidência da mesma família, achada numa varredura sistemática (não por relato
+    dela)**: os dois gráficos de Relações (`GraficoBarras.tsx`, `GraficoRadar.tsx`) desenhavam a
+    caixinha de valor que aparece ao passar o mouse com `bg-sakura-purple-dark` + `text-white`.
+    **A armadilha está no nome do token**: `sakura-purple-dark` era roxo escuro no tema claro
+    antigo (letra branca em cima fazia todo sentido) e virou uma cor **clara** (`#e8d5e5`) na
+    migração pro tema escuro — ou seja, virou branco sobre branco, contraste **1,39:1** contra o
+    mínimo legível de 4,5:1 do WCAG. Corrigido pra `bg-sakura-pink-soft` (`#1a1018`) + borda sutil,
+    subindo pra 18,56:1. **Lição maior que o bug**: `bg-white/*` não é o único suspeito — qualquer
+    uso de `sakura-purple-dark` como **fundo** é candidato pelo mesmo motivo, e o nome do token
+    ativamente engana quem lê o código. Por isso a varredura virou ferramenta permanente:
+    **`npm run contraste`** (`scripts/varredura-contraste.mjs`) lê toda string de `className` do
+    app e aponta combinação de fundo claro + letra clara (ou fundo escuro + letra escura). Rodar
+    depois de qualquer mexida grande de estilo — hoje passa limpo. Ele não enxerga fundo e texto
+    declarados em elementos diferentes, então continua valendo olhar a tela; serve pra pegar de
+    graça o caso mais comum, que é fundo e cor na mesma classe.
 18. **Padrão de bug: `process.env.npm_package_version` não existe no app empacotado** —
     `VersaoApp.tsx` (canto inferior direito, em toda tela) sempre dependeu dessa variável, que o npm
     só injeta quando o processo é lançado via `npm run ...`. No `.exe` instalado (aberto direto,

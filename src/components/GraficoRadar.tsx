@@ -186,7 +186,7 @@ export function GraficoRadar({
 
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-sakura-purple-dark px-2.5 py-1.5 text-xs text-white shadow-lg"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-sakura-gray/30 bg-sakura-pink-soft px-2.5 py-1.5 text-xs text-white shadow-lg"
           style={{ left: tooltip.x, top: tooltip.y - 6 }}
         >
           <p className="font-medium">{tooltip.eixo}</p>

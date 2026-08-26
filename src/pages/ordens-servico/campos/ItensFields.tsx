@@ -15,6 +15,7 @@ export function ItensFields({
   setValue,
   itensExistentes,
   ehEdicao,
+  podeAdicionarItem,
   pecas,
   servicos,
   funcionarios,
@@ -25,6 +26,7 @@ export function ItensFields({
   setValue: UseFormSetValue<OrdemServicoFormValues>;
   itensExistentes: ItemOS[];
   ehEdicao: boolean;
+  podeAdicionarItem: boolean;
   pecas: Peca[];
   servicos: Servico[];
   funcionarios: Funcionario[];
@@ -37,14 +39,22 @@ export function ItensFields({
     <section>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-sakura-purple-dark">Peças e serviços</h3>
-        <button
-          type="button"
-          onClick={() => append({ ...itemFormVazio })}
-          className="text-xs font-medium text-sakura-purple hover:underline"
-        >
-          + adicionar item
-        </button>
+        {podeAdicionarItem && (
+          <button
+            type="button"
+            onClick={() => append({ ...itemFormVazio })}
+            className="text-xs font-medium text-sakura-purple hover:underline"
+          >
+            + adicionar item
+          </button>
+        )}
       </div>
+
+      {!podeAdicionarItem && (
+        <p className="mb-3 text-xs text-sakura-muted">
+          Esta OS já foi faturada — pra acrescentar peça ou serviço, abra uma OS nova.
+        </p>
+      )}
 
       {itensExistentes.length > 0 && (
         <div className="mb-3 space-y-1.5 rounded-lg bg-sakura-gray/5 p-3">

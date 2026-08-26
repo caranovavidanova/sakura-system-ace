@@ -181,6 +181,11 @@ export function OrdensServicoPage() {
     novosItens: NovoItemOS[],
   ) {
     if (!operador || !lojaAtual) return;
+    if (novosItens.length > 0 && ordemEmEdicao?.status === "faturada") {
+      throw new Error(
+        "Esta OS já foi faturada — não dá mais pra acrescentar peça ou serviço nela.",
+      );
+    }
     await atualizarOrdem(id, patch, operador.id);
     if (novosItens.length > 0 && ordemEmEdicao) {
       await adicionarItensOrdem(id, ordemEmEdicao.numero, novosItens, operador.id, lojaAtual.id);

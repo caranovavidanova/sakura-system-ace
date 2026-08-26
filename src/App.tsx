@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AreaRolavel } from "./components/AreaRolavel";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
@@ -6,9 +7,11 @@ import { VersaoApp } from "./components/VersaoApp";
 import { useAuth } from "./contexts/AuthContext";
 import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { useLimparDataAoApagar } from "./hooks/useLimparDataAoApagar";
+import { conexaoConfigurada } from "./lib/conexao";
 import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
+import { ConexaoPage } from "./pages/conexao/ConexaoPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
 import { ContasPagarPage } from "./pages/contas-pagar/ContasPagarPage";
 import { ContasReceberPage } from "./pages/contas-receber/ContasReceberPage";
@@ -55,6 +58,22 @@ export default function App() {
   const { carregando, session, operador } = useAuth();
   useEnterParaProximoCampo();
   useLimparDataAoApagar();
+  // Na primeira abertura deste computador ainda não se sabe de qual empresa é
+  // este app — sem isso não há nem como fazer login.
+  const [configurandoConexao, setConfigurandoConexao] = useState(!conexaoConfigurada());
+
+  if (configurandoConexao) {
+    return (
+      <>
+        <ConexaoPage
+          onCancelar={
+            conexaoConfigurada() ? () => setConfigurandoConexao(false) : undefined
+          }
+        />
+        <VersaoApp />
+      </>
+    );
+  }
 
   if (carregando) {
     return (
@@ -68,7 +87,7 @@ export default function App() {
   if (!session) {
     return (
       <>
-        <LoginPage />
+        <LoginPage onConfigurarConexao={() => setConfigurandoConexao(true)} />
         <VersaoApp />
       </>
     );

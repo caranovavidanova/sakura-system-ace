@@ -12,4 +12,17 @@ contextBridge.exposeInMainWorld("sakuraApp", {
   // da tela (CORS), ver o handler "http:fetchComAuth" em main.ts.
   fetchComAuth: (opcoes: { url: string; metodo: string; token: string; corpo?: unknown }) =>
     ipcRenderer.invoke("http:fetchComAuth", opcoes),
+  // Conexão com o Supabase escolhida neste computador (ver o bloco sobre
+  // "conexao.json" em main.ts). Vem como valor pronto, não como função, porque
+  // o cliente do Supabase precisa dela de imediato — IPC seria assíncrono
+  // demais pra esse momento. `undefined` significa "ainda não configurado".
+  conexao:
+    process.env.SAKURA_SUPABASE_URL && process.env.SAKURA_SUPABASE_ANON_KEY
+      ? {
+          url: process.env.SAKURA_SUPABASE_URL,
+          chave: process.env.SAKURA_SUPABASE_ANON_KEY,
+        }
+      : undefined,
+  salvarConexao: (conexao: { url: string; chave: string }) =>
+    ipcRenderer.invoke("conexao:salvar", conexao),
 });

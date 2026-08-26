@@ -80,13 +80,13 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    (dono diferente) = 1 projeto Supabase próprio**, totalmente isolado — diferente da fundação
    **multi-loja** já construída (essa é pra **uma empresa com várias lojas**, e continua servindo
    normalmente dentro do projeto Supabase do amigo, já que ele tem 2 lojas próprias).
-   **Decisão tomada, ainda não implementada**: hoje o instalador só sabe conectar num Supabase só
-   (URL/chave gravadas no build via secret do GitHub) — pra servir uma empresa nova sem gerar um
-   instalador separado pra cada uma, é preciso trocar isso por uma **tela de configuração de
-   conexão dentro do próprio app** (URL/chave do Supabase digitadas e salvas localmente, em vez de
-   embutidas no build) — opção escolhida em vez de manter builds separados por cliente, porque
-   também serve de base pro modelo self-service da fase 3 (site de assinatura). **Ainda não
-   construída** — é o próximo passo antes de conseguir instalar de verdade pra esse amigo.
+   **Resolvido (construído nesta sessão)**: o instalador só sabia conectar num Supabase só
+   (URL/chave gravadas no build via secret do GitHub), o que impedia instalar pra esse amigo sem
+   gerar um instalador separado por cliente. Agora cada computador escolhe a conexão na primeira
+   abertura e o valor fica guardado só naquela máquina — ver "Conexão com o banco (multi-empresa)"
+   na seção 7. Serve também de base pro modelo self-service da fase 3 (site de assinatura).
+   **Falta publicar numa tag e ela testar** — e, antes disso, avisar que a loja do pai dela vai
+   precisar digitar a conexão uma vez depois de atualizar (motivo na seção 7).
 3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema**
    — essa fase **já envolve estados diferentes** (não fica só em Araraquara/SP como as fases
    anteriores) — o que pode importar pra emissão fiscal (regras de ICMS/ISS variam por
@@ -168,6 +168,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Fluxo de Git **enquanto não existir uma v1.0 oficial publicada** | Criar/reusar uma branch de trabalho, commitar, abrir PR e **já mergear direto em `main`** ao final de cada tarefa — nunca deixar PR esperando aprovação manual | Pedido explícito da usuária. **Sempre informar no chat, em português simples, os comandos exatos e onde rodar cada um** depois do merge. Revisitar quando existir uma v1.0 publicada de verdade |
 | Ir pra produção sem emissão fiscal pronta | A usuária já usa o sistema na borracharia (cadastro, OS, estoque, caixa) e continua emitindo nota fiscal por fora até a emissão automática ficar pronta | Desbloqueia o uso real sem esperar o projeto de integração fiscal (depende de escolher provedor + certificado digital) |
 | Empacotamento do instalador Windows | Instalador simples (NSIS) + atualização automática via GitHub Releases (`electron-builder` + `electron-updater`) | Evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
+| Conexão com o Supabase no app instalado | Digitada na primeira abertura e guardada **naquele computador** (`conexao.json` na pasta de dados do app) — **não** embutida no build | Um instalador só passa a servir qualquer empresa (fase 2). Os secrets saíram do `release.yml` de propósito: embutidos, o instalador entregue a um cliente novo viria apontando pro banco de outra empresa. Em `npm run dev` o `.env` continua valendo. Ver seção 7 |
 | Chave da IA (leitura de nota fiscal por foto) | Fica só como secret de uma Supabase Edge Function — nunca no app Electron instalado | Cada loja (projeto Supabase próprio) paga pela própria conta Anthropic, sem expor a chave a quem tem acesso ao computador. Ver seção 7 e item 8 da seção 8 |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
 | Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
@@ -204,14 +205,21 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # bug de clique já corrigido nele; ganhou a opção `permitirLivre`
 │   │                             # nesta sessão — quando ligada, aceita digitar um valor que não
 │   │                             # está na lista de sugestões em vez de exigir escolher uma opção,
-│   │                             # usado hoje só na Marca do veículo, ver seção 7 "Clientes")
+│   │                             # usado hoje só na Marca do veículo, ver seção 7 "Clientes"),
+│   │                             # AvisoRascunho.tsx (faixa "restaurar rascunho não salvo?", usada
+│   │                             # por todo formulário com auto-save — ver hooks abaixo)
 │   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
 │   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
 │   │                             # globalmente, em App.tsx + useLimparDataAoApagar.ts (nesta
 │   │                             # sessão — Backspace/Delete num campo de data limpa o campo
 │   │                             # inteiro em vez de não fazer nada, mesmo padrão de aplicação
 │   │                             # global em App.tsx; ver item 27 da seção 6)
-│   ├── lib/                     # supabase.ts + um arquivo por entidade (clientes.ts, pecas.ts,
+│   │                             # + useRascunhoFormulario.ts (auto-save local a cada 30s; o hook
+│   │                             # `useRascunho` junta autosave + restaurar/descartar, usado por
+│   │                             # OS, Cliente, Funcionário, Produto e Pedido de Compra)
+│   ├── lib/                     # supabase.ts + conexao.ts (decide com qual Supabase/empresa este
+│   │                             # computador fala — ver "Conexão com o banco" na seção 7)
+│   │                             # + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
 │   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
@@ -252,6 +260,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # notas-fiscais, funcionarios, auditoria (admin-only, sem entrada
 │   │                             # em MODULOS — acesso via ícone no rodapé da Sidebar, igual
 │   │                             # Configurações, não é permissão de operador comum), login,
+│   │                             # conexao (só ConexaoPage.tsx — tela de conectar ao banco da
+│   │                             # empresa, aparece no lugar do login enquanto não há conexão
+│   │                             # salva; sem permissão nem rota, é decidida em App.tsx),
 │   │                             # configuracoes. Cada pasta tem
 │   │                             # <Modulo>Page.tsx (lista) + <Modulo>Form.tsx (formulário), com
 │   │                             # exceções:
@@ -352,7 +363,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # (só o Supabase injeta sozinha, sem secret manual pra
 │                                  # configurar), ver "Login e permissões" na seção 7.
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
+├── scripts/varredura-contraste.mjs # `npm run contraste` — procura combinação de fundo/letra
+│                                  # ilegível nas classes do app (sobra do tema claro antigo), ver
+│                                  # item 17 da seção 6
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
+│                                  # (NÃO embute mais a conexão do Supabase — ver seção 7)
 ├── eslint.config.js              # flat config do ESLint 9
 ├── vitest.config.ts              # config de teste separado do vite.config.ts de propósito (não
 │                                  # carrega os plugins do Electron, que não fazem sentido numa
@@ -1214,6 +1229,42 @@ deixando redigitar sem precisar do mouse. Implementado uma única vez, globalmen
 bug corrigido no próprio fix (checar `.value` bloqueava o caso mais comum, corrigir um dígito
 ainda no meio da digitação).
 
+- **Conexão com o banco (multi-empresa)** — construída nesta sessão, **ainda não publicada em tag
+  nem testada por ela**. Antes, a URL/chave do Supabase eram gravadas dentro do instalador (secrets
+  do GitHub no `release.yml`), então **um instalador servia uma empresa só**. Agora cada computador
+  escolhe a conexão na primeira abertura, numa tela própria (`pages/conexao/ConexaoPage.tsx`) que
+  aparece no lugar do login enquanto não houver conexão salva; o valor fica guardado **só naquela
+  máquina**, num `conexao.json` dentro da pasta de dados do app (no Windows, algo como
+  `%APPDATA%\Sakura System - AutoCenter Edition\conexao.json`). A tela tem "Testar conexão" e
+  também testa sozinha antes de salvar — salvar um endereço com erro de digitação deixaria o app
+  numa tela de login que nunca funciona, sem explicação. Pra trocar depois, há um link discreto
+  **na própria tela de login** (de propósito: se a conexão estiver errada ninguém entra, então o
+  conserto não pode estar atrás do login, em Configurações).
+  - **Decisão importante tomada junto**: os secrets `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`
+    foram **removidos do `release.yml`**, ou seja, o instalador não carrega mais a conexão de
+    empresa nenhuma. O motivo é de segurança de dado, não de arquitetura: mantendo os secrets, o
+    instalador entregue ao amigo do pai dela viria pré-preenchido com o banco da **Pneus Amigão** —
+    um clique distraído e ele estaria vendo os dados dos clientes de outra empresa. Com eles fora,
+    a tela nasce vazia pra todo mundo. Em `npm run dev` nada muda: o `.env` continua valendo, e a
+    tela nem aparece (`import.meta.env.DEV` manda; ver `src/lib/conexao.ts`).
+  - **Consequência prática pra loja que já usa (Pneus Amigão)**: na primeira abertura **depois** de
+    atualizar pra versão que levar isso, o app vai pedir a conexão uma vez, com os campos vazios.
+    Os valores são os de sempre — URL `https://rlgdjiowvnfzsedehyga.supabase.co` e a chave `anon`
+    do painel do Supabase (Settings → API). É uma vez por computador, não toda abertura. **Avisar a
+    usuária antes de publicar a tag**, pra ela não ser pega de surpresa (ou pro pai dela não ser).
+  - **Como o valor chega na tela sem IPC assíncrono**: `electron/main.ts` lê o `conexao.json` na
+    abertura e joga em `process.env.SAKURA_SUPABASE_URL`/`SAKURA_SUPABASE_ANON_KEY`; o preload
+    repassa isso pro app via `contextBridge`. É de propósito o **mesmo mecanismo** já usado pela
+    versão do app (`SAKURA_APP_VERSION`): o cliente do Supabase é criado assim que a tela carrega,
+    antes de qualquer IPC conseguir responder, então o valor precisa estar disponível de forma
+    síncrona — e ler arquivo direto de dentro do preload empacotado já falhou de um jeito
+    silencioso antes (item 18 da seção 6). Salvar grava o arquivo e **recarrega a tela**, porque o
+    cliente do Supabase é montado uma vez só.
+  - **Testado de ponta a ponta no Electron de verdade** (Playwright + `xvfb-run`, apontando pra
+    raiz do app), 11 verificações: preload roda inteiro, tela de conexão aparece no lugar do login
+    quando não há conexão salva, salvar grava o arquivo com o conteúdo certo, e depois do reload a
+    conexão chega na tela e o app passa pro login. Esse teste é o único jeito de pegar falha
+    silenciosa de preload — leitura de código não pegaria.
 - **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
   do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
   novo). Menu lateral e rotas filtrados por permissão (`PermissaoRoute`/`AdminRoute`). Tela
@@ -2063,15 +2114,11 @@ ainda no meio da digitação).
    ainda não foram criados — ela recebeu um `.txt` com esse resumo pra colar como primeira mensagem
    quando abrir a sessão de IA desse projeto novo. **Isso é 100% separado do Sakura System — nenhum
    código, dado ou decisão de arquitetura desse teste deve vazar pra cá sem ela pedir.**
-8. **Tela de configuração de conexão Supabase (multi-empresa)** — decidida numa sessão posterior,
-   ainda não construída. Motivada pelo primeiro caso real da fase 2 (item 2 da seção 1): um amigo
-   do pai dela provavelmente vai comprar o sistema pras duas lojas dele, uma empresa diferente que
-   precisa de projeto Supabase próprio, isolado. Hoje o instalador tem a conexão (URL/chave)
-   gravada no build (secrets do GitHub), então um instalador só serve uma empresa — pra vender pra
-   uma segunda empresa sem gerar build/instalador separado por cliente, o app precisa de uma tela
-   (provavelmente antes do login) onde a URL/chave do Supabase daquela empresa são digitadas e
-   salvas localmente no computador, não embutidas no build. Ver seção 1, item 2 da fase 2, pro
-   raciocínio completo da decisão.
+8. ✅ **Tela de configuração de conexão Supabase (multi-empresa)** — **construída nesta sessão**,
+   ver "Conexão com o banco (multi-empresa)" na seção 7 pro funcionamento e pra pendência de
+   publicação. Era o passo que travava a fase 2 (item 2 da seção 1): um amigo do pai dela vai
+   comprar o sistema pras duas lojas dele, uma empresa diferente, que precisa de projeto Supabase
+   próprio e isolado — e até aqui um instalador servia uma empresa só.
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -2223,9 +2270,15 @@ Só precisa da migration — sem Edge Function, sem secret.
 Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar — os apps já
 instalados se atualizam sozinhos quando sai uma versão nova.
 
-**Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/sakura-system-ace` → Settings →
-Secrets and variables → Actions → criar `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; e Settings
-→ Actions → General → "Workflow permissions" → "Read and write permissions".
+**Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/sakura-system-ace` →
+Settings → Actions → General → "Workflow permissions" → "Read and write permissions".
+
+**Os secrets `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` não são mais usados pelo build** (desde
+a sessão que construiu a tela de conexão, ver seção 7): o instalador não carrega mais a conexão de
+empresa nenhuma dentro dele, cada computador escolhe a sua na primeira abertura. Podem continuar
+cadastrados no GitHub sem problema — só não fazem mais efeito. **Não voltar a colocá-los no
+`release.yml`** sem entender o motivo: embutidos, o instalador entregue a um cliente novo viria
+apontando pro banco de dados de outra empresa.
 
 **Toda vez que quiser publicar uma versão nova — jeito atual, preferido, sem a usuária precisar
 mexer em nada** (descoberto e validado numa sessão que publicou `v0.9.13` a `v0.9.15` assim

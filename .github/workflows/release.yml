@@ -29,9 +29,13 @@ jobs:
 
       - run: npm ci
 
+      # A conexão com o Supabase NÃO é mais embutida no instalador de
+      # propósito. Ela era gravada aqui via secrets, o que fazia um instalador
+      # servir uma empresa só — e, pior, faria o instalador entregue a um
+      # cliente novo já vir apontando pro banco de dados de outra empresa.
+      # Hoje cada computador escolhe a conexão na primeira abertura, e o valor
+      # fica guardado só naquela máquina (ver src/lib/conexao.ts).
       - name: Build e publica o instalador Windows
         run: npm run electron:build -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}

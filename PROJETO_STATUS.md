@@ -37,6 +37,14 @@
   desses" ou "assim?", ela geralmente já está no meio do passo a passo que eu dei — vale conferir
   o print com atenção antes de responder, às vezes tem um detalhe (nome errado, campo a mais) que
   muda o resultado.
+- **Mensagem que ela vai mandar pra outra pessoa** (contabilidade, suporte da Focus NFe, cliente):
+  escrever **curta e informal**, do jeito que uma pessoa fala — não recapitular todo o contexto
+  técnico. Se existe um print ou e-mail que já explica o problema, é ele que carrega a parte
+  técnica, e a mensagem fica só: *"preciso de ajuda com isso / o print explica / vocês fazem pra
+  mim? / preciso receber X de volta"*. Ela rejeitou explicitamente uma primeira versão longa e
+  formal ("quero mais humano, mais simples, sem precisar desse contexto todo"). Vale pra qualquer
+  texto que sai da nossa conversa pro mundo — o cuidado com contexto completo é pro
+  `PROJETO_STATUS.md`, não pro WhatsApp dela.
 - **Sempre que eu aprender uma preferência de trabalho nova**, documentar aqui — não só nas
   decisões técnicas da seção 3, mas qualquer coisa sobre *como* ela quer que eu trabalhe. Sessões
   futuras não têm memória da conversa, só deste arquivo.
@@ -1856,6 +1864,17 @@ ainda no meio da digitação).
      Feito isso, segundo ele, a empresa fica apta a emitir. **Próximo passo é 100% dela/da
      contabilidade** (portal da SEFAZ-SP, com certificado digital) — não há nada a mudar no código
      do Sakura System por causa disso.
+
+     **Pedido enviado à contabilidade (Lucrare/Rafaela) em 26/08/2026**, junto com o print da
+     resposta do Danilo, pedindo que eles (a) credenciem o CNPJ pra NFC-e na SEFAZ-SP nos dois
+     ambientes e (b) gerem o CSC e o ID Token de homologação **e** de produção. **Aguardando os
+     quatro códigos** — quando chegarem, é só cadastrar no painel da Focus NFe (passo dela, não de
+     código) e tentar emitir de novo. **Preferência dela sobre esse tipo de mensagem, aprendida
+     aqui**: mensagem pra terceiro (contabilidade, suporte) deve ser **curta e informal**, sem
+     recapitular todo o contexto técnico — se existe um print/e-mail que já explica, ele carrega a
+     parte técnica e a mensagem fica só "preciso de ajuda com isso / o print explica / vocês fazem
+     pra mim? / preciso receber X de volta". A primeira versão que escrevi foi rejeitada por ser
+     longa e formal demais.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.

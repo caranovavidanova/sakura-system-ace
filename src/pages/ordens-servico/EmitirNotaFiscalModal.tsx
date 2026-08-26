@@ -18,7 +18,7 @@ import type { Cliente } from "@/types/cliente";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { RespostaFocusNfe } from "@/types/focusNfe";
 import type { OrdemServico } from "@/types/os";
-import { totalPorTipo } from "@/types/os";
+import { totalOrdem, totalPorTipo } from "@/types/os";
 
 interface EmitirNotaFiscalModalProps {
   ordem: OrdemServico;
@@ -31,12 +31,33 @@ interface EmitirNotaFiscalModalProps {
 // — quando não há lançamento de Caixa vinculado (faturamento "a receber
 // depois"), não dá pra saber o meio de pagamento real ainda, então cai num
 // código genérico ("99" — Outros) só pra não travar a emissão.
-async function buscarPagamentosParaNota(ordemId: string, total: number): Promise<PagamentoParaNota[]> {
+//
+// O lançamento de Caixa cobre a OS inteira (peça + serviço juntos), mas a
+// NFC-e representa só a parte de peça — por isso o valor de cada forma de
+// pagamento é escalado proporcionalmente (peça / total da OS), senão o
+// total pago informado fica maior que o total da nota e a SEFAZ rejeita por
+// falta de "troco". A última linha absorve a diferença de arredondamento,
+// pra soma bater exatamente com o total da nota.
+async function buscarPagamentosParaNota(
+  ordemId: string,
+  totalNota: number,
+  totalGeralOrdem: number,
+): Promise<PagamentoParaNota[]> {
   const movimentos = await listarMovimentosCaixaPorOrdem(ordemId);
-  if (movimentos.length > 0) {
-    return movimentos.map((m) => ({ formaPagamento: m.forma_pagamento ?? "outros", valor: m.valor }));
+  if (movimentos.length === 0 || totalGeralOrdem <= 0) {
+    return [{ formaPagamento: "outros", valor: totalNota }];
   }
-  return [{ formaPagamento: "outros", valor: total }];
+
+  const fator = totalNota / totalGeralOrdem;
+  const pagamentos = movimentos.map((m) => ({
+    formaPagamento: m.forma_pagamento ?? "outros",
+    valor: Math.round(m.valor * fator * 100) / 100,
+  }));
+
+  const somaSemUltima = pagamentos.slice(0, -1).reduce((soma, p) => soma + p.valor, 0);
+  pagamentos[pagamentos.length - 1].valor = Math.round((totalNota - somaSemUltima) * 100) / 100;
+
+  return pagamentos;
 }
 
 export function EmitirNotaFiscalModal({
@@ -108,7 +129,11 @@ export function EmitirNotaFiscalModal({
           throw new Error("Esta OS não tem nenhum item de peça pra emitir NFC-e.");
         }
 
-        const pagamentos = await buscarPagamentosParaNota(ordem.id, totalPecas);
+        const pagamentos = await buscarPagamentosParaNota(
+          ordem.id,
+          totalPecas,
+          totalOrdem(ordem.itens ?? []),
+        );
 
         resposta = await emitirNFCe({ ordem, itens, cliente, pagamentos, configuracaoFiscal });
       } else {

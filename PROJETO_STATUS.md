@@ -7,6 +7,12 @@
 > confirmada, narrativa de sessão que virou só histórico sem lição nenhuma). Prefira reescrever a
 > seção 7 como "estado atual por módulo" em vez de empilhar mais um parágrafo por PR — o que
 > importa pra uma sessão nova é o que está pronto **hoje**, não a arqueologia de como chegou lá.
+>
+> **Cuidado ao ler**: a expressão "nesta sessão" aparece mais de 60 vezes aqui, escrita por sessões
+> diferentes ao longo de meses — **ela não quer dizer a sessão atual**, e não dá pra saber a qual
+> se refere só pelo texto. Trate como "em algum momento do passado". Ao escrever coisa nova,
+> prefira a data (o rodapé "Onde tudo parou" no fim da seção 8 é o marco mais recente) ou o número
+> da versão publicada. Vale uma limpeza dessas expressões quando sobrar tempo.
 
 ## 1. Quem é a usuária e como trabalhar com ela
 
@@ -808,9 +814,15 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
    de Compra, saldo de estoque, cotação por fornecedor) — **não** testa componente React, tela,
    nem nada que dependa do Supabase (esse tipo de teste, de UI/integração, é bem mais trabalhoso de
-   montar e não foi feito ainda). 45 testes, todos passando. Achou e corrigiu de brinde um bug real
-   de arredondamento de ponto flutuante em `calcularValorCobrado` (`100 * 1.1` podia sair
-   `110.00000000000001` em vez de `110`). **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
+   montar e não foi feito ainda). **59 testes**, todos passando. Achou e corrigiu de brinde um bug
+   real de arredondamento de ponto flutuante em `calcularValorCobrado` (`100 * 1.1` podia sair
+   `110.00000000000001` em vez de `110`).
+   **Um teste de verdade fora desse padrão, nesta sessão**: a tela de conexão foi validada de ponta
+   a ponta no **Electron real** (Playwright + `xvfb-run`, ver item 6 desta seção), inclusive o
+   caminho de falha — e ali o sandbox ajuda em vez de atrapalhar, porque a ausência de rede pro
+   Supabase reproduz naturalmente o cenário "a checagem reprovou". Não está no `npm test` (é script
+   avulso), mas é o único jeito de pegar falha silenciosa de preload.
+   **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
    o parser de XML de verdade (precisa de `DOMParser`, uma API de navegador que o ambiente "node"
    padrão do Vitest não tem) — usa jsdom só nesse arquivo, via comentário `// @vitest-environment
    jsdom` no topo do arquivo (`jsdom` virou devDependency só pra isso; o resto dos testes continua
@@ -1278,6 +1290,18 @@ deixando redigitar sem precisar do mouse. Implementado uma única vez, globalmen
 bug corrigido no próprio fix (checar `.value` bloqueava o caso mais comum, corrigir um dígito
 ainda no meio da digitação).
 
+**Auto-save de rascunho** (estendido nesta sessão): os formulários longos guardam sozinhos uma
+cópia local do que está digitado, a cada 30s — **não é um "salvar" de verdade** (não manda nada pro
+banco nem substitui o botão Salvar), é rede de segurança pra quando o programa fecha de repente ou
+a tela recarrega sozinha (ver item 30 da seção 6). Ao reabrir o mesmo registro, aparece a faixa
+"Encontramos um rascunho não salvo... Restaurar?" (`components/AvisoRascunho.tsx`); salvar de
+verdade descarta o rascunho. Cobre **Ordem de Serviço, Cliente, Funcionário, Produto e Pedido de
+Compra** — os cinco formulários onde dá pra perder bastante digitação. Ligar num formulário novo
+são duas linhas: o hook `useRascunho(chave, watch, reset)` (`src/hooks/useRascunhoFormulario.ts`)
+mais o `<AvisoRascunho>`. **Cuidado embutido**: o autosave compara com o retrato de quando a tela
+abriu e ignora formulário intocado — sem isso, só abrir uma tela e deixar 30s já criaria um
+rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
+
 - **Conexão com o banco (multi-empresa)** — construída nesta sessão e **confirmada funcionando de
   verdade por ela** (instalou a `v0.9.18` no notebook dela, colou URL + chave, entrou no sistema
   normalmente). Antes, a URL/chave do Supabase eram gravadas dentro do instalador (secrets
@@ -1424,9 +1448,8 @@ ainda no meio da digitação).
   ele está aberto (não é um "salvar" de verdade, não mexe no banco nem no botão de Salvar) — se a
   tela recarregar sozinha (ver item 30 da seção 6) ou o programa fechar de repente, reabrir a
   mesma OS mostra "Encontramos um rascunho não salvo... Restaurar?"; ao salvar com sucesso, o
-  rascunho é descartado. Só implementado nesse formulário por enquanto (o mais longo, mais exposto
-  a interrupção no balcão) — dá pra estender pros outros formulários depois de validado de
-  verdade. Técnico por item + vendedor/atendente da OS (ambos listam
+  rascunho é descartado. **Estendido nesta sessão** pros outros formulários longos do app — ver
+  "Auto-save de rascunho" logo no começo desta seção. Técnico por item + vendedor/atendente da OS (ambos listam
   `funcionarios`, não só operadores). Lista de OS tem filtro de período (De/Até) e busca por
   cliente/placa — OS em aberto sempre aparecem, não importa a data (só o histórico já faturado é
   filtrado por período, pra lista não crescer sem controle); colunas de Nº/Peças/Serviços/Total/Lucro
@@ -1641,6 +1664,19 @@ ainda no meio da digitação).
     da seção 6). **Também publicada direto via `workflow_dispatch`** — a partir daqui esse já virou
     o jeito padrão de publicar (ver detalhe completo em "Gerar o instalador Windows e publicar uma
     versão nova", seção 9).
+  - `v0.9.16`: a leva desta sessão — **tela de conexão com o banco** (o instalador deixa de
+    carregar a conexão de empresa nenhuma, ver "Conexão com o banco (multi-empresa)" nesta seção),
+    auto-save de rascunho em mais quatro formulários, correção do tooltip ilegível nos gráficos de
+    Relações (item 17 da seção 6) e cadastro manual em Contas a Receber. Publicada via
+    `workflow_dispatch`.
+  - `v0.9.17`: primeira tentativa de corrigir o "Testar conexão" reprovando a chave certa — mandar
+    a chave só no cabeçalho `apikey`, sem `Authorization: Bearer` (ver item 33 da seção 6).
+    **Não resolveu** — ela testou e o erro continuou igual.
+  - `v0.9.18`: a correção que importava — o teste de conexão **deixa de trancar a entrada no
+    sistema** (ganha "Salvar assim mesmo" quando reprova) e passa a usar o próprio cliente do
+    `supabase-js`, o mesmo caminho que o app usa de verdade. **Confirmada por ela**: instalou,
+    colou URL + chave e entrou normalmente ("coloquei a chave e foiii"). Também já rodando no PC
+    da loja, sem precisar avisar ninguém. Ver item 33 da seção 6 pra lição completa.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -2239,6 +2275,26 @@ por módulo) e item 4 (sem teste de UI/integração, só função pura).
 fornecedores etc.) — o único módulo que falta é a emissão de nota fiscal (item 1 desta seção), que
 não bloqueia o uso, só é emitida por fora enquanto isso.
 
+### Onde tudo parou ao fim desta sessão (26/08/2026)
+
+Nada travado do lado do **código**: `main` na `v0.9.18`, publicada, rodando no notebook dela e no
+PC da loja. As 45 migrations estão aplicadas. Os dois assuntos em aberto são fiscais e dependem de
+terceiros:
+
+| Assunto | Onde parou | Com quem está |
+|---|---|---|
+| **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
+| **NFS-e** (serviço) | Erro *"Lote RPS não pode ser nulo"*, sem diagnóstico ainda. Hipótese do Ambiente Nacional já descartada (empresa não é MEI) | **Focus NFe** — ticket `#238770`, aberto em 26/08, sem resposta |
+
+**Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
+painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico
+faltando na NFS-e, aí sim é ajuste em `montarCorpoNFSe()` (`src/lib/focusNfe.ts`).
+
+**Ponta solta pequena, não confirmada**: não ficou claro se ela chegou a usar o botão "Testar
+conexão" com sucesso na `v0.9.18`, ou se entrou pelo "Salvar assim mesmo". Se foi o segundo, a
+checagem ainda está errada (só não trava mais ninguém) e vale investigar quando houver folga — mas
+não é urgente, porque o app funciona de qualquer jeito.
+
 ## 9. Como rodar / configurar (resumo)
 
 ```bash
@@ -2259,18 +2315,28 @@ Auditoria, todos testados na prática — `0041`, o cadastro de Depósito, tamb�
 por ela — `0042`, Cotação de peças, rodada por ela numa sessão anterior, depois de um susto com a
 query dando erro "relation pecas does not exist" por estar apontando pro projeto Supabase errado
 no SQL Editor (rodando no projeto certo, funcionou de primeira) — e `0043`, "Recorrente até" em
-Contas a Pagar, rodada e confirmada por ela nesta sessão). **`0044`** (campos novos em
+Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (campos novos em
 `configuracoes_fiscais_loja` pra NFS-e — código do município, item da lista de serviço, alíquota
-ISS, código tributário do município), criada nesta sessão, validada num Postgres local e **já
-confirmada rodando no Supabase real dela** — falta só ela preencher esses campos novos em
-Configurações → "Dados fiscais da loja" antes de testar a emissão de NFS-e (a de NFC-e não
-depende dela).
+ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
+NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
+
+**Estado hoje: as 45 migrations (`0001` a `0045`) estão todas aplicadas no projeto dela.** Nada
+pendente de rodar — as duas sessões mais recentes (esta inclusive) não criaram migration nenhuma:
+o cadastro manual em Contas a Receber reaproveitou a tabela existente, e a tela de conexão não
+toca no banco.
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0044`. Todas são idempotentes.
+até `0045`. Todas são idempotentes.
+
+**Isso é só a parte do banco.** Uma empresa nova (não uma loja nova dentro da mesma empresa) ainda
+precisa de: os dois passos manuais de Auth logo abaixo, o primeiro operador admin, e — no
+computador dela — digitar a URL/chave desse projeto na tela de conexão que aparece na primeira
+abertura (ver "Conexão com o banco (multi-empresa)" na seção 7). Se a loja também for emitir nota
+fiscal, some a isso o **playbook de habilitação fiscal** do item 1 da seção 8, que é a parte
+demorada e depende de SEFAZ/prefeitura/contabilidade do cliente.
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 
@@ -2484,7 +2550,7 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.15"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+- `package.json` em `"version": "0.9.18"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**

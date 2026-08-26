@@ -256,6 +256,7 @@ export function OrdemServicoForm({
             setValue={setValue}
             itensExistentes={itensExistentes}
             ehEdicao={!!ordemExistente}
+            podeAdicionarItem={ordemExistente?.status !== "faturada"}
             pecas={pecas}
             servicos={servicos}
             funcionarios={funcionarios}

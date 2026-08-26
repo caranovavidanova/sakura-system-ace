@@ -101,6 +101,15 @@ export function FaturamentoCard({
       return;
     }
 
+    if (
+      !confirm(
+        "Confirmar o faturamento? Depois disso não dá mais pra acrescentar peça ou serviço " +
+          "nessa OS — se esquecer algo, só numa OS nova.",
+      )
+    ) {
+      return;
+    }
+
     try {
       await onConfirmar(
         paraPagamentos(valores, valorCobrado),

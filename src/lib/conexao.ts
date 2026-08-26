@@ -48,24 +48,33 @@ export async function salvarConexao(conexao: Conexao): Promise<void> {
 // usuária salvar um endereço com erro de digitação e só descobrir na hora de
 // entrar, com uma mensagem que não ajuda em nada. Um Supabase válido responde
 // nesse endereço quando recebe a chave certa.
+//
+// Traduz o código HTTP da resposta na mensagem que a usuária vê (`null` =
+// deu certo). Separado da chamada de rede pra poder ser testado sem internet.
+export function mensagemDoTeste(status: number): string | null {
+  if (status === 401 || status === 403) {
+    return "O endereço respondeu, mas a chave não foi aceita. Confira se copiou a chave anon/publishable inteira.";
+  }
+  if (status >= 200 && status < 300) return null;
+  return `O endereço respondeu de um jeito inesperado (código ${status}). Confira se a URL é a do seu projeto Supabase.`;
+}
+
 export async function testarConexao(conexao: Conexao): Promise<void> {
   const base = conexao.url.replace(/\/+$/, "");
   let resposta: Response;
   try {
-    resposta = await fetch(`${base}/rest/v1/`, {
-      headers: { apikey: conexao.chave, Authorization: `Bearer ${conexao.chave}` },
-    });
+    // Só o cabeçalho `apikey`. Mandar a chave também como
+    // `Authorization: Bearer ...` faz o Supabase recusar com 401 quando ela
+    // está no formato novo (`sb_publishable_...`), que não é um JWT e não
+    // pode ser usado como token — erro documentado por eles, e que fazia esta
+    // tela acusar "chave não foi aceita" com a chave certa. Só `apikey`
+    // funciona nos dois formatos, o novo e o antigo (`eyJ...`).
+    resposta = await fetch(`${base}/rest/v1/`, { headers: { apikey: conexao.chave } });
   } catch {
     throw new Error(
       "Não foi possível falar com esse endereço. Confira se a URL está certa e se o computador está conectado à internet.",
     );
   }
-  if (resposta.status === 401 || resposta.status === 403) {
-    throw new Error("O endereço respondeu, mas a chave não foi aceita. Confira a chave anon.");
-  }
-  if (!resposta.ok) {
-    throw new Error(
-      `O endereço respondeu de um jeito inesperado (código ${resposta.status}). Confira se a URL é a do seu projeto Supabase.`,
-    );
-  }
+  const problema = mensagemDoTeste(resposta.status);
+  if (problema) throw new Error(problema);
 }

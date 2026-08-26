@@ -1201,6 +1201,24 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     seção 6). **Publicado na `v0.9.15`** (build disparado direto pelo `workflow_dispatch`, ver
     "Empacotamento" na seção 7) — ainda falta ela confirmar testando de novo se resolveu de
     verdade.
+33. **Padrão de bug: a chave nova do Supabase (`sb_publishable_...`) não pode ir em
+    `Authorization: Bearer`** — reportado por ela na primeira vez que usou a tela de conexão nova
+    (`v0.9.16`, print da loja): "Testar conexão" acusava *"O endereço respondeu, mas a chave não foi
+    aceita"* mesmo com a chave certa, colada do painel. Causa: `testarConexao()`
+    (`src/lib/conexao.ts`) mandava a chave nos **dois** cabeçalhos, `apikey` e
+    `Authorization: Bearer`. Isso funcionava com o formato **antigo** de chave anon (`eyJ...`, que
+    é um JWT de verdade), mas o Supabase trocou pro formato novo `sb_publishable_...`, que é uma
+    chave **opaca** — não é JWT, então usá-la como token de portador é recusado com 401. A própria
+    documentação deles lista isso como erro comum. **Corrigido** mandando só `apikey`, que vale
+    pros dois formatos. **Por que só a tela nova quebrou, e não o app inteiro**: o `supabase-js`
+    também monta `Authorization: Bearer <chave>` quando não há sessão, mas o app praticamente não
+    faz chamada REST antes do login (login vai pro `/auth/v1/`, que tolera), então nunca batia
+    nesse caso — a tela de conexão foi o primeiro lugar a chamar `/rest/v1/` sem sessão.
+    **Lição**: ao escrever qualquer checagem de credencial contra uma API, conferir em qual
+    cabeçalho aquela credencial deve ir, em vez de mandar nos dois "por garantia" — mandar a mais
+    pode ser o que causa a recusa. A tradução de código HTTP pra mensagem virou função pura
+    (`mensagemDoTeste`) com teste, já que o sandbox não alcança `supabase.co` pra testar de ponta a
+    ponta.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

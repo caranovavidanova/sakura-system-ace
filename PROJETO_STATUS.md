@@ -1744,6 +1744,23 @@ ainda no meio da digitação).
    painel deles; (3) se não for isso, o que falta pra resolver o "Lote RPS" no ambiente municipal
    mesmo. **Ainda não enviada** — aguardando ela mandar e o suporte responder.
 
+   **Hipótese do "Ambiente Nacional" descartada nesta sessão** (antes de mandar a mensagem acima,
+   ela achou o interruptor direto no painel — Serviços → Pneus Amigao → "Ambiente da NFSe Nacional -
+   Homologação" — e tentou ligar): ao tentar, a própria Focus NFe mostrou um aviso que **fecha essa
+   hipótese**: *"Este município não usa o emissor do ambiente nacional para todas as empresas. Se
+   você não é uma empresa obrigada a emitir pelo ambiente nacional, a emissão via NFSe Nacional não
+   irá funcionar... Se você tem certeza que sua empresa é obrigada a emitir no ambiente nacional ao
+   invés do ambiente do município (por exemplo, se sua empresa é MEI), você deve digitar 'eu aceito'
+   no campo abaixo."* A empresa (Amigao Pneus e Serviços Automotivos **Ltda**, CNPJ
+   `66.217.744/0001-70`) **não é MEI** — é Simples Nacional, mas registrada como Ltda, não como
+   Microempreendedor Individual — então não se encaixa na exceção que obrigaria/permitiria usar o
+   Ambiente Nacional. **Orientada a cancelar a janela, sem digitar "eu aceito"** — confirmar isso
+   às cegas arriscaria emitir pelo ambiente errado (mesmo em homologação, não é um comportamento
+   que queremos validar). **Volta a valer o plano original**: mandar a mensagem-checklist já
+   preparada (pergunta 1/2/3 acima) pro suporte da Focus NFe — a pergunta (1) já está
+   respondida-por-elas-mesmas como "não" (não é MEI, não se encaixa), então a mensagem pode ser
+   simplificada pra focar direto na (3): o que falta pro "Lote RPS" no ambiente municipal mesmo.
+
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
    não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou
@@ -1756,12 +1773,12 @@ ainda no meio da digitação).
      sessão posterior** (Rafaela encaminhou a tabela da Rayana) e **já implementada em código**, ver
      o item "NFC-e — IBS/CBS — RESOLVIDO" logo acima.
 
-   **Como retomar na próxima sessão**: perguntar direto se: (a) ela mandou a mensagem sobre
-   Ambiente Nacional x municipal pro suporte da Focus NFe e o que responderam — se a resposta for
-   "sim, migre pro Ambiente Nacional", isso muda a implementação (pode ser um jeito de emitir
-   diferente, sem lote/RPS, não só um campo novo em `montarCorpoNFSe()`); se for "não, o municipal
-   mesmo, falta o campo X", aí sim é só ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts`
-   conforme indicado; (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se sim e o
+   **Como retomar na próxima sessão**: a hipótese do Ambiente Nacional **já foi descartada** (ver
+   bloco logo acima — a própria Focus NFe confirmou que a empresa não se encaixa, por não ser MEI),
+   então não perguntar mais sobre isso, só confirmar se: (a) ela já mandou (ou vai mandar) a versão
+   simplificada da mensagem pro suporte da Focus NFe, focada só em "o que falta pro Lote RPS no
+   ambiente municipal mesmo" — e o que responderam; se indicarem um campo específico, é só ajustar
+   `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme indicado; (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se sim e o
    código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e revisar
    as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
    (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de

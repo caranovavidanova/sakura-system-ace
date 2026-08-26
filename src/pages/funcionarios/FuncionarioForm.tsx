@@ -1,7 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { AvisoRascunho } from "@/components/AvisoRascunho";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { useRascunho } from "@/hooks/useRascunhoFormulario";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   funcionarioFormSchema,
@@ -40,13 +42,21 @@ export function FuncionarioForm({
   const {
     register,
     control,
+    watch,
     setValue,
+    reset,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FuncionarioFormValues>({
     resolver: zodResolver(funcionarioFormSchema),
     defaultValues: paraValoresFormulario(funcionarioExistente),
   });
+
+  const rascunho = useRascunho(
+    `rascunho-funcionario-${funcionarioExistente?.id ?? "novo"}`,
+    watch,
+    reset,
+  );
 
   // Todos os campos com validação (só "nome" por enquanto) ficam na aba "Dados
   // gerais" — se o envio falhar com o usuário na aba "Família", troca de aba
@@ -60,6 +70,7 @@ export function FuncionarioForm({
     setErro(null);
     try {
       await onSalvar(paraNovoFuncionario(valores), paraFilhosPreenchidos(valores.filhos));
+      rascunho.limpar();
     } catch (err) {
       console.error("Erro ao salvar funcionário:", err);
       setErro(mensagemDeErro(err));
@@ -80,6 +91,14 @@ export function FuncionarioForm({
 
       {erro && (
         <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+      )}
+
+      {rascunho.rascunho && (
+        <AvisoRascunho
+          descricao="deste funcionário"
+          onRestaurar={rascunho.restaurar}
+          onDescartar={rascunho.descartar}
+        />
       )}
 
       {funcionarioExistente?.operador_id && (

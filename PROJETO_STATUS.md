@@ -1146,8 +1146,9 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     **Corrigido**: escala cada forma de pagamento proporcionalmente (`totalPecas / totalGeralOrdem`),
     com a última linha absorvendo a diferença de arredondamento pra soma bater exatamente com o
     total da nota (mesmo cuidado de arredondamento já usado em `calcularValorCobrado`, ver item 4 da
-    seção 6). **Mesclado na `main`, ainda não publicado em tag** — falta uma versão nova pra
-    confirmar que resolveu de verdade.
+    seção 6). **Publicado na `v0.9.15`** (build disparado direto pelo `workflow_dispatch`, ver
+    "Empacotamento" na seção 7) — ainda falta ela confirmar testando de novo se resolveu de
+    verdade.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1496,6 +1497,10 @@ ainda no meio da digitação).
     **Publicada direto via `workflow_dispatch`** (rodado por aqui mesmo, `ref: main`) — primeira
     vez que uma tag/release nasceu sem a usuária precisar tocar na tela do GitHub, e sem nenhum
     atraso de fila dessa vez.
+  - `v0.9.15`: leva a correção do pagamento da NFC-e em OS com peça e serviço juntos (ver item 32
+    da seção 6). **Também publicada direto via `workflow_dispatch`** — a partir daqui esse já virou
+    o jeito padrão de publicar (ver detalhe completo em "Gerar o instalador Windows e publicar uma
+    versão nova", seção 9).
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -2065,32 +2070,69 @@ instalados se atualizam sozinhos quando sai uma versão nova.
 Secrets and variables → Actions → criar `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; e Settings
 → Actions → General → "Workflow permissions" → "Read and write permissions".
 
-**Toda vez que quiser publicar uma versão nova**:
+**Toda vez que quiser publicar uma versão nova — jeito atual, preferido, sem a usuária precisar
+mexer em nada** (descoberto e validado numa sessão que publicou `v0.9.13` a `v0.9.15` assim
+seguidas, sem ela tocar no terminal nem na tela do GitHub nenhuma vez):
 
-1. Peça pra eu atualizar o campo `"version"` do `package.json` pro número novo primeiro, numa
-   mensagem separada — ex: "atualiza a versão pra 0.1.4 e publica". **Importante**: o nome da
-   release no GitHub vem desse campo, **não** da tag do Git — sem esse passo, o `electron-builder`
-   atualiza a release errada em vez de criar uma nova.
-2. Depois que eu confirmar que atualizei e mergeei, no terminal:
-   ```powershell
-   git checkout main
-   git pull origin main
-   git tag v0.1.4
-   git push origin v0.1.4
-   ```
-   (o número da tag precisa ser **exatamente igual** ao `"version"` do `package.json`.)
+1. Atualizar o campo `"version"` do `package.json` (e rodar `npm install` só pra sincronizar o
+   `package-lock.json`, que também carrega o número da versão) — commit, PR, merge direto na
+   `main`, igual qualquer outra mudança (ver seção 3, fluxo de Git).
+2. Depois do merge confirmado, disparar o build **direto por uma chamada de API**, sem precisar de
+   `git tag`/`git push` nenhum: `mcp__github__actions_run_trigger` com `method: "run_workflow"`,
+   `workflow_id: "release.yml"`, `ref: "main"`. Isso cria a tag/release sozinho (com o nome vindo
+   do `"version"` do `package.json`, `v` na frente) e já builda em cima do commit certo.
+3. Conferir com `mcp__github__get_release_by_tag` (`tag: "vX.Y.Z"`) até `assets` aparecer com o
+   `.exe` e o `latest.yml` — leva uns 5-10 minutos.
 
-Isso dispara o build automaticamente no GitHub — demora uns 5 a 10 minutos. O instalador aparece
-em `github.com/caranovavidanova/sakura-system-ace/releases`. O Windows/SmartScreen deve avisar "editor
-desconhecido" (normal sem certificado pago — "Mais informações → Executar assim mesmo"). PCs já
-atualizados se atualizam sozinhos na próxima tag.
+**Por que esse é o jeito preferido agora, e não `git tag` + `git push`**: numa sessão do Claude
+Code na nuvem (não é a máquina da usuária), `git push` de uma **tag** é bloqueado com erro 403 —
+parece trava de segurança proposital do ambiente, não bug de proxy (mas `git push` de **branch**
+normal, pra abrir PR, funciona numa boa — só tag é bloqueada). Isso sempre obrigou a usuária a
+publicar manualmente pela tela do GitHub (`releases/new`), o que já causou **dois incidentes reais**
+de rascunho de release antigo sendo reaproveitado silenciosamente por engano (ver "Empacotamento"
+na seção 7, tags `v0.9.10` e `v0.9.12`) — a tela de criar release não distingue "nome de tag novo"
+de "nome de tag que já existe como rascunho esquecido de semanas atrás". O gatilho manual
+`workflow_dispatch` (adicionado ao `.github/workflows/release.yml` nesta mesma sessão, ao lado do
+`push: tags: v*` que já existia) resolve os dois problemas de uma vez: não depende de `git push` de
+tag (então funciona de dentro de uma sessão na nuvem) e não passa pela tela de criar release da
+usuária (então não tem chance de colidir com rascunho nenhum).
+
+**Detalhe de uso do `workflow_dispatch`**: só funciona disparando com `ref: "main"` — o GitHub só
+permite `workflow_dispatch` a partir do arquivo do workflow que está na branch **default**
+(`main`); tentar `ref` apontando pra uma tag antiga falha com "Workflow does not have
+workflow_dispatch trigger" (porque o arquivo naquele commit antigo não tem esse gatilho ainda). Não
+tem problema nenhum disparar sempre por `main` — o `package.json` de lá já está com a versão certa
+assim que o passo 1 acima for mesclado.
+
+**Se por algum motivo o `workflow_dispatch` não estiver disponível** (ex: outro repositório que
+ainda não tem esse gatilho no workflow) ou se for a própria usuária publicando (ela não tem esse
+bloqueio de `git push` de tag, roda numa máquina normal): os dois jeitos antigos continuam
+funcionando —
+```powershell
+git checkout main
+git pull origin main
+git tag v0.1.4
+git push origin v0.1.4
+```
+(tag tem que bater exatamente com o `"version"` do `package.json`) — ou publicar direto pela tela
+do GitHub (`releases/new`, digitar a tag nova, "Publish release"). **Nesse segundo caso**, sempre
+checar antes se o nome da tag já foi usado alguma vez no projeto (mesmo que a release tenha sido
+apagada depois) — reusar um nome de tag é arriscado (rascunho antigo pode reaparecer, ou o GitHub
+simplesmente não disparar o build de novo pra esse nome, ver os dois incidentes documentados na
+seção 7); **não existe hoje um jeito confiável de checar isso por API** (`get_release_by_tag` e
+`list_releases` não enxergam rascunho não publicado) — na dúvida, pular pro próximo número de
+versão em vez de tentar reusar um nome antigo.
+
+O instalador aparece em `github.com/caranovavidanova/sakura-system-ace/releases`. O
+Windows/SmartScreen deve avisar "editor desconhecido" (normal sem certificado pago — "Mais
+informações → Executar assim mesmo"). PCs já atualizados se atualizam sozinhos na próxima tag.
 
 **Duas pegadinhas já corrigidas** (não devem mais acontecer, mas documentado caso reapareçam): (a)
 por padrão o `electron-builder` publica a release como rascunho invisível — corrigido com
-`"releaseType": "release"` no `publish` do `package.json`; (b) publicar uma tag sem antes
-atualizar `"version"` no `package.json` faz o build atualizar a release **anterior** em vez de
-criar uma nova (o nome da release vem do `package.json`, não da tag) — por isso o passo 1 acima é
-sempre antes da tag, nunca depois.
+`"releaseType": "release"` no `publish` do `package.json`; (b) publicar sem antes atualizar
+`"version"` no `package.json` faz o build atualizar a release **anterior** em vez de criar uma nova
+(o nome da release vem do `package.json`, não da tag/gatilho usado) — por isso o passo 1 acima é
+sempre antes de disparar o build, nunca depois.
 
 ## 10. Estado do Git
 
@@ -2130,7 +2172,7 @@ sempre antes da tag, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.14"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+- `package.json` em `"version": "0.9.15"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**

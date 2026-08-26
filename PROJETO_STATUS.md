@@ -313,8 +313,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │   notas-fiscais/  # NotasFiscaisPage.tsx com abas NFe/NFS-e + ArquivosSection.tsx +
 │   │                   # NotaFiscalVisualModal.tsx (recibo "versão para o cliente")
 │   │   contas-pagar/   # ContasPagarPage.tsx + ContaPagarForm.tsx + PagarContaModal.tsx
-│   │   contas-receber/ # ContasReceberPage.tsx + ReceberContaModal.tsx (sem form de criação manual
-│   │                   # — só nasce automaticamente ao faturar uma OS escolhendo "a receber")
+│   │   contas-receber/ # ContasReceberPage.tsx + ReceberContaModal.tsx + ContaReceberForm.tsx
+│   │                   # (nasce sozinha ao faturar uma OS escolhendo "a receber", e desde esta
+│   │                   # sessão também dá pra lançar à mão, igual Contas a Pagar)
 │   │   relatorios/     # RelatoriosPage.tsx (orquestrador de abas) + GraficosSection.tsx (barras +
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
 │   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado, agora conta o
@@ -722,11 +723,18 @@ outro projeto Supabase do zero (ver seção 9).
   ordens_servico, opcional e único — 1 conta a receber por OS faturada), descricao, valor,
   vencimento (date, aqui é "previsão de recebimento"), status (`pendente`/`recebido`),
   data_recebimento (opcional), caixa_movimento_id (FK, opcional — a Entrada gerada ao marcar como
-  recebido), operador_id (FK operadores), criado_em. **Nasce só automaticamente**: ao faturar uma OS
-  (`FaturamentoCard.tsx`) escolhendo "A receber depois" em vez de "Recebido agora", não lança Entrada
-  no Caixa na hora — cria uma linha aqui, pendente; marcar como recebido (`ReceberContaModal.tsx`)
-  é que gera a Entrada. **Sem cadastro manual** pelo app ainda (diferente de Contas a Pagar, que tem
-  "+ Nova conta") — se um dia precisar de conta a receber sem OS por trás, adicionar isso é aditivo.
+  recebido), operador_id (FK operadores), criado_em. Nasce de dois jeitos: (a) **automaticamente**,
+  ao faturar uma OS (`FaturamentoCard.tsx`) escolhendo "A receber depois" em vez de "Recebido
+  agora" — não lança Entrada no Caixa na hora, cria uma linha aqui, pendente; marcar como recebido
+  (`ReceberContaModal.tsx`) é que gera a Entrada; (b) **à mão** (desde esta sessão), pelo botão
+  "+ Nova conta" da própria tela (`ContaReceberForm.tsx`, mesmo padrão do Contas a Pagar), pra
+  cobrança que não passou por OS nenhuma. **Detalhe que valeu conferir antes de construir (b)**: a
+  tabela tem `constraint contas_receber_ordem_id_unique unique (ordem_servico_id)`, que à primeira
+  vista pareceria impedir mais de uma conta manual (todas com `ordem_servico_id` nulo) — mas o
+  Postgres não trata dois nulos como repetidos numa constraint `unique` comum (só com
+  `nulls not distinct`, que não foi usado aqui), então cabem quantas contas avulsas forem precisas.
+  **Não precisou de migration nova.** `cliente_id` continua obrigatório, então o formulário exige
+  escolher o cliente.
 - **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
   (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
   Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
@@ -801,6 +809,19 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    login/dados reais sem essa rede, uma alternativa que funcionou bem foi recriar a estrutura HTML
    isolada (sem app inteiro) reaproveitando o CSS já compilado do `dist/`, pra testes puramente
    visuais/CSS que não dependem de dado real.
+   **Melhor que isso (descoberto numa sessão posterior): dá pra renderizar o componente React de
+   verdade**, não uma imitação em HTML. Receita, pra qualquer componente que receba os dados por
+   `props` (ou seja, que não chame o Supabase sozinho — todo `<Modulo>Form.tsx` do app se encaixa):
+   criar um `preview-temp.tsx` que monta só esse componente com dados falsos (dentro de um
+   `<MemoryRouter>`, senão `BotaoVoltar` quebra) + um `vite.preview.config.ts` mínimo (só
+   `react()` + `tailwindcss()` + o alias `@`, **sem** os plugins de Electron), buildar com
+   `npx vite build --config vite.preview.config.ts` e tirar screenshot com Playwright. Pega
+   layout/contraste/estilo de verdade, com o CSS real do tema. **Duas pegadinhas que custaram duas
+   tentativas em branco**: precisa de `base: "./"` no config (senão o asset sai com caminho
+   absoluto e não carrega) e precisa **servir por HTTP**, não abrir via `file://` (o Chromium
+   bloqueia `<script type="module">` em `file://` por CORS — e o sintoma é uma página branca **sem
+   erro nenhum** no console, fácil de confundir com bug do componente). Apagar os arquivos
+   temporários depois, não commitar.
    **Descoberto nesta sessão**: o sandbox já vem com um cluster **Postgres 16 local** instalado
    (`service postgresql start`, usuário `postgres` via `sudo -u postgres psql`) — dá pra validar
    migrations novas de verdade (não só ler o SQL): criar um banco de teste, aplicar um stub mínimo
@@ -1346,11 +1367,13 @@ ainda no meio da digitação).
   opcional que só aparece quando "Conta mensal recorrente" está marcado — em branco, continua
   recorrendo pra sempre (como sempre foi); preenchido com um mês, `pagarConta()` para de criar a
   próxima ocorrência depois dessa data (migration `0043`, já rodada por ela no Supabase real).
-- **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Sem
-  cadastro manual — nasce automaticamente quando uma OS é faturada escolhendo "A receber depois" em
-  vez de "Recebido agora". Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
-  Contas a Pagar). Pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o
-  cliente ter pago tudo na hora.
+- **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Nasce
+  automaticamente quando uma OS é faturada escolhendo "A receber depois" em vez de "Recebido
+  agora" — pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o cliente
+  ter pago tudo na hora. **Desde esta sessão também aceita cadastro manual** ("+ Nova conta", igual
+  Contas a Pagar): cliente, descrição, valor e previsão de recebimento — pra cobrança que não
+  passou por OS nenhuma. Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
+  Contas a Pagar), venha a conta de qual dos dois jeitos for.
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
   (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
   e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code).

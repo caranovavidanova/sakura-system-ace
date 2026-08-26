@@ -1220,6 +1220,28 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     (`mensagemDoTeste`) com teste, já que o sandbox não alcança `supabase.co` pra testar de ponta a
     ponta.
 
+    **A correção acima NÃO resolveu — e o problema maior era outro (`v0.9.17`)**: com só `apikey`,
+    o "Testar conexão" continuou reprovando a chave certa (print dela, já rodando a `v0.9.17`).
+    Nunca foi possível confirmar por aqui qual era a causa exata, porque **o sandbox não alcança
+    `supabase.co`** — ou seja, eu estava adivinhando o formato da requisição às cegas, duas vezes
+    seguidas. **O erro de verdade não foi nenhuma das duas tentativas: foi ter feito uma checagem
+    incerta virar pré-requisito pra salvar.** Enquanto `testarConexao()` reprovasse, o botão
+    "Salvar e entrar" se recusava a gravar — então um palpite errado meu deixou a usuária
+    **sem conseguir usar o sistema**, num computador onde a conexão estava certa o tempo todo.
+    **Corrigido em duas frentes**: (a) o teste passou a usar o **próprio cliente do `supabase-js`**
+    (`cliente.from("lojas").select("id").limit(1)`) em vez de montar a requisição à mão, então
+    percorre exatamente o mesmo caminho que o app usa de verdade e não pode reprovar num detalhe
+    de cabeçalho que só existia ali; (b) reprovar no teste **nunca mais impede de salvar** — a
+    mensagem de erro passa a vir acompanhada de um botão "Salvar assim mesmo"
+    (`ConexaoPage.tsx`), e há um limite de 10s na chamada pra não deixar o botão "Testando..."
+    pendurado quando a URL está errada. **Lição que vale além deste bug**: uma validação sobre a
+    qual não se tem certeza absoluta serve de **aviso, nunca de tranca** — ainda mais quando ela
+    guarda a porta de entrada do sistema e o ambiente de desenvolvimento não consegue testá-la de
+    verdade. Se a validação falhar, o pior caso tem que ser "a usuária segue em frente avisada",
+    não "a usuária fica de fora". Testado no Electron real sob `xvfb`: o caminho de falha (que no
+    sandbox acontece naturalmente, por não haver rede pro Supabase) mostra a saída, grava a
+    conexão ao clicar nela, e o app destrava pro login.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais

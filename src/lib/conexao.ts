@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+
 // Decide com qual Supabase (qual empresa) este computador vai falar.
 //
 // O app nasceu com a conexão gravada dentro do build, o que fazia um
@@ -44,37 +46,57 @@ export async function salvarConexao(conexao: Conexao): Promise<void> {
   await window.sakuraApp.salvarConexao(conexao);
 }
 
-// Confere se a URL e a chave realmente respondem, antes de gravar — evita a
-// usuária salvar um endereço com erro de digitação e só descobrir na hora de
-// entrar, com uma mensagem que não ajuda em nada. Um Supabase válido responde
-// nesse endereço quando recebe a chave certa.
+// Confere se a URL e a chave funcionam de verdade, pra usuária não descobrir
+// um erro de digitação só na hora de entrar.
 //
-// Traduz o código HTTP da resposta na mensagem que a usuária vê (`null` =
-// deu certo). Separado da chamada de rede pra poder ser testado sem internet.
-export function mensagemDoTeste(status: number): string | null {
-  if (status === 401 || status === 403) {
-    return "O endereço respondeu, mas a chave não foi aceita. Confira se copiou a chave anon/publishable inteira.";
+// **Nunca deve impedir de salvar** (ver ConexaoPage): duas versões seguidas
+// deste teste acusaram "chave não aceita" com a chave certa, e enquanto ele
+// era obrigatório pra salvar, isso virava uma parede que deixava a usuária
+// sem conseguir usar o sistema. Um teste sobre o qual não se tem certeza
+// absoluta serve de aviso, não de tranca.
+//
+// Traduz o erro numa mensagem em português (`null` = deu certo). Separado da
+// chamada de rede pra poder ser testado sem internet.
+export function mensagemDoTeste(erro: { message?: string; code?: string } | null): string | null {
+  if (!erro) return null;
+  const mensagem = erro.message ?? "";
+  if (/api key|apikey|jwt|unauthorized/i.test(mensagem)) {
+    return "O endereço respondeu, mas a chave não foi aceita. Confira se copiou a chave inteira — e, se o painel do Supabase mostrar mais de uma, tente a outra.";
   }
-  if (status >= 200 && status < 300) return null;
-  return `O endereço respondeu de um jeito inesperado (código ${status}). Confira se a URL é a do seu projeto Supabase.`;
+  // Conectou e a chave passou, mas o banco não tem as tabelas do sistema —
+  // acontece num projeto Supabase novo, antes de rodar as migrations.
+  if (erro.code === "PGRST205" || erro.code === "42P01" || /does not exist/i.test(mensagem)) {
+    return "Conectou, mas esse projeto ainda não tem as tabelas do Sakura System. Rode as migrations antes de usar.";
+  }
+  return `O Supabase respondeu com um erro: ${mensagem}`;
 }
 
 export async function testarConexao(conexao: Conexao): Promise<void> {
-  const base = conexao.url.replace(/\/+$/, "");
-  let resposta: Response;
+  // Usa o próprio cliente do Supabase, em vez de montar a requisição à mão:
+  // assim o teste passa exatamente pelo mesmo caminho que o app usa de
+  // verdade, e não pode "passar" num caminho que o app não usa (ou reprovar
+  // num detalhe de cabeçalho que só existia aqui — foi o que aconteceu nas
+  // duas primeiras versões deste teste).
+  const cliente = createClient(conexao.url, conexao.chave, {
+    auth: { persistSession: false },
+    // Sem esse limite, uma URL com erro de digitação deixa o botão "Testando..."
+    // pendurado por muito tempo, sem dizer nada — parece que travou.
+    global: {
+      fetch: (entrada, opcoes) =>
+        fetch(entrada, { ...opcoes, signal: AbortSignal.timeout(10_000) }),
+    },
+  });
+  let erro: { message?: string; code?: string } | null;
   try {
-    // Só o cabeçalho `apikey`. Mandar a chave também como
-    // `Authorization: Bearer ...` faz o Supabase recusar com 401 quando ela
-    // está no formato novo (`sb_publishable_...`), que não é um JWT e não
-    // pode ser usado como token — erro documentado por eles, e que fazia esta
-    // tela acusar "chave não foi aceita" com a chave certa. Só `apikey`
-    // funciona nos dois formatos, o novo e o antigo (`eyJ...`).
-    resposta = await fetch(`${base}/rest/v1/`, { headers: { apikey: conexao.chave } });
+    // `lojas` existe em todo projeto Sakura já preparado. Sem estar logado, a
+    // RLS simplesmente não devolve linha nenhuma — o que conta aqui é não vir
+    // erro de chave inválida.
+    ({ error: erro } = await cliente.from("lojas").select("id").limit(1));
   } catch {
     throw new Error(
       "Não foi possível falar com esse endereço. Confira se a URL está certa e se o computador está conectado à internet.",
     );
   }
-  const problema = mensagemDoTeste(resposta.status);
+  const problema = mensagemDoTeste(erro);
   if (problema) throw new Error(problema);
 }

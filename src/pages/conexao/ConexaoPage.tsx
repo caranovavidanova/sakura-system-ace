@@ -22,12 +22,14 @@ export function ConexaoPage({ onCancelar }: ConexaoPageProps) {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [testeOk, setTesteOk] = useState(false);
+  const [podeSalvarAssimMesmo, setPodeSalvarAssimMesmo] = useState(false);
 
   const dadosPreenchidos = url.trim() !== "" && chave.trim() !== "";
 
   function aoEditar(novoValor: string, campo: "url" | "chave") {
     setErro(null);
     setTesteOk(false);
+    setPodeSalvarAssimMesmo(false);
     if (campo === "url") setUrl(novoValor);
     else setChave(novoValor);
   }
@@ -47,22 +49,37 @@ export function ConexaoPage({ onCancelar }: ConexaoPageProps) {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setErro(null);
+  async function gravar() {
     setSalvando(true);
     try {
-      const conexao = { url: url.trim(), chave: chave.trim() };
-      // Testa antes de gravar: salvar um endereço errado deixaria o app numa
-      // tela de login que nunca funciona, sem explicação nenhuma.
-      await testarConexao(conexao);
       // Não precisa desligar "salvando": o app recarrega inteiro em seguida.
-      await salvarConexao(conexao);
+      await salvarConexao({ url: url.trim(), chave: chave.trim() });
     } catch (err) {
       console.error("Erro ao salvar conexão:", err);
       setErro(mensagemDeErro(err));
       setSalvando(false);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    setSalvando(true);
+    try {
+      // O teste serve pra pegar erro de digitação antes de cair numa tela de
+      // login que nunca funciona — mas é só um aviso, nunca uma tranca: se
+      // reprovar, aparece o botão "Salvar assim mesmo". Este teste já errou
+      // duas vezes com a chave certa, e ficar preso aqui é bem pior que uma
+      // conexão errada, que dá pra corrigir voltando por esta mesma tela.
+      await testarConexao({ url: url.trim(), chave: chave.trim() });
+    } catch (err) {
+      console.error("Erro ao testar conexão:", err);
+      setErro(mensagemDeErro(err));
+      setPodeSalvarAssimMesmo(true);
+      setSalvando(false);
+      return;
+    }
+    await gravar();
   }
 
   return (
@@ -85,7 +102,26 @@ export function ConexaoPage({ onCancelar }: ConexaoPageProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {erro && (
-            <p className="rounded-lg bg-red-50/90 px-4 py-2 text-sm text-red-700">{erro}</p>
+            <div className="space-y-2 rounded-lg bg-red-50/90 px-4 py-3 text-sm text-red-700">
+              <p>{erro}</p>
+              {podeSalvarAssimMesmo && (
+                <>
+                  <p className="text-xs">
+                    Se você tem certeza de que os dados estão certos, dá pra salvar assim mesmo —
+                    esta checagem já errou antes. Se a conexão estiver mesmo errada, é só voltar
+                    aqui pelo link na tela de login.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={gravar}
+                    disabled={salvando}
+                    className="rounded-lg border border-red-700/40 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    Salvar assim mesmo
+                  </button>
+                </>
+              )}
+            </div>
           )}
 
           {testeOk && !erro && (

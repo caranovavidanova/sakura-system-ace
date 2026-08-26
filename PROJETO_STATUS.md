@@ -1626,6 +1626,24 @@ ainda no meio da digitação).
    essa página específica do guia de Araraquara e copiar o trecho sobre "lote"/"RPS", em vez de
    esperar mais respostas genéricas de ticket.
 
+   **Ela abriu a página e mandou print (mesma sessão)** — achado importante, muda a direção da
+   investigação: **o JSON de exemplo da Focus NFe pra Araraquara não tem nenhum campo de "lote" em
+   lugar nenhum** (nem no exemplo, nem na tabela "Campos Importantes" — só CPF/CNPJ do tomador,
+   endereço do tomador, item da lista de serviço, código CNAE são obrigatórios). Ou seja: não é um
+   campo que falta a gente mandar no corpo da requisição — o conceito de "lote" pertence ao sistema
+   municipal antigo (ABRASF/RPS), do lado do fornecedor da prefeitura (aparece como "Provedor: Giap"
+   na página). **Mas apareceu um aviso mais relevante ainda**: *"Empresas MEI e optantes pelo
+   Simples Nacional possuem prazos definidos para deixar de emitir utilizando este ambiente
+   municipal. Consulte a obrigatoriedade de emissão no Ambiente Nacional."* — a loja é Simples
+   Nacional, então é bem possível que o caminho certo não seja "achar o campo de lote que falta",
+   e sim **migrar pro "Ambiente Nacional"** (o novo sistema nacional de NFS-e, que nem usa o
+   conceito de lote/RPS — isso explicaria o erro sumir de vez, não só ser contornado). **Mensagem
+   preparada nesta sessão** (formato checklist, a pedido da usuária, mesmo padrão já usado com a
+   Rayana) pra ela mandar pro suporte da Focus NFe perguntando: (1) se a empresa já deveria estar
+   emitindo pelo Ambiente Nacional em vez do municipal de Araraquara; (2) se sim, como migrar no
+   painel deles; (3) se não for isso, o que falta pra resolver o "Lote RPS" no ambiente municipal
+   mesmo. **Ainda não enviada** — aguardando ela mandar e o suporte responder.
+
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
    não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou
@@ -1638,16 +1656,18 @@ ainda no meio da digitação).
      sessão posterior** (Rafaela encaminhou a tabela da Rayana) e **já implementada em código**, ver
      o item "NFC-e — IBS/CBS — RESOLVIDO" logo acima.
 
-   **Como retomar na próxima sessão**: perguntar direto se: (a) ela conseguiu abrir a página do
-   guia da Focus NFe específica de Araraquara (link acima) ou se surgiu alguma resposta nova sobre
-   o campo de lote/RPS (NFS-e); (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se
-   sim e o código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e
-   revisar as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
+   **Como retomar na próxima sessão**: perguntar direto se: (a) ela mandou a mensagem sobre
+   Ambiente Nacional x municipal pro suporte da Focus NFe e o que responderam — se a resposta for
+   "sim, migre pro Ambiente Nacional", isso muda a implementação (pode ser um jeito de emitir
+   diferente, sem lote/RPS, não só um campo novo em `montarCorpoNFSe()`); se for "não, o municipal
+   mesmo, falta o campo X", aí sim é só ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts`
+   conforme indicado; (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se sim e o
+   código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e revisar
+   as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
    (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de
    2026 (rejeição 1026) — próximo passo ali é só **testar emitindo de novo** pra confirmar que
-   nenhuma rejeição de IBS/CBS aparece mais (sem depender de mais nenhuma resposta). Com a resposta
-   do "Lote RPS": ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o campo indicado e
-   testar de novo. **Só depois que a emissão de teste estiver validada de ponta a
+   nenhuma rejeição de IBS/CBS aparece mais (sem depender de mais nenhuma resposta). **Só depois
+   que a emissão de teste estiver validada de ponta a
    ponta** (ou quando ela decidir que não vai testar mais por enquanto): lembrar de rodar
    `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de teste em nome de "Eduarda Cristina"
    ainda está lá na loja real, sendo reusada pra cada nova tentativa de emissão; não apagar antes

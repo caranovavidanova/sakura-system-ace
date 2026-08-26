@@ -196,6 +196,20 @@ function montarItemNFCe(item: ItemParaNFCe, numeroItem: number): ItemNFCe {
     // alíquota fica zerada e a base também — ver PROJETO_STATUS.md.
     icms_base_calculo: aliquota > 0 ? formatarValor(valorBruto) : "0",
     icms_modalidade_base_calculo: "3",
+    // Reforma Tributária (IBS/CBS) — período de transição 2026: CST "000"
+    // (tributação integral) + cClassTrib "000001" (situação plenamente
+    // tributada), alíquotas e valores ainda zerados (confirmado com a
+    // contabilidade, ver PROJETO_STATUS.md seção 8, item 1).
+    ibs_cbs_situacao_tributaria: "000",
+    ibs_cbs_classificacao_tributaria: "000001",
+    ibs_cbs_base_calculo: formatarValor(valorBruto),
+    cbs_aliquota: "0.00",
+    cbs_valor: "0.00",
+    ibs_uf_aliquota: "0.00",
+    ibs_uf_valor: "0.00",
+    ibs_mun_aliquota: "0.00",
+    ibs_mun_valor: "0.00",
+    ibs_valor_total: "0.00",
   };
 }
 

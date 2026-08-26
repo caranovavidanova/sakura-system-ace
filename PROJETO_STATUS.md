@@ -1525,7 +1525,7 @@ ainda no meio da digitação).
      Documentos Fiscais → NFSe, que ela deixou em branco). Não é algo que a Focus NFe fornece.
      **Pergunta enviada pra contabilidade** (Lucrare, contato Rafaela Forti) perguntando se eles já
      têm esse login cadastrado pra essa empresa — **aguardando resposta**.
-   - **NFC-e — IBS/CBS — bloqueio novo, parcialmente respondido, ainda pendente**: depois de
+   - **NFC-e — IBS/CBS — RESOLVIDO (implementado numa sessão posterior)**: depois de
      corrigir o CSOSN, apareceu rejeição **diferente** tentando emitir de novo: *"Rejeição: Grupo
      IBS/CBS não informado [nItem: 1]"* (rejeição SEFAZ nº 1115). É a **Reforma Tributária** (os
      impostos novos IBS/CBS entrando em vigor a par do ICMS/ISS antigo) — não é bug, é exigência
@@ -1546,10 +1546,21 @@ ainda no meio da digitação).
      nfe.io, tributos.io e blog.tecnospeed.com.br via busca na web, todos bloqueados igual; só
      consegui confirmar o *significado* de `ibs_cbs_situacao_tributaria`/`ibs_cbs_classificacao_
      tributaria` (CST e cClassTrib) por snippet de busca, não o conteúdo completo das páginas.
-     **Próximo passo, ainda não feito**: perguntar pra Rafaela/Lucrare (contabilidade) qual
-     CST/cClassTrib usar numa venda comum de peça (Simples Nacional) e se as alíquotas de IBS/CBS
-     já são cobradas de verdade em 2026 ou ainda é um valor de teste/zero nesse período de
-     transição — só depois disso implementar em `src/lib/focusNfe.ts`.
+     **Resposta da contabilidade (Lucrare, via Rafaela Forti, encaminhando a orientação da
+     Rayana)**: tabela com os 10 campos e o valor pra usar em 2026 (fase de transição) — CST
+     `ibs_cbs_situacao_tributaria = "000"` (tributação integral), cClassTrib
+     `ibs_cbs_classificacao_tributaria = "000001"` (situação plenamente tributada),
+     `ibs_cbs_base_calculo` = valor normal da operação (mesmo valor bruto do item), e as 3 alíquotas
+     (`cbs_aliquota`/`ibs_uf_aliquota`/`ibs_mun_aliquota`) e os 4 valores
+     (`cbs_valor`/`ibs_uf_valor`/`ibs_mun_valor`/`ibs_valor_total`) todos zerados (`0,00%`/`R$0,00`)
+     — confirma que em 2026 ainda não se cobra de verdade, mas os campos precisam ser **enviados
+     explicitamente com zero**, não omitidos. **Implementado** em `montarItemNFCe()`
+     (`src/lib/focusNfe.ts`, perto de `icms_modalidade_base_calculo`) e nos tipos correspondentes em
+     `src/types/focusNfe.ts` (`ItemNFCe`) — `tsc -b`, `npm run lint` e os 55 testes automatizados
+     passando. **Ainda não testado com uma emissão de teste real** (só resolve a rejeição SEFAZ
+     nº 1115 "Grupo IBS/CBS não informado" na teoria — falta confirmar tentando emitir de novo).
+     Só cobre NFC-e — NFS-e não tem grupo IBS/CBS no formato usado hoje, não precisou de mudança
+     equivalente lá.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
@@ -1588,24 +1599,20 @@ ainda no meio da digitação).
    usar na ligação/conversa com a Rayana, formato de checklist objetivo em vez de mensagem corrida,
    a pedido da usuária) uma lista específica com:
    - Pergunta 1 (CSOSN): pra uma venda comum de peça (Simples Nacional), o CSOSN certo é `'500'`
-     mesmo ou depende do produto/situação?
-   - Pergunta 2 (IBS/CBS): uma tabela com os 10 campos exigidos pela Focus NFe
-     (`ibs_cbs_situacao_tributaria`/CST, `ibs_cbs_classificacao_tributaria`/cClassTrib,
-     `ibs_cbs_base_calculo`, `cbs_aliquota`, `cbs_valor`, `ibs_uf_aliquota`, `ibs_uf_valor`,
-     `ibs_mun_aliquota`, `ibs_mun_valor`, `ibs_valor_total`) com 3 perguntas: (a) qual código vai em
-     CST e cClassTrib numa venda comum de peça; (b) em 2026 (fase de transição) as alíquotas de
-     CBS/IBS já são cobradas de verdade ou ainda é zero/teste; (c) se for zero, ainda precisa
-     mandar `0` nesses campos ou dá pra deixar em branco/não enviar.
+     mesmo ou depende do produto/situação? **Ainda sem resposta.**
+   - Pergunta 2 (IBS/CBS): uma tabela com os 10 campos exigidos pela Focus NFe — **respondida numa
+     sessão posterior** (Rafaela encaminhou a tabela da Rayana) e **já implementada em código**, ver
+     o item "NFC-e — IBS/CBS — RESOLVIDO" logo acima.
 
    **Como retomar na próxima sessão**: perguntar direto se: (a) ela decidiu testar em produção como
    o Gustavo (suporte Focus NFe) sugeriu, ou se surgiu alguma resposta nova e mais específica sobre
-   o campo de lote/RPS; (b) a Rayana já ligou/mandou mensagem, e se sim, o que ela respondeu
-   pras perguntas de CSOSN e IBS/CBS (lista acima). Com a resposta do "Lote RPS": ajustar
-   `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o campo indicado e testar de novo. Com a
-   resposta do IBS/CBS: implementar o campo certo em `src/lib/focusNfe.ts` (função que monta o item
-   da NFC-e, perto de `icms_situacao_tributaria`, ver linha ~190) e testar de novo. Sem nenhuma
-   resposta nova ainda: não insistir tentando emitir de novo sem a informação, os erros são os
-   mesmos até ter os dados certos. **Só depois que a emissão de teste estiver validada de ponta a
+   o campo de lote/RPS (NFS-e); (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se
+   sim e o código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e
+   revisar as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
+   (Pergunta 2) já está implementado — próximo passo ali é só **testar emitindo de novo** pra
+   confirmar que a rejeição SEFAZ nº 1115 não aparece mais (sem depender de mais nenhuma resposta).
+   Com a resposta do "Lote RPS": ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme o
+   campo indicado e testar de novo. **Só depois que a emissão de teste estiver validada de ponta a
    ponta** (ou quando ela decidir que não vai testar mais por enquanto): lembrar de rodar
    `supabase/scripts/excluir-os-teste-eduarda.sql` — a OS de teste em nome de "Eduarda Cristina"
    ainda está lá na loja real, sendo reusada pra cada nova tentativa de emissão; não apagar antes

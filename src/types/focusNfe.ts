@@ -52,6 +52,20 @@ export interface ItemNFCe {
   icms_aliquota: string;
   icms_base_calculo: string;
   icms_modalidade_base_calculo: string;
+  // Reforma Tributária (IBS/CBS) — valores confirmados com a contabilidade da
+  // loja (Lucrare) pro período de transição de 2026, ver PROJETO_STATUS.md
+  // seção 8, item 1: alíquotas ainda zeradas nessa fase, mas os campos
+  // precisam ser enviados explicitamente (não dá pra omitir).
+  ibs_cbs_situacao_tributaria: string;
+  ibs_cbs_classificacao_tributaria: string;
+  ibs_cbs_base_calculo: string;
+  cbs_aliquota: string;
+  cbs_valor: string;
+  ibs_uf_aliquota: string;
+  ibs_uf_valor: string;
+  ibs_mun_aliquota: string;
+  ibs_mun_valor: string;
+  ibs_valor_total: string;
 }
 
 export interface FormaPagamentoNFCe {

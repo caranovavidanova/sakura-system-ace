@@ -1664,6 +1664,24 @@ ainda no meio da digitação).
      real** (resolve a rejeição 1026 na teoria — falta confirmar tentando emitir de novo depois que
      ela publicar essa correção numa tag nova). Só cobre NFC-e — NFS-e não tem grupo IBS/CBS no
      formato usado hoje, não precisou de mudança equivalente lá.
+   - **NFC-e — CNPJ Emitente não cadastrado — bloqueio novo, fora do nosso código (26/08/2026)**:
+     testando de novo (ainda em homologação), a rejeição de IBS/CBS não apareceu mais (sinal de que
+     a correção da alíquota de teste, item acima, funcionou), mas surgiu uma **rejeição diferente**:
+     *"Rejeição: CNPJ Emitente não cadastrado"* (print da loja de verdade). **Pesquisado via busca
+     na web nesta sessão** — é a rejeição SEFAZ nº 245, bem documentada por vários fornecedores de
+     software fiscal (Bling, Oobj, Sankhya, Omie, TagPlus, Conta Azul, Tecnospeed, Treeunfe,
+     Webmania, eNotas). Não é bug de código — os ambientes de **homologação e produção são cadastros
+     separados** na SEFAZ: mesmo com o CNPJ normal/ativo em produção, ele precisa de um
+     credenciamento **próprio** pra poder emitir nota de teste em homologação, e isso não é algo que
+     a Focus NFe resolve sozinha nem que dá pra corrigir editando código do Sakura System. Causas
+     mais prováveis, nessa ordem: (1) o CNPJ da loja (`66.217.744/0001-70`) ainda não tem esse
+     credenciamento de homologação feito junto à SEFAZ-SP; (2) menos provável, já que o CNPJ já foi
+     confirmado certo antes (ver bloqueio do CSOSN) — algum erro de digitação/cadastro. **Próximo
+     passo sugerido**: perguntar pro suporte da Focus NFe (mesmo canal "Novo suporte" já usado pros
+     outros bloqueios) se o CNPJ da empresa está credenciado no ambiente de homologação da SEFAZ-SP
+     pra NFC-e — se não estiver, perguntar como pedir esse credenciamento (pode ser algo que a
+     própria Focus NFe processa, ou pode exigir contato direto com a SEFAZ/contabilidade). **Ainda
+     não investigado a fundo nem resolvido** — só identificado e documentado nesta sessão.
    - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
@@ -1747,8 +1765,10 @@ ainda no meio da digitação).
    código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e revisar
    as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
    (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de
-   2026 (rejeição 1026) — próximo passo ali é só **testar emitindo de novo** pra confirmar que
-   nenhuma rejeição de IBS/CBS aparece mais (sem depender de mais nenhuma resposta).
+   2026 (rejeição 1026) — a rejeição de IBS/CBS já sumiu testando de novo, confirmando que resolveu;
+   (c) o **novo bloqueio de NFC-e** achado numa sessão posterior — rejeição "CNPJ Emitente não
+   cadastrado" (SEFAZ nº 245, ver bloqueio logo acima) — já foi levado pro suporte da Focus NFe, e
+   se sim, o que responderam sobre o credenciamento de homologação do CNPJ da loja.
    **`supabase/scripts/excluir-os-teste-eduarda.sql` já foi rodado nesta sessão** — não por ter
    terminado de testar, mas porque a OS de teste antiga ("Eduarda Cristina", reusada em cada
    tentativa de emissão) tinha ficado contaminada de vez pelo bug do item 31 da seção 6 (item

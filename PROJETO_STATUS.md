@@ -1818,6 +1818,63 @@ ainda no meio da digitação).
    uma **OS de teste nova** nesse mesmo cliente, já com peça e serviço juntos, e foi testando essa
    nova OS que apareceu o bug do item 32 da seção 6 (pagamento cheio da OS mandado como se fosse só
    da peça). Testes seguem nessa OS nova depois que a próxima tag (com a correção do item 32) sair.
+
+   ### Playbook de habilitação fiscal por loja nova (lições da primeira)
+
+   Escrito a pedido da usuária **enquanto a primeira loja ainda está travada**, justamente pra que
+   toda essa descoberta na marra não precise ser refeita do zero na loja 2, 3... 30. A lição
+   central é que os bloqueios encontrados **não são todos do mesmo tipo** — e só um dos três tipos
+   some sozinho quando uma loja nova entra:
+
+   **(A) Igual pra toda loja — já resolvido no código, custo zero por loja nova.** Formato do JSON
+   da NFC-e/NFS-e (confirmado contra os exemplos oficiais do repo `FocusNFe/javascript`); os 10
+   campos de IBS/CBS e as alíquotas de teste de 2026 (`cbs_aliquota = 0.90`,
+   `ibs_uf_aliquota = 0.10`, `ibs_mun_aliquota = 0.00` — regra **nacional** fixada por lei, não
+   decisão de contabilidade de nenhuma loja específica); o rateio proporcional do pagamento em OS
+   com peça + serviço; a chamada via IPC do Electron pra fugir de CORS; e a exibição do erro real
+   vindo da Focus NFe em vez de mensagem genérica. **Nada disso se repete por loja.**
+
+   **(B) Muda por loja, mas é só preencher uma tela — minutos, self-service.** Em Configurações →
+   "Dados fiscais da loja": CNPJ, razão social, inscrição estadual/municipal, regime tributário,
+   endereço, telefone, token da Focus NFe, e (só pra NFS-e) código IBGE do município, item da lista
+   de serviço LC 116, alíquota de ISS e código tributário do município. **Cuidado aprendido**: campo
+   em branco aqui vira erro que *parece* bug do sistema — o `prestador.cnpj não informado` da
+   primeira tentativa era só o CNPJ vazio nessa tela.
+
+   **(C) Muda por loja e depende de terceiros — é o caro, e é onde a primeira loja está travada.**
+   Nenhum desses é código; são cadastros que levam dias/semanas e passam por gente de fora:
+   1. **Habilitar os documentos no painel da Focus NFe** — Empresas → (empresa) → Documentos
+      Fiscais → ligar NFCe e NFSe. É **self-service** (o suporte deles não faz isso por você —
+      resposta do Natan Coelho), mas ninguém adivinha que existe: custou um ticket pra descobrir.
+   2. **Credenciar o CNPJ na SEFAZ do estado, pra NFC-e** — e **homologação e produção são
+      credenciamentos separados** (rejeição 245, "CNPJ Emitente não cadastrado"). Em SP existe um
+      portal próprio de NFC-e (`nfce.fazenda.sp.gov.br`), diferente do de NF-e/CT-e, possivelmente
+      exigindo certificado digital. **Varia por estado** — direto relevante pra fase 3, que sai de
+      Araraquara/SP (ver seção 1).
+   3. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
+      da loja, não da Focus NFe). **Varia por município**, inclusive o fornecedor do sistema
+      municipal (Araraquara usa "Giap") e o conceito de lote/RPS que ele impõe.
+   4. **Confirmar CST/CSOSN com a contabilidade do cliente** — depende do regime tributário
+      **daquela** empresa (Simples Nacional usa CSOSN, regime normal usa CST). A SEFAZ rejeita o
+      código incompatível com o regime, mas **não** confere se é o código certo pro produto — ou
+      seja, um cadastro errado passa na emissão e só aparece como problema fiscal depois.
+
+   **Consequência estratégica (importante pro item 2 desta seção, o site de assinatura
+   self-service)**: o bucket (C) é o que impede o sonho "loja nova assina no site e já emite nota
+   sozinha". Assinar o sistema pode ser instantâneo; **emitir nota, não** — cada loja nova carrega
+   um onboarding fiscal que envolve SEFAZ estadual, prefeitura e a contabilidade do próprio
+   cliente. Duas implicações práticas pra quando essa hora chegar: (1) tratar "usar o sistema" e
+   "emitir nota fiscal" como **duas etapas de ativação separadas** — a loja começa usando
+   cadastro/OS/estoque/caixa no primeiro dia (exatamente como a Pneus Amigão fez, ver seção 3) e a
+   emissão entra depois, quando o bucket (C) fechar; (2) esse onboarding precisa virar um
+   **checklist operacional que a usuária (ou quem for vender) conduz junto com o cliente**, não uma
+   redescoberta por loja — este playbook é o rascunho dele.
+
+   **Ponto ainda em aberto que muda esse desenho**: se a arquitetura de **token compartilhado**
+   (item 6 desta seção) for construída, o passo (B) deixa de ter "token da Focus NFe" por loja, e o
+   passo (C.1) passa a ser feito pela usuária dentro da conta única dela, em vez de cada dono de
+   loja mexer no painel da Focus NFe — reduz a fricção de (C), mas **não elimina** (C.2), (C.3) nem
+   (C.4), que são cadastros no nome do CNPJ do cliente e não têm como ser feitos por outra empresa.
 2. **Site externo de assinatura** que cria a primeira conta de cada loja
    automaticamente (hoje é manual, pelo painel do Supabase) continua pendente — combinado que fica
    pra quando pensarem na versão comercial.

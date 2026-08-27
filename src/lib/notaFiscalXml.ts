@@ -44,6 +44,11 @@ export interface NotaFiscalVisual {
   itens: ItemNotaFiscalVisual[];
   total: number | null;
   formasPagamento: FormaPagamentoVisual[];
+  // Só preenchido pra prefeituras (ex: Araraquara/Giap) cujo XML devolvido
+  // pela Focus NFe não é o "corpo" da nota (sem itens/valores) — é só uma
+  // confirmação de emissão, com um link pro documento oficial completo,
+  // hospedado no próprio site da prefeitura. Ver interpretarConfirmacaoGiap().
+  linkOficial: string | null;
 }
 
 const TPAG_LABEL: Record<string, string> = {
@@ -100,6 +105,47 @@ function notaNaoReconhecida(tipo: TipoNotaFiscal): NotaFiscalVisual {
     itens: [],
     total: null,
     formasPagamento: [],
+    linkOficial: null,
+  };
+}
+
+// Algumas prefeituras (Araraquara/Giap incluída) não emitem NFS-e no layout
+// Nacional nem no ABRASF tradicional — a Focus NFe devolve, no lugar do
+// "corpo" da nota, só uma confirmação de emissão (número da nota/RPS/lote,
+// código de verificação e um link pro documento oficial completo, hospedado
+// no próprio site da prefeitura). Sem itens nem valores nesse XML — não tem
+// como montar uma tabela de itens de verdade, então o recibo mostra os dados
+// de confirmação + esse link, em vez de uma tabela vazia.
+function interpretarConfirmacaoGiap(doc: Document): NotaFiscalVisual | null {
+  const notaFiscal = el(el(doc, "nfeResposta"), "notaFiscal");
+  if (!notaFiscal) return null;
+
+  const numeroNota = texto(notaFiscal, "numeroNota");
+  if (!numeroNota) return null;
+
+  const loteRps = texto(notaFiscal, "loteRps");
+  const numeroRps = texto(notaFiscal, "numeroRps");
+  const cnpjPrestador = texto(notaFiscal, "cnpjPrestador");
+
+  return {
+    reconhecido: true,
+    tipo: "nfse",
+    numero: numeroNota,
+    serie: null,
+    dataEmissao: texto(notaFiscal, "dataEmissaoNF") ?? texto(notaFiscal, "dataEmissaoRPS"),
+    chaveAcesso: texto(notaFiscal, "codigoVerificacao"),
+    protocolo:
+      loteRps || numeroRps
+        ? [loteRps ? `Lote ${loteRps}` : null, numeroRps ? `RPS ${numeroRps}` : null]
+            .filter(Boolean)
+            .join(" · ")
+        : null,
+    emitente: cnpjPrestador ? { nome: null, documento: cnpjPrestador, endereco: null } : null,
+    destinatario: null,
+    itens: [],
+    total: null,
+    formasPagamento: [],
+    linkOficial: texto(notaFiscal, "link"),
   };
 }
 
@@ -162,10 +208,14 @@ function interpretarNFe(doc: Document): NotaFiscalVisual {
     itens,
     total: numero(icmsTot, "vNF"),
     formasPagamento,
+    linkOficial: null,
   };
 }
 
 function interpretarNFSe(doc: Document): NotaFiscalVisual {
+  const confirmacaoGiap = interpretarConfirmacaoGiap(doc);
+  if (confirmacaoGiap) return confirmacaoGiap;
+
   const infNFSe = el(doc, "infNFSe");
   const prest = el(infNFSe, "prest") ?? el(doc, "prest");
   const toma = el(infNFSe, "toma") ?? el(doc, "toma");
@@ -211,6 +261,7 @@ function interpretarNFSe(doc: Document): NotaFiscalVisual {
     ],
     total: valorServico,
     formasPagamento: [],
+    linkOficial: null,
   };
 }
 
@@ -345,21 +396,33 @@ export function montarHtmlVisualNotaFiscal(dados: NotaFiscalVisual): string {
     ${linhaPessoa("Cliente", dados.destinatario)}
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Descrição</th>
-        <th class="numero">Qtde.</th>
-        <th class="numero">Valor unit.</th>
-        <th class="numero">Valor total</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${linhasItens}
-    </tbody>
-  </table>
+  ${
+    dados.linkOficial
+      ? `
+    <div class="aviso" style="background:#eaf7ee;color:#1f6b3d;">
+      Esta prefeitura confirma a emissão, mas não inclui os itens/valores no arquivo da nota — o
+      documento oficial completo fica hospedado no site dela:<br />
+      <a href="${dados.linkOficial}" target="_blank" rel="noopener" style="color:#1f6b3d;font-weight:600;">Ver documento oficial completo</a>
+    </div>
+  `
+      : `
+    <table>
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th class="numero">Qtde.</th>
+          <th class="numero">Valor unit.</th>
+          <th class="numero">Valor total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhasItens}
+      </tbody>
+    </table>
 
-  <p class="total">Total: ${dados.total !== null ? formatarMoeda(dados.total) : "—"}</p>
+    <p class="total">Total: ${dados.total !== null ? formatarMoeda(dados.total) : "—"}</p>
+  `
+  }
 
   ${linhasPagamento}
 

@@ -2072,9 +2072,19 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    que a contabilidade passou pode valer só pra homologação, não pra produção (municípios costumam
    ter portais/cadastros separados pros dois ambientes) — precisa confirmar com a contabilidade ou
    com o suporte da Focus NFe se esse é o caso, e se sim, pedir o login/senha de **produção**
-   especificamente. **Pergunta já enviada** (ela perguntou — não registrado aqui se foi pro
-   suporte da Focus NFe ou pra Rafaela/Lucrare) — **aguardando resposta**, sem teste novo por
-   enquanto.
+   especificamente. **Pergunta enviada pro suporte da Focus NFe.**
+
+   **Respondido (Gustavo Peres, suporte Focus NFe)** — a hipótese do login/senha de homologação vs.
+   produção **não era o problema real**. Pra Araraquara, o campo "senha" (painel Focus NFe →
+   Empresas → Documentos Fiscais → NFSe) **não é uma senha escolhida livremente** — precisa ser um
+   **token gerado direto no portal da própria prefeitura** (Araraquara usa o "Giap"), no menu
+   "Dados Cadastrais" desse portal. O usuário/senha `30016580`/`1234` que a contabilidade passou
+   antes não é isso — o suporte deu uma referência específica de Araraquara:
+   `focusnfe.com.br/guides/nfse/municipios-integrados/araraquara-sp/`. **Próximo passo**: alguém
+   com acesso ao portal da prefeitura de Araraquara (provavelmente a contabilidade, Rafaela/Lucrare
+   — é o mesmo tipo de acesso que já geraram usuário/senha antes) precisa entrar lá, achar "Dados
+   Cadastrais" e gerar esse token, depois colar no campo "senha" da Focus NFe (substituindo o que
+   está lá agora). **Ainda não feito** — depende de alguém com esse acesso.
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
@@ -2364,7 +2374,7 @@ terceiros:
 | Assunto | Onde parou | Com quem está |
 |---|---|---|
 | **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
-| **NFS-e** (serviço) | Testado em produção: erro mudou de *"Lote RPS não pode ser nulo"* pra *"Erro de autenticação na comunicação com a Prefeitura"* — login/senha da prefeitura (Araraquara/Giap) configurado pode valer só pra homologação, não produção | **Contabilidade/Focus NFe** — confirmar se o login `30016580` é válido em produção ou se precisa de credencial separada |
+| **NFS-e** (serviço) | Diagnóstico **fechado**: o campo "senha" da Focus NFe pra Araraquara precisa ser um token gerado no portal da prefeitura (menu "Dados Cadastrais"), não o usuário/senha `30016580`/`1234` que estava lá | **Contabilidade** (Rafaela/Lucrare) — gerar o token no portal da prefeitura e colar no painel da Focus NFe |
 
 **Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
 painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico

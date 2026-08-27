@@ -2038,8 +2038,23 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    `lib/focusNfe.ts`, mas nenhuma tela chama essas funções ainda); (4) se quiser tirar a OS de teste
    do próprio Sakura System depois (não é obrigatório, é só arrumação), preparado nesta sessão
    `supabase/scripts/excluir-os-teste-nfse-producao.sql` — mesmo padrão do
-   `excluir-os-teste-eduarda.sql`, só precisa trocar o número da OS antes de rodar. **Aguardando
-   ela fazer o teste e reportar o resultado** (autorizou? mesmo erro de Lote RPS? erro diferente?).
+   `excluir-os-teste-eduarda.sql`, só precisa trocar o número da OS antes de rodar.
+
+   **Testado em produção nesta sessão — erro diferente, é progresso**: o erro mudou de "Lote RPS
+   não pode ser nulo" (homologação) pra **"Erro de autenticação na comunicação com a Prefeitura."**
+   (produção). Não é bug do Sakura System — essa mensagem vem pronta da Focus NFe
+   (`resposta.mensagem_sefaz`, só exibida por `EmitirNotaFiscalModal.tsx`, sem lógica nossa no
+   meio). Pesquisado via busca na web: essa mensagem indica que a Focus NFe tentou logar no sistema
+   da prefeitura (Araraquara usa o "Giap") com o login/senha configurado no painel deles
+   (Documentos Fiscais → NFSe → "Login prefeitura", preenchido numa sessão anterior com o usuário
+   `30016580`/senha `1234` que a contabilidade passou) e a prefeitura **recusou essa credencial** —
+   diferente do erro anterior ("é necessário configurar a senha desta empresa neste município"),
+   que era só a ausência de qualquer login cadastrado. **Hipótese mais provável**: o login/senha
+   que a contabilidade passou pode valer só pra homologação, não pra produção (municípios costumam
+   ter portais/cadastros separados pros dois ambientes) — precisa confirmar com a contabilidade ou
+   com o suporte da Focus NFe se esse é o caso, e se sim, pedir o login/senha de **produção**
+   especificamente. **Ainda não confirmado, só levantado**. Próximo passo sugerido: perguntar isso
+   direto pro suporte da Focus NFe (citando esse erro específico) ou pra Rafaela/Lucrare.
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
@@ -2329,7 +2344,7 @@ terceiros:
 | Assunto | Onde parou | Com quem está |
 |---|---|---|
 | **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
-| **NFS-e** (serviço) | Erro *"Lote RPS não pode ser nulo"*. Hipótese do Ambiente Nacional descartada (empresa não é MEI). Focus NFe respondeu: não tem relação com o Simples Nacional, hipótese é instabilidade no ambiente de homologação da prefeitura — sugerem testar em produção com cancelamento | **Decisão da usuária** — ticket `#238770` respondido (Hélio Marques); falta ela decidir se testa em produção ou continua esperando/insistindo em homologação |
+| **NFS-e** (serviço) | Testado em produção: erro mudou de *"Lote RPS não pode ser nulo"* pra *"Erro de autenticação na comunicação com a Prefeitura"* — login/senha da prefeitura (Araraquara/Giap) configurado pode valer só pra homologação, não produção | **Contabilidade/Focus NFe** — confirmar se o login `30016580` é válido em produção ou se precisa de credencial separada |
 
 **Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
 painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico

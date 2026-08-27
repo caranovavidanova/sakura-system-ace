@@ -175,7 +175,7 @@ describe("montarCorpoNFSe", () => {
       aliquota: 5,
       discriminacao: "Alinhamento e balanceamento",
       item_lista_servico: "14.01",
-      codigo_cnae: "4520-0/01",
+      codigo_cnae: "4520001",
       valor_servicos: 150,
     });
   });

@@ -42,6 +42,7 @@ function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFi
         ? configuracao.aliquota_iss
         : null,
     codigo_tributario_municipio: configuracao?.codigo_tributario_municipio ?? "",
+    codigo_cnae: configuracao?.codigo_cnae ?? "",
   };
 }
 
@@ -99,6 +100,7 @@ export function DadosFiscaisSection({
         codigo_municipio: valores.codigo_municipio || null,
         item_lista_servico: valores.item_lista_servico || null,
         codigo_tributario_municipio: valores.codigo_tributario_municipio || null,
+        codigo_cnae: valores.codigo_cnae || null,
       });
       await onSalvo();
       setSalvo(true);
@@ -324,7 +326,20 @@ export function DadosFiscaisSection({
               className={campoClasse}
             />
           </label>
+          <label className="col-span-1 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+            Código CNAE
+            <input
+              value={valores.codigo_cnae ?? ""}
+              onChange={(e) => set("codigo_cnae", e.target.value)}
+              placeholder="Ex: 4520-0/01"
+              className={campoClasse}
+            />
+          </label>
         </div>
+        <p className="mt-2 text-xs text-sakura-muted">
+          O código CNAE está no Cartão CNPJ da empresa, em "Atividade econômica principal" —
+          algumas prefeituras (Araraquara incluída) exigem esse campo pra autorizar a NFS-e.
+        </p>
       </div>
 
       <div className="mt-4 flex justify-end">

@@ -124,6 +124,7 @@ export interface NFSeCorpo {
     iss_retido: string;
     item_lista_servico: string;
     codigo_tributario_municipio?: string;
+    codigo_cnae: string;
     valor_servicos: number;
   };
 }

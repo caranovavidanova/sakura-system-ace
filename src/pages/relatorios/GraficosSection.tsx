@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import { GraficoBarras } from "@/components/GraficoBarras";
 import { GraficoRadar } from "@/components/GraficoRadar";
 import type { MovimentoCaixa } from "@/types/caixa";
+import type { OrdemServico } from "@/types/os";
+import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 
 type Periodo = "diario" | "semanal" | "mensal";
 
@@ -91,10 +94,34 @@ const PERIODOS: { chave: Periodo; label: string }[] = [
 
 interface GraficosSectionProps {
   movimentos: MovimentoCaixa[];
+  ordens: OrdemServico[];
+  pecas: Peca[];
+  servicos: Servico[];
 }
 
-export function GraficosSection({ movimentos }: GraficosSectionProps) {
+export function GraficosSection({ movimentos, ordens, pecas, servicos }: GraficosSectionProps) {
   const [periodo, setPeriodo] = useState<Periodo>("diario");
+
+  // Custo de aquisição de cada OS (peça/serviço) — o que "Custos" precisa somar além das
+  // saídas manuais do Caixa, senão o gráfico mostra Lucro igual a Vendas sempre que não há
+  // despesa manual lançada no período (ver PROJETO_STATUS.md).
+  const custoPorOrdem = useMemo(() => {
+    const custoPorPeca = new Map(pecas.map((p) => [p.id, p.preco_custo ?? 0]));
+    const custoPorServico = new Map(servicos.map((s) => [s.id, s.custo ?? 0]));
+    const mapa = new Map<string, number>();
+    for (const ordem of ordens) {
+      let custo = 0;
+      for (const item of ordem.itens ?? []) {
+        const custoUnitario =
+          item.tipo === "peca"
+            ? custoPorPeca.get(item.peca_id ?? "") ?? 0
+            : custoPorServico.get(item.servico_id ?? "") ?? 0;
+        custo += item.quantidade * custoUnitario;
+      }
+      mapa.set(ordem.id, custo);
+    }
+    return mapa;
+  }, [ordens, pecas, servicos]);
 
   const entradas = useMemo(() => movimentos.filter((m) => m.tipo === "entrada"), [movimentos]);
 
@@ -124,10 +151,24 @@ export function GraficosSection({ movimentos }: GraficosSectionProps) {
     const chaves = gerarChavesBuckets(periodo, hoje);
     const vendasMap = new Map<string, number>();
     const custosMap = new Map<string, number>();
+    // Uma OS faturada com pagamento dividido em mais de uma forma gera vários
+    // caixa_movimentos — soma o custo dela uma vez só por período, não uma vez por lançamento.
+    const ordensJaContadas = new Set<string>();
     for (const m of movimentos) {
       const chave = chaveDoMovimento(m.data, periodo);
-      const mapa = m.tipo === "entrada" ? vendasMap : custosMap;
-      mapa.set(chave, (mapa.get(chave) ?? 0) + m.valor);
+      if (m.tipo === "entrada") {
+        vendasMap.set(chave, (vendasMap.get(chave) ?? 0) + m.valor);
+        if (m.ordem_servico_id) {
+          const marcador = `${chave}|${m.ordem_servico_id}`;
+          if (!ordensJaContadas.has(marcador)) {
+            ordensJaContadas.add(marcador);
+            const custoOrdem = custoPorOrdem.get(m.ordem_servico_id) ?? 0;
+            custosMap.set(chave, (custosMap.get(chave) ?? 0) + custoOrdem);
+          }
+        }
+      } else {
+        custosMap.set(chave, (custosMap.get(chave) ?? 0) + m.valor);
+      }
     }
     const vendasArr = chaves.map((c) => vendasMap.get(c) ?? 0);
     const custosArr = chaves.map((c) => custosMap.get(c) ?? 0);
@@ -138,7 +179,7 @@ export function GraficosSection({ movimentos }: GraficosSectionProps) {
       lucro: vendasArr.map((v, i) => v - custosArr[i]),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movimentos, periodo]);
+  }, [movimentos, periodo, custoPorOrdem]);
 
   const ultimoIndice = vendas.length - 1;
   const penultimoIndice = vendas.length - 2;

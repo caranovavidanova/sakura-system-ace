@@ -92,7 +92,12 @@ export function RelatoriosPage() {
       {carregando ? (
         <p className="text-sm text-sakura-muted">Carregando...</p>
       ) : aba === "graficos" ? (
-        <GraficosSection movimentos={movimentos} />
+        <GraficosSection
+          movimentos={movimentos}
+          ordens={ordens}
+          pecas={pecas}
+          servicos={servicos}
+        />
       ) : (
         <LucratividadeSection ordens={ordens} pecas={pecas} servicos={servicos} />
       )}

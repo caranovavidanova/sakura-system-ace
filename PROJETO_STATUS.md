@@ -1266,6 +1266,25 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     não "a usuária fica de fora". Testado no Electron real sob `xvfb`: o caminho de falha (que no
     sandbox acontece naturalmente, por não haver rede pro Supabase) mostra a saída, grava a
     conexão ao clicar nela, e o app destrava pro login.
+34. **Padrão de bug: pegar "o dia" de um timestamp com `.slice(0, 10)` pega o dia em UTC, não no
+    fuso local** — reportado pela usuária testando NFS-e em produção **à noite**: faturou uma OS
+    de teste (cliente "Eduarda Cristina") e ela **sumiu da lista de Ordens de Serviço** logo depois
+    de faturar — mas o lançamento apareceu certinho no Caixa Diário, confirmando que o faturamento
+    funcionou, só a lista escondeu por engano. Causa: `data_abertura` vem do banco como timestamp
+    em UTC; `OrdensServicoPage.tsx` e `LucratividadeSection.tsx` pegavam o "dia" pra comparar com o
+    filtro de período fazendo `ordem.data_abertura.slice(0, 10)` — isso pega o dia **em UTC**. O
+    filtro "Até" é calculado em hora **local** (`new Date().toLocaleDateString("sv-SE")`). No fuso
+    do Brasil (UTC-3), qualquer horário local a partir de ~21h já é o dia seguinte em UTC — então
+    uma OS faturada às 22h49, por exemplo, ficava com "dia" = amanhã em UTC, maior que o "Até: hoje"
+    calculado em hora local, e caía fora do filtro (só as OS **faturadas** são filtradas por
+    período — OS em aberto sempre aparecem, ver comentário no próprio código). **Corrigido**
+    convertendo a data com `new Date(dataIso).toLocaleDateString("sv-SE")` antes de comparar —
+    mesmo padrão que `DiarioSection.tsx` (Caixa Diário) já usava certo, e por isso o Caixa nunca
+    teve esse sintoma. **Lição**: qualquer comparação de "dia" que mistura uma data vinda do banco
+    (sempre UTC) com uma data calculada no navegador (sempre fuso local) é suspeita — sempre
+    converter as duas pro mesmo fuso antes de comparar, nunca cortar a string do timestamp direto.
+    Corrigido no código (PR mesclado), **ainda não confirmado por ela rodando de novo** — ela
+    ainda está no meio do teste de NFS-e em produção quando isso foi encontrado.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

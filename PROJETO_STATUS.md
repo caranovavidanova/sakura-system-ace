@@ -548,6 +548,10 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   guarda a referência que a Focus NFe usa pra identificar a nota, gerada na hora da emissão
   automática. Sem essa coluna, não tinha como cancelar uma nota emitida automaticamente depois
   (ver botão "Cancelar nota" na seção 7, módulo "Notas Fiscais").
+- `0047` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
+  idempotência — **ainda não rodada por ela**): adiciona `configuracoes_fiscais_loja.codigo_cnae`
+  — campo exigido por Araraquara (e provavelmente outras prefeituras) pra autorizar a NFS-e, que o
+  Sakura System não pedia nem mandava. Ver item 1 da seção 8.
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -2084,7 +2088,37 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    com acesso ao portal da prefeitura de Araraquara (provavelmente a contabilidade, Rafaela/Lucrare
    — é o mesmo tipo de acesso que já geraram usuário/senha antes) precisa entrar lá, achar "Dados
    Cadastrais" e gerar esse token, depois colar no campo "senha" da Focus NFe (substituindo o que
-   está lá agora). **Ainda não feito** — depende de alguém com esse acesso.
+   está lá agora).
+
+   **Feito nesta sessão — e ela mesma conseguiu, sem precisar da contabilidade**: o login
+   `30016580`/`1234` que a contabilidade tinha passado antes **não era pra colar direto na Focus
+   NFe** — era o login pra **entrar no próprio portal da prefeitura** (`araraquara.giap.com.br`,
+   sistema "Giap", acessado por Serviços Empresa → Nota Fiscal Eletrônica → Contribuintes no site
+   oficial `araraquara.sp.gov.br`). Ela entrou com esse login normalmente. Duas pegadinhas no
+   caminho: (a) a tela avisava que a opção "Emitir NFS-e" ficaria escondida até confirmar a leitura
+   de um "comunicado pendente" — era uma dúvida antiga que a contabilidade tinha mandado pra
+   prefeitura perguntando se Araraquara já migrou pro Padrão Nacional de NFS-e ou ainda usa o
+   sistema próprio (Giap); só precisou abrir/marcar como lida pra destravar o menu, sem precisar
+   responder nada; (b) o menu "Dados Cadastrais" (mencionado pela Focus NFe) só apareceu no menu
+   lateral **depois** dessa confirmação — antes disso nem aparecia. Dentro de "Dados Cadastrais" já
+   existia um **Token** pronto, gerado (`RKTKVCWNJUO72X6Y8Z7TWT3VILSNAGZ2` — citado aqui só como
+   registro do que foi usado, não é segredo de alto risco tipo senha de banco, mas ainda assim
+   convém trocar se algum dia este arquivo circular fora do controle dela). Ela copiou esse token
+   (sem clicar em "Gerar Token", que geraria um novo e invalidaria esse) e colou no campo "senha"
+   da Focus NFe, mantendo o usuário `30016580`. **Confirmado que resolveu**: o próximo teste não
+   repetiu mais o erro de autenticação.
+
+   **Bloqueio seguinte, já resolvido no código (mesma sessão)**: passada a autenticação, a nota foi
+   rejeitada com *"Preencher a tag cnae e envie novamente"* — a Focus NFe documenta `codigo_cnae`
+   como campo obrigatório do objeto `servico` da NFS-e (vem do Cartão CNPJ da empresa, "Atividade
+   econômica principal"), que o Sakura System nunca pediu nem mandava. **Corrigido**: migration
+   `0047` (coluna `codigo_cnae` em `configuracoes_fiscais_loja`), campo novo "Código CNAE" em
+   Configurações → Dados fiscais → "Emissão de NFS-e", `montarCorpoNFSe()` manda o campo e
+   `emitirNFSe()` valida que está preenchido antes de tentar emitir (mesmo padrão do
+   `codigo_municipio`). **Validado**: `tsc -b`, lint, os 60 testes (fixture + asserção nova) e a
+   migration num Postgres local, aplicada duas vezes pra confirmar idempotência. **Falta**: ela
+   rodar a migration `0047` e preencher o código CNAE da loja (número no Cartão CNPJ) antes do
+   próximo teste — sem isso, `emitirNFSe()` já bloqueia com mensagem clara antes de tentar.
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
@@ -2374,7 +2408,7 @@ terceiros:
 | Assunto | Onde parou | Com quem está |
 |---|---|---|
 | **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
-| **NFS-e** (serviço) | Diagnóstico **fechado**: o campo "senha" da Focus NFe pra Araraquara precisa ser um token gerado no portal da prefeitura (menu "Dados Cadastrais"), não o usuário/senha `30016580`/`1234` que estava lá | **Contabilidade** (Rafaela/Lucrare) — gerar o token no portal da prefeitura e colar no painel da Focus NFe |
+| **NFS-e** (serviço) | Autenticação com a prefeitura **resolvida** (ela mesma gerou o token no Giap). Próximo bloqueio já corrigido no código: faltava mandar `codigo_cnae` — migration `0047` criada, campo novo em Configurações | **Ela mesma** — rodar a migration `0047`, preencher o Código CNAE (Cartão CNPJ) em Configurações → Dados fiscais, e testar de novo |
 
 **Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
 painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico
@@ -2411,15 +2445,16 @@ ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
 **Estado hoje: `0001` a `0045` estão aplicadas no projeto dela. `0046` (`focus_nfe_ref` em
-`notas_fiscais_arquivos`, pro botão "Cancelar nota") foi criada nesta sessão e ainda não foi
-rodada por ela** — precisa rodar essa migration antes do botão "Cancelar nota" funcionar (sem a
-coluna, salvar o `ref` na emissão falha).
+`notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
+`configuracoes_fiscais_loja`, pra NFS-e) foram criadas nesta sessão e ainda não foram rodadas por
+ela** — precisa rodar as duas: sem a `0046` o botão "Cancelar nota" falha ao salvar o `ref` na
+emissão; sem a `0047`, `emitirNFSe()` bloqueia com mensagem clara (não tenta emitir sem o CNAE).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0046`. Todas são idempotentes.
+até `0047`. Todas são idempotentes.
 
 **Isso é só a parte do banco.** Uma empresa nova (não uma loja nova dentro da mesma empresa) ainda
 precisa de: os dois passos manuais de Auth logo abaixo, o primeiro operador admin, e — no

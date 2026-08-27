@@ -540,6 +540,14 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   cidade da loja), `item_lista_servico` (código da LC 116/2003, default `'14.01'`),
   `aliquota_iss`, `codigo_tributario_municipio`. NFC-e não depende de nenhuma delas. Ver item 1 da
   seção 8.
+- `0045`: adiciona `clientes.codigo_municipio` (código IBGE), preenchido sozinho junto com o resto
+  do endereço quando o CEP é buscado — evita digitar esse código toda vez que emite uma NFS-e pro
+  mesmo cliente.
+- `0046` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
+  idempotência — **ainda não rodada por ela**): adiciona `notas_fiscais_arquivos.focus_nfe_ref` —
+  guarda a referência que a Focus NFe usa pra identificar a nota, gerada na hora da emissão
+  automática. Sem essa coluna, não tinha como cancelar uma nota emitida automaticamente depois
+  (ver botão "Cancelar nota" na seção 7, módulo "Notas Fiscais").
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -1523,7 +1531,18 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   Contas a Pagar), venha a conta de qual dos dois jeitos for.
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
   (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
-  e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code).
+  e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code). **Botão "Cancelar
+  nota" (nesta sessão)**: até aqui, cancelar uma nota emitida automaticamente (NFC-e/NFS-e via
+  Focus NFe) só dava pra fazer direto no painel deles — as funções `cancelarNFCe`/`cancelarNFSe`
+  já existiam em `lib/focusNfe.ts`, mas nenhuma tela chamava. Agora aparece um botão "Cancelar
+  nota" na lista, só pra notas com `origem = "automatica"` e ainda `status = "autorizado"` — pede
+  uma justificativa (mínimo 15 caracteres, exigido pela Focus NFe) num modal
+  (`CancelarNotaModal.tsx`) antes de confirmar. Precisou de uma migration nova (`0046`) porque o
+  `ref` que a Focus NFe usa pra identificar a nota (gerado na hora da emissão) nunca tinha sido
+  salvo em lugar nenhum — sem ele, não tem como cancelar depois. **Validado**: `tsc -b`, lint e os
+  59 testes passando; a migration foi testada num Postgres local, aplicada duas vezes seguidas pra
+  confirmar idempotência. **Não dá pra testar a chamada de verdade à Focus NFe no sandbox** (sem
+  acesso à rede) — só quando ela rodar a migration e testar na loja.
 - **Relações** (ex-"Relatórios", label mudou antes; agora também absorveu o módulo antigo
   "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
   Lucro, Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca
@@ -2381,16 +2400,16 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: as 45 migrations (`0001` a `0045`) estão todas aplicadas no projeto dela.** Nada
-pendente de rodar — as duas sessões mais recentes (esta inclusive) não criaram migration nenhuma:
-o cadastro manual em Contas a Receber reaproveitou a tabela existente, e a tela de conexão não
-toca no banco.
+**Estado hoje: `0001` a `0045` estão aplicadas no projeto dela. `0046` (`focus_nfe_ref` em
+`notas_fiscais_arquivos`, pro botão "Cancelar nota") foi criada nesta sessão e ainda não foi
+rodada por ela** — precisa rodar essa migration antes do botão "Cancelar nota" funcionar (sem a
+coluna, salvar o `ref` na emissão falha).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 
 Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
 Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0045`. Todas são idempotentes.
+até `0046`. Todas são idempotentes.
 
 **Isso é só a parte do banco.** Uma empresa nova (não uma loja nova dentro da mesma empresa) ainda
 precisa de: os dois passos manuais de Auth logo abaixo, o primeiro operador admin, e — no

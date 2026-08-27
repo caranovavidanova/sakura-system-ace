@@ -1297,6 +1297,20 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     converter as duas pro mesmo fuso antes de comparar, nunca cortar a string do timestamp direto.
     Corrigido no código (PR mesclado), **ainda não confirmado por ela rodando de novo** — ela
     ainda está no meio do teste de NFS-e em produção quando isso foi encontrado.
+35. **Padrão de bug: gráfico de Lucro contava só saída manual do Caixa como "Custos", nunca o
+    custo de peça/serviço vendido** — reportado pela usuária: em Relações → Gráficos, "Lucro"
+    aparecia com o mesmo valor de "Vendas". Causa: `GraficosSection.tsx` calculava "Custos" a
+    partir dos lançamentos de **saída manual** no Caixa (aluguel, sucata etc.) — nunca olhava pro
+    `preco_custo` da peça nem pro `custo` do serviço vendido em cada OS faturada. Sem nenhuma saída
+    manual lançada no período, Custos ficava zerado e Lucro = Vendas sempre, mesmo período com
+    vendas de verdade. **Corrigido**: passou a somar também o custo de aquisição de cada OS
+    faturada (mesmo cálculo de `custoPorPeca`/`custoPorServico` já usado em
+    `OrdensServicoPage.tsx` e `LucratividadeSection.tsx`), deduplicado por OS — importante porque
+    uma OS com pagamento dividido em mais de uma forma gera vários `caixa_movimentos`, e contar o
+    custo uma vez por lançamento (em vez de uma vez por OS) dobraria o valor. **Lição**: qualquer
+    tela nova que precisar de "custo real" (não confundir com saída manual de Caixa, que é despesa
+    operacional tipo aluguel) precisa ir buscar em `pecas.preco_custo`/`servicos.custo` via os itens
+    da OS — não tem atalho genérico só olhando pro Caixa. `tsc -b`, lint e os 62 testes passando.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

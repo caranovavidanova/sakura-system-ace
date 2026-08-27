@@ -369,7 +369,7 @@ export function montarCorpoNFSe({
       iss_retido: "false",
       item_lista_servico: configuracaoFiscal.item_lista_servico || "14.01",
       codigo_tributario_municipio: configuracaoFiscal.codigo_tributario_municipio ?? undefined,
-      codigo_cnae: configuracaoFiscal.codigo_cnae ?? "",
+      codigo_cnae: (configuracaoFiscal.codigo_cnae ?? "").replace(/\D/g, ""),
       valor_servicos: valorServicos,
     },
   };

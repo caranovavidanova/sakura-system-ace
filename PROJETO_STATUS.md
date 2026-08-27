@@ -1723,6 +1723,13 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     `supabase-js`, o mesmo caminho que o app usa de verdade. **Confirmada por ela**: instalou,
     colou URL + chave e entrou normalmente ("coloquei a chave e foiii"). Também já rodando no PC
     da loja, sem precisar avisar ninguém. Ver item 33 da seção 6 pra lição completa.
+  - `v0.9.19`: leva o botão "Cancelar nota" fiscal (migration `0046`), o código CNAE na NFS-e
+    (migration `0047`) e a correção do bug de fuso horário que fazia OS faturada à noite sumir da
+    lista (item 34 da seção 6). Publicada via `workflow_dispatch`.
+  - `v0.9.20`: corrige o recibo "Versão para o cliente" saindo em branco pra NFS-e de prefeituras
+    estilo Giap (Araraquara incluída) — ver item 1 da seção 8. **Confirmada por ela** testando a
+    NFS-e número 11: recibo saiu com os dados certos (número, emitente, chave, protocolo, link pro
+    documento oficial). Publicada via `workflow_dispatch`.
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
@@ -2132,6 +2139,18 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    **NFC-e (peça) continua bloqueada** — separado, esperando a contabilidade credenciar o CNPJ na
    SEFAZ-SP (ver bloco de NFC-e nesta seção).
 
+   **Bug encontrado e corrigido na sequência, mesma sessão**: o botão "Versão para o cliente" saiu
+   com tudo em branco (número, itens, total) pra essa NFS-e — o XML que a Focus NFe hospeda pra
+   Araraquara não é o "corpo" completo da nota (com itens/valores), é só uma **confirmação de
+   emissão** do sistema Giap: número da nota/RPS/lote, código de verificação, CNPJ do prestador e
+   um **link pro documento oficial completo**, hospedado no próprio site da prefeitura. O
+   interpretador de XML (`lib/notaFiscalXml.ts`) só conhecia o layout Nacional de NFS-e. **Corrigido**
+   com `interpretarConfirmacaoGiap()`, que reconhece esse formato e monta o recibo com os dados
+   disponíveis + o link "Ver documento oficial completo" em vez de uma tabela vazia. Publicado na
+   `v0.9.20` e **já confirmado por ela** — testou com a NFS-e número 11 e o recibo saiu certo
+   (número, emitente, chave de verificação, protocolo, link). `tsc -b`, lint e os 62 testes
+   automatizados (3 novos cobrindo esse formato) passando.
+
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
    não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou
@@ -2456,11 +2475,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0045` estão aplicadas no projeto dela. `0046` (`focus_nfe_ref` em
+**Estado hoje: `0001` a `0047` estão todas aplicadas no projeto dela.** `0046` (`focus_nfe_ref` em
 `notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
-`configuracoes_fiscais_loja`, pra NFS-e) foram criadas nesta sessão e ainda não foram rodadas por
-ela** — precisa rodar as duas: sem a `0046` o botão "Cancelar nota" falha ao salvar o `ref` na
-emissão; sem a `0047`, `emitirNFSe()` bloqueia com mensagem clara (não tenta emitir sem o CNAE).
+`configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
+funcionando (a NFS-e número 10/11 só autorizou depois da `0047` e do Código CNAE preenchido).
 
 ### Montar um projeto Supabase do zero (loja nova / outro computador)
 

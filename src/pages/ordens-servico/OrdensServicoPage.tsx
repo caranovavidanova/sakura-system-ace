@@ -49,6 +49,17 @@ function hojeStr(): string {
   return new Date().toLocaleDateString("sv-SE");
 }
 
+// `data_abertura` vem do banco em UTC — não dá pra pegar o "dia" com um
+// `.slice(0, 10)` na string, porque isso pega o dia em UTC, não no fuso
+// local. No Brasil (UTC-3), qualquer OS aberta depois das ~21h vira "amanhã"
+// em UTC e sumiria do filtro "Até: hoje" (que é calculado em hora local) até
+// a data virar de verdade. Convertendo pra `Date` e formatando com
+// `toLocaleDateString`, o "dia" bate com o fuso local, igual ao Caixa Diário
+// já faz (`DiarioSection.tsx` → `paraDataLocal`).
+function paraDataLocal(dataIso: string): string {
+  return new Date(dataIso).toLocaleDateString("sv-SE");
+}
+
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -114,7 +125,7 @@ export function OrdensServicoPage() {
         return nomeCliente.includes(buscaNormalizada) || placa.includes(buscaNormalizada);
       }
       if (ordem.status !== "faturada") return true;
-      const dia = ordem.data_abertura.slice(0, 10);
+      const dia = paraDataLocal(ordem.data_abertura);
       return dia >= dataInicio && dia <= dataFim;
     });
   }, [ordens, busca, dataInicio, dataFim]);

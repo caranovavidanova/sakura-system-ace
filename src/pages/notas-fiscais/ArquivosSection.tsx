@@ -6,6 +6,7 @@ import { baixarArquivo, enviarArquivo, excluirArquivo, listarArquivos } from "@/
 import { listarOrdens } from "@/lib/ordensServico";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
+import { CancelarNotaModal } from "./CancelarNotaModal";
 import { NotaFiscalVisualModal } from "./NotaFiscalVisualModal";
 
 interface ArquivosSectionProps {
@@ -36,6 +37,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   const [ordemServicoId, setOrdemServicoId] = useState("");
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
   const [arquivoVisualizando, setArquivoVisualizando] = useState<NotaFiscalArquivo | null>(null);
+  const [arquivoCancelando, setArquivoCancelando] = useState<NotaFiscalArquivo | null>(null);
 
   async function carregar() {
     if (!lojaAtual) {
@@ -244,6 +246,14 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                         >
                           Baixar XML
                         </button>
+                        {arquivo.origem === "automatica" && arquivo.status === "autorizado" && (
+                          <button
+                            onClick={() => setArquivoCancelando(arquivo)}
+                            className="text-xs font-medium text-red-600 hover:underline"
+                          >
+                            Cancelar nota
+                          </button>
+                        )}
                         <button
                           onClick={() => handleExcluir(arquivo)}
                           className="text-xs font-medium text-red-600 hover:underline"
@@ -264,6 +274,14 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
         <NotaFiscalVisualModal
           arquivo={arquivoVisualizando}
           onFechar={() => setArquivoVisualizando(null)}
+        />
+      )}
+
+      {arquivoCancelando && (
+        <CancelarNotaModal
+          arquivo={arquivoCancelando}
+          onFechar={() => setArquivoCancelando(null)}
+          onCancelado={carregar}
         />
       )}
     </div>

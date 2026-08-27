@@ -2471,20 +2471,32 @@ produção** (ver item 1 desta seção), a última peça grande que faltava. Ain
 algumas emissões reais antes de considerar 100% validado (só um teste de cada até agora), e
 segue pendente o CSC/ID Token de **homologação** da NFC-e (não bloqueia uso real).
 
-### Onde tudo parou ao fim desta sessão (26/08/2026)
+### Onde tudo parou ao fim desta sessão (27/08/2026)
 
-Nada travado do lado do **código**: `main` na `v0.9.18`, publicada, rodando no notebook dela e no
-PC da loja. As 45 migrations estão aplicadas. Os dois assuntos em aberto são fiscais e dependem de
-terceiros:
+**A parte fiscal fechou nesta sessão** — as duas notas (NFC-e e NFS-e) emitem de ponta a ponta em
+produção:
 
-| Assunto | Onde parou | Com quem está |
-|---|---|---|
-| **NFC-e** (peça) | ✅ **FUNCIONANDO** — emitida com sucesso em produção (número 1, 27/08). Nota de teste, será cancelada pelo botão "Cancelar nota" | Nenhuma — resolvido |
-| **NFS-e** (serviço) | ✅ **FUNCIONANDO** — emitida com sucesso em produção (número 10, 27/08). Nota de teste, será cancelada pelo botão novo "Cancelar nota" | Nenhuma — resolvido |
+| Assunto | Onde parou |
+|---|---|
+| **NFC-e** (peça) | ✅ **FUNCIONANDO** — credenciamento na SEFAZ-SP feito por ela mesma (certificado digital A1), CSC/ID Token de produção gerados, primeira nota (número 1) autorizada. Nota de teste, já cancelada. |
+| **NFS-e** (serviço) | ✅ **FUNCIONANDO** — token da prefeitura gerado por ela no portal Giap, código CNAE configurado, notas (números 10 e 11) autorizadas. Ambas de teste, já canceladas. |
 
-**Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
-painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico
-faltando na NFS-e, aí sim é ajuste em `montarCorpoNFSe()` (`src/lib/focusNfe.ts`).
+Depois de confirmar as duas, ela pediu pra limpar o rastro: as 4 OS de teste (números 2-5, cliente
+"Eduarda Cristina") foram apagadas junto com tudo que geraram (estoque, Caixa, Contas a Receber,
+arquivos de nota) via SQL direto — mesmo padrão dos scripts de limpeza já usados antes. Confirmado
+por ela que sumiu tudo da tela. O cadastro do cliente/veículo continua existindo.
+
+**O que ainda falta, sem bloquear uso real**:
+- **CSC/ID Token de homologação da NFC-e** — o servidor de homologação da SEFAZ-SP nunca respondeu
+  (`ERR_CONNECTION_TIMED_OUT` em navegadores diferentes); só o de produção foi gerado. Tentar de
+  novo quando o servidor deles voltar, se algum dia precisar testar em homologação de novo.
+- **CSOSN das peças do catálogo** — ainda não confirmado com a contabilidade se `'500'` é o código
+  certo pra toda peça, ou só pra quem tem ICMS-ST de verdade (ver item 1 da seção 8). Baixo risco
+  imediato (SEFAZ só rejeita incompatibilidade com o regime, não o código errado pro produto), mas
+  vale revisar antes de emitir em volume.
+- **Sugestão de feature registrada, não decidida**: cancelar uma nota deveria também estornar
+  estoque/Caixa automaticamente? Ver tarefa sugerida `task_22e069e2` — precisa de uma decisão de
+  design antes de implementar (cancelar a nota ≠ sempre desfazer a venda inteira).
 
 **Ponta solta pequena, não confirmada**: não ficou claro se ela chegou a usar o botão "Testar
 conexão" com sucesso na `v0.9.18`, ou se entrou pelo "Salvar assim mesmo". Se foi o segundo, a

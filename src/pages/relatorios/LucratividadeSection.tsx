@@ -16,6 +16,14 @@ function hojeStr(): string {
   return new Date().toLocaleDateString("sv-SE");
 }
 
+// `data_abertura` vem do banco em UTC — pegar o "dia" com `.slice(0, 10)`
+// pegaria o dia em UTC, não no fuso local. No Brasil (UTC-3), uma OS aberta
+// depois das ~21h vira "amanhã" em UTC e sumiria do filtro de período (que é
+// calculado em hora local). Ver mesmo bug/correção em OrdensServicoPage.tsx.
+function paraDataLocal(dataIso: string): string {
+  return new Date(dataIso).toLocaleDateString("sv-SE");
+}
+
 interface LinhaLucro {
   descricao: string;
   quantidade: number;
@@ -50,7 +58,7 @@ export function LucratividadeSection({ ordens, pecas, servicos }: LucratividadeS
     const mapa = new Map<string, LinhaLucro>();
 
     for (const ordem of ordens) {
-      const dia = ordem.data_abertura.slice(0, 10);
+      const dia = paraDataLocal(ordem.data_abertura);
       if (dia < dataInicio || dia > dataFim) continue;
 
       for (const item of ordem.itens ?? []) {

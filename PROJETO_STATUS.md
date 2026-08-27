@@ -1968,6 +1968,25 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
      causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
 
+   **A contabilidade não respondeu — ela mesma fez o credenciamento (mesma sessão do sucesso da
+   NFS-e)**: com a NFS-e resolvida, ela decidiu tentar o credenciamento de NFC-e sozinha em vez de
+   continuar esperando. Ela tinha em mãos o **certificado digital A1** da empresa (arquivo `.pfx`,
+   "AMIGAO PNEUS S. Amigao7@ .pfx"). Passo a passo que funcionou: (1) instalou o certificado no
+   Windows (duplo-clique no `.pfx` → Assistente de Importação de Certificados → "Usuário Atual");
+   (2) o link direto `nfce.fazenda.sp.gov.br` deu `ERR_CONNECTION_RESET` em dois navegadores
+   diferentes (Brave e Edge) — não era problema de navegador, era o endereço: o certo é
+   `www.nfce.fazenda.sp.gov.br/NFCePortal/` (achado via busca na web, já que o domínio puro não
+   funciona); (3) o portal reconheceu o certificado sozinho e já mostrou a empresa (CNPJ
+   66.217.744/0001-70, "Ativo" no CADESP) na tela **Credenciamento → Credenciamento Voluntário**;
+   (4) marcou o rádio da empresa, preencheu "Dados do Responsável" com o nome do pai dela (dono de
+   fato da empresa, decisão dela — não os dados dela mesma) e o e-mail da contabilidade
+   (`contabilidadedelucrare@gmail.com`); (5) clicou **"Solicitar Credenciamento"**. **Funcionou de
+   primeira**: a coluna "Data Credenciamento" passou a mostrar `27/08/2026` e o botão virou
+   "Solicitar Descredenciamento" (confirma ativo). **CNPJ credenciado pra NFC-e na SEFAZ-SP.**
+   Faltam ainda o **CSC** e o **ID Token** (homologação e produção) — o menu lateral do mesmo
+   portal tem uma opção **"Gerenciar Cód Segurança"**, que deve ser onde isso é gerado (ainda
+   sendo navegado quando este trecho foi escrito, ver próxima sessão/mensagem pra confirmar).
+
    **Estado atualizado numa sessão posterior**: a Rafaela/Lucrare respondeu o login da prefeitura
    de Araraquara (usuário `30016580`, senha `1234`) — a usuária preencheu no painel da Focus NFe
    (Empresas → Documentos Fiscais → NFSe → "Login prefeitura") e testou de novo. O erro genérico

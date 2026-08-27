@@ -83,9 +83,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    de status quebrando linha — ver itens 23-25 da seção 6), exatamente o tipo de bug que só aparece
    usando pra valer. Banco de produção limpo, só existe uma loja real no Supabase: "Pneus Amigão"
    (Araraquara). Auto-update via GitHub Releases confirmado funcionando de novo nesta sessão
-   (`v0.9.5` → `v0.9.6` sozinho, ver item 21 da seção 6). **Assinou o Focus NFe** (ver item 1 da
-   seção 8 pro estado atual da emissão fiscal) — até a emissão automática estar validada de ponta
-   a ponta, nota fiscal continua sendo emitida por fora do sistema.
+   (`v0.9.5` → `v0.9.6` sozinho, ver item 21 da seção 6). **Assinou o Focus NFe e a emissão
+   automática já está validada de ponta a ponta em produção** (NFC-e e NFS-e, ver item 1 da
+   seção 8) — não depende mais de emitir por fora do sistema.
 2. **Expandir pra mais 2-3 lojas de conhecidos do pai dela, também em Araraquara** — ainda como
    teste, validar como o sistema se comporta crescendo pra fora de uma loja só, antes de pensar
    grande. **Primeiro caso real surgiu numa sessão posterior**: o pai dela contou que um amigo dele
@@ -1517,8 +1517,8 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   de teste real; assim que autorizada, o PDF/DANFE já carrega direto num preview embutido dentro
   do próprio modal — mesmo padrão de `iframe` já usado em "Ver garantia"/"Versão para o cliente" —
   com botões "Baixar PDF", "Imprimir" e "OK", em vez do antigo botão único "Ver DANFE" que abria
-  numa aba separada; mesclado numa sessão posterior, **ainda não testado com uma emissão real**
-  porque depende dos bloqueios do item 1 da seção 8 estarem resolvidos) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
+  numa aba separada; **já testado com emissão real de NFC-e e NFS-e em produção**, ver item 1 da
+  seção 8) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
   cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com opção de
   baixar HTML/imprimir via `iframe`).
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
@@ -1763,8 +1763,27 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
-1. **Parte fiscal (NÃO bloqueia o uso na loja)**: emissão de NFC-e (peças) e NFS-e (serviço) via
-   Focus NFe, plano básico. **Assinado nesta sessão** — a usuária criou a conta pelo celular
+1. **Parte fiscal — ✅ RESOLVIDA (27/08/2026), NÃO precisa ler o histórico abaixo pra saber o
+   estado atual**: **NFC-e (peça) e NFS-e (serviço) emitem de ponta a ponta em produção**, as duas
+   já testadas com sucesso de verdade. O que uma sessão nova precisa saber, sem arqueologia:
+   - **NFC-e**: CNPJ credenciado na SEFAZ-SP, CSC + ID Token de **produção** gerados e cadastrados
+     na Focus NFe. Falta só o CSC/ID Token de **homologação** (servidor de teste da SEFAZ-SP nunca
+     respondeu — `ERR_CONNECTION_TIMED_OUT` — não bloqueia nada, só serve pra testar sem gerar nota
+     real; tentar de novo no portal `www.nfce.fazenda.sp.gov.br/NFCePortal/` → Gerenciar Cód
+     Segurança → "ambiente de testes" quando precisar).
+   - **NFS-e**: token da prefeitura de Araraquara (portal Giap) gerado e cadastrado, código CNAE da
+     loja preenchido em Configurações → Dados fiscais. Sem pendência conhecida.
+   - **Risco em aberto, não bloqueante**: o CSOSN `'500'` usado no cadastro de peças (Simples
+     Nacional) foi um valor de hábito da usuária, nunca confirmado pela contabilidade como correto
+     pra todo produto — vale revisar o catálogo antes de emitir em volume real (ver bloco "CST" mais
+     abaixo pro contexto completo).
+   - Token de **produção** da Focus NFe (NFC-e e NFS-e) já está configurado e em uso — não é mais
+     "não colocar até validar", já foi validado.
+   - Tudo daqui pra baixo (o resto deste item 1) é o **histórico de como se chegou até aqui** —
+     útil se algo quebrar e for preciso entender uma decisão passada, mas não é leitura obrigatória
+     pra continuar o projeto. Candidato a ser resumido/podado numa limpeza futura do arquivo.
+
+   **Assinado nesta sessão** — a usuária criou a conta pelo celular
    (estava fora de casa) e me passou o **token de homologação** (via print de tela, achado em
    Painel API → Empresas → editar a empresa → "Token Homologação"). **A emissão de verdade foi
    implementada nesta sessão** (`emitirNFCe()`/`emitirNFSe()` em `lib/focusNfe.ts`, substituindo a

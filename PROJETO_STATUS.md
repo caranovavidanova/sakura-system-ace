@@ -1983,9 +1983,29 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    (`contabilidadedelucrare@gmail.com`); (5) clicou **"Solicitar Credenciamento"**. **Funcionou de
    primeira**: a coluna "Data Credenciamento" passou a mostrar `27/08/2026` e o botão virou
    "Solicitar Descredenciamento" (confirma ativo). **CNPJ credenciado pra NFC-e na SEFAZ-SP.**
-   Faltam ainda o **CSC** e o **ID Token** (homologação e produção) — o menu lateral do mesmo
-   portal tem uma opção **"Gerenciar Cód Segurança"**, que deve ser onde isso é gerado (ainda
-   sendo navegado quando este trecho foi escrito, ver próxima sessão/mensagem pra confirmar).
+
+   **CSC/ID Token gerados na sequência, mesma sessão**: o menu lateral do mesmo portal tem
+   **"Gerenciar Cód Segurança"**, com duas opções — "com validade jurídica" (produção) e "ambiente
+   de testes" (homologação). O de **homologação** (`homologacao.nfce.fazenda.sp.gov.br`) nunca
+   carregou — `ERR_CONNECTION_TIMED_OUT` repetido, em navegadores diferentes, mesmo padrão de
+   instabilidade de ambiente de teste do governo já visto com a NFS-e (ver mais abaixo). O de
+   **produção** carregou de primeira e gerou o par direto (botão "Novo Cód Segurança"):
+   **ID Cód Segurança `000001`**, **CSC `56345e25-ce08-40e6-bf64-a95404bf17e6`** (citados aqui como
+   registro do que foi usado, mesma ressalva de segurança do token do Giap — convém trocar se este
+   arquivo circular fora do controle dela). Cadastrado no painel da Focus NFe (Empresas → Amigão
+   Pneus → Documentos Fiscais → NFCe, campos CSC/ID Token) — sem token de homologação até
+   conseguir gerar o CSC de lá.
+
+   **🎉 NFC-e EMITIDA COM SUCESSO EM PRODUÇÃO** — primeiro teste (peça "CIL RD TR", preço da linha
+   editado pra R$2,00) deu erro "Código CSC não configurado" (CSC ainda não tinha sido salvo no
+   painel da Focus NFe naquele momento); depois de salvar, **número 1** autorizou, com DANFE
+   completo (chave de acesso, QR, forma de pagamento) exibido no modal. É a primeira NFC-e emitida
+   pelo Sakura System de ponta a ponta. **Junto com a NFS-e (item acima), as duas notas fiscais do
+   sistema estão funcionando em produção** — fecha a parte fiscal que era o item pendente há mais
+   tempo no projeto (ver seção 8, resumo geral). Nota de teste, será cancelada com o botão
+   "Cancelar nota" e a OS de teste limpa com um script SQL (mesmo padrão dos anteriores).
+   **CSC/ID Token de homologação continuam pendentes** — não bloqueia uso real, só testes futuros
+   em ambiente de teste; tentar de novo quando o servidor da SEFAZ-SP voltar a responder.
 
    **Estado atualizado numa sessão posterior**: a Rafaela/Lucrare respondeu o login da prefeitura
    de Araraquara (usuário `30016580`, senha `1234`) — a usuária preencheu no painel da Focus NFe
@@ -2446,8 +2466,10 @@ pra decidir com calma, não são bug): item 1 da seção 6 (permissão só checa
 por módulo) e item 4 (sem teste de UI/integração, só função pura).
 
 **Estado geral**: o sistema está pronto pro uso real no dia a dia (cadastro, OS, estoque, caixa,
-fornecedores etc.) — o único módulo que falta é a emissão de nota fiscal (item 1 desta seção), que
-não bloqueia o uso, só é emitida por fora enquanto isso.
+fornecedores etc.) — **e a emissão fiscal automática (NFC-e e NFS-e) já está funcionando em
+produção** (ver item 1 desta seção), a última peça grande que faltava. Ainda vale rodar mais
+algumas emissões reais antes de considerar 100% validado (só um teste de cada até agora), e
+segue pendente o CSC/ID Token de **homologação** da NFC-e (não bloqueia uso real).
 
 ### Onde tudo parou ao fim desta sessão (26/08/2026)
 
@@ -2457,7 +2479,7 @@ terceiros:
 
 | Assunto | Onde parou | Com quem está |
 |---|---|---|
-| **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
+| **NFC-e** (peça) | ✅ **FUNCIONANDO** — emitida com sucesso em produção (número 1, 27/08). Nota de teste, será cancelada pelo botão "Cancelar nota" | Nenhuma — resolvido |
 | **NFS-e** (serviço) | ✅ **FUNCIONANDO** — emitida com sucesso em produção (número 10, 27/08). Nota de teste, será cancelada pelo botão novo "Cancelar nota" | Nenhuma — resolvido |
 
 **Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no

@@ -15,6 +15,7 @@ export interface NotaFiscalArquivo {
   numero: string | null;
   chave_acesso: string | null;
   status: string | null;
+  focus_nfe_ref: string | null;
   ordem_servico?: { cliente?: { nome: string } | null } | null;
   operador?: { nome: string } | null;
 }

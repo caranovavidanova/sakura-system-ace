@@ -1,4 +1,4 @@
-import { baixarArquivoFocusNfe } from "./focusNfe";
+import { baixarArquivoFocusNfe, cancelarNFCe, cancelarNFSe, FocusNfeError } from "./focusNfe";
 import { supabase } from "./supabase";
 import type { AmbienteFocusNfe } from "@/types/configuracao";
 import type { RespostaFocusNfe } from "@/types/focusNfe";
@@ -114,11 +114,60 @@ export async function salvarArquivoEmitido({
     numero: resposta.numero ?? null,
     chave_acesso: resposta.chave_nfe ?? null,
     status: resposta.status,
+    focus_nfe_ref: resposta.ref ?? null,
   });
   if (erroMetadados) {
     await supabase.storage.from("notas-fiscais").remove([caminho]);
     throw erroMetadados;
   }
+}
+
+// Cancela uma nota emitida automaticamente pelo Sakura System (origem =
+// "automatica") direto na Focus NFe, e atualiza o status guardado aqui.
+// Precisa do `focus_nfe_ref` gravado na emissão (ver salvarArquivoEmitido) —
+// notas enviadas manualmente (upload de XML) não têm esse dado e não têm
+// como ser canceladas por aqui (cancelar/substituir é feito por fora, com
+// quem emitiu a nota de verdade).
+export async function cancelarArquivoEmitido(
+  arquivo: NotaFiscalArquivo,
+  justificativa: string,
+  token: string,
+  ambiente: AmbienteFocusNfe,
+): Promise<void> {
+  if (arquivo.origem !== "automatica" || !arquivo.focus_nfe_ref) {
+    throw new FocusNfeError(
+      "Essa nota não foi emitida automaticamente pelo Sakura System — cancele direto onde ela " +
+        "foi emitida.",
+    );
+  }
+
+  const resposta =
+    arquivo.tipo === "nfe"
+      ? await cancelarNFCe(arquivo.focus_nfe_ref, justificativa, token, ambiente)
+      : await cancelarNFSe(arquivo.focus_nfe_ref, justificativa, token, ambiente);
+
+  // A Focus NFe pode responder HTTP 200 com um cancelamento recusado pela
+  // SEFAZ/prefeitura (ex: prazo de cancelamento vencido) — mesmo cuidado já
+  // tomado na emissão (EmitirNotaFiscalModal.tsx): só considerar sucesso de
+  // verdade quando o status vier "cancelado".
+  if (resposta.status !== "cancelado") {
+    const mensagensErros = (resposta.erros ?? [])
+      .map((e) => (e.campo ? `${e.campo}: ${e.mensagem}` : e.mensagem))
+      .filter((m): m is string => Boolean(m))
+      .join(" | ");
+    throw new FocusNfeError(
+      resposta.mensagem_sefaz ??
+        (mensagensErros || undefined) ??
+        resposta.mensagem ??
+        `O cancelamento voltou com status "${resposta.status}".`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("notas_fiscais_arquivos")
+    .update({ status: resposta.status })
+    .eq("id", arquivo.id);
+  if (error) throw error;
 }
 
 export async function buscarConteudoArquivo(arquivo: NotaFiscalArquivo): Promise<string> {

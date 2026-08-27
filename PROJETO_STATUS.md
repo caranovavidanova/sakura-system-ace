@@ -2115,10 +2115,22 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    `0047` (coluna `codigo_cnae` em `configuracoes_fiscais_loja`), campo novo "Código CNAE" em
    Configurações → Dados fiscais → "Emissão de NFS-e", `montarCorpoNFSe()` manda o campo e
    `emitirNFSe()` valida que está preenchido antes de tentar emitir (mesmo padrão do
-   `codigo_municipio`). **Validado**: `tsc -b`, lint, os 60 testes (fixture + asserção nova) e a
-   migration num Postgres local, aplicada duas vezes pra confirmar idempotência. **Falta**: ela
-   rodar a migration `0047` e preencher o código CNAE da loja (número no Cartão CNPJ) antes do
-   próximo teste — sem isso, `emitirNFSe()` já bloqueia com mensagem clara antes de tentar.
+   `codigo_municipio`). **Validado**: `tsc -b`, lint, os 59 testes (fixture + asserção nova) e a
+   migration num Postgres local, aplicada duas vezes pra confirmar idempotência. `codigo_cnae` é
+   normalizado pra só dígitos antes de mandar pra Focus NFe (mesmo padrão de CNPJ/CPF/CEP), então
+   aceita digitar com ou sem pontuação.
+
+   **🎉 NFS-e EMITIDA COM SUCESSO EM PRODUÇÃO** — ela rodou as migrations `0046`/`0047`, preencheu
+   o Código CNAE (`4520-0/01`, coincidiu com o exemplo já usado na UI/testes) e publicou a
+   `v0.9.19` com tudo isso. Testou de novo na OS de teste (cliente "Eduarda Cristina") e a NFS-e
+   autorizou — **número 10**, XML já salvo em Notas Fiscais. É a primeira NFS-e de verdade emitida
+   pelo Sakura System de ponta a ponta (formulário → Focus NFe → prefeitura → autorizada). Fecha
+   a cadeia inteira de bloqueios desta sessão: Lote RPS (era instabilidade de homologação,
+   contornado testando em produção) → autenticação com a prefeitura (resolvido gerando o token no
+   portal Giap) → CNAE faltando (corrigido no código). **Por ser nota de teste, ela vai cancelar**
+   — usando o botão "Cancelar nota" construído nesta mesma sessão (primeiro uso real dele).
+   **NFC-e (peça) continua bloqueada** — separado, esperando a contabilidade credenciar o CNPJ na
+   SEFAZ-SP (ver bloco de NFC-e nesta seção).
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
@@ -2408,7 +2420,7 @@ terceiros:
 | Assunto | Onde parou | Com quem está |
 |---|---|---|
 | **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
-| **NFS-e** (serviço) | Autenticação com a prefeitura **resolvida** (ela mesma gerou o token no Giap). Próximo bloqueio já corrigido no código: faltava mandar `codigo_cnae` — migration `0047` criada, campo novo em Configurações | **Ela mesma** — rodar a migration `0047`, preencher o Código CNAE (Cartão CNPJ) em Configurações → Dados fiscais, e testar de novo |
+| **NFS-e** (serviço) | ✅ **FUNCIONANDO** — emitida com sucesso em produção (número 10, 27/08). Nota de teste, será cancelada pelo botão novo "Cancelar nota" | Nenhuma — resolvido |
 
 **Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
 painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico

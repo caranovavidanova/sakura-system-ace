@@ -27,6 +27,7 @@ function configuracaoFiscal(sobrescrever: Partial<ConfiguracaoFiscalLoja> = {}):
     item_lista_servico: "14.01",
     aliquota_iss: 5,
     codigo_tributario_municipio: null,
+    codigo_cnae: "4520-0/01",
     atualizado_em: new Date().toISOString(),
     ...sobrescrever,
   };
@@ -174,6 +175,7 @@ describe("montarCorpoNFSe", () => {
       aliquota: 5,
       discriminacao: "Alinhamento e balanceamento",
       item_lista_servico: "14.01",
+      codigo_cnae: "4520-0/01",
       valor_servicos: 150,
     });
   });

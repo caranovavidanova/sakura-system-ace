@@ -34,11 +34,14 @@ export interface ConfiguracaoFiscalLoja {
   // nenhum destes. codigo_municipio é o código IBGE da cidade da loja;
   // item_lista_servico é o código da LC 116/2003 (padrão "14.01" — manutenção
   // e conservação de veículos); codigo_tributario_municipio é específico da
-  // prefeitura, só alguns municípios exigem.
+  // prefeitura, só alguns municípios exigem; codigo_cnae vem do Cartão CNPJ
+  // da empresa ("Atividade econômica principal") — algumas prefeituras
+  // (Araraquara incluída) exigem esse campo pra autorizar a nota.
   codigo_municipio: string | null;
   item_lista_servico: string | null;
   aliquota_iss: number | null;
   codigo_tributario_municipio: string | null;
+  codigo_cnae: string | null;
   atualizado_em: string;
 }
 

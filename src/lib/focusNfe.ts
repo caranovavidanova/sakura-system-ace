@@ -369,6 +369,7 @@ export function montarCorpoNFSe({
       iss_retido: "false",
       item_lista_servico: configuracaoFiscal.item_lista_servico || "14.01",
       codigo_tributario_municipio: configuracaoFiscal.codigo_tributario_municipio ?? undefined,
+      codigo_cnae: configuracaoFiscal.codigo_cnae ?? "",
       valor_servicos: valorServicos,
     },
   };
@@ -385,6 +386,12 @@ export async function emitirNFSe(dados: DadosEmissaoNFSe): Promise<RespostaFocus
     throw new FocusNfeError(
       "Código do município da loja não configurado — cadastre em Configurações → Dados " +
         "fiscais da loja, seção \"Emissão de NFS-e\".",
+    );
+  }
+  if (!configuracaoFiscal.codigo_cnae) {
+    throw new FocusNfeError(
+      "Código CNAE da loja não configurado — cadastre em Configurações → Dados fiscais da " +
+        "loja, seção \"Emissão de NFS-e\" (está no Cartão CNPJ da empresa).",
     );
   }
 

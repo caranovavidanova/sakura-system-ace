@@ -2053,8 +2053,9 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    que a contabilidade passou pode valer só pra homologação, não pra produção (municípios costumam
    ter portais/cadastros separados pros dois ambientes) — precisa confirmar com a contabilidade ou
    com o suporte da Focus NFe se esse é o caso, e se sim, pedir o login/senha de **produção**
-   especificamente. **Ainda não confirmado, só levantado**. Próximo passo sugerido: perguntar isso
-   direto pro suporte da Focus NFe (citando esse erro específico) ou pra Rafaela/Lucrare.
+   especificamente. **Pergunta já enviada** (ela perguntou — não registrado aqui se foi pro
+   suporte da Focus NFe ou pra Rafaela/Lucrare) — **aguardando resposta**, sem teste novo por
+   enquanto.
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela

@@ -1994,8 +1994,23 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    Nacional em Araraquara — preciso migrar pro Ambiente Nacional?"*. Ela cobriu as duas pontas numa
    mensagem só: se a empresa precisa migrar pro Ambiente Nacional (e como fazer isso no painel
    deles), **ou**, se não for o caso, o que exatamente falta pra resolver o "Lote RPS não pode ser
-   nulo" no ambiente municipal mesmo. **Aguardando resposta** — o ticket estava sem retorno 3 horas
-   depois de aberto. É o único bloqueio de NFS-e hoje; nada a fazer no código até eles responderem.
+   nulo" no ambiente municipal mesmo.
+
+   **Respondido (Hélio Marques, suporte Focus NFe)**: **não tem relação com a migração pro Simples
+   Nacional** (que teve a data adiada pra 1º de novembro — ou seja, mesmo se a empresa fosse
+   obrigada a migrar um dia, ainda não é agora). A hipótese deles é **instabilidade do ambiente de
+   homologação da prefeitura** — o mesmo tipo de suspeita que o Gustavo Peres (outro atendente) já
+   tinha levantado numa sessão anterior, agora reforçada por um segundo atendente independente.
+   Sugestão deles: fazer um **teste de baixo valor em produção, cancelando a nota logo em
+   seguida**, já que "o ambiente de homologação das prefeituras nem sempre está funcional".
+   **Não é diagnóstico de um campo faltando** — é a Focus NFe dizendo que não há mais nada pra
+   ajustar do lado deles/nosso, e que o jeito de confirmar é testar fora da homologação.
+   **Continua sendo decisão da usuária, não decidida ainda**: da vez anterior que essa mesma
+   sugestão apareceu (Gustavo Peres), ela preferiu esperar mais informação em vez de gerar uma
+   NFS-e real — agora com dois atendentes emitindo a mesma hipótese, a decisão de tentar (ou seguir
+   esperando/insistindo em homologação) é dela. Se decidir tentar: precisa trocar o token de
+   homologação pelo de produção em Configurações → Dados fiscais da loja antes, é nota fiscal de
+   verdade (não simulada), e cancelar logo depois do teste.
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
@@ -2010,11 +2025,12 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      o item "NFC-e — IBS/CBS — RESOLVIDO" logo acima.
 
    **Como retomar na próxima sessão**: a hipótese do Ambiente Nacional **já foi descartada** (ver
-   bloco logo acima — a própria Focus NFe confirmou que a empresa não se encaixa, por não ser MEI),
-   então não perguntar mais sobre isso, só confirmar se: (a) ela já mandou (ou vai mandar) a versão
-   simplificada da mensagem pro suporte da Focus NFe, focada só em "o que falta pro Lote RPS no
-   ambiente municipal mesmo" — e o que responderam; se indicarem um campo específico, é só ajustar
-   `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme indicado; (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se sim e o
+   bloco logo acima — a própria Focus NFe confirmou que a empresa não se encaixa, por não ser MEI).
+   O ticket `#238770` **já foi respondido** (ver bloco acima) — não é mais "aguardando resposta", é
+   "aguardando decisão da usuária" sobre testar em produção ou não. Confirmar se: (a) ela decidiu
+   tentar o teste de baixo valor em produção (e, se sim, como foi — resolveu o "Lote RPS" ou não) ou
+   se prefere continuar insistindo em homologação; se um dia surgir um campo específico faltando, é
+   só ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme indicado; (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se sim e o
    código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e revisar
    as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
    (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de
@@ -2284,7 +2300,7 @@ terceiros:
 | Assunto | Onde parou | Com quem está |
 |---|---|---|
 | **NFC-e** (peça) | Diagnóstico **fechado**: falta credenciar o CNPJ na SEFAZ-SP e gerar CSC + ID Token (homologação e produção). Certificado digital já vinculado. | **Contabilidade** (Lucrare/Rafaela) — pedido enviado em 26/08 com o print da Focus NFe. Aguardando os 4 códigos |
-| **NFS-e** (serviço) | Erro *"Lote RPS não pode ser nulo"*, sem diagnóstico ainda. Hipótese do Ambiente Nacional já descartada (empresa não é MEI) | **Focus NFe** — ticket `#238770`, aberto em 26/08, sem resposta |
+| **NFS-e** (serviço) | Erro *"Lote RPS não pode ser nulo"*. Hipótese do Ambiente Nacional descartada (empresa não é MEI). Focus NFe respondeu: não tem relação com o Simples Nacional, hipótese é instabilidade no ambiente de homologação da prefeitura — sugerem testar em produção com cancelamento | **Decisão da usuária** — ticket `#238770` respondido (Hélio Marques); falta ela decidir se testa em produção ou continua esperando/insistindo em homologação |
 
 **Quando as respostas chegarem**: se a contabilidade mandar CSC/ID Token, é só ela cadastrar no
 painel da Focus NFe e testar de novo (nada de código). Se a Focus NFe indicar um campo específico

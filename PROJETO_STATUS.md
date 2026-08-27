@@ -369,6 +369,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # (uso único, criado numa sessão pra apagar as OS de teste abertas
 │                                  # em nome de "Eduarda Cristina" na loja real, sem tocar no cadastro
 │                                  # do cliente/veículo — ver "Empacotamento"/nota fiscal na seção 7/8)
+│                                  # + excluir-os-teste-nfse-producao.sql (mesmo padrão, preparado
+│                                  # nesta sessão pra limpar a OS usada no teste de NFS-e em PRODUÇÃO
+│                                  # sugerido pelo suporte da Focus NFe — troca o número da OS antes
+│                                  # de rodar; ver item 1 da seção 8)
 ├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts: lê fotos ou
 │                                  # PDFs de nota fiscal via Claude/Anthropic e devolve os produtos
 │                                  # estruturados (a ANTHROPIC_API_KEY fica só como secret dessa
@@ -2005,12 +2009,18 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    seguida**, já que "o ambiente de homologação das prefeituras nem sempre está funcional".
    **Não é diagnóstico de um campo faltando** — é a Focus NFe dizendo que não há mais nada pra
    ajustar do lado deles/nosso, e que o jeito de confirmar é testar fora da homologação.
-   **Continua sendo decisão da usuária, não decidida ainda**: da vez anterior que essa mesma
-   sugestão apareceu (Gustavo Peres), ela preferiu esperar mais informação em vez de gerar uma
-   NFS-e real — agora com dois atendentes emitindo a mesma hipótese, a decisão de tentar (ou seguir
-   esperando/insistindo em homologação) é dela. Se decidir tentar: precisa trocar o token de
-   homologação pelo de produção em Configurações → Dados fiscais da loja antes, é nota fiscal de
-   verdade (não simulada), e cancelar logo depois do teste.
+   **Ela decidiu tentar** (nesta sessão). Passo a passo combinado: (1) trocar o "Ambiente" pra
+   Produção em Configurações → Dados fiscais da loja, colando o token de produção (esse campo é
+   único pra loja toda — também deixa a NFC-e "em produção", mas ela continua travada no mesmo erro
+   de sempre, "CNPJ Emitente não cadastrado", então sem risco de emitir NFC-e real sem querer); (2)
+   escolher/criar uma OS de teste com valor baixo, com item de **serviço**, status concluída, e usar
+   "Emitir NFS-e" na aba Fechamento; (3) se autorizar, **cancelar direto no painel da Focus NFe**
+   (o Sakura System ainda não tem botão de cancelar nota — `cancelarNFCe`/`cancelarNFSe` existem em
+   `lib/focusNfe.ts`, mas nenhuma tela chama essas funções ainda); (4) se quiser tirar a OS de teste
+   do próprio Sakura System depois (não é obrigatório, é só arrumação), preparado nesta sessão
+   `supabase/scripts/excluir-os-teste-nfse-producao.sql` — mesmo padrão do
+   `excluir-os-teste-eduarda.sql`, só precisa trocar o número da OS antes de rodar. **Aguardando
+   ela fazer o teste e reportar o resultado** (autorizou? mesmo erro de Lote RPS? erro diferente?).
 
    Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
    nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela

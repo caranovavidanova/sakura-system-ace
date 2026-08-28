@@ -1,0 +1,231 @@
+/* Sakura System — site de apresentação
+   Mesma paleta do aplicativo (src/styles/globals.css), pra quem vê o site e
+   depois abre o programa reconhecer que é a mesma coisa. */
+
+:root {
+  --pink: #ff4dce;
+  --purple: #b624ff;
+  --bg: #0b070a;
+  --card: #150e14;
+  --card-borda: rgba(255, 77, 206, 0.14);
+  --texto: #f4eaf2;
+  --texto-suave: #b9a7b5;
+  --texto-fraco: #8d7d8a;
+  --max: 1120px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--texto);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* brilho difuso rosa/roxo ao fundo, como no app */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(182, 36, 255, 0.20), transparent 60%),
+    radial-gradient(50rem 35rem at 88% 8%, rgba(255, 77, 206, 0.14), transparent 60%);
+  pointer-events: none;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+
+.wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+/* ---------- topo ---------- */
+.topo {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(14px);
+  background: rgba(11, 7, 10, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.topo .wrap { display: flex; align-items: center; gap: 24px; height: 76px; }
+.topo img {
+  height: 38px; width: auto;
+  filter: drop-shadow(0 0 12px rgba(255, 77, 206, 0.35));
+}
+.topo nav { margin-left: auto; display: flex; gap: 26px; align-items: center; }
+.topo nav a { color: var(--texto-suave); text-decoration: none; font-size: 0.94rem; }
+.topo nav a:hover { color: var(--texto); }
+
+/* ---------- botões ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 13px 24px; border-radius: 999px;
+  font-weight: 600; font-size: 1rem; text-decoration: none;
+  border: 1px solid transparent; cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn-principal {
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(182, 36, 255, 0.32);
+}
+.btn-principal:hover { transform: translateY(-2px); box-shadow: 0 12px 38px rgba(182, 36, 255, 0.45); }
+.btn-secundario {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--texto);
+}
+.btn-secundario:hover { background: rgba(255, 255, 255, 0.10); transform: translateY(-2px); }
+.btn-pequeno { padding: 9px 18px; font-size: 0.9rem; }
+
+/* ---------- seções ---------- */
+section { padding: 96px 0; }
+.selo {
+  display: inline-block;
+  font-size: 0.76rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--pink);
+  margin-bottom: 18px;
+}
+h1 {
+  font-size: clamp(2.3rem, 5.4vw, 3.9rem);
+  line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 22px;
+  font-weight: 700;
+}
+h1 .destaque {
+  background: linear-gradient(120deg, var(--pink), var(--purple));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+h2 {
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 18px; font-weight: 700;
+}
+h3 { font-size: 1.12rem; margin: 0 0 8px; font-weight: 650; }
+.chamada { font-size: clamp(1.02rem, 1.7vw, 1.2rem); color: var(--texto-suave); max-width: 62ch; margin: 0 0 34px; }
+.centro { text-align: center; }
+.centro .chamada { margin-left: auto; margin-right: auto; }
+
+/* ---------- hero ---------- */
+.hero { padding: 84px 0 64px; }
+.hero .acoes { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+.hero .aviso-download { font-size: 0.86rem; color: var(--texto-fraco); margin: 0; }
+.moldura {
+  margin-top: 52px;
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--card-borda);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(182, 36, 255, 0.10);
+}
+
+/* ---------- cartões ---------- */
+.grade { display: grid; gap: 20px; }
+.grade-3 { grid-template-columns: repeat(3, 1fr); }
+.grade-2 { grid-template-columns: repeat(2, 1fr); }
+.cartao {
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+  border: 1px solid var(--card-borda);
+  border-radius: 14px; padding: 26px;
+}
+.cartao p { color: var(--texto-suave); margin: 0; font-size: 0.95rem; }
+.cartao .icone {
+  width: 40px; height: 40px; border-radius: 11px; margin-bottom: 16px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, rgba(255,77,206,0.20), rgba(182,36,255,0.20));
+  border: 1px solid rgba(255,77,206,0.22);
+  font-size: 1.15rem;
+}
+
+/* ---------- telas ---------- */
+.telas { display: grid; gap: 56px; }
+/* Sem isto, o item de um grid cresce pra caber o conteúdo (min-width: auto é o
+   padrão) e a imagem larga da tela empurra a página inteira pro lado no
+   celular, em vez de rolar dentro da própria moldura. */
+.telas > * { min-width: 0; }
+.tela .rolavel { max-width: 100%; }
+.tela figcaption { margin-top: 16px; }
+.tela figcaption strong { display: block; font-size: 1.06rem; margin-bottom: 4px; }
+.tela figcaption span { color: var(--texto-suave); font-size: 0.95rem; }
+.tela img {
+  border-radius: 14px;
+  border: 1px solid var(--card-borda);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- destaque fiscal ---------- */
+.faixa {
+  background: linear-gradient(135deg, rgba(255,77,206,0.09), rgba(182,36,255,0.09));
+  border-top: 1px solid var(--card-borda);
+  border-bottom: 1px solid var(--card-borda);
+}
+.lista-check { list-style: none; padding: 0; margin: 0; display: grid; gap: 13px; }
+.lista-check li { display: flex; gap: 12px; align-items: flex-start; color: var(--texto-suave); }
+.lista-check li::before {
+  content: "✓"; color: var(--pink); font-weight: 700; flex-shrink: 0; line-height: 1.5;
+}
+
+/* ---------- plano ---------- */
+.plano {
+  border: 1px solid rgba(255, 77, 206, 0.26);
+  border-radius: 18px; padding: 40px;
+  background: linear-gradient(180deg, rgba(255,77,206,0.07), rgba(255,255,255,0.015));
+}
+.plano .preco { font-size: 1.16rem; color: var(--texto); margin: 0 0 6px; font-weight: 650; }
+.plano .preco-nota { color: var(--texto-fraco); font-size: 0.92rem; margin: 0 0 28px; }
+
+/* ---------- passos ---------- */
+.passo { display: flex; gap: 18px; align-items: flex-start; }
+.passo .n {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; font-size: 0.92rem;
+  background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff;
+}
+.passo p { margin: 0; color: var(--texto-suave); font-size: 0.95rem; }
+
+/* ---------- perguntas ---------- */
+details {
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 20px 0;
+}
+details summary {
+  cursor: pointer; font-weight: 600; font-size: 1.02rem; list-style: none;
+  display: flex; justify-content: space-between; gap: 20px; align-items: center;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::after { content: "+"; color: var(--pink); font-size: 1.3rem; font-weight: 400; }
+details[open] summary::after { content: "−"; }
+details p { color: var(--texto-suave); margin: 14px 0 0; font-size: 0.96rem; max-width: 70ch; }
+
+/* ---------- rodapé ---------- */
+footer {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 44px 0; color: var(--texto-fraco); font-size: 0.9rem;
+}
+footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+footer a { color: var(--texto-suave); }
+
+/* ---------- telas menores ---------- */
+@media (max-width: 900px) {
+  section { padding: 68px 0; }
+  .grade-3, .grade-2 { grid-template-columns: 1fr; }
+  .topo nav a:not(.btn) { display: none; }
+}
+
+/* No celular a imagem da tela encolheria a ponto de não dar pra ler nada.
+   Em vez disso, ela mantém um tamanho legível e a pessoa arrasta de lado —
+   a rolagem fica dentro da moldura, a página em si nunca rola na horizontal. */
+@media (max-width: 760px) {
+  .moldura, .tela .rolavel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .moldura img, .tela .rolavel img { min-width: 700px; }
+  .tela .rolavel {
+    border-radius: 14px;
+    border: 1px solid var(--card-borda);
+  }
+  .tela .rolavel img { border: 0; border-radius: 0; box-shadow: none; }
+}

@@ -188,6 +188,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Quem paga a infraestrutura das lojas clientes (28/08/2026) | **Tudo na conta da usuária** — Supabase, Anthropic e Focus NFe. O dono da loja não cria conta em serviço nenhum e nunca vê que eles existem | Decisão explícita dela. É o que justifica a mensalidade e o que permite dar suporte de verdade; em troca, o dado dos clientes das lojas fica sob responsabilidade dela — daí o backup ser obrigatório, não opcional. **Substitui** o modelo antigo de "cada loja cria a própria conta Anthropic" descrito na linha acima e no item 6 da seção 8 |
 | Plano do Supabase por empresa cliente (28/08/2026) | **Pro desde a primeira venda** (~R$145/mês por empresa, já dentro da conta do R$350/loja) | O plano grátis não guarda cópia de segurança automática — perder o dado de uma loja de terceiro seria muito pior que esse custo. O grátis também tem teto baixo de projetos por organização e pausa sozinho após dias sem uso |
 | Instalação de empresa nova | Um arquivo SQL único (`supabase/instalacao/instalacao-completa.sql`, gerado por `npm run gerar-instalacao`) + o checklist `supabase/instalacao/INSTALAR-LOJA-NOVA.md` | Colar as ~47 migrations uma por uma era o maior risco operacional da venda: pular uma ou trocar a ordem não dá erro na hora, só quebra depois na tela do app. Ver itens 36 e 37 da seção 6 |
+| Site de apresentação (28/08/2026) | Pasta `site/` no próprio repositório, **HTML/CSS puros sem build**, publicado na Vercel com Root Directory = `site` | Uma página só não justifica um segundo `node_modules`; sem build não há risco de quebrar o build/teste do app, e a usuária consegue editar um texto sem rodar nada. Reaproveita a conexão da Vercel que já existia no repositório e só atrapalhava (check falhando nos PRs) |
+| Nome do arquivo do instalador (28/08/2026) | Fixo: `SakuraSystem-Setup.exe` (`build.artifactName` no `package.json`), sem o número da versão | Permite ao site apontar pra um endereço permanente (`/releases/latest/download/SakuraSystem-Setup.exe`) que sempre entrega a última versão, sem editar o site a cada lançamento. Seguro pro auto-update: o `latest.yml` guarda o nome do arquivo, então a próxima versão já aponta sozinha pro nome novo |
+| Preço no site (28/08/2026) | Mostrar **o que está incluído, sem valor fechado** — escolha dela, entre "sem preço nenhum" e "preço na cara" | O R$350/loja foi calculado pras 3 primeiras lojas (fase 2), não é preço de tabela; e a venda é pra conhecidos do pai dela, onde o valor pode variar caso a caso |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
 | Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
 | Gerenciamento de formulário | `react-hook-form` + `zod` — **migração concluída**, todo formulário do app já está nesse padrão | Pedido da usuária, baseado num plano de refatoração de outra IA (Gemini) — decisão explícita de que é o padrão geral, não um teste isolado. Ver "Padrão de formulário" na seção 4 |
@@ -393,6 +396,15 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # senha temporária pra outro operador — usa a service role key
 │                                  # (só o Supabase injeta sozinha, sem secret manual pra
 │                                  # configurar), ver "Login e permissões" na seção 7.
+├── site/                         # site de apresentação (HTML/CSS puros, SEM etapa de build —
+│                                  # de propósito: uma página só não justifica um segundo
+│                                  # node_modules, e assim não atrapalha build/teste do app).
+│                                  # index.html (todo o texto), styles.css (mesma paleta do app),
+│                                  # telas/*.jpg (imagens do sistema com dados inventados),
+│                                  # ferramentas/ (gera essas imagens rodando o app de verdade
+│                                  # num navegador, com o Supabase interceptado — ver
+│                                  # site/README.md), README.md (como ver, publicar na Vercel e
+│                                  # regerar as imagens)
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
 ├── scripts/gerar-instalacao-completa.mjs # `npm run gerar-instalacao` — regera
 │                                  # supabase/instalacao/instalacao-completa.sql a partir das
@@ -1362,6 +1374,24 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     maior**: comentário de bootstrap dentro de uma migration antiga **não é atualizado pelas
     migrations seguintes** — quando uma migration nova muda o que é preciso pra criar o primeiro
     usuário/registro de algo, procurar ativamente as instruções antigas que ficaram para trás.
+
+38. **O cartão "Lucros mês" da tela Início tem o MESMO bug do item 35, que só foi corrigido nos
+    gráficos de Relações — ainda não corrigido, e é a primeira tela que todo mundo vê.**
+    Encontrado por acaso ao gerar as imagens do site: com dados de demonstração plausíveis, o
+    Início mostrava lucro de 91% sobre as vendas. `PainelPage.tsx` calcula
+    `lucrosMes = vendasMes - custosMes`, onde `custosMes` soma **só os lançamentos de saída do
+    Caixa** (aluguel, sucata, fornecedor pago) — nunca o `preco_custo` da peça nem o `custo` do
+    serviço vendido em cada OS faturada. Ou seja, o número não é lucro: é
+    "vendas − despesas operacionais lançadas à mão". Numa loja que não lança despesa manual
+    nenhuma, o cartão mostra o **faturamento inteiro como se fosse lucro**. O item 35 corrigiu
+    exatamente isso em `GraficosSection.tsx` (somando o custo de aquisição por OS faturada,
+    deduplicado por OS — importante porque pagamento dividido gera vários `caixa_movimentos` pra
+    mesma OS), mas `PainelPage.tsx` ficou pra trás. **Não corrigido nesta sessão** — foi só
+    reportado pra ela, porque muda um número que ela olha todo dia e merece ser uma mudança
+    separada, não escondida dentro do trabalho do site. **Lição que se repete**: ao corrigir um
+    cálculo de negócio, procurar **todos** os lugares que fazem a mesma conta (mesma família dos
+    itens 20 e 28) — `LucratividadeSection.tsx` também vale conferir junto quando isso for
+    atacado.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -2612,6 +2642,25 @@ migration `0007`) estava desatualizada desde a `0031`, e sem o `insert` em `oper
 instalação nova nasceria com a loja aparecendo vazia**, sem conserto pela tela. Os dois corrigidos
 e validados num Postgres local.
 
+**Segunda parte da sessão — site de apresentação** (pedido dela, pra ter um endereço bonito pra
+mostrar pros conhecidos do pai dela e um link de download que não seja a tela do GitHub):
+
+- **`site/`** — página única em HTML/CSS puros, mesma paleta do app, com telas reais do sistema,
+  seção de nota fiscal, "o que está incluído" sem valor fechado, passo a passo de como começa e
+  perguntas frequentes. Ver `site/README.md` pra ver localmente, publicar na Vercel e regerar as
+  imagens. **Ainda não publicado** — falta ela apontar a Vercel pra pasta `site` (3 campos, passo
+  a passo no README).
+- **Imagens das telas geradas por ferramenta, não por print à mão** (`site/ferramentas/`): abre o
+  app de verdade num navegador e responde as chamadas ao Supabase com dados inventados, sem tocar
+  no banco de loja nenhuma. Refazer quando o visual mudar é um comando. Nenhum dado de cliente
+  real aparece no site.
+- **Link de download permanente**: o instalador passou a ter nome fixo (`SakuraSystem-Setup.exe`),
+  então o site aponta pra `/releases/latest/download/SakuraSystem-Setup.exe` e nunca precisa ser
+  editado a cada versão. **Esse link só passa a funcionar a partir da `v0.9.22`** — as versões já
+  publicadas têm o nome antigo, com o número da versão dentro.
+- **Bug real encontrado no caminho, ainda NÃO corrigido**: o cartão "Lucros mês" da tela Início
+  mostra faturamento como se fosse lucro (item 38 da seção 6). Reportado a ela, aguardando decisão.
+
 **Fila combinada, na ordem, não começada**:
 1. **Token Focus NFe compartilhado** (uma conta só dela, invisível pro dono da loja) — é o
    pré-requisito da conta de R$350/loja. Ver item 6 da seção 8. Combinado que só depois da emissão
@@ -2621,6 +2670,9 @@ e validados num Postgres local.
 3. **Risco conhecido, sem solução ainda**: publicar uma tag ruim atualiza **todas as lojas de uma
    vez, sozinho**. Com 1 loja o risco é dela; com 3 de terceiros, vira telefonema. Não foi decidido
    nada — por ora vale o hábito de testar antes e não publicar em dia de movimento.
+4. **Corrigir o "Lucros mês" do Início** (item 38 da seção 6) — decisão dela pendente.
+5. **Publicar a `v0.9.22`** pra destravar o botão de download do site, e apontar a Vercel pra
+   pasta `site`.
 
 ## 9. Como rodar / configurar (resumo)
 

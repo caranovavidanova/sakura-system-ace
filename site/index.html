@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sakura System — sistema de gestão para autocenter e borracharia</title>
+<meta name="description" content="Sistema completo de gestão para autocenter e borracharia: ordem de serviço, estoque, caixa, contas a pagar e receber, e emissão de nota fiscal (NFC-e e NFS-e) direto do programa.">
+<link rel="icon" href="/sakura-icon.svg">
+<meta property="og:title" content="Sakura System — AutoCenter Edition">
+<meta property="og:description" content="Ordem de serviço, estoque, caixa e nota fiscal num programa só. Feito para autocenter e borracharia.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="wrap">
+    <img src="/sakura-logo.svg" alt="Sakura System">
+    <nav>
+      <a href="#recursos">Recursos</a>
+      <a href="#telas">Telas</a>
+      <a href="#nota-fiscal">Nota fiscal</a>
+      <a href="#assinatura">Assinatura</a>
+      <a class="btn btn-principal btn-pequeno" href="#baixar">Baixar</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <span class="selo">AutoCenter Edition</span>
+      <h1>O sistema da sua loja,<br><span class="destaque">do orçamento à nota fiscal.</span></h1>
+      <p class="chamada">
+        Ordem de serviço, estoque, caixa, contas e emissão de nota fiscal num programa só —
+        pensado para o dia a dia de autocenter e borracharia, não para quem entende de computador.
+      </p>
+      <div class="acoes" id="baixar">
+        <a class="btn btn-principal" href="https://github.com/caranovavidanova/sakura-system-ace/releases/latest/download/SakuraSystem-Setup.exe">
+          Baixar para Windows
+        </a>
+        <a class="btn btn-secundario" href="#contato">Falar comigo</a>
+      </div>
+      <p class="aviso-download">Instalação em poucos minutos. O programa se atualiza sozinho.</p>
+
+      <div class="moldura">
+        <img src="/telas/inicio.jpg" width="1720" height="980"
+             alt="Tela de Início do Sakura System, com vendas do mês, ordens de serviço abertas e veículos no pátio">
+      </div>
+    </div>
+  </section>
+
+  <section class="faixa" style="padding: 56px 0;">
+    <div class="wrap centro">
+      <p class="chamada" style="margin-bottom: 0; font-size: 1.06rem;">
+        Em uso diário numa autocenter em Araraquara — cada função nasceu de um problema real de
+        balcão, não de uma lista de recursos.
+      </p>
+    </div>
+  </section>
+
+  <section id="recursos">
+    <div class="wrap">
+      <span class="selo">Recursos</span>
+      <h2>Tudo que a loja precisa, num lugar só</h2>
+      <p class="chamada">
+        Sem planilha paralela, sem caderno, sem ter que lembrar o que ficou pendente.
+      </p>
+
+      <div class="grade grade-3">
+        <div class="cartao">
+          <div class="icone">🔧</div>
+          <h3>Ordem de serviço</h3>
+          <p>Cliente, veículo, peças usadas e serviço realizado. Numeração própria, técnico por
+             item e o lucro de cada OS calculado na hora.</p>
+        </div>
+        <div class="cartao">
+          <div class="icone">📦</div>
+          <h3>Estoque</h3>
+          <p>Entrada, saída e saldo por produto. A peça usada numa OS baixa sozinha. Inventário
+             por depósito e importação da nota do fornecedor.</p>
+        </div>
+        <div class="cartao">
+          <div class="icone">💵</div>
+          <h3>Caixa diário</h3>
+          <p>Toda OS faturada vira lançamento automático. Divide o pagamento entre Pix, cartão e
+             dinheiro, com parcelamento e juros configuráveis.</p>
+        </div>
+        <div class="cartao">
+          <div class="icone">📄</div>
+          <h3>Contas a pagar e receber</h3>
+          <p>Vencimentos, contas mensais que se repetem sozinhas, e o que o cliente ficou devendo
+             quando não pagou tudo na hora.</p>
+        </div>
+        <div class="cartao">
+          <div class="icone">🚚</div>
+          <h3>Fornecedores e compras</h3>
+          <p>Pedido de compra, recebimento (inteiro ou parcial) e histórico de preço por
+             fornecedor, pra saber com quem aquela peça saiu mais barata.</p>
+        </div>
+        <div class="cartao">
+          <div class="icone">📊</div>
+          <h3>Relações e garantias</h3>
+          <p>Vendas, custos e lucro por período, margem por peça e serviço, e o controle de
+             garantia do que foi vendido.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="telas" class="faixa">
+    <div class="wrap">
+      <span class="selo">Por dentro</span>
+      <h2>Como o sistema é de verdade</h2>
+      <p class="chamada">Telas reais do programa. Os dados são de exemplo.</p>
+
+      <div class="telas">
+        <figure class="tela" style="margin:0">
+          <div class="rolavel"><img src="/telas/ordens-servico.jpg" width="1720" height="980" loading="lazy"
+               alt="Lista de ordens de serviço com número, cliente, veículo, status e lucro por OS"></div>
+          <figcaption>
+            <strong>Ordens de serviço</strong>
+            <span>Tudo que está em andamento, concluído e faturado — com o lucro de cada OS na
+              própria lista.</span>
+          </figcaption>
+        </figure>
+
+        <figure class="tela" style="margin:0">
+          <div class="rolavel"><img src="/telas/caixa.jpg" width="1720" height="980" loading="lazy"
+               alt="Caixa diário com entradas, saídas, saldo e formas de recebimento do dia"></div>
+          <figcaption>
+            <strong>Caixa diário</strong>
+            <span>O dinheiro do dia separado por forma de recebimento, com o que veio de cada
+              ordem de serviço.</span>
+          </figcaption>
+        </figure>
+
+        <figure class="tela" style="margin:0">
+          <div class="rolavel"><img src="/telas/estoque.jpg" width="1720" height="980" loading="lazy"
+               alt="Cadastro de produtos com custo, preço de venda e estoque atual"></div>
+          <figcaption>
+            <strong>Estoque</strong>
+            <span>Custo, preço de venda e saldo de cada peça — e o botão que lê a nota do
+              fornecedor por foto ou PDF.</span>
+          </figcaption>
+        </figure>
+
+        <figure class="tela" style="margin:0">
+          <div class="rolavel"><img src="/telas/clientes.jpg" width="1720" height="980" loading="lazy"
+               alt="Cadastro de clientes com telefone, cidade e veículos de cada um"></div>
+          <figcaption>
+            <strong>Clientes e veículos</strong>
+            <span>Cada cliente com seus veículos, e todo o histórico de serviço ligado à placa.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="nota-fiscal">
+    <div class="wrap">
+      <div class="grade grade-2" style="align-items:center; gap:56px">
+        <div>
+          <span class="selo">Nota fiscal</span>
+          <h2>NFC-e e NFS-e sem sair do sistema</h2>
+          <p class="chamada" style="margin-bottom:26px">
+            A nota sai da própria ordem de serviço: o sistema monta, envia, espera a autorização e
+            já mostra o documento pronto pra imprimir ou mandar pro cliente.
+          </p>
+          <ul class="lista-check">
+            <li>NFC-e para a venda de peça e NFS-e para o serviço</li>
+            <li>Guarda o XML de cada nota, organizado por mês</li>
+            <li>Cancelamento pelo próprio sistema, com justificativa</li>
+            <li>Recibo em versão simples pra entregar ao cliente</li>
+          </ul>
+        </div>
+        <div class="cartao">
+          <h3>Antes de emitir, um aviso honesto</h3>
+          <p style="margin-bottom:14px">
+            Emitir nota fiscal não depende só do programa. Cada loja precisa de certificado
+            digital, credenciamento na SEFAZ do estado e, no caso da nota de serviço, cadastro na
+            prefeitura da cidade.
+          </p>
+          <p>
+            Isso leva alguns dias e envolve a contabilidade da sua loja — mas o resto do sistema
+            (OS, estoque, caixa) você já usa desde o primeiro dia. Eu acompanho essa parte com
+            você.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="assinatura" class="faixa">
+    <div class="wrap">
+      <div class="centro" style="margin-bottom:40px">
+        <span class="selo">Assinatura</span>
+        <h2>Uma mensalidade, sem surpresa</h2>
+        <p class="chamada">
+          Você não cria conta em serviço nenhum, não configura servidor, não paga nada separado.
+          Está tudo dentro da assinatura.
+        </p>
+      </div>
+
+      <div class="plano">
+        <p class="preco">Valor combinado caso a caso</p>
+        <p class="preco-nota">Depende do tamanho da operação e da quantidade de lojas. Sem taxa de instalação.</p>
+        <div class="grade grade-2" style="gap:14px">
+          <ul class="lista-check">
+            <li>O sistema completo, em quantos computadores a loja precisar</li>
+            <li>Banco de dados na nuvem, exclusivo da sua empresa</li>
+            <li>Cópia de segurança automática, todo dia</li>
+            <li>Emissão de nota fiscal inclusa</li>
+          </ul>
+          <ul class="lista-check">
+            <li>Atualizações novas chegando sozinhas</li>
+            <li>Instalação e configuração feitas por mim</li>
+            <li>Suporte direto comigo, sem central de atendimento</li>
+            <li>Mais de uma loja no mesmo sistema, se precisar</li>
+          </ul>
+        </div>
+        <div style="margin-top:32px">
+          <a class="btn btn-principal" href="#contato">Pedir uma proposta</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <span class="selo">Como começa</span>
+      <h2>Do primeiro contato ao balcão</h2>
+      <div class="grade grade-3" style="margin-top:36px">
+        <div class="passo">
+          <div class="n">1</div>
+          <div>
+            <h3>A gente conversa</h3>
+            <p>Você me conta como a loja trabalha hoje e eu digo, com sinceridade, se o sistema
+               atende.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="n">2</div>
+          <div>
+            <h3>Eu deixo tudo pronto</h3>
+            <p>Preparo o banco da sua empresa, instalo no computador da loja e configuro com os
+               dados reais dela.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="n">3</div>
+          <div>
+            <h3>A loja começa a usar</h3>
+            <p>Cadastro, OS, estoque e caixa desde o primeiro dia. A nota fiscal entra assim que a
+               parte burocrática ficar pronta.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faixa">
+    <div class="wrap">
+      <span class="selo">Dúvidas</span>
+      <h2>Perguntas que sempre aparecem</h2>
+      <div style="margin-top:26px">
+        <details open>
+          <summary>Preciso de internet pra usar?</summary>
+          <p>Precisa. Os dados ficam na nuvem, o que permite acessar a mesma informação de mais de
+             um computador e mantém a cópia de segurança sempre em dia. É o mesmo motivo pelo qual
+             a nota fiscal funciona: ela também exige internet.</p>
+        </details>
+        <details>
+          <summary>Funciona em quantos computadores?</summary>
+          <p>Quantos a loja precisar, sem custo por máquina. Todos veem a mesma informação na hora.
+             Cada funcionário entra com o próprio usuário, e você escolhe o que cada um pode ver.</p>
+        </details>
+        <details>
+          <summary>E se eu já uso outro sistema?</summary>
+          <p>Dá pra começar cadastrando só o que você usa no dia a dia e ir migrando aos poucos.
+             Sobre trazer os dados do sistema antigo automaticamente, me pergunte — depende do
+             formato em que ele consegue exportar.</p>
+        </details>
+        <details>
+          <summary>O programa roda em Mac ou celular?</summary>
+          <p>Hoje só em Windows. Versão para celular está nos planos, mas ainda não existe — prefiro
+             dizer isso agora do que prometer.</p>
+        </details>
+        <details>
+          <summary>Meus dados ficam misturados com os de outra loja?</summary>
+          <p>Não. Cada empresa tem um banco de dados separado, só dela. Se a sua empresa tiver mais
+             de uma loja, aí sim elas dividem o mesmo sistema — com cadastro de cliente e peça em
+             comum, mas caixa, estoque e OS separados por loja.</p>
+        </details>
+        <details>
+          <summary>Quando o Windows avisa "editor desconhecido", é problema?</summary>
+          <p>Não. É o aviso padrão do Windows para programa sem certificado de assinatura, que é um
+             selo pago. É só clicar em "Mais informações" e "Executar assim mesmo".</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contato">
+    <div class="wrap centro">
+      <span class="selo">Contato</span>
+      <h2>Quer ver funcionando?</h2>
+      <p class="chamada">
+        Me chame que eu mostro o sistema rodando e respondo o que você precisar saber, sem
+        compromisso.
+      </p>
+      <div class="acoes" style="justify-content:center">
+        <a class="btn btn-principal" href="mailto:caranovavidanova@gmail.com?subject=Interesse%20no%20Sakura%20System">
+          Mandar um e-mail
+        </a>
+        <a class="btn btn-secundario" href="https://github.com/caranovavidanova/sakura-system-ace/releases/latest/download/SakuraSystem-Setup.exe">
+          Baixar para Windows
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Sakura System — AutoCenter Edition · por Sakura Corp</span>
+    <span><a href="#baixar">Baixar</a> · <a href="#contato">Contato</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

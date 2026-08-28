@@ -20,5 +20,6 @@ interface Window {
     }) => Promise<{ ok: boolean; status: number; contentType: string; bytes: Uint8Array }>;
     conexao?: { url: string; chave: string };
     salvarConexao: (conexao: { url: string; chave: string }) => Promise<void>;
+    registrarErro?: (mensagem: string) => void;
   };
 }

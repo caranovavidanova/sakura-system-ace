@@ -1404,6 +1404,29 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     itens 20 e 28) — `LucratividadeSection.tsx` também vale conferir junto quando isso for
     atacado.
 
+39. **Campo que "para de aceitar digitação" e volta ao normal reiniciando o app — NÃO
+    diagnosticado, mas agora tem como investigar.** Relatado por ela usando o sistema de verdade
+    (28/08/2026): foi editar o CPF de um cliente, conseguiu **apagar** mas não conseguiu **digitar**
+    — a mesma frase do item 17 desta seção, o que puxa naturalmente pra hipótese de "texto
+    invisível". **Mas ela fechou e abriu o app e o problema sumiu sozinho — e isso muda o
+    diagnóstico inteiro**: cor de texto não se conserta reiniciando, então não é CSS. Também não são
+    os dois hooks globais de teclado (`useEnterParaProximoCampo` só trata Enter,
+    `useLimparDataAoApagar` só `input[type=date]`), nem o `Combobox` (só mexe no próprio campo), nem
+    o autosave de rascunho (só grava no localStorage). Sobra alguma coisa de **estado do app em
+    execução** — o candidato mais provável é um erro de JavaScript solto que deixa parte da tela
+    morta até a janela reiniciar. **Tentado reproduzir e não deu**: o `ClienteForm` foi renderizado
+    de verdade com um cliente existente, primeiro no navegador e depois **dentro do Electron real**
+    (`playwright._electron`, ver item 6) — apagar e redigitar o CPF funcionou nos dois, com letra
+    branca sobre fundo escuro e nenhum `bg-white/*` por perto. **Nada foi "corrigido" às cegas**, de
+    propósito: é exatamente o erro do item 33 (chutar duas vezes numa correção não testável).
+    **O que foi feito**: o app passou a registrar erro de tela em arquivo —
+    `%APPDATA%\Sakura System - AutoCenter Edition\erros.log`, mesmo espírito do `atualizacoes.log`
+    do item 19 (`src/lib/registrarErros.ts` escuta `error` e `unhandledrejection` e manda pro
+    processo principal gravar via IPC `log:erroDaTela`). Sem isso, um erro na tela do app instalado
+    é 100% invisível: DevTools só abre em modo dev e um app aberto por duplo clique não tem terminal.
+    **Se o sintoma voltar, o primeiro passo é pedir esse arquivo pra ela** — validado no Electron
+    real (erro solto e promise rejeitada caíram no arquivo com data, mensagem e pilha).
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -1630,6 +1653,23 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   o total da nota deixando a última **negativa** (rejeição da SEFAZ). Passou a ratear pela **soma
   das formas de pagamento** (`ratearPagamentos`, função pura testada): resultado idêntico quando não
   há juros, sem negativo quando há.
+
+  **"Finalizada" — a OS sabe de que nota ela precisa** (28/08/2026, pedido dela usando o sistema;
+  ainda não confirmado por ela rodando): o sistema deduz, pelos itens, qual nota cada OS precisa —
+  só peça → NFC-e, só serviço → NFS-e, os dois → as duas — e cruza com as notas já ligadas àquela
+  OS. Consequências na tela: (a) na lista, uma OS faturada que ainda deve nota continua "Faturada"
+  (agora em **azul**, porque ainda pede uma ação) com um "falta NFS-e" embaixo, e vira
+  **"Finalizada"** (verde) quando todas as notas dela saíram; (b) na aba Fechamento, só aparece o
+  botão da nota que aquela OS precisa (uma OS só de serviço não mostra mais "Emitir NFC-e", que
+  daria erro de qualquer forma), com uma linha dizendo o que falta, e o botão de uma nota já
+  emitida aparece como "NFC-e emitida ✓". **Nota cancelada volta a contar como pendente**, e nota
+  enviada à mão (upload de XML vinculado à OS) conta como emitida igual às automáticas.
+  **Sem migration e sem status novo no banco**: `ordens_servico.status` continua
+  em_andamento/concluida/faturada — "Finalizada" é derivado na hora (`schemas/situacaoFiscal.ts`,
+  funções puras testadas), mesma filosofia do módulo de Garantias. Derivar em vez de gravar também
+  evita o status mentir se uma nota for cancelada depois. **Decisão dela junto**: não existe
+  "OS sem nota" — toda OS vai ter nota emitida, então não foi criado nenhum jeito de marcar uma OS
+  como dispensada de nota (se um dia fizer falta, é uma coluna nova + migration).
 
   **Dois ajustes de ergonomia na lista de itens** (mesma leva, mesmo motivo — uso real no balcão):
   o botão "+ adicionar item" saiu do cabeçalho e foi pro **rodapé da lista, alinhado à direita**

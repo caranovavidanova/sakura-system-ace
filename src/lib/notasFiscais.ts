@@ -23,6 +23,22 @@ export async function listarArquivos(
   return data as unknown as NotaFiscalArquivo[];
 }
 
+// Notas ligadas a um conjunto de OS — usada pra saber, sem uma consulta por
+// linha da lista, quais notas cada OS já tem (ver schemas/situacaoFiscal.ts).
+export async function listarArquivosDasOrdens(
+  ordemIds: string[],
+): Promise<NotaFiscalArquivo[]> {
+  if (ordemIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("notas_fiscais_arquivos")
+    .select("*")
+    .in("ordem_servico_id", ordemIds);
+
+  if (error) throw error;
+  return data as unknown as NotaFiscalArquivo[];
+}
+
 interface NovoEnvioArquivo {
   tipo: TipoNotaFiscal;
   competencia: string;

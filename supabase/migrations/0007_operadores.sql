@@ -64,3 +64,19 @@ create policy "operadores_escrita_admins" on operadores
 --
 -- insert into operadores (id, usuario, nome, admin, permissoes, ativo)
 -- values ('COLE_O_USER_UID_AQUI', 'SEU_USUARIO', 'Seu Nome', true, '{}', true);
+--
+-- insert into operador_lojas (operador_id, loja_id)
+-- values ('COLE_O_USER_UID_AQUI', '00000000-0000-0000-0000-000000000001');
+--
+-- ⚠️  O SEGUNDO insert é obrigatório desde a migration 0031 (multi-loja) e é
+-- fácil de esquecer, porque esta migration é bem anterior a ela. Sem o vínculo
+-- em `operador_lojas`, o admin entra no sistema mas não enxerga NADA que seja
+-- por loja — depósito, configurações do Início, dados fiscais, OS, caixa, tudo
+-- vazio — e ninguém consegue nem editar esse operador depois (ver
+-- PROJETO_STATUS.md, seção 6, item 23). O backfill da 0031 só cobre operadores
+-- que já existiam quando ela rodou, então num banco novo, criado do zero, o
+-- primeiro admin sempre precisa deste insert à mão.
+--
+-- O UUID acima é o da "Loja 1", criada pela própria migration 0031 com id fixo.
+-- Passo a passo completo de instalar uma empresa nova:
+-- supabase/instalacao/INSTALAR-LOJA-NOVA.md

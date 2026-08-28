@@ -185,6 +185,9 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Empacotamento do instalador Windows | Instalador simples (NSIS) + atualização automática via GitHub Releases (`electron-builder` + `electron-updater`) | Evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
 | Conexão com o Supabase no app instalado | Digitada na primeira abertura e guardada **naquele computador** (`conexao.json` na pasta de dados do app) — **não** embutida no build | Um instalador só passa a servir qualquer empresa (fase 2). Os secrets saíram do `release.yml` de propósito: embutidos, o instalador entregue a um cliente novo viria apontando pro banco de outra empresa. Em `npm run dev` o `.env` continua valendo. Ver seção 7 |
 | Chave da IA (leitura de nota fiscal por foto) | Fica só como secret de uma Supabase Edge Function — nunca no app Electron instalado | Cada loja (projeto Supabase próprio) paga pela própria conta Anthropic, sem expor a chave a quem tem acesso ao computador. Ver seção 7 e item 8 da seção 8 |
+| Quem paga a infraestrutura das lojas clientes (28/08/2026) | **Tudo na conta da usuária** — Supabase, Anthropic e Focus NFe. O dono da loja não cria conta em serviço nenhum e nunca vê que eles existem | Decisão explícita dela. É o que justifica a mensalidade e o que permite dar suporte de verdade; em troca, o dado dos clientes das lojas fica sob responsabilidade dela — daí o backup ser obrigatório, não opcional. **Substitui** o modelo antigo de "cada loja cria a própria conta Anthropic" descrito na linha acima e no item 6 da seção 8 |
+| Plano do Supabase por empresa cliente (28/08/2026) | **Pro desde a primeira venda** (~R$145/mês por empresa, já dentro da conta do R$350/loja) | O plano grátis não guarda cópia de segurança automática — perder o dado de uma loja de terceiro seria muito pior que esse custo. O grátis também tem teto baixo de projetos por organização e pausa sozinho após dias sem uso |
+| Instalação de empresa nova | Um arquivo SQL único (`supabase/instalacao/instalacao-completa.sql`, gerado por `npm run gerar-instalacao`) + o checklist `supabase/instalacao/INSTALAR-LOJA-NOVA.md` | Colar as ~47 migrations uma por uma era o maior risco operacional da venda: pular uma ou trocar a ordem não dá erro na hora, só quebra depois na tela do app. Ver itens 36 e 37 da seção 6 |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
 | Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
 | Gerenciamento de formulário | `react-hook-form` + `zod` — **migração concluída**, todo formulário do app já está nesse padrão | Pedido da usuária, baseado num plano de refatoração de outra IA (Gemini) — decisão explícita de que é o padrão geral, não um teste isolado. Ver "Padrão de formulário" na seção 4 |
@@ -362,8 +365,17 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0036), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0047), todas idempotentes
+├── supabase/instalacao/          # instalacao-completa.sql (as 47 migrations concatenadas num
+│                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
+│                                  # por `npm run gerar-instalacao`, não editar à mão) +
+│                                  # INSTALAR-LOJA-NOVA.md (o checklist que ela segue de verdade ao
+│                                  # vender: banco, Auth, primeiro admin, app, configuração inicial,
+│                                  # e o que costuma dar errado). Ver seção 9
 ├── supabase/scripts/             # SQL de uso único, NÃO faz parte da sequência de migrations —
+│                                  # stub-supabase-local.sql (cria os schemas auth/storage e as
+│                                  # permissões que o Supabase dá sozinho, pra validar migrations e
+│                                  # testar RLS num Postgres local — NUNCA rodar no Supabase real) +
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5) + excluir-os-teste-eduarda.sql
 │                                  # (uso único, criado numa sessão pra apagar as OS de teste abertas
@@ -382,6 +394,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # (só o Supabase injeta sozinha, sem secret manual pra
 │                                  # configurar), ver "Login e permissões" na seção 7.
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
+├── scripts/gerar-instalacao-completa.mjs # `npm run gerar-instalacao` — regera
+│                                  # supabase/instalacao/instalacao-completa.sql a partir das
+│                                  # migrations. Rodar SEMPRE que criar uma migration nova; o
+│                                  # `npm test` reprova se o arquivo estiver desatualizado
+│                                  # (scripts/gerar-instalacao-completa.test.ts)
 ├── scripts/varredura-contraste.mjs # `npm run contraste` — procura combinação de fundo/letra
 │                                  # ilegível nas classes do app (sobra do tema claro antigo), ver
 │                                  # item 17 da seção 6
@@ -1311,6 +1328,40 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     tela nova que precisar de "custo real" (não confundir com saída manual de Caixa, que é despesa
     operacional tipo aluguel) precisa ir buscar em `pecas.preco_custo`/`servicos.custo` via os itens
     da OS — não tem atalho genérico só olhando pro Caixa. `tsc -b`, lint e os 62 testes passando.
+
+36. **Padrão de bug: cada migration é idempotente sozinha, mas a SEQUÊNCIA inteira não era** —
+    variação mais sutil do item 12, achada ao gerar o arquivo de instalação única
+    (`supabase/instalacao/instalacao-completa.sql`) e rodá-lo duas vezes no mesmo banco. Cada
+    migration passava sozinha, mas 3 delas quebravam na reexecução da sequência inteira, todas com
+    `column "id" of relation ... does not exist`: `0018`/`0024`/`0026` criam tabelas de
+    configuração "singleton" (`id smallint primary key default 1`) e logo em seguida inserem a
+    linha padrão usando `id` — só que a migration `0033`, **bem depois**, troca a PK dessas tabelas
+    de `id` pra `loja_id` e derruba a coluna `id`. Na segunda passada, o `create table if not
+    exists` pula (a tabela já existe, mas no formato NOVO) e o `insert` logo abaixo bate numa coluna
+    que não existe mais. **Corrigido** envolvendo os 3 inserts numa guarda `do $$ ... if exists
+    (select 1 from information_schema.columns where ... column_name = 'id') then ... end if`, que
+    pula a linha padrão quando a tabela já virou "uma por loja" (a própria `0033` cria as linhas de
+    cada loja). Validado rodando a instalação inteira **três vezes seguidas** num Postgres local,
+    sem erro. **Lição**: "toda migration é idempotente" **não implica** "a sequência inteira é
+    re-executável" — uma migration tardia que muda o formato de uma tabela pode invalidar a guarda
+    de idempotência de uma migration anterior. Só aparece rodando a sequência completa duas vezes
+    no mesmo banco, nunca revisando arquivo por arquivo.
+37. **A instrução de criar o primeiro admin ficou desatualizada por 24 migrations, e quebra toda
+    instalação nova** — o comentário de bootstrap no fim de `0007_operadores.sql` manda inserir só
+    em `operadores`. Isso valia quando foi escrito, mas a migration `0031` (multi-loja) passou a
+    exigir também uma linha em `operador_lojas` pra qualquer coisa por loja ficar visível. O
+    backfill da `0031` só cobre operadores **que já existiam quando ela rodou** — num banco novo,
+    criado do zero, não existe operador nenhum nesse momento, então o primeiro admin criado depois
+    **nunca** ganha vínculo. **Comprovado num Postgres local** simulando o login desse admin
+    (`set local role authenticated` + `request.jwt.claim.sub`): ele enxerga `depositos: 0`,
+    `configuracoes_painel_inicio: 0`, `configuracoes_fiscais_loja: 0` — ou seja, entra no sistema e
+    a loja aparece vazia/quebrada. Pior: cai no item 23 desta seção (operador sem loja não pode ser
+    editado nem inativado por ninguém), então nem dá pra consertar pela tela — só apagando pelo
+    painel do Supabase e refazendo. **Corrigido** adicionando o segundo `insert` ao comentário da
+    `0007`, com o aviso do porquê, e documentando no checklist de instalação com destaque. **Lição
+    maior**: comentário de bootstrap dentro de uma migration antiga **não é atualizado pelas
+    migrations seguintes** — quando uma migration nova muda o que é preciso pra criar o primeiro
+    usuário/registro de algo, procurar ativamente as instruções antigas que ficaram para trás.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -2536,6 +2587,41 @@ conexão" com sucesso na `v0.9.18`, ou se entrou pelo "Salvar assim mesmo". Se f
 checagem ainda está errada (só não trava mais ninguém) e vale investigar quando houver folga — mas
 não é urgente, porque o app funciona de qualquer jeito.
 
+### Onde tudo parou ao fim desta sessão (28/08/2026)
+
+Sessão de **preparação pra vender pra terceiros** (fase 2 do plano da seção 1 — o amigo do pai
+dela, com 2 lojas). Nenhuma funcionalidade nova pro usuário final: o assunto foi a "esteira" de
+entregar e sustentar o sistema numa loja que não é a do pai dela.
+
+**Três decisões dela, já registradas na tabela da seção 3:**
+1. **Todos os custos ficam na conta dela** (Supabase, Anthropic, Focus NFe). O dono da loja não
+   cria conta em serviço nenhum e nunca vê que eles existem.
+2. **Supabase Pro desde a primeira venda**, por causa do backup automático.
+3. **Primeira coisa a construir**: o arquivo único de instalação + o checklist (feito nesta
+   sessão). O resto continua na fila.
+
+**O que foi construído**: `supabase/instalacao/instalacao-completa.sql` (as 47 migrations num
+arquivo só, gerado por `npm run gerar-instalacao`, com teste que reprova se ficar desatualizado),
+`supabase/instalacao/INSTALAR-LOJA-NOVA.md` (o checklist de venda/instalação) e
+`supabase/scripts/stub-supabase-local.sql` (stub reaproveitável pra validar migrations e RLS num
+Postgres local).
+
+**Dois bugs reais achados no caminho, os dois só visíveis instalando do zero** — ver itens 36 e 37
+da seção 6. O segundo é o mais sério: a instrução de criar o primeiro admin (comentário na
+migration `0007`) estava desatualizada desde a `0031`, e sem o `insert` em `operador_lojas` **toda
+instalação nova nasceria com a loja aparecendo vazia**, sem conserto pela tela. Os dois corrigidos
+e validados num Postgres local.
+
+**Fila combinada, na ordem, não começada**:
+1. **Token Focus NFe compartilhado** (uma conta só dela, invisível pro dono da loja) — é o
+   pré-requisito da conta de R$350/loja. Ver item 6 da seção 8. Combinado que só depois da emissão
+   estar bem rodada na loja do pai dela.
+2. **Botão de diagnóstico pra suporte** no app (copia versão/loja/último erro pro cliente mandar no
+   WhatsApp) — hoje ela não tem como enxergar problema de loja remota.
+3. **Risco conhecido, sem solução ainda**: publicar uma tag ruim atualiza **todas as lojas de uma
+   vez, sozinho**. Com 1 loja o risco é dela; com 3 de terceiros, vira telefonema. Não foi decidido
+   nada — por ora vale o hábito de testar antes e não publicar em dia de movimento.
+
 ## 9. Como rodar / configurar (resumo)
 
 ```bash
@@ -2566,18 +2652,36 @@ NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 `configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
 funcionando (a NFS-e número 10/11 só autorizou depois da `0047` e do Código CNAE preenchido).
 
-### Montar um projeto Supabase do zero (loja nova / outro computador)
+### Montar um projeto Supabase do zero (empresa nova / outro computador)
 
-Rodar, **nessa ordem**, todo o conteúdo de cada arquivo em `supabase/migrations/*.sql` (SQL
-Editor do Supabase — abrir cada um, copiar tudo, colar numa "New query", clicar "Run") — de `0001`
-até `0047`. Todas são idempotentes.
+**O passo a passo completo está em `supabase/instalacao/INSTALAR-LOJA-NOVA.md`** — é o checklist
+que a usuária segue de verdade ao vender pra um cliente novo. Não reescrever esse roteiro aqui;
+esta seção só registra o essencial pra uma sessão entender o mecanismo.
+
+**Banco**: colar **um arquivo só**, `supabase/instalacao/instalacao-completa.sql`, no SQL Editor
+(New query → Run). Ele é gerado a partir das migrations por `npm run gerar-instalacao`
+(`scripts/gerar-instalacao-completa.mjs`) e um teste do `npm test` reprova se estiver
+desatualizado — ou seja, **criar uma migration nova sem regerar o arquivo quebra o `npm test`**,
+de propósito.
+
+Antes existia aqui a instrução de colar os ~47 arquivos de `supabase/migrations/` um por um, na
+ordem. Isso foi abandonado porque pular um arquivo ou trocar a ordem **não dá erro na hora** — só
+quebra depois, na tela do app, como um erro estranho difícil de ligar à instalação.
 
 **Isso é só a parte do banco.** Uma empresa nova (não uma loja nova dentro da mesma empresa) ainda
-precisa de: os dois passos manuais de Auth logo abaixo, o primeiro operador admin, e — no
-computador dela — digitar a URL/chave desse projeto na tela de conexão que aparece na primeira
-abertura (ver "Conexão com o banco (multi-empresa)" na seção 7). Se a loja também for emitir nota
-fiscal, some a isso o **playbook de habilitação fiscal** do item 1 da seção 8, que é a parte
-demorada e depende de SEFAZ/prefeitura/contabilidade do cliente.
+precisa de: os dois passos manuais de Auth logo abaixo, o primeiro operador admin **com o vínculo
+em `operador_lojas`** (ver item 37 da seção 6 — é o erro mais fácil de cometer nessa instalação),
+e — no computador dela — digitar a URL/chave desse projeto na tela de conexão que aparece na
+primeira abertura (ver "Conexão com o banco (multi-empresa)" na seção 7). Se a loja também for
+emitir nota fiscal, some a isso o **playbook de habilitação fiscal** do item 1 da seção 8, que é a
+parte demorada e depende de SEFAZ/prefeitura/contabilidade do cliente.
+
+**Pra validar migration nova num Postgres local** (o ambiente de desenvolvimento tem um):
+`supabase/scripts/stub-supabase-local.sql` cria os schemas `auth`/`storage` e as permissões que o
+Supabase dá sozinho — inclusive as necessárias pra simular login e testar RLS de verdade
+(`set local role authenticated` + `set local "request.jwt.claim.sub"`, dentro de uma transação,
+senão o `set local` não pega e o teste roda como superusuário, que ignora RLS). Existe porque toda
+sessão que precisava validar uma migration recriava esses mesmos stubs do zero.
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 

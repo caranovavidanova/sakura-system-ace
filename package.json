@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "contraste": "node scripts/varredura-contraste.mjs"
+    "contraste": "node scripts/varredura-contraste.mjs",
+    "gerar-instalacao": "node scripts/gerar-instalacao-completa.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

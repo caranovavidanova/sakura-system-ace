@@ -11,18 +11,33 @@ create table if not exists configuracoes_garantia (
   constraint configuracoes_garantia_singleton check (id = 1)
 );
 
-insert into configuracoes_garantia (id, texto)
-values (
-  1,
-  E'Certificado de Garantia\n\n' ||
-  E'Cliente: {cliente}\n' ||
-  E'Veículo: {veiculo}\n' ||
-  E'Data de fechamento: {data}\n\n' ||
-  E'Itens cobertos por esta garantia:\n{itens}\n\n' ||
-  E'Esta garantia cobre defeitos de fabricação e instalação nos itens acima, ' ||
-  E'conforme o prazo de garantia informado no momento da venda de cada peça/serviço.'
-)
-on conflict (id) do nothing;
+-- A linha padrão abaixo só faz sentido enquanto esta tabela é "singleton"
+-- (coluna `id`). A partir da migration 0033 ela vira uma linha POR LOJA
+-- (`loja_id`), e a própria 0033 cria as linhas de cada loja. Sem esta guarda,
+-- reexecutar a sequência inteira num banco já atualizado quebraria aqui, com
+-- "column id does not exist" — ver PROJETO_STATUS.md, seção 6, item 12.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'configuracoes_garantia'
+      and column_name = 'id'
+  ) then
+    insert into configuracoes_garantia (id, texto)
+    values (
+      1,
+      E'Certificado de Garantia\n\n' ||
+      E'Cliente: {cliente}\n' ||
+      E'Veículo: {veiculo}\n' ||
+      E'Data de fechamento: {data}\n\n' ||
+      E'Itens cobertos por esta garantia:\n{itens}\n\n' ||
+      E'Esta garantia cobre defeitos de fabricação e instalação nos itens acima, ' ||
+      E'conforme o prazo de garantia informado no momento da venda de cada peça/serviço.'
+    )
+    on conflict (id) do nothing;
+  end if;
+end
+$$;
 
 alter table configuracoes_garantia enable row level security;
 

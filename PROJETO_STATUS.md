@@ -1906,6 +1906,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     fixo** (`SakuraSystem-Setup.exe`) — ou seja, é a partir dela que o link de download permanente
     do site passa a funcionar. Publicada via `workflow_dispatch`.
 
+  - `v0.9.23`: a OS passa a reconhecer de que nota ela precisa e ganha o estado **"Finalizada"**
+    (ver "Ordens de Serviço" nesta seção), e o app passa a gravar erro de tela em `erros.log`
+    (ver item 39 da seção 6 — é o arquivo a pedir pra ela se o bug de "campo parou de aceitar
+    digitação" voltar). Publicada via `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava

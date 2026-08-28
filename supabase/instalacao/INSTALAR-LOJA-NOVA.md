@@ -40,8 +40,9 @@ cliente for apagado ou corromper, o dado da loja inteira some e não tem como vo
 Organization → **Billing** → plano **Pro**.
 
 Duas coisas pra saber:
-- O plano grátis tem um limite baixo de projetos por organização. Como cada empresa é um projeto,
-  você bate nesse teto rápido — a partir daí é pago de qualquer forma.
+- O plano grátis parece ter um limite baixo de projetos por organização (algo como 2) — **isso
+  ainda não foi confirmado no painel**. Se for esse o caso, como cada empresa é um projeto, você
+  bate no teto já na terceira empresa e ela seria paga de qualquer forma. Vale conferir na hora.
 - Projeto grátis **pausa sozinho** depois de alguns dias sem uso. Numa loja ativa isso não
   acontece, mas basta o cliente viajar numa semana parada pra dar susto.
 

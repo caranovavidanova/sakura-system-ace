@@ -5,10 +5,12 @@ import { mensagemDeErro } from "@/lib/errors";
 import { criarMovimentoCaixa, listarMovimentosCaixa } from "@/lib/caixa";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
 import { listarPecas } from "@/lib/pecas";
+import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
 import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 import { DiarioSection } from "./DiarioSection";
 import { EntradaSaidaSection } from "./EntradaSaidaSection";
 
@@ -19,6 +21,7 @@ export function CaixaPage() {
   const [aba, setAba] = useState<Aba>("diario");
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
   const [categorias, setCategorias] = useState<CategoriaCaixa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -31,13 +34,16 @@ export function CaixaPage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [movimentosCarregados, pecasCarregadas, categoriasCarregadas] = await Promise.all([
+      const [movimentosCarregados, pecasCarregadas, servicosCarregados, categoriasCarregadas] =
+        await Promise.all([
         listarMovimentosCaixa(lojaAtual.id),
         listarPecas(),
+        listarServicos(),
         listarCategoriasCaixa(),
       ]);
       setMovimentos(movimentosCarregados);
       setPecas(pecasCarregadas);
+      setServicos(servicosCarregados);
       setCategorias(categoriasCarregadas);
     } catch (err) {
       console.error("Erro ao carregar caixa:", err);
@@ -98,6 +104,7 @@ export function CaixaPage() {
         <DiarioSection
           movimentos={movimentos}
           pecas={pecas}
+          servicos={servicos}
           categorias={categorias}
           onSalvar={handleSalvar}
         />

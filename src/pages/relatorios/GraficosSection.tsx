@@ -1,4 +1,9 @@
 import { useMemo, useState } from "react";
+import {
+  custoDosItens,
+  mapaCustoPecas,
+  mapaCustoServicos,
+} from "@/schemas/metricasCaixa";
 import { GraficoBarras } from "@/components/GraficoBarras";
 import { GraficoRadar } from "@/components/GraficoRadar";
 import type { MovimentoCaixa } from "@/types/caixa";
@@ -106,21 +111,11 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
   // saídas manuais do Caixa, senão o gráfico mostra Lucro igual a Vendas sempre que não há
   // despesa manual lançada no período (ver PROJETO_STATUS.md).
   const custoPorOrdem = useMemo(() => {
-    const custoPorPeca = new Map(pecas.map((p) => [p.id, p.preco_custo ?? 0]));
-    const custoPorServico = new Map(servicos.map((s) => [s.id, s.custo ?? 0]));
-    const mapa = new Map<string, number>();
-    for (const ordem of ordens) {
-      let custo = 0;
-      for (const item of ordem.itens ?? []) {
-        const custoUnitario =
-          item.tipo === "peca"
-            ? custoPorPeca.get(item.peca_id ?? "") ?? 0
-            : custoPorServico.get(item.servico_id ?? "") ?? 0;
-        custo += item.quantidade * custoUnitario;
-      }
-      mapa.set(ordem.id, custo);
-    }
-    return mapa;
+    const custoPeca = mapaCustoPecas(pecas);
+    const custoServico = mapaCustoServicos(servicos);
+    return new Map(
+      ordens.map((ordem) => [ordem.id, custoDosItens(ordem.itens ?? [], custoPeca, custoServico)]),
+    );
   }, [ordens, pecas, servicos]);
 
   const entradas = useMemo(() => movimentos.filter((m) => m.tipo === "entrada"), [movimentos]);

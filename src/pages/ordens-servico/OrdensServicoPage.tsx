@@ -15,6 +15,7 @@ import {
   listarOrdens,
 } from "@/lib/ordensServico";
 import type { PagamentoOrdem } from "@/lib/ordensServico";
+import { listarArquivosDasOrdens } from "@/lib/notasFiscais";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -29,15 +30,16 @@ import type {
 } from "@/types/os";
 import {
   STATUS_COM_FECHAMENTO,
-  STATUS_COR,
-  STATUS_LABEL,
   nomeOrdem,
   totalOrdem,
   totalPorTipo,
 } from "@/types/os";
+import type { NotaFiscalArquivo } from "@/types/notaFiscal";
+import { agruparNotasPorOrdem } from "@/schemas/situacaoFiscal";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { FaturamentoCard } from "./FaturamentoCard";
+import { StatusOrdem } from "./StatusOrdemBadge";
 import { OrdemServicoForm } from "./OrdemServicoForm";
 
 function primeiroDiaDoMes(): string {
@@ -74,6 +76,9 @@ export function OrdensServicoPage() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
+  const [notasPorOrdem, setNotasPorOrdem] = useState<Map<string, NotaFiscalArquivo[]>>(
+    () => new Map(),
+  );
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -159,6 +164,17 @@ export function OrdensServicoPage() {
       setServicos(servicosCarregados);
       setFuncionarios(funcionariosCarregados);
       setJurosParcelas(jurosCarregados);
+
+      // Notas de todas as OS de uma vez só (uma consulta, não uma por linha)
+      // — é o que diz quais notas cada OS já tem. Falhar aqui não pode
+      // derrubar a lista inteira: sem essa informação a OS só aparece como
+      // "Faturada", que é o comportamento de antes.
+      try {
+        const notas = await listarArquivosDasOrdens(ordensCarregadas.map((o) => o.id));
+        setNotasPorOrdem(agruparNotasPorOrdem(notas));
+      } catch (err) {
+        console.error("Erro ao carregar as notas fiscais das ordens:", err);
+      }
 
       const abrirOrdemId = (location.state as { abrirOrdemId?: string } | null)?.abrirOrdemId;
       if (abrirOrdemId) {
@@ -398,11 +414,7 @@ export function OrdensServicoPage() {
                     {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COR[ordem.status]}`}
-                    >
-                      {STATUS_LABEL[ordem.status]}
-                    </span>
+                    <StatusOrdem ordem={ordem} notas={notasPorOrdem.get(ordem.id) ?? []} />
                   </td>
                   <td className="px-4 py-3">{formatarMoeda(totalPorTipo(ordem.itens ?? [], "peca"))}</td>
                   <td className="px-4 py-3">

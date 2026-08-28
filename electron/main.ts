@@ -172,6 +172,28 @@ function logAtualizacao(mensagem: string) {
   }
 }
 
+// Erro de JavaScript acontecido na TELA (processo renderer). Sem isso, um
+// erro desses é invisível pra quem usa o app instalado: o DevTools só abre
+// em modo de desenvolvimento, e um app aberto por duplo clique não tem
+// terminal nenhum pra mostrar o console. É justamente o tipo de problema que
+// "some ao fechar e abrir o app" — o estado quebrado morre junto com a
+// janela, e sem registro não sobra nenhuma pista do que aconteceu.
+const CAMINHO_LOG_ERROS = () => path.join(app.getPath("userData"), "erros.log");
+
+function logErroDaTela(mensagem: string) {
+  const linha = `[${new Date().toISOString()}] ${mensagem}\n`;
+  try {
+    fs.appendFileSync(CAMINHO_LOG_ERROS(), linha);
+  } catch {
+    // Mesma postura do log de atualização: se nem logar dá, não é motivo
+    // pra atrapalhar o uso do sistema.
+  }
+}
+
+ipcMain.on("log:erroDaTela", (_evento, mensagem: unknown) => {
+  logErroDaTela(String(mensagem).slice(0, 4000));
+});
+
 app.whenReady().then(() => {
   createWindow();
 

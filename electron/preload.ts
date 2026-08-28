@@ -25,4 +25,9 @@ contextBridge.exposeInMainWorld("sakuraApp", {
       : undefined,
   salvarConexao: (conexao: { url: string; chave: string }) =>
     ipcRenderer.invoke("conexao:salvar", conexao),
+  // Manda um erro da tela pro processo principal gravar em "erros.log" (na
+  // pasta de dados do app). É de mão única (`send`, não `invoke`): quem
+  // reporta erro não precisa de resposta, e se o log falhar não faz sentido
+  // atrapalhar quem está usando o sistema.
+  registrarErro: (mensagem: string) => ipcRenderer.send("log:erroDaTela", mensagem),
 });

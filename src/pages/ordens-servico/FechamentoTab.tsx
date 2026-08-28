@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { buscarTextoGarantia } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
+import { listarArquivosDasOrdens } from "@/lib/notasFiscais";
+import { situacaoFiscalOrdem } from "@/schemas/situacaoFiscal";
+import type { NotaFiscalArquivo } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
 import { totalOrdem } from "@/types/os";
 import { EmitirNotaFiscalModal } from "./EmitirNotaFiscalModal";
@@ -26,12 +29,65 @@ function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Só aparece o botão da nota que a OS realmente precisa: uma OS só de
+// serviço não tem o que mandar numa NFC-e (e o contrário também). Quando a
+// nota já saiu, o botão continua ali (dá pra emitir de novo se a primeira
+// foi cancelada), mas já avisa que está emitida.
+function BotaoEmitir({
+  rotulo,
+  emitida,
+  onClick,
+}: {
+  rotulo: string;
+  emitida: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        emitida
+          ? "flex-1 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20"
+          : "flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
+      }
+    >
+      {emitida ? `${rotulo} emitida ✓` : `Emitir ${rotulo}`}
+    </button>
+  );
+}
+
 export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const itens = ordem.itens ?? [];
   const [templateGarantia, setTemplateGarantia] = useState("");
   const [notaParaEmitir, setNotaParaEmitir] = useState<"NFC-e" | "NFS-e" | null>(null);
   const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
+  const [notas, setNotas] = useState<NotaFiscalArquivo[]>([]);
   const [erro, setErro] = useState("");
+
+  // Quais notas essa OS precisa sai do que ela tem dentro (peça → NFC-e,
+  // serviço → NFS-e); o que já saiu vem das notas ligadas a ela.
+  const situacao = situacaoFiscalOrdem(itens, notas);
+
+  async function recarregarNotas() {
+    try {
+      setNotas(await listarArquivosDasOrdens([ordem.id]));
+    } catch (err) {
+      console.error("Erro ao carregar as notas fiscais da OS:", err);
+    }
+  }
+
+  useEffect(() => {
+    let ativo = true;
+    listarArquivosDasOrdens([ordem.id])
+      .then((lista) => {
+        if (ativo) setNotas(lista);
+      })
+      .catch((err) => console.error("Erro ao carregar as notas fiscais da OS:", err));
+    return () => {
+      ativo = false;
+    };
+  }, [ordem.id]);
 
   useEffect(() => {
     async function carregar() {
@@ -103,21 +159,28 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
       <section className="space-y-4 sakura-card p-4">
         <div className="space-y-2">
           <p className="text-xs font-medium text-sakura-purple-dark/85">Nota fiscal</p>
+          <p className="text-xs text-sakura-muted">
+            {situacao.pendentes.length === 0
+              ? situacao.completa
+                ? "Todas as notas desta OS já foram emitidas."
+                : "Esta OS não tem peça nem serviço lançado."
+              : `Esta OS precisa de ${situacao.pendentes.join(" e ")}.`}
+          </p>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setNotaParaEmitir("NFC-e")}
-              className="flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
-            >
-              Emitir NFC-e
-            </button>
-            <button
-              type="button"
-              onClick={() => setNotaParaEmitir("NFS-e")}
-              className="flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
-            >
-              Emitir NFS-e
-            </button>
+            {situacao.precisaNfce && (
+              <BotaoEmitir
+                rotulo="NFC-e"
+                emitida={situacao.temNfce}
+                onClick={() => setNotaParaEmitir("NFC-e")}
+              />
+            )}
+            {situacao.precisaNfse && (
+              <BotaoEmitir
+                rotulo="NFS-e"
+                emitida={situacao.temNfse}
+                onClick={() => setNotaParaEmitir("NFS-e")}
+              />
+            )}
           </div>
         </div>
 
@@ -138,7 +201,9 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           ordem={ordem}
           tipoNota={notaParaEmitir}
           onFechar={() => setNotaParaEmitir(null)}
-          onEmitido={() => {}}
+          onEmitido={() => {
+            void recarregarNotas();
+          }}
         />
       )}
 

@@ -1667,7 +1667,7 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com opção de
   baixar HTML/imprimir via `iframe`).
   **Parcelar cartão dentro do pagamento dividido** (28/08/2026, pedido dela usando o sistema de
-  verdade — ainda não confirmado por ela rodando): antes, marcar "dividir em mais de uma forma"
+  verdade — **confirmado por ela funcionando na loja**): antes, marcar "dividir em mais de uma forma"
   travava tudo em 1x, então quem passava parte no cartão parcelado não tinha onde registrar. Agora
   **cada forma tem seu próprio número de parcelas** (o seletor só habilita no cartão de crédito;
   Pix/dinheiro/débito são sempre à vista), e o **juro incide só sobre a parte que passou no
@@ -1685,7 +1685,7 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   há juros, sem negativo quando há.
 
   **"Finalizada" — a OS sabe de que nota ela precisa** (28/08/2026, pedido dela usando o sistema;
-  ainda não confirmado por ela rodando): o sistema deduz, pelos itens, qual nota cada OS precisa —
+  **confirmado por ela funcionando na loja**): o sistema deduz, pelos itens, qual nota cada OS precisa —
   só peça → NFC-e, só serviço → NFS-e, os dois → as duas — e cruza com as notas já ligadas àquela
   OS. Consequências na tela: (a) na lista, uma OS faturada que ainda deve nota continua "Faturada"
   (agora em **azul**, porque ainda pede uma ação) com um "falta NFS-e" embaixo, e vira
@@ -2882,10 +2882,11 @@ pro diagnóstico completo (não é CSS; não reproduziu no navegador nem no Elec
 correção foi chutada. O app agora grava erro de tela em `erros.log` (pasta de dados do app): **se o
 sintoma voltar, pedir esse arquivo a ela é o primeiro passo.**
 
-**Confirmado por ela funcionando**: o parcelamento no pagamento dividido ("veio certinho aqui").
-O resto da leva (Finalizada, cálculos corrigidos) foi publicado mas **ainda não teve retorno dela**
-— vale perguntar numa próxima sessão, principalmente se o "Lucros mês" do Início agora bate com a
-realidade da loja (o número **caiu** de propósito, ver item 40).
+**Tudo desta sessão foi confirmado por ela rodando na loja de verdade** — o parcelamento no
+pagamento dividido ("veio certinho aqui") e, depois da `v0.9.24` chegar, o resto da leva
+("ta tudo certinho!"): estado "Finalizada", os três cálculos corrigidos de lucro/ticket médio, o
+botão de adicionar item no rodapé e o total por item. Ou seja, o "Lucros mês" do Início já está
+mostrando o lucro real (o número **caiu** de propósito, ver item 40) e ela viu isso sem estranhar.
 
 **Estado do código ao fim desta sessão**: `main` com os PRs #197 a #201 mesclados,
 `package.json` em `0.9.24`, `tsc`/`lint`/`npm run contraste` limpos e **98 testes** passando (eram

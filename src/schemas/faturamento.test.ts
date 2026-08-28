@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   calcularJurosPercentual,
+  calcularLinhasPagamento,
   calcularListaParcelas,
   calcularValorCobrado,
   faturamentoFormVazio,
   paraPagamentos,
+  parcelasDaOrdem,
+  somarLinhasCobradas,
+  ratearPagamentos,
   somarLinhasPagamento,
   type FaturamentoFormValues,
 } from "./faturamento";
@@ -65,17 +69,17 @@ describe("calcularListaParcelas", () => {
 describe("somarLinhasPagamento", () => {
   it("soma o valor de cada forma de pagamento", () => {
     const total = somarLinhasPagamento([
-      { formaPagamento: "pix", valor: "50" },
-      { formaPagamento: "cartao_credito", valor: "50.5" },
+      { formaPagamento: "pix", valor: "50", parcelas: "1" },
+      { formaPagamento: "cartao_credito", valor: "50.5", parcelas: "1" },
     ]);
     expect(total).toBe(100.5);
   });
 
   it("ignora campo vazio ou inválido como se fosse zero (não quebra a soma)", () => {
     const total = somarLinhasPagamento([
-      { formaPagamento: "pix", valor: "" },
-      { formaPagamento: "dinheiro", valor: "abc" },
-      { formaPagamento: "cartao_debito", valor: "30" },
+      { formaPagamento: "pix", valor: "", parcelas: "1" },
+      { formaPagamento: "dinheiro", valor: "abc", parcelas: "1" },
+      { formaPagamento: "cartao_debito", valor: "30", parcelas: "1" },
     ]);
     expect(total).toBe(30);
   });
@@ -98,8 +102,8 @@ describe("paraPagamentos", () => {
       ...base,
       dividirPagamento: true,
       linhasPagamento: [
-        { formaPagamento: "pix", valor: "100" },
-        { formaPagamento: "cartao_credito", valor: "100" },
+        { formaPagamento: "pix", valor: "100", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "100", parcelas: "1" },
       ],
     };
     expect(paraPagamentos(valores, 200)).toEqual([
@@ -113,8 +117,8 @@ describe("paraPagamentos", () => {
       ...base,
       dividirPagamento: true,
       linhasPagamento: [
-        { formaPagamento: "pix", valor: "200" },
-        { formaPagamento: "cartao_credito", valor: "0" },
+        { formaPagamento: "pix", valor: "200", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "0", parcelas: "1" },
       ],
     };
     expect(paraPagamentos(valores, 200)).toEqual([{ formaPagamento: "pix", valor: 200 }]);
@@ -128,5 +132,145 @@ describe("paraPagamentos", () => {
       formaPagamento: "pix",
     };
     expect(paraPagamentos(valores, 200)).toEqual([{ formaPagamento: "pix", valor: 200 }]);
+  });
+});
+
+describe("calcularLinhasPagamento", () => {
+  it("aplica o juro só na linha do cartão parcelado, não na OS inteira", () => {
+    const linhas = calcularLinhasPagamento(
+      [
+        { formaPagamento: "pix", valor: "300", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "100", parcelas: "3" },
+      ],
+      jurosParcelas,
+    );
+    expect(linhas[0].valorCobrado).toBe(300); // Pix não muda
+    expect(linhas[1].jurosPercentual).toBe(5);
+    expect(linhas[1].valorCobrado).toBe(105);
+  });
+
+  it("ignora parcelamento numa forma que não é cartão de crédito", () => {
+    const [linha] = calcularLinhasPagamento(
+      [{ formaPagamento: "pix", valor: "100", parcelas: "3" }],
+      jurosParcelas,
+    );
+    expect(linha.parcelas).toBe(1);
+    expect(linha.valorCobrado).toBe(100);
+  });
+
+  it("trata parcelas vazia/inválida como 1x", () => {
+    const [linha] = calcularLinhasPagamento(
+      [{ formaPagamento: "cartao_credito", valor: "100", parcelas: "" }],
+      jurosParcelas,
+    );
+    expect(linha.parcelas).toBe(1);
+    expect(linha.valorCobrado).toBe(100);
+  });
+});
+
+describe("somarLinhasCobradas", () => {
+  it("soma o valor já com os juros de cada linha", () => {
+    const total = somarLinhasCobradas(
+      [
+        { formaPagamento: "pix", valor: "300", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "100", parcelas: "2" },
+      ],
+      jurosParcelas,
+    );
+    expect(total).toBe(403); // 300 + 100 * 1.03
+  });
+});
+
+describe("parcelasDaOrdem", () => {
+  const base: FaturamentoFormValues = faturamentoFormVazio(400);
+
+  it("no pagamento dividido, grava o maior parcelamento usado", () => {
+    const parcelas = parcelasDaOrdem({
+      ...base,
+      dividirPagamento: true,
+      linhasPagamento: [
+        { formaPagamento: "pix", valor: "300", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "100", parcelas: "3" },
+      ],
+    });
+    expect(parcelas).toBe(3);
+  });
+
+  it("desconsidera linha zerada na hora de decidir o parcelamento da OS", () => {
+    const parcelas = parcelasDaOrdem({
+      ...base,
+      dividirPagamento: true,
+      linhasPagamento: [
+        { formaPagamento: "pix", valor: "400", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "0", parcelas: "6" },
+      ],
+    });
+    expect(parcelas).toBe(1);
+  });
+
+  it("sem divisão, usa o campo de parcelas do formulário", () => {
+    expect(parcelasDaOrdem({ ...base, dividirPagamento: false, parcelas: "4" })).toBe(4);
+  });
+});
+
+describe("paraPagamentos com parcelamento por forma", () => {
+  const base: FaturamentoFormValues = faturamentoFormVazio(400);
+
+  it("manda pro Caixa o valor de cada forma já com os juros do cartão", () => {
+    const valores: FaturamentoFormValues = {
+      ...base,
+      dividirPagamento: true,
+      linhasPagamento: [
+        { formaPagamento: "pix", valor: "300", parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "100", parcelas: "3" },
+      ],
+    };
+    expect(paraPagamentos(valores, 400, jurosParcelas)).toEqual([
+      { formaPagamento: "pix", valor: 300 },
+      { formaPagamento: "cartao_credito", valor: 105 },
+    ]);
+  });
+});
+
+describe("ratearPagamentos", () => {
+  it("divide o total da nota entre as formas, mantendo a proporção", () => {
+    const rateado = ratearPagamentos(
+      [
+        { formaPagamento: "pix", valor: 300 },
+        { formaPagamento: "cartao_credito", valor: 700 },
+      ],
+      500,
+    );
+    expect(rateado).toEqual([
+      { formaPagamento: "pix", valor: 150 },
+      { formaPagamento: "cartao_credito", valor: 350 },
+    ]);
+  });
+
+  it("a soma bate exatamente com o total pedido, mesmo com arredondamento", () => {
+    const rateado = ratearPagamentos(
+      [{ valor: 1 }, { valor: 1 }, { valor: 1 }],
+      100,
+    );
+    expect(rateado.reduce((soma, p) => soma + p.valor, 0)).toBe(100);
+  });
+
+  // Com juros de cartão, o que entrou no Caixa é maior que o total dos itens
+  // — ratear pela soma das formas (e não pelo total da OS) impede que uma
+  // linha estoure o total da nota e deixe a última negativa.
+  it("nunca gera valor negativo quando o pago é maior que o total da nota", () => {
+    const rateado = ratearPagamentos(
+      [
+        { formaPagamento: "cartao_credito", valor: 1188 },
+        { formaPagamento: "pix", valor: 10 },
+      ],
+      100,
+    );
+    expect(rateado.every((p) => p.valor >= 0)).toBe(true);
+    expect(rateado.reduce((soma, p) => soma + p.valor, 0)).toBe(100);
+  });
+
+  it("sem nenhuma forma de pagamento, devolve lista vazia (quem chama decide o fallback)", () => {
+    expect(ratearPagamentos([], 100)).toEqual([]);
   });
 });

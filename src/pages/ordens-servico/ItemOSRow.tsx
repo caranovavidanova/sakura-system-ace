@@ -1,6 +1,10 @@
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Combobox } from "@/components/Combobox";
-import { paraDisplayNumero, type OrdemServicoFormValues } from "@/schemas/ordemServico";
+import {
+  paraDisplayNumero,
+  totalItensFormulario,
+  type OrdemServicoFormValues,
+} from "@/schemas/ordemServico";
 import type { Funcionario } from "@/types/funcionario";
 import type { TipoItemOS } from "@/types/os";
 import type { Peca } from "@/types/peca";
@@ -54,6 +58,13 @@ export function ItemOSRow({
   }
 
   const servicoEhAvulso = tipo === "servico" && !servicoId;
+
+  // Total da linha (quantidade x preço − desconto) — reaproveita a mesma
+  // conta do total geral, com um item só, pra não haver duas fórmulas
+  // diferentes convivendo. Ajuda a conferir par de peça (2x pneu, por ex.)
+  // sem ter que multiplicar de cabeça.
+  const item = watch(`itens.${index}`);
+  const totalItem = item ? totalItensFormulario([item]) : 0;
 
   return (
     <div className="space-y-2 rounded-lg border border-sakura-gray/30 p-3">
@@ -153,6 +164,13 @@ export function ItemOSRow({
           />
         </label>
       </div>
+
+      <p className="text-right text-xs text-sakura-purple-dark/90">
+        Total deste item:{" "}
+        <span className="font-semibold text-sakura-purple-dark">
+          {totalItem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+        </span>
+      </p>
     </div>
   );
 }

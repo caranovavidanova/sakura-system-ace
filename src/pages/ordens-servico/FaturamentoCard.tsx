@@ -6,11 +6,15 @@ import { mensagemDeErro } from "@/lib/errors";
 import type { PagamentoOrdem } from "@/lib/ordensServico";
 import {
   calcularJurosPercentual,
+  calcularLinhasPagamento,
   calcularListaParcelas,
   calcularValorCobrado,
   faturamentoFormSchema,
   faturamentoFormVazio,
+  formaPermiteParcelar,
   paraPagamentos,
+  parcelasDaOrdem,
+  somarLinhasCobradas,
   somarLinhasPagamento,
   type FaturamentoFormValues,
 } from "@/schemas/faturamento";
@@ -76,9 +80,15 @@ export function FaturamentoCard({
   const valorCobrado = calcularValorCobrado(total, jurosPercentual);
   const listaParcelas = calcularListaParcelas(valorCobrado, parcelas);
 
+  // No pagamento dividido, o que precisa fechar com o total dos itens é a
+  // soma dos valores *base* (o que o cliente combinou em cada forma) — os
+  // juros do cartão entram depois, por linha, e engordam só o total cobrado.
   const somaLinhasPagamento = somarLinhasPagamento(linhasPagamento);
-  const diferencaLinhasPagamento = valorCobrado - somaLinhasPagamento;
+  const diferencaLinhasPagamento = total - somaLinhasPagamento;
   const linhasBatem = Math.abs(diferencaLinhasPagamento) < 0.01;
+  const linhasCalculadas = calcularLinhasPagamento(linhasPagamento, jurosParcelas);
+  const totalCobradoDividido = somarLinhasCobradas(linhasPagamento, jurosParcelas);
+  const jurosDividido = Math.round((totalCobradoDividido - somaLinhasPagamento) * 100) / 100;
 
   const formaPagamentoField = register("formaPagamento");
 
@@ -87,8 +97,8 @@ export function FaturamentoCard({
     if (dividir) {
       setValue("parcelas", "1");
       replace([
-        { formaPagamento: "pix", valor: String(total) },
-        { formaPagamento: "cartao_credito", valor: "0" },
+        { formaPagamento: "pix", valor: String(total), parcelas: "1" },
+        { formaPagamento: "cartao_credito", valor: "0", parcelas: "1" },
       ]);
     }
   }
@@ -97,7 +107,7 @@ export function FaturamentoCard({
     setErro(null);
 
     if (valores.recebidoAgora && valores.dividirPagamento && !linhasBatem) {
-      setErro("A soma das formas de pagamento precisa bater com o total cobrado.");
+      setErro("A soma das formas de pagamento precisa bater com o total dos itens.");
       return;
     }
 
@@ -112,8 +122,8 @@ export function FaturamentoCard({
 
     try {
       await onConfirmar(
-        paraPagamentos(valores, valorCobrado),
-        parcelas,
+        paraPagamentos(valores, valorCobrado, jurosParcelas),
+        parcelasDaOrdem(valores),
         valores.recebidoAgora ? null : valores.previsaoRecebimento,
       );
     } catch (err) {
@@ -198,39 +208,95 @@ export function FaturamentoCard({
 
       {recebidoAgora && dividirPagamento ? (
         <div className="space-y-2">
-          {fields.map((campo, index) => (
-            <div key={campo.id} className="flex items-center gap-2">
-              <select
-                {...register(`linhasPagamento.${index}.formaPagamento`)}
-                className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
-              >
-                {FORMAS_PAGAMENTO.map((forma) => (
-                  <option key={forma.valor} value={forma.valor}>
-                    {forma.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                {...register(`linhasPagamento.${index}.valor`)}
-                className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
-              />
-              {fields.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="text-xs font-medium text-red-600 hover:underline"
-                >
-                  Remover
-                </button>
-              )}
-            </div>
-          ))}
+          {fields.map((campo, index) => {
+            const linha = linhasCalculadas[index];
+            const podeParcelarLinha = formaPermiteParcelar(
+              linhasPagamento[index]?.formaPagamento ?? "",
+            );
+            const formaLinhaField = register(`linhasPagamento.${index}.formaPagamento`);
+
+            return (
+              <div key={campo.id} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <select
+                    {...formaLinhaField}
+                    onChange={(e) => {
+                      formaLinhaField.onChange(e);
+                      // Trocou pra uma forma que não parcela (Pix, dinheiro,
+                      // débito): volta pra 1x, senão ficaria um parcelamento
+                      // invisível sobrando de uma escolha anterior.
+                      if (!formaPermiteParcelar(e.target.value)) {
+                        setValue(`linhasPagamento.${index}.parcelas`, "1");
+                      }
+                    }}
+                    className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+                  >
+                    {FORMAS_PAGAMENTO.map((forma) => (
+                      <option key={forma.valor} value={forma.valor}>
+                        {forma.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    {...register(`linhasPagamento.${index}.parcelas`)}
+                    disabled={!podeParcelarLinha}
+                    title={
+                      podeParcelarLinha
+                        ? "Em quantas vezes o cliente passou no cartão"
+                        : "Só o cartão de crédito parcela"
+                    }
+                    className="w-40 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple disabled:opacity-50"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+                      const percentual = calcularJurosPercentual(jurosParcelas, n);
+                      return (
+                        <option key={n} value={n}>
+                          {n}x
+                          {n === 1
+                            ? " à vista"
+                            : percentual > 0
+                              ? ` (${percentual}% juros)`
+                              : " sem juros"}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...register(`linhasPagamento.${index}.valor`)}
+                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+                  />
+                  {fields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="text-xs font-medium text-red-600 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+                {linha && linha.parcelas > 1 && linha.valorBase > 0 && (
+                  <p className="pr-2 text-right text-xs text-sakura-muted">
+                    {linha.jurosPercentual > 0
+                      ? `${linha.parcelas}x de ${formatarMoeda(
+                          linha.valorCobrado / linha.parcelas,
+                        )} — com ${linha.jurosPercentual}% de juros, essa forma fecha em ${formatarMoeda(
+                          linha.valorCobrado,
+                        )}`
+                      : `${linha.parcelas}x de ${formatarMoeda(
+                          linha.valorCobrado / linha.parcelas,
+                        )} — sem juros`}
+                  </p>
+                )}
+              </div>
+            );
+          })}
           <button
             type="button"
-            onClick={() => append({ formaPagamento: "dinheiro", valor: "0" })}
+            onClick={() => append({ formaPagamento: "dinheiro", valor: "0", parcelas: "1" })}
             className="text-xs font-medium text-sakura-purple hover:underline"
           >
             + Adicionar forma de pagamento
@@ -241,11 +307,17 @@ export function FaturamentoCard({
             }`}
           >
             {linhasBatem
-              ? `Total: ${formatarMoeda(valorCobrado)}`
+              ? `Total: ${formatarMoeda(somaLinhasPagamento)}`
               : diferencaLinhasPagamento > 0
-                ? `Falta ${formatarMoeda(diferencaLinhasPagamento)} de ${formatarMoeda(valorCobrado)}`
-                : `Passou ${formatarMoeda(-diferencaLinhasPagamento)} de ${formatarMoeda(valorCobrado)}`}
+                ? `Falta ${formatarMoeda(diferencaLinhasPagamento)} de ${formatarMoeda(total)}`
+                : `Passou ${formatarMoeda(-diferencaLinhasPagamento)} de ${formatarMoeda(total)}`}
           </p>
+          {linhasBatem && jurosDividido > 0 && (
+            <p className="text-right text-sm font-semibold text-sakura-purple-dark">
+              Com os juros do cartão: {formatarMoeda(totalCobradoDividido)} (
+              {formatarMoeda(jurosDividido)} de juros)
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">

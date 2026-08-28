@@ -1860,6 +1860,18 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     estilo Giap (Araraquara incluída) — ver item 1 da seção 8. **Confirmada por ela** testando a
     NFS-e número 11: recibo saiu com os dados certos (número, emitente, chave, protocolo, link pro
     documento oficial). Publicada via `workflow_dispatch`.
+  - `v0.9.22`: parcelar cartão dentro do pagamento dividido, "+ adicionar item" no rodapé da lista
+    e total por item na OS (ver "Ordens de Serviço" nesta seção), mais a correção do rateio do
+    pagamento na NFC-e que essa mudança destapava. **É a primeira tag com o instalador de nome
+    fixo** (`SakuraSystem-Setup.exe`) — ou seja, é a partir dela que o link de download permanente
+    do site passa a funcionar. Publicada via `workflow_dispatch`.
+
+  **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
+  última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
+  numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
+  a `v0.9.21`. Antes de propor um número de versão, conferir a lista real de releases
+  (`mcp__github__list_releases`), não a memória deste documento.
+
   Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
   origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
   Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece

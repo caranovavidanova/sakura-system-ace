@@ -7,6 +7,13 @@ import { feriadosNacionais } from "@/lib/feriados";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarMovimentosCaixa } from "@/lib/caixa";
 import { listarClientes } from "@/lib/clientes";
+import { listarPecas } from "@/lib/pecas";
+import { listarServicos } from "@/lib/servicos";
+import {
+  mapaCustoPecas,
+  mapaCustoServicos,
+  resumirMovimentos,
+} from "@/schemas/metricasCaixa";
 import { listarContasPagar } from "@/lib/contasPagar";
 import { buscarConfiguracaoPainelInicio } from "@/lib/configuracoes";
 import { listarOrdens } from "@/lib/ordensServico";
@@ -14,6 +21,8 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { CARTOES_INICIO_PADRAO } from "@/types/configuracao";
 import type { CartaoMetrica } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
+import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
 import { nomeOrdem } from "@/types/os";
@@ -45,6 +54,8 @@ export function PainelPage() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [pecas, setPecas] = useState<Peca[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
   const [contas, setContas] = useState<ContaPagar[]>([]);
   const [cartoesConfig, setCartoesConfig] = useState<CartaoMetrica[]>(CARTOES_INICIO_PADRAO);
   const [carregando, setCarregando] = useState(true);
@@ -57,19 +68,30 @@ export function PainelPage() {
         return;
       }
       try {
-        const [movimentosCarregados, ordensCarregadas, clientesCarregados, contasCarregadas, cartoesCarregados] =
-          await Promise.all([
-            listarMovimentosCaixa(lojaAtual.id),
-            listarOrdens(lojaAtual.id),
-            listarClientes(),
-            listarContasPagar(lojaAtual.id),
-            buscarConfiguracaoPainelInicio(lojaAtual.id),
-          ]);
+        const [
+          movimentosCarregados,
+          ordensCarregadas,
+          clientesCarregados,
+          contasCarregadas,
+          cartoesCarregados,
+          pecasCarregadas,
+          servicosCarregados,
+        ] = await Promise.all([
+          listarMovimentosCaixa(lojaAtual.id),
+          listarOrdens(lojaAtual.id),
+          listarClientes(),
+          listarContasPagar(lojaAtual.id),
+          buscarConfiguracaoPainelInicio(lojaAtual.id),
+          listarPecas(),
+          listarServicos(),
+        ]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
         setClientes(clientesCarregados);
         setContas(contasCarregadas);
         setCartoesConfig(cartoesCarregados);
+        setPecas(pecasCarregadas);
+        setServicos(servicosCarregados);
       } catch (err) {
         console.error("Erro ao carregar painel:", err);
         setErro(mensagemDeErro(err));
@@ -85,36 +107,34 @@ export function PainelPage() {
   const mes = hoje.getMonth();
   const diaDeHoje = hoje.getDate();
 
-  const { vendasMes, custosMes, ticketMedioMes } = useMemo(() => {
+  // Custo aqui é o custo de verdade: o que a loja pagou pelas peças e pelo
+  // serviço vendidos (`pecas.preco_custo` / `servicos.custo`) MAIS as saídas
+  // lançadas à mão (aluguel, sucata...). Antes só as saídas manuais entravam
+  // nessa conta — numa loja que não lança despesa nenhuma, o cartão "Lucros
+  // mês" acabava mostrando o faturamento inteiro como se fosse lucro. O
+  // ticket médio, pelo mesmo motivo, é por ORDEM e não por lançamento: uma OS
+  // paga em duas formas gera dois lançamentos e derrubava a média.
+  const { vendasMes, custosMes, lucrosMes, ticketMedioMes } = useMemo(() => {
     const inicioMesAtual = new Date(ano, mes, 1);
-    let vendas = 0;
-    let custos = 0;
-    let somaTicket = 0;
-    let qtdTicket = 0;
-
-    for (const movimento of movimentos) {
+    const movimentosDoMes = movimentos.filter((movimento) => {
       const dataMovimento = new Date(movimento.data);
-      if (dataMovimento < inicioMesAtual) continue;
-      if (dataMovimento.getDate() > diaDeHoje) continue;
-      if (movimento.tipo === "entrada") {
-        vendas += movimento.valor;
-        if (movimento.ordem_servico_id) {
-          somaTicket += movimento.valor;
-          qtdTicket += 1;
-        }
-      } else {
-        custos += movimento.valor;
-      }
-    }
+      if (dataMovimento < inicioMesAtual) return false;
+      return dataMovimento.getDate() <= diaDeHoje;
+    });
+
+    const resumo = resumirMovimentos(
+      movimentosDoMes,
+      mapaCustoPecas(pecas),
+      mapaCustoServicos(servicos),
+    );
 
     return {
-      vendasMes: vendas,
-      custosMes: custos,
-      ticketMedioMes: qtdTicket > 0 ? somaTicket / qtdTicket : 0,
+      vendasMes: resumo.entradas,
+      custosMes: resumo.saidas + resumo.custoDeAquisicao,
+      lucrosMes: resumo.lucro,
+      ticketMedioMes: resumo.ticketMedio,
     };
-  }, [movimentos, ano, mes, diaDeHoje]);
-
-  const lucrosMes = vendasMes - custosMes;
+  }, [movimentos, pecas, servicos, ano, mes, diaDeHoje]);
 
   const contasVencendoMes = useMemo(() => {
     let total = 0;

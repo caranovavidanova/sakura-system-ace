@@ -1,13 +1,21 @@
 import { useMemo, useState } from "react";
-import { nomeOrdem, totalOrdem } from "@/types/os";
+import {
+  lucroPorMovimento,
+  mapaCustoPecas,
+  mapaCustoServicos,
+  resumirMovimentos,
+} from "@/schemas/metricasCaixa";
+import { nomeOrdem } from "@/types/os";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
 import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
 import { CaixaForm } from "./CaixaForm";
 
 interface DiarioSectionProps {
   movimentos: MovimentoCaixa[];
   pecas: Peca[];
+  servicos: Servico[];
   categorias: CategoriaCaixa[];
   onSalvar: (movimento: NovoMovimentoCaixa) => Promise<void>;
 }
@@ -20,7 +28,13 @@ function paraDataLocal(dataIso: string): string {
   return new Date(dataIso).toLocaleDateString("sv-SE");
 }
 
-export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: DiarioSectionProps) {
+export function DiarioSection({
+  movimentos,
+  pecas,
+  servicos,
+  categorias,
+  onSalvar,
+}: DiarioSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [dataFiltro, setDataFiltro] = useState(() => paraDataLocal(new Date().toISOString()));
 
@@ -29,23 +43,20 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
     setMostrarFormulario(false);
   }
 
-  const custoPorPeca = useMemo(() => {
-    const mapa = new Map<string, number>();
-    for (const peca of pecas) mapa.set(peca.id, peca.preco_custo ?? 0);
-    return mapa;
-  }, [pecas]);
+  const custoPorPeca = useMemo(() => mapaCustoPecas(pecas), [pecas]);
+  const custoPorServico = useMemo(() => mapaCustoServicos(servicos), [servicos]);
 
   const movimentosDoDia = useMemo(
     () => movimentos.filter((m) => paraDataLocal(m.data) === dataFiltro),
     [movimentos, dataFiltro],
   );
 
-  const entradas = movimentosDoDia
-    .filter((m) => m.tipo === "entrada")
-    .reduce((total, m) => total + m.valor, 0);
-  const saidas = movimentosDoDia
-    .filter((m) => m.tipo === "saida")
-    .reduce((total, m) => total + m.valor, 0);
+  const resumo = useMemo(
+    () => resumirMovimentos(movimentosDoDia, custoPorPeca, custoPorServico),
+    [movimentosDoDia, custoPorPeca, custoPorServico],
+  );
+  const entradas = resumo.entradas;
+  const saidas = resumo.saidas;
 
   const porFormaPagamento = useMemo(() => {
     const mapa = new Map<string, number>();
@@ -57,19 +68,15 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
     return [...mapa.entries()].sort((a, b) => b[1] - a[1]);
   }, [movimentosDoDia]);
 
-  function lucroDoMovimento(m: MovimentoCaixa): number | null {
-    if (!m.ordem_servico) return null;
-    let custo = 0;
-    for (const item of m.ordem_servico.itens) {
-      const custoUnitario = item.tipo === "peca" ? custoPorPeca.get(item.peca_id ?? "") ?? 0 : 0;
-      custo += item.quantidade * custoUnitario;
-    }
-    return totalOrdem(m.ordem_servico.itens) - custo;
-  }
+  // Lucro de cada linha: numa OS paga em duas formas, o lucro da OS é
+  // repartido entre os lançamentos — antes cada linha mostrava o lucro
+  // cheio da OS e o total do dia contava esse lucro duas vezes.
+  const lucrosPorMovimento = useMemo(
+    () => lucroPorMovimento(movimentosDoDia, custoPorPeca, custoPorServico),
+    [movimentosDoDia, custoPorPeca, custoPorServico],
+  );
 
-  const totalLucro = movimentosDoDia
-    .filter((m) => m.tipo === "entrada")
-    .reduce((total, m) => total + (lucroDoMovimento(m) ?? 0), 0);
+  const totalLucro = resumo.lucro;
 
   return (
     <div className="space-y-6">
@@ -163,7 +170,7 @@ export function DiarioSection({ movimentos, pecas, categorias, onSalvar }: Diari
             </thead>
             <tbody>
               {movimentosDoDia.map((m) => {
-                const lucro = lucroDoMovimento(m);
+                const lucro = lucrosPorMovimento.get(m.id) ?? null;
                 return (
                   <tr key={m.id} className="border-t border-sakura-gray/20">
                     <td className="px-4 py-3">

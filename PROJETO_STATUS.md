@@ -1386,8 +1386,8 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     migrations seguintes** — quando uma migration nova muda o que é preciso pra criar o primeiro
     usuário/registro de algo, procurar ativamente as instruções antigas que ficaram para trás.
 
-38. **O cartão "Lucros mês" da tela Início tem o MESMO bug do item 35, que só foi corrigido nos
-    gráficos de Relações — ainda não corrigido, e é a primeira tela que todo mundo vê.**
+38. **[RESOLVIDO em 28/08/2026 — ver item 40]** **O cartão "Lucros mês" da tela Início tem o
+    MESMO bug do item 35, que só foi corrigido nos gráficos de Relações.**
     Encontrado por acaso ao gerar as imagens do site: com dados de demonstração plausíveis, o
     Início mostrava lucro de 91% sobre as vendas. `PainelPage.tsx` calcula
     `lucrosMes = vendasMes - custosMes`, onde `custosMes` soma **só os lançamentos de saída do
@@ -1426,6 +1426,36 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     é 100% invisível: DevTools só abre em modo dev e um app aberto por duplo clique não tem terminal.
     **Se o sintoma voltar, o primeiro passo é pedir esse arquivo pra ela** — validado no Electron
     real (erro solto e promise rejeitada caíram no arquivo com data, mensagem e pilha).
+
+40. **Três telas calculavam "lucro" de jeitos diferentes — e as três estavam erradas** (achado
+    28/08/2026, ela pediu pra conferir os números olhando duas telas do sistema em uso real). É a
+    conclusão da família dos itens 35 e 38: o mesmo erro reaparecendo em cada tela nova, porque
+    cada uma refazia a conta por conta própria. Os três defeitos:
+    - **Caixa Diário — "Lucro do dia" contava o lucro da OS uma vez por LANÇAMENTO.** Desde que o
+      pagamento dividido existe (migration 0037), uma OS paga em duas formas gera dois
+      `caixa_movimentos`; `totalLucro` somava `lucroDoMovimento(m)`, que devolve o lucro da **OS
+      inteira**. No dia real dela: R$ 2.603,04 em vez de R$ 1.589,27 — o lucro da OS 3 (R$ 1.013,77)
+      contado duas vezes. A coluna "Lucro" da tabela tinha o mesmo problema: repetia o valor cheio
+      da OS em cada linha.
+    - **Início — "Lucros mês" mostrava o faturamento como lucro** (é o item 38, que estava
+      documentado e não corrigido): `custosMes` só somava saída manual do Caixa, nunca o
+      `preco_custo` da peça nem o `custo` do serviço. Numa loja que não lança despesa à mão, o
+      cartão mostrava Lucro = Vendas (no print dela: R$ 3.165,00 nos dois).
+    - **Início — "Ticket médio" dividia por lançamento, não por OS.** `qtdTicket += 1` por
+      movimento com `ordem_servico_id`: 3 OS em 4 lançamentos viravam média de R$ 791,25 em vez de
+      R$ 1.055,00.
+    **Corrigido de uma vez, com a conta num lugar só**: `src/schemas/metricasCaixa.ts` (funções
+    puras testadas) — `resumirMovimentos()` devolve entradas, saídas, custo de aquisição
+    (deduplicado por OS), lucro e ticket médio por ordem; `lucroPorMovimento()` reparte o lucro da
+    OS entre os lançamentos dela, proporcional ao valor pago em cada um, pra a coluna fechar com o
+    total; `custoDosItens()`/`mapaCustoPecas()`/`mapaCustoServicos()` são o cálculo de custo
+    compartilhado. Caixa Diário, Início e Relações passaram a usar as mesmas funções — as três
+    telas agora respondem o mesmo número pro mesmo período, que antes não acontecia.
+    **Mudança de definição que vale saber**: "Lucro do dia" no Caixa agora também desconta as
+    saídas lançadas à mão (aluguel, sucata), igual o gráfico de Relações já fazia — antes ignorava.
+    **Lição (a mesma dos itens 20, 28 e 35, agora com solução estrutural)**: conta de negócio
+    repetida em várias telas sempre diverge. Ao precisar de "lucro", "custo real" ou "ticket
+    médio" numa tela nova, usar `schemas/metricasCaixa.ts` — não reescrever a conta ali.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -1685,7 +1715,10 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   em nada (mesmos campos, mesma validação de "Nome obrigatório").
 - **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
   lançamentos manuais, com categoria opcional via `categorias_caixa`). Card de "Lucro do dia" +
-  resumo por forma de recebimento.
+  resumo por forma de recebimento. **Desde 28/08/2026 o "Lucro do dia" é confiável** (ver item 40
+  da seção 6): conta o custo de cada OS uma vez só mesmo com pagamento dividido, inclui o custo do
+  serviço (não só o da peça) e desconta as saídas lançadas à mão. A coluna "Lucro" da tabela
+  reparte o lucro da OS entre os lançamentos dela, então a coluna fecha com o total.
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
   já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
@@ -1723,7 +1756,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba "Lucratividade" —
   margem por peça/serviço, período filtrável.
 - **Início**: 3 cartões de tendência personalizáveis (Configurações → "Cartões do Início", padrão
-  Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta), calendário do mês com feriados
+  Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta; **"Lucros mês" e "Ticket médio" foram
+  corrigidos em 28/08/2026** — o lucro passou a descontar o custo real de peça e serviço, e o
+  ticket médio a dividir por OS e não por lançamento de Caixa; ver item 40 da seção 6. O número do
+  lucro **caiu bastante** com a correção, porque antes mostrava o faturamento quase inteiro),
+  calendário do mês com feriados
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
   "Veículos no pátio" (com ícone por tipo/cor).
 - **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador", e agora um
@@ -1910,6 +1947,10 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     (ver "Ordens de Serviço" nesta seção), e o app passa a gravar erro de tela em `erros.log`
     (ver item 39 da seção 6 — é o arquivo a pedir pra ela se o bug de "campo parou de aceitar
     digitação" voltar). Publicada via `workflow_dispatch`.
+
+  - `v0.9.24`: corrige os três cálculos errados de lucro/ticket médio do Caixa Diário e do Início
+    (ver item 40 da seção 6) — a conta virou uma função só, compartilhada pelas três telas que
+    mostram lucro. Publicada via `workflow_dispatch`.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -2814,6 +2855,43 @@ seja, nada do que foi feito aqui chegou ao app instalado da loja (e nada disso p
 instalador só muda de nome na próxima tag, e nada do site vai pro app). `tsc`, `lint` e os 64
 testes passando.
 
+### Onde tudo parou ao fim desta sessão (28/08/2026 — tarde)
+
+Sessão inteira de **ajustes vindos do uso real no balcão** — exatamente o que a sessão anterior
+previu que aconteceria. Ela trouxe os pedidos fazendo uma OS de verdade, e cada leva virou uma tag
+publicada no mesmo dia.
+
+**O que ela pediu, e o que foi feito:**
+
+| Pedido dela | Resultado | Versão |
+|---|---|---|
+| Parcelar cartão no pagamento dividido | Cada forma tem parcelas próprias; juro só sobre a parte do cartão | `v0.9.22` |
+| "+ adicionar item" no canto inferior direito | Botão saiu do cabeçalho e foi pro rodapé da lista | `v0.9.22` |
+| Total por item na lista de peças | Cada linha mostra quantidade × preço − desconto | `v0.9.22` |
+| A OS saber de que nota precisa | Estado **"Finalizada"** derivado das notas emitidas | `v0.9.23` |
+| "Confere se os cálculos estão certos" | Três bugs de lucro/ticket médio corrigidos (item 40 da seção 6) | `v0.9.24` |
+
+**Publicação**: as quatro tags (`v0.9.21` a `v0.9.24`) saíram por `workflow_dispatch` disparado
+daqui, sem ela tocar no terminal nem na tela do GitHub — ver seção 9. Vale reforçar o aprendizado
+anotado em "Empacotamento": **conferir a lista real de releases antes de propor um número**; eu
+disse a ela que a última era a `v0.9.20` baseado neste arquivo, e o app dela já rodava a `v0.9.21`.
+
+**Bug em aberto, com ferramenta nova pra investigar**: o campo de CPF de um cliente parou de
+aceitar digitação e **voltou ao normal quando ela fechou e abriu o app** — ver item 39 da seção 6
+pro diagnóstico completo (não é CSS; não reproduziu no navegador nem no Electron real). Nenhuma
+correção foi chutada. O app agora grava erro de tela em `erros.log` (pasta de dados do app): **se o
+sintoma voltar, pedir esse arquivo a ela é o primeiro passo.**
+
+**Confirmado por ela funcionando**: o parcelamento no pagamento dividido ("veio certinho aqui").
+O resto da leva (Finalizada, cálculos corrigidos) foi publicado mas **ainda não teve retorno dela**
+— vale perguntar numa próxima sessão, principalmente se o "Lucros mês" do Início agora bate com a
+realidade da loja (o número **caiu** de propósito, ver item 40).
+
+**Estado do código ao fim desta sessão**: `main` com os PRs #197 a #201 mesclados,
+`package.json` em `0.9.24`, `tsc`/`lint`/`npm run contraste` limpos e **98 testes** passando (eram
+64 no começo do dia — a maior parte dos novos cobre justamente as contas de dinheiro que estavam
+erradas).
+
 ## 9. Como rodar / configurar (resumo)
 
 ```bash
@@ -3087,7 +3165,7 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.18"` (ver "Empacotamento" na seção 7 pro que essa tag trouxe e
+- `package.json` em `"version": "0.9.24"` (ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**

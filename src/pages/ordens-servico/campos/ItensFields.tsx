@@ -37,18 +37,7 @@ export function ItensFields({
 
   return (
     <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-sakura-purple-dark">Peças e serviços</h3>
-        {podeAdicionarItem && (
-          <button
-            type="button"
-            onClick={() => append({ ...itemFormVazio })}
-            className="text-xs font-medium text-sakura-purple hover:underline"
-          >
-            + adicionar item
-          </button>
-        )}
-      </div>
+      <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Peças e serviços</h3>
 
       {!podeAdicionarItem && (
         <p className="mb-3 text-xs text-sakura-muted">
@@ -99,6 +88,20 @@ export function ItensFields({
           </p>
         )}
       </div>
+
+      {/* O botão fica embaixo, colado no último item: com a OS cheia de peça,
+          subir a tela toda pra adicionar mais uma era o que atrapalhava. */}
+      {podeAdicionarItem && (
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={() => append({ ...itemFormVazio })}
+            className="rounded-lg border border-sakura-purple/40 px-3 py-1.5 text-xs font-medium text-sakura-purple hover:bg-sakura-purple/10"
+          >
+            + adicionar item
+          </button>
+        </div>
+      )}
 
       <p className="mt-3 text-right text-sm font-semibold text-sakura-purple-dark">
         Total {ehEdicao ? "geral" : "previsto"}:{" "}

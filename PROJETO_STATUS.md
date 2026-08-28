@@ -1598,8 +1598,8 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   falta faturar) — mesma cor no card "OS abertas" do Início. Faturamento (`FaturamentoCard.tsx`)
   calcula parcelas automaticamente conforme os juros configurados em Configurações, deixa **dividir
   o pagamento em mais de uma forma** (ex: metade Pix, metade cartão — cada forma vira seu próprio
-  lançamento de Caixa, soma precisa bater com o total antes de confirmar; parcelamento só é
-  permitido quando é uma forma só), e deixa escolher entre "Recebido agora" (lança a Entrada no
+  lançamento de Caixa, e a soma precisa bater com o total **dos itens** antes de confirmar), e deixa
+  escolher entre "Recebido agora" (lança a Entrada no
   Caixa na hora, como sempre foi) ou "A receber depois" (não lança nada no Caixa ainda, cria uma
   pendência em Contas a Receber — ver módulo abaixo; aqui não dá pra dividir forma de pagamento,
   só ao receber depois). Aba "Fechamento" (só aparece com status concluída/faturada): botões "Emitir
@@ -1613,6 +1613,30 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   seção 8) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
   cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com opção de
   baixar HTML/imprimir via `iframe`).
+  **Parcelar cartão dentro do pagamento dividido** (28/08/2026, pedido dela usando o sistema de
+  verdade — ainda não confirmado por ela rodando): antes, marcar "dividir em mais de uma forma"
+  travava tudo em 1x, então quem passava parte no cartão parcelado não tinha onde registrar. Agora
+  **cada forma tem seu próprio número de parcelas** (o seletor só habilita no cartão de crédito;
+  Pix/dinheiro/débito são sempre à vista), e o **juro incide só sobre a parte que passou no
+  cartão**, não sobre a OS inteira — igual à maquininha. Consequência visível na tela: a soma das
+  formas fecha com o total **dos itens** (valor combinado, sem juros) e o juro aparece somado à
+  parte, na linha "Com os juros do cartão"; cada linha parcelada mostra o valor da parcela. Como
+  `ordens_servico.parcelas` é um número só, o pagamento dividido grava o **maior** parcelamento
+  usado (na prática, o do cartão). Sem migration. As contas viraram funções puras testadas em
+  `schemas/faturamento.ts` (`calcularLinhasPagamento`, `somarLinhasCobradas`, `parcelasDaOrdem`).
+  **Correção junto, que essa mudança destapava**: o rateio do pagamento na NFC-e
+  (`buscarPagamentosParaNota`, ver item 32 da seção 6) dividia o total da nota pelo total da OS —
+  com juros de cartão o que entra no Caixa é maior que o total dos itens, e uma linha podia estourar
+  o total da nota deixando a última **negativa** (rejeição da SEFAZ). Passou a ratear pela **soma
+  das formas de pagamento** (`ratearPagamentos`, função pura testada): resultado idêntico quando não
+  há juros, sem negativo quando há.
+
+  **Dois ajustes de ergonomia na lista de itens** (mesma leva, mesmo motivo — uso real no balcão):
+  o botão "+ adicionar item" saiu do cabeçalho e foi pro **rodapé da lista, alinhado à direita**
+  (com a OS cheia de peça, subir a tela toda pra lançar mais uma era o que atrapalhava); e cada item
+  passou a mostrar o **total da linha** (quantidade × preço − desconto) além do preço unitário, pra
+  não haver confusão em par de peça (2x pneu, por exemplo).
+
 - **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
   abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
   **Formulário refatorado nesta sessão** pro padrão novo `react-hook-form` + `zod` (ver "Padrão de

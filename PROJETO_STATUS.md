@@ -1784,6 +1784,18 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   Lucro, Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca
   externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba "Lucratividade" —
   margem por peça/serviço, período filtrável.
+- **Início — calendário mostra também os dias vizinhos** (31/08/2026, pedido dela): a grade tem
+  **6 semanas fixas** (como a do Windows), então a sobra do mês anterior e os primeiros dias do mês
+  **seguinte** aparecem sempre, em cinza apagado. Motivo: o calendário mostra só o mês corrente e
+  não tem seta pra avançar — uma conta que vencesse dia 1º ficava invisível no dia 31, justamente
+  quando ela mais precisava ser vista. Os eventos (feriado, aniversário, conta a vencer/vencida)
+  passaram a ser montados pra **toda a grade visível**, não só pro mês, e a lista embaixo do
+  calendário mostra `dd/mm` quando o evento é de outro mês. `components/MiniCalendario.tsx` recebe
+  evento com `data` ISO (era só o número do dia); `lib/calendario.ts` guarda as duas funções puras
+  (`diasDoCalendario`, `chaveData` — essa usa `toLocaleDateString("sv-SE")`, nunca `toISOString`,
+  pelo motivo do item 34 da seção 6), com teste. **Ponto cego que continua**: o cartão "Contas a
+  pagar vencendo" soma só o mês corrente (`PainelPage.tsx`), então no dia 31 ele pode mostrar
+  R$ 0,00 com uma conta vencendo amanhã — não foi mexido, ela sabe.
 - **Início**: 3 cartões de tendência personalizáveis (Configurações → "Cartões do Início", padrão
   Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta; **"Lucros mês" e "Ticket médio" foram
   corrigidos em 28/08/2026** — o lucro passou a descontar o custo real de peça e serviço, e o

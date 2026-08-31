@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MiniCalendario } from "@/components/MiniCalendario";
+import { MiniCalendario, type EventoCalendario } from "@/components/MiniCalendario";
 import { VeiculoIcone } from "@/components/VeiculoIcone";
 import { useAuth } from "@/contexts/AuthContext";
 import { feriadosNacionais } from "@/lib/feriados";
@@ -14,6 +14,7 @@ import {
   mapaCustoServicos,
   resumirMovimentos,
 } from "@/schemas/metricasCaixa";
+import { chaveData, diasDoCalendario } from "@/lib/calendario";
 import { listarContasPagar } from "@/lib/contasPagar";
 import { buscarConfiguracaoPainelInicio } from "@/lib/configuracoes";
 import { listarOrdens } from "@/lib/ordensServico";
@@ -161,44 +162,56 @@ export function PainelPage() {
 
   const veiculosNoPatio = filaDeAtendimento.filter((o) => o.veiculo);
 
-  const eventosDoMes = useMemo(() => {
-    const feriados = feriadosNacionais(ano)
-      .map((f) => {
-        const [, mesFeriado, diaFeriado] = f.data.split("-").map(Number);
-        return mesFeriado - 1 === mes
-          ? { dia: diaFeriado, tipo: "feriado" as const, nome: f.nome }
-          : null;
-      })
-      .filter((e): e is NonNullable<typeof e> => e !== null);
+  // Os eventos cobrem TODA a grade visível (42 dias), não só o mês corrente:
+  // é isso que faz uma conta que vence dia 1º já aparecer no dia 31, no
+  // pedaço apagadinho do mês que vem.
+  const eventosDoCalendario = useMemo(() => {
+    const dias = diasDoCalendario(ano, mes);
+    const chavesVisiveis = new Set(dias.map(chaveData));
+    const chaveDeHoje = chaveData(hoje);
 
-    const aniversarios = clientes
-      .filter((c) => c.data_nascimento)
-      .map((c) => {
-        const [, mesNascimento, diaNascimento] = c.data_nascimento!.split("-").map(Number);
-        return mesNascimento - 1 === mes
-          ? { dia: diaNascimento, tipo: "aniversario" as const, nome: `Aniversário de ${c.nome}` }
-          : null;
-      })
-      .filter((e): e is NonNullable<typeof e> => e !== null);
+    const feriadosPorData = new Map<string, string>();
+    for (const anoVisivel of new Set(dias.map((d) => d.getFullYear()))) {
+      for (const feriado of feriadosNacionais(anoVisivel)) {
+        feriadosPorData.set(feriado.data, feriado.nome);
+      }
+    }
 
-    const contasDoMes = contas
-      .filter((c) => c.status === "pendente")
-      .map((c) => {
-        const [anoVencimento, mesVencimento, diaVencimento] = c.vencimento.split("-").map(Number);
-        if (anoVencimento !== ano || mesVencimento - 1 !== mes) return null;
-        const vencida = new Date(c.vencimento) < new Date(ano, mes, hoje.getDate());
-        const tipo: "conta_vencida" | "conta_a_vencer" = vencida
-          ? "conta_vencida"
-          : "conta_a_vencer";
-        return {
-          dia: diaVencimento,
-          tipo,
-          nome: `${vencida ? "Venceu" : "Vence"}: ${c.descricao} (${formatarMoeda(c.valor)})`,
-        };
-      })
-      .filter((e): e is NonNullable<typeof e> => e !== null);
+    const eventos: EventoCalendario[] = [];
 
-    return [...feriados, ...aniversarios, ...contasDoMes];
+    for (const dia of dias) {
+      const chave = chaveData(dia);
+      const feriado = feriadosPorData.get(chave);
+      if (feriado) {
+        eventos.push({ data: chave, tipo: "feriado", nome: feriado });
+      }
+      for (const cliente of clientes) {
+        if (!cliente.data_nascimento) continue;
+        const [, mesNascimento, diaNascimento] = cliente.data_nascimento
+          .split("-")
+          .map(Number);
+        if (mesNascimento - 1 === dia.getMonth() && diaNascimento === dia.getDate()) {
+          eventos.push({
+            data: chave,
+            tipo: "aniversario",
+            nome: `Aniversário de ${cliente.nome}`,
+          });
+        }
+      }
+    }
+
+    for (const conta of contas) {
+      if (conta.status !== "pendente") continue;
+      if (!chavesVisiveis.has(conta.vencimento)) continue;
+      const vencida = conta.vencimento < chaveDeHoje;
+      eventos.push({
+        data: conta.vencimento,
+        tipo: vencida ? "conta_vencida" : "conta_a_vencer",
+        nome: `${vencida ? "Venceu" : "Vence"}: ${conta.descricao} (${formatarMoeda(conta.valor)})`,
+      });
+    }
+
+    return eventos;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ano, mes, clientes, contas]);
 
@@ -290,7 +303,7 @@ export function PainelPage() {
               )}
             </section>
 
-            <MiniCalendario ano={ano} mes={mes} eventos={eventosDoMes} />
+            <MiniCalendario ano={ano} mes={mes} eventos={eventosDoCalendario} />
           </div>
 
           <section className="sakura-card p-4">

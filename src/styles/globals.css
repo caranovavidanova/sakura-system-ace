@@ -48,6 +48,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(100%);
 }
 
+/* Setinhas de somar/subtrair dentro dos campos numéricos: escondidas de
+   propósito. São alvos minúsculos, colados na borda do campo, e um clique
+   sem querer mudava o número por um "step" — nos campos com step="0.01"
+   (preço, quantidade, alíquota) isso deixava um 2 virar 1,99 sem ninguém
+   perceber. O valor passa a mudar só digitando (as setas ↑/↓ do teclado são
+   bloqueadas por useNaoMexerNoNumeroSemDigitar, a outra porta do mesmo
+   problema). Precisa ficar dentro de "@layer base" pelo mesmo motivo da
+   barra de rolagem abaixo: CSS sem camada vence classe do Tailwind. */
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
 /* Barra de rolagem nativa discreta — usada só como reforço/fallback nos
    poucos lugares que ainda não usam o componente <AreaRolavel> (ex: Modal.tsx,
    de propósito, ver PROJETO_STATUS.md seção 2). Precisa ficar dentro de

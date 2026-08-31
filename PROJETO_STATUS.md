@@ -1457,6 +1457,28 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     repetida em várias telas sempre diverge. Ao precisar de "lucro", "custo real" ou "ticket
     médio" numa tela nova, usar `schemas/metricasCaixa.ts` — não reescrever a conta ali.
 
+41. **Campo numérico mudava de valor sozinho: a seta ↓ do teclado e a setinha do próprio campo**
+    (31/08/2026). Ela achou uma peça com estoque de **1,99 UN** (amortecedor traseiro Ford Ka) e
+    disse não ter digitado isso. A tela de Movimentações mostrou a origem exata: uma entrada de
+    `1.99` com referência "Estoque inicial (cadastro do produto)" — ou seja, veio do campo "Qtde.
+    estoque inicial", não de OS nem de importação. Causa: o Chromium trata **ArrowUp/ArrowDown**
+    dentro de um `input[type=number]` como "somar/subtrair um step"; como o campo usa
+    `step="0.01"`, um toque na seta pra baixo em cima de "2" deixa exatamente **1.99**. E a seta
+    pra baixo é o gesto natural de quem quer descer a tela — dentro de um campo ela não rola a
+    página, só mexe no número, sem aviso nenhum. A setinha minúscula do spinner, dentro do campo,
+    faz o mesmo com um clique torto. **Corrigido** com `hooks/useNaoMexerNoNumeroSemDigitar.ts`
+    (global em `App.tsx`, mesmo padrão do Enter/Backspace: bloqueia só as setas em campo numérico,
+    digitação intacta) + CSS em `@layer base` escondendo os spinners. Vale pros 32 campos numéricos
+    do app, não só a quantidade — o mesmo acidente num preço de venda mudaria 1 centavo sem deixar
+    rastro em tela nenhuma.
+    **Lição de método, que quase virou o terceiro chute do item 33**: a primeira hipótese foi a
+    **rodinha do mouse** (o clássico "wheel muda input number"), e ela estava **errada** — testado
+    no Electron real (Chromium 130), a rodinha não mexe mais no valor; o Chromium tirou esse
+    comportamento. Só apareceu porque a hipótese foi testada antes de virar correção, e não depois.
+    Testar cedo também evitou o inverso: o Chromium **141** avulso do sandbox e o **130** de dentro
+    do Electron respondem diferente, então validar comportamento de campo nativo tem que ser no
+    Electron do projeto, nunca num Chromium qualquer.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -1483,6 +1505,13 @@ deixando redigitar sem precisar do mouse. Implementado uma única vez, globalmen
 (`src/hooks/useLimparDataAoApagar.ts`, mesmo padrão do Enter acima). Ver item 27 da seção 6 pro
 bug corrigido no próprio fix (checar `.value` bloqueava o caso mais comum, corrigir um dígito
 ainda no meio da digitação).
+
+**Campo numérico só muda digitando** (31/08/2026): em qualquer campo de número do app, as setas
+↑/↓ do teclado não somam nem subtraem mais, e as setinhas de spinner dentro do campo foram
+escondidas — o valor só muda quando alguém escreve. Vale pros 32 campos numéricos (preço,
+quantidade, desconto, juros, alíquota). Global, sem nada a fazer em tela nova
+(`src/hooks/useNaoMexerNoNumeroSemDigitar.ts` + CSS em `globals.css`). Ver item 41 da seção 6 pro
+estoque de "1,99 UN" que revelou isso.
 
 **Auto-save de rascunho** (estendido nesta sessão): os formulários longos guardam sozinhos uma
 cópia local do que está digitado, a cada 30s — **não é um "salvar" de verdade** (não manda nada pro

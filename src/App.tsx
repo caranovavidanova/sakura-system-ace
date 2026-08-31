@@ -7,6 +7,7 @@ import { VersaoApp } from "./components/VersaoApp";
 import { useAuth } from "./contexts/AuthContext";
 import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { useLimparDataAoApagar } from "./hooks/useLimparDataAoApagar";
+import { useNaoMexerNoNumeroSemDigitar } from "./hooks/useNaoMexerNoNumeroSemDigitar";
 import { conexaoConfigurada } from "./lib/conexao";
 import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
@@ -58,6 +59,7 @@ export default function App() {
   const { carregando, session, operador } = useAuth();
   useEnterParaProximoCampo();
   useLimparDataAoApagar();
+  useNaoMexerNoNumeroSemDigitar();
   // Na primeira abertura deste computador ainda não se sabe de qual empresa é
   // este app — sem isso não há nem como fazer login.
   const [configurandoConexao, setConfigurandoConexao] = useState(!conexaoConfigurada());

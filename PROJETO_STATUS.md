@@ -2033,6 +2033,29 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      abaixo pro contexto completo).
    - Token de **produção** da Focus NFe (NFC-e e NFS-e) já está configurado e em uso — não é mais
      "não colocar até validar", já foi validado.
+   - **⚠️ Bloqueio ATIVO na NFS-e desde 31/08/2026 — numeração de RPS colidindo, nada a mudar no
+     código**: emitir NFS-e passou a falhar com *"O número de RPS 7 já existe"*. O Sakura System
+     **não envia número de RPS nenhum** (o corpo montado em `montarCorpoNFSe()` tem prestador,
+     tomador e serviço; a única coisa nossa é o `ref` interno `os<numero>-nfse-<timestamp>`, que é
+     único e não tem relação com o RPS) — quem controla esse contador é a Focus NFe. **Causa
+     confirmada pelo portal da prefeitura**: a numeração de RPS dessa empresa já foi usada no
+     passado pela contabilidade emitindo direto pelo portal (existe nota antiga com **RPS 78**), e
+     a Focus NFe começou a contar **do 1** — as notas 10 a 14 saíram com RPS 2, 3, 4, 5 e 6
+     (números que estavam livres) e o 7 bateu num já usado. **Pedido aberto no suporte da Focus
+     NFe** pra pular o contador pra 100 ou acima (avançar de 1 em 1 não resolve, bate no próximo
+     número antigo). **Aguardando resposta.** Descartado no caminho: o número do RPS **não** vem do
+     número da OS (a OS era a 4 e o erro falava em 7).
+   - **Duas observações do portal da prefeitura, sem impacto confirmado** (achadas investigando o
+     RPS acima, valem só pra não assustar quem vir de novo): (a) toda nota emitida pela API aparece
+     no portal com **"Processado: Não"**, "Chave Acesso" vazia e um erro genérico
+     (`{"details":"Error id ...","stack":""}`), enquanto uma nota antiga emitida à mão pelo portal
+     está com "Processado: Sim" — **mas o XML dessas notas traz `cStat 100`** (autorizada), com
+     número, chave e assinatura do Município, então a nota vale; essa coluna parece ser a etapa
+     posterior de envio ao Ambiente Nacional, do lado deles. (b) o XML sai com
+     `cNBS 120013430` = *"Serviços de manutenção e reparação de foguetes e equipamentos
+     aeroespaciais"* — não é coisa nossa (a gente manda só `item_lista_servico` 14.01, que sai
+     correto como `cTribNac 140101`); esse NBS é preenchido pela Focus NFe ou pela prefeitura.
+     As duas foram junto no mesmo ticket, como perguntas secundárias.
    - Tudo daqui pra baixo (o resto deste item 1) é o **histórico de como se chegou até aqui** —
      útil se algo quebrar e for preciso entender uma decisão passada, mas não é leitura obrigatória
      pra continuar o projeto. Candidato a ser resumido/podado numa limpeza futura do arquivo.

@@ -1993,6 +1993,10 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     (ver item 40 da seção 6) — a conta virou uma função só, compartilhada pelas três telas que
     mostram lucro. Publicada via `workflow_dispatch`.
 
+  - `v0.9.25`: campo numérico deixa de mudar de valor sozinho pelas setas ↑/↓ e pelo spinner (ver
+    item 41 da seção 6) e o calendário do Início passa a mostrar os dias do mês vizinho, apagados
+    (ver "Início — calendário" nesta seção). Publicada via `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -2039,10 +2043,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      Segurança → "ambiente de testes" quando precisar).
    - **NFS-e**: token da prefeitura de Araraquara (portal Giap) gerado e cadastrado, código CNAE da
      loja preenchido em Configurações → Dados fiscais. Sem pendência conhecida.
-   - **Risco em aberto, não bloqueante**: o CSOSN `'500'` usado no cadastro de peças (Simples
-     Nacional) foi um valor de hábito da usuária, nunca confirmado pela contabilidade como correto
-     pra todo produto — vale revisar o catálogo antes de emitir em volume real (ver bloco "CST" mais
-     abaixo pro contexto completo).
+   - **CSOSN `'500'` — CONFIRMADO pela contabilidade (31/08/2026)**: era o único risco fiscal em
+     aberto do cadastro de peças. A usuária tinha usado `'500'` por hábito do sistema antigo, sem
+     validação; a contabilidade confirmou que é o código certo mesmo. Nada a mudar no catálogo, e a
+     pergunta 1 que estava pendente com a Rayana/Rafaela está respondida (o histórico mais abaixo
+     ainda diz "ainda sem resposta" — é texto antigo, ignorar).
    - Token de **produção** da Focus NFe (NFC-e e NFS-e) já está configurado e em uso — não é mais
      "não colocar até validar", já foi validado.
    - **⚠️ Bloqueio ATIVO na NFS-e desde 31/08/2026 — numeração de RPS colidindo, nada a mudar no
@@ -2822,10 +2827,6 @@ por ela que sumiu tudo da tela. O cadastro do cliente/veículo continua existind
 - **CSC/ID Token de homologação da NFC-e** — o servidor de homologação da SEFAZ-SP nunca respondeu
   (`ERR_CONNECTION_TIMED_OUT` em navegadores diferentes); só o de produção foi gerado. Tentar de
   novo quando o servidor deles voltar, se algum dia precisar testar em homologação de novo.
-- **CSOSN das peças do catálogo** — ainda não confirmado com a contabilidade se `'500'` é o código
-  certo pra toda peça, ou só pra quem tem ICMS-ST de verdade (ver item 1 da seção 8). Baixo risco
-  imediato (SEFAZ só rejeita incompatibilidade com o regime, não o código errado pro produto), mas
-  vale revisar antes de emitir em volume.
 - **Sugestão de feature registrada, não decidida**: cancelar uma nota deveria também estornar
   estoque/Caixa automaticamente? Ver tarefa sugerida `task_22e069e2` — precisa de uma decisão de
   design antes de implementar (cancelar a nota ≠ sempre desfazer a venda inteira).
@@ -3259,3 +3260,47 @@ cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehy
                         # e VITE_SUPABASE_ANON_KEY=<chave anon, em Settings -> API no Supabase>
 npm run dev
 ```
+
+### Onde tudo parou ao fim desta sessão (31/08/2026)
+
+Sessão curta, toda de **uso real no balcão** — nenhum módulo novo, dois ajustes e uma investigação
+fiscal que não terminou em código.
+
+**Dois ajustes, os dois publicados na `v0.9.25`:**
+
+| O que ela viu | O que era | Resultado |
+|---|---|---|
+| Peça com estoque de **1,99 UN** | Seta ↓ do teclado (e o spinner do campo) somando/subtraindo um `step` de 0,01 | Campo numérico só muda digitando — item 41 da seção 6 |
+| "O calendário não mostra o dia 1º quando ainda é dia 31" | A grade só desenhava o mês corrente | Seis semanas fixas, dias do mês vizinho apagados — ver seção 7 |
+
+**Método que vale guardar** (é a lição do item 41, e quase virou o terceiro chute do item 33): a
+primeira hipótese do 1,99 foi a **rodinha do mouse** e estava **errada** — só não virou correção
+porque foi testada no Electron real antes. Vale repetir esse reflexo: hipótese sobre comportamento
+de campo nativo se testa no Electron **do projeto** (Chromium 130), nunca num Chromium avulso — o
+141 do sandbox responde diferente.
+
+**NFS-e travada, esperando terceiros**: emitir NFS-e passou a falhar com *"O número de RPS 7 já
+existe"*. Não é código nosso — detalhe completo e o que foi descartado no caminho estão no item 1
+da seção 8. Ticket aberto no suporte da Focus NFe pedindo pra pular o contador pra 100+;
+**aguardando resposta**. A NFC-e continua saindo normalmente.
+
+**Resolvido nesta sessão, sem código**: o **CSOSN `'500'`** foi confirmado pela contabilidade — era
+o último risco fiscal em aberto do cadastro de peças.
+
+**O que ela pediu pra guardar pra "em breve"** (não retomar sozinho, ela sabe que existe):
+
+1. **Crédito da Anthropic zerado** — o "Importar por foto/PDF" pode estar sem funcionar desde
+   agosto (ver item 25 da seção 6). É a pendência mais provável de estar atrapalhando no dia a dia.
+2. **Cancelar nota deveria estornar estoque/Caixa?** — pergunta de design nunca respondida.
+3. **Token Focus NFe compartilhado**, **botão de diagnóstico pra suporte** e o **risco de uma tag
+   ruim atualizar todas as lojas de uma vez** — a fila já combinada, ver o fim da sessão de
+   28/08/2026.
+4. Duas pontas soltas pequenas: avisar a loja sobre a tela de conexão (provavelmente já passou) e
+   confirmar se o "Testar conexão" da `v0.9.18` funciona de verdade.
+
+**Ponto cego que continua, e ela sabe**: o cartão "Contas a pagar vencendo" do Início soma só o mês
+corrente — no dia 31 pode mostrar R$ 0,00 com conta vencendo amanhã. O calendário já resolveu a
+parte dele; o cartão foi deixado de fora de propósito (mudaria o significado dele).
+
+**Estado do código**: `main` com os PRs #203, #204 e #205 mesclados, `package.json` em `0.9.25`,
+`tsc`/`lint` limpos e **103 testes** passando.

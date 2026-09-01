@@ -2050,29 +2050,29 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      ainda diz "ainda sem resposta" — é texto antigo, ignorar).
    - Token de **produção** da Focus NFe (NFC-e e NFS-e) já está configurado e em uso — não é mais
      "não colocar até validar", já foi validado.
-   - **⚠️ Bloqueio ATIVO na NFS-e desde 31/08/2026 — numeração de RPS colidindo, nada a mudar no
-     código**: emitir NFS-e passou a falhar com *"O número de RPS 7 já existe"*. O Sakura System
-     **não envia número de RPS nenhum** (o corpo montado em `montarCorpoNFSe()` tem prestador,
-     tomador e serviço; a única coisa nossa é o `ref` interno `os<numero>-nfse-<timestamp>`, que é
-     único e não tem relação com o RPS) — quem controla esse contador é a Focus NFe. **Causa
-     confirmada pelo portal da prefeitura**: a numeração de RPS dessa empresa já foi usada no
-     passado pela contabilidade emitindo direto pelo portal (existe nota antiga com **RPS 78**), e
-     a Focus NFe começou a contar **do 1** — as notas 10 a 14 saíram com RPS 2, 3, 4, 5 e 6
-     (números que estavam livres) e o 7 bateu num já usado. **Pedido aberto no suporte da Focus
-     NFe** pra pular o contador pra 100 ou acima (avançar de 1 em 1 não resolve, bate no próximo
-     número antigo). **Aguardando resposta.** Descartado no caminho: o número do RPS **não** vem do
-     número da OS (a OS era a 4 e o erro falava em 7).
-   - **Duas observações do portal da prefeitura, sem impacto confirmado** (achadas investigando o
-     RPS acima, valem só pra não assustar quem vir de novo): (a) toda nota emitida pela API aparece
-     no portal com **"Processado: Não"**, "Chave Acesso" vazia e um erro genérico
-     (`{"details":"Error id ...","stack":""}`), enquanto uma nota antiga emitida à mão pelo portal
-     está com "Processado: Sim" — **mas o XML dessas notas traz `cStat 100`** (autorizada), com
-     número, chave e assinatura do Município, então a nota vale; essa coluna parece ser a etapa
-     posterior de envio ao Ambiente Nacional, do lado deles. (b) o XML sai com
-     `cNBS 120013430` = *"Serviços de manutenção e reparação de foguetes e equipamentos
-     aeroespaciais"* — não é coisa nossa (a gente manda só `item_lista_servico` 14.01, que sai
-     correto como `cTribNac 140101`); esse NBS é preenchido pela Focus NFe ou pela prefeitura.
-     As duas foram junto no mesmo ticket, como perguntas secundárias.
+   - **NFS-e — colisão de numeração de RPS — RESOLVIDA (31/08/2026)**: emitir NFS-e passou a
+     falhar com *"O número de RPS 7 já existe"*. O Sakura System **não envia número de RPS nenhum**
+     (o corpo de `montarCorpoNFSe()` tem prestador, tomador e serviço; a única coisa nossa é o
+     `ref` interno `os<numero>-nfse-<timestamp>`, único e sem relação com o RPS) — quem controla
+     esse contador é a Focus NFe. **Causa**: a numeração de RPS dessa empresa já tinha sido usada
+     no passado pela contabilidade emitindo direto pelo portal (existe nota antiga com **RPS 78**),
+     e a Focus NFe começou a contar **do 1** — as notas 10 a 14 saíram com RPS 2 a 6 e o 7 bateu
+     num já usado. **Resolvido pelo suporte da Focus NFe (Jaciara Santana), que ajustou o contador
+     pra 100** e informou que isso também dá pra fazer sozinha: Painel da API → menu **Documentos
+     Fiscais**. Descartado no caminho: o número do RPS **não** vem do número da OS (a OS era a 4 e
+     o erro falava em 7). **Vale pra qualquer loja nova que já emitia nota antes do Sakura System**
+     — ver o passo (C) do playbook mais abaixo.
+   - **Duas observações do portal da prefeitura — respondidas pelo suporte da Focus NFe, as duas
+     são com a prefeitura** (achadas investigando o RPS acima; nenhuma exige mudança no nosso
+     código): (a) toda nota emitida pela API aparece no portal com **"Processado: Não"**, "Chave
+     Acesso" vazia e um erro genérico (`{"details":"Error id ...","stack":""}`) — o suporte
+     respondeu que **o retorno do webservice foi de sucesso na autorização**, então é etapa
+     posterior, do lado da prefeitura (bate com o XML dessas notas trazer `cStat 100`, número,
+     chave e assinatura do Município: a nota vale). (b) o XML sai com `cNBS 120013430` =
+     *"Serviços de manutenção e reparação de foguetes e equipamentos aeroespaciais"* — o suporte
+     confirmou que **veio da prefeitura**, justamente porque o código não é enviado no JSON; pra
+     corrigir, é preciso conferir no portal da prefeitura qual código está configurado pra empresa.
+     **Nenhuma das duas foi levada à prefeitura ainda.**
    - Tudo daqui pra baixo (o resto deste item 1) é o **histórico de como se chegou até aqui** —
      útil se algo quebrar e for preciso entender uma decisão passada, mas não é leitura obrigatória
      pra continuar o projeto. Candidato a ser resumido/podado numa limpeza futura do arquivo.
@@ -2591,10 +2591,16 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
       **Varia por estado** — direto relevante pra fase 3, que sai de Araraquara/SP (ver seção 1).
       **É o passo mais pesado de todo o onboarding fiscal**: envolve certificado digital pago,
       portal de governo e, na prática, a contabilidade do cliente.
-   3. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
+   3. **Conferir a numeração de RPS da empresa antes da primeira NFS-e** — se a loja já emitia
+      nota de serviço antes (pela contabilidade, direto no portal do município), a numeração de RPS
+      já andou, e a Focus NFe começa a contar do 1: as primeiras notas passam nos números livres e
+      uma hora batem num já usado ("O número de RPS X já existe"). Resolve-se ajustando o contador
+      pra bem acima do maior já usado (Painel da API → Documentos Fiscais, ou pedindo ao suporte).
+      Aconteceu na primeira loja — ver item 1 desta seção.
+   4. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
       da loja, não da Focus NFe). **Varia por município**, inclusive o fornecedor do sistema
       municipal (Araraquara usa "Giap") e o conceito de lote/RPS que ele impõe.
-   4. **Confirmar CST/CSOSN com a contabilidade do cliente** — depende do regime tributário
+   5. **Confirmar CST/CSOSN com a contabilidade do cliente** — depende do regime tributário
       **daquela** empresa (Simples Nacional usa CSOSN, regime normal usa CST). A SEFAZ rejeita o
       código incompatível com o regime, mas **não** confere se é o código certo pro produto — ou
       seja, um cadastro errado passa na emissão e só aparece como problema fiscal depois.
@@ -3279,10 +3285,11 @@ porque foi testada no Electron real antes. Vale repetir esse reflexo: hipótese 
 de campo nativo se testa no Electron **do projeto** (Chromium 130), nunca num Chromium avulso — o
 141 do sandbox responde diferente.
 
-**NFS-e travada, esperando terceiros**: emitir NFS-e passou a falhar com *"O número de RPS 7 já
-existe"*. Não é código nosso — detalhe completo e o que foi descartado no caminho estão no item 1
-da seção 8. Ticket aberto no suporte da Focus NFe pedindo pra pular o contador pra 100+;
-**aguardando resposta**. A NFC-e continua saindo normalmente.
+**NFS-e travada e destravada no mesmo dia**: emitir NFS-e passou a falhar com *"O número de RPS 7
+já existe"*. Não era código nosso — o contador de RPS da Focus NFe estava atrás da numeração que a
+contabilidade já tinha usado no portal da prefeitura. O suporte deles **ajustou pra 100** no mesmo
+dia e informou que dá pra fazer sozinha pelo Painel da API → Documentos Fiscais. Detalhe completo
+no item 1 da seção 8. **Falta ela confirmar emitindo de novo** (a NFS-e da OS 4 nunca saiu).
 
 **Resolvido nesta sessão, sem código**: o **CSOSN `'500'`** foi confirmado pela contabilidade — era
 o último risco fiscal em aberto do cadastro de peças.
@@ -3291,11 +3298,19 @@ o último risco fiscal em aberto do cadastro de peças.
 
 1. **Crédito da Anthropic zerado** — o "Importar por foto/PDF" pode estar sem funcionar desde
    agosto (ver item 25 da seção 6). É a pendência mais provável de estar atrapalhando no dia a dia.
-2. **Cancelar nota deveria estornar estoque/Caixa?** — pergunta de design nunca respondida.
-3. **Token Focus NFe compartilhado**, **botão de diagnóstico pra suporte** e o **risco de uma tag
+2. **Não dá pra reabrir o PDF (DANFE) de uma nota já emitida** — ela esbarrou nisso e disse que
+   dá pra resolver depois. O PDF só existe dentro do modal de emissão; fechou, acabou. Em Notas
+   Fiscais os botões são "Versão para o cliente" (recibo HTML do XML), "Baixar XML", "Cancelar
+   nota" e "Excluir" — não existe "Ver DANFE" (`ArquivosSection.tsx:237`). **Já investigado**: o
+   mecanismo de exibir PDF não está quebrado (testado no Electron real — blob PDF dentro de
+   `iframe` renderiza com o visualizador do Chromium, e `pdfViewerEnabled` é `true` mesmo sem
+   `plugins: true`). É falta de botão mesmo. Como a migration `0046` já guarda o
+   `focus_nfe_ref`, um "Ver DANFE" em Notas Fiscais consegue buscar o PDF de novo na Focus NFe.
+3. **Cancelar nota deveria estornar estoque/Caixa?** — pergunta de design nunca respondida.
+4. **Token Focus NFe compartilhado**, **botão de diagnóstico pra suporte** e o **risco de uma tag
    ruim atualizar todas as lojas de uma vez** — a fila já combinada, ver o fim da sessão de
    28/08/2026.
-4. Duas pontas soltas pequenas: avisar a loja sobre a tela de conexão (provavelmente já passou) e
+5. Duas pontas soltas pequenas: avisar a loja sobre a tela de conexão (provavelmente já passou) e
    confirmar se o "Testar conexão" da `v0.9.18` funciona de verdade.
 
 **Ponto cego que continua, e ela sabe**: o cartão "Contas a pagar vencendo" do Início soma só o mês

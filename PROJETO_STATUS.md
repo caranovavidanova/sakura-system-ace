@@ -2062,6 +2062,26 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      Fiscais**. Descartado no caminho: o número do RPS **não** vem do número da OS (a OS era a 4 e
      o erro falava em 7). **Vale pra qualquer loja nova que já emitia nota antes do Sakura System**
      — ver o passo (C) do playbook mais abaixo.
+   - **⚠️ NFS-e — a alíquota da competência precisa ser cadastrada TODO MÊS no portal da
+     prefeitura, ANTES da primeira nota do mês** (descoberto em 01/09/2026, na primeira nota de um
+     mês novo). A emissão falha com *"Por gentileza, conclua o cadastro de todas as alíquotas
+     referentes à competência vigente"* (chega com os acentos quebrados, mojibake do lado deles).
+     **Não é código nosso** — a alíquota que o app manda (`configuracoes_fiscais_loja.aliquota_iss`,
+     3%) está certa e sai no XML como `pAliqAplic 3.00`; o que falta é um cadastro no portal.
+     **Onde**: portal do Giap (site da prefeitura → Serviços Empresa → Nota Fiscal Eletrônica →
+     Contribuintes, login `30016580`) → menu **Emissor/Consulta NFS-e** → tela **Cadastro de
+     Alíquota**. Preencher Mês/Ano (ex: `09/2026`), Alíquota (`3`) e Atividade, e clicar
+     **"Replicar Alíquota"** (é o botão de salvar dessa tela; o outro é "Voltar"). A empresa tem
+     **três atividades** cadastradas — CNAE 452000100 (manutenção e reparação mecânica), 452000400
+     (alinhamento e balanceamento) e 452000600 (borracharia) —, todas historicamente a 3%.
+     **Detalhe não confirmado**: bastou cadastrar com a **primeira** atividade selecionada pra
+     destravar; a nota seguinte era de *alinhamento* (a segunda atividade) e saiu normalmente — não
+     ficou claro se o "Replicar Alíquota" cadastra as três de uma vez ou se o portal só exige uma.
+     Conferir no "Relatório Alíquota" da própria tela quando acontecer de novo. **Cuidado ao mudar
+     o valor**: a tela é uma declaração formal (a alíquota do Simples Nacional varia com o
+     faturamento) — se a contabilidade mandar outro percentual, ele tem que ser trocado **também**
+     em Configurações → Dados fiscais da loja, senão a nota sai com um valor e a prefeitura tem
+     outro cadastrado.
    - **Duas observações do portal da prefeitura — respondidas pelo suporte da Focus NFe, as duas
      são com a prefeitura** (achadas investigando o RPS acima; nenhuma exige mudança no nosso
      código): (a) toda nota emitida pela API aparece no portal com **"Processado: Não"**, "Chave
@@ -2597,10 +2617,13 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
       uma hora batem num já usado ("O número de RPS X já existe"). Resolve-se ajustando o contador
       pra bem acima do maior já usado (Painel da API → Documentos Fiscais, ou pedindo ao suporte).
       Aconteceu na primeira loja — ver item 1 desta seção.
-   4. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
+   4. **Cadastrar a alíquota da competência todo mês** (pelo menos em Araraquara/Giap) — sem
+      isso a primeira NFS-e do mês é recusada. É tarefa recorrente do lojista, não de instalação;
+      passo a passo no item 1 desta seção.
+   5. **Login/senha do portal da prefeitura, pra NFS-e** — Araraquara exigiu (veio da contabilidade
       da loja, não da Focus NFe). **Varia por município**, inclusive o fornecedor do sistema
       municipal (Araraquara usa "Giap") e o conceito de lote/RPS que ele impõe.
-   5. **Confirmar CST/CSOSN com a contabilidade do cliente** — depende do regime tributário
+   6. **Confirmar CST/CSOSN com a contabilidade do cliente** — depende do regime tributário
       **daquela** empresa (Simples Nacional usa CSOSN, regime normal usa CST). A SEFAZ rejeita o
       código incompatível com o regime, mas **não** confere se é o código certo pro produto — ou
       seja, um cadastro errado passa na emissão e só aparece como problema fiscal depois.
@@ -3289,7 +3312,9 @@ de campo nativo se testa no Electron **do projeto** (Chromium 130), nunca num Ch
 já existe"*. Não era código nosso — o contador de RPS da Focus NFe estava atrás da numeração que a
 contabilidade já tinha usado no portal da prefeitura. O suporte deles **ajustou pra 100** no mesmo
 dia e informou que dá pra fazer sozinha pelo Painel da API → Documentos Fiscais. Detalhe completo
-no item 1 da seção 8. **Falta ela confirmar emitindo de novo** (a NFS-e da OS 4 nunca saiu).
+no item 1 da seção 8. **Confirmado no dia seguinte (01/09)**: a NFS-e da OS 4 saiu — **número 15** —, mas só depois de
+esbarrar num bloqueio novo, o do cadastro de alíquota da competência (ver item 1 da seção 8): é
+tarefa recorrente, todo dia 1º do mês. A OS 4 ficou com as duas notas e virou "Finalizada".
 
 **Resolvido nesta sessão, sem código**: o **CSOSN `'500'`** foi confirmado pela contabilidade — era
 o último risco fiscal em aberto do cadastro de peças.

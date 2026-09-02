@@ -2261,6 +2261,36 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
       nome do campo de CNPJ do destinatário — deliberadamente **não** foi chutado (inventar nome
       de campo fiscal já custou caro aqui). Enquanto isso, a tela de emissão avisa quando o
       cliente é PJ, em vez de deixar passar calado.
+
+      **Mensagem preparada em 02/09/2026 pra ela mandar** (canal "Novo suporte" do painel da Focus
+      NFe, o mesmo já usado nos outros chamados) — **ainda não confirmado se foi enviada**:
+
+      > Oi! Emito NFC-e por aqui pela API de vocês (v2) e quase sempre é venda pra pessoa física —
+      > mando `nome_destinatario` e `cpf_destinatario` e sai certinho.
+      >
+      > Agora começou a aparecer cliente pessoa jurídica, que precisa da nota no CNPJ da empresa
+      > dele. Duas perguntas:
+      >
+      > 1. Qual é o campo pra mandar o CNPJ do destinatário na NFC-e? É `cnpj_destinatario`, junto
+      >    com o `nome_destinatario`?
+      > 2. Muda mais alguma coisa no corpo da nota quando o destinatário é empresa em vez de pessoa
+      >    física?
+      >
+      > Meu CNPJ aqui é 66.217.744/0001-70.
+      >
+      > Obrigada!
+
+      **Quando a resposta chegar**: o campo entra em `NFCeCorpo` (`src/types/focusNfe.ts`) e em
+      `montarCorpoNFCe()` (`src/lib/focusNfe.ts`), onde hoje o destinatário só é preenchido pra
+      `tipo_pessoa === "fisica"`. O aviso amarelo de PJ em `EmitirNotaFiscalModal.tsx` sai junto.
+
+      **Pergunta opcional, do item 2 abaixo, pra aproveitar o mesmo chamado** (é sobre
+      comportamento da API deles, não sobre tributação — a Focus NFe já avisou que definição
+      tributária não é escopo do suporte):
+
+      > Aproveitando: minhas peças usam CSOSN 500 e eu não mando nenhum campo de substituição
+      > tributária no item (vBCSTRet, vICMSSTRet). As notas estão saindo autorizadas normalmente —
+      > vocês completam esses campos automaticamente, ou é algo que eu deveria estar mandando?
    2. **CSOSN `500` é enviado sem os campos de ICMS-ST** (`vBCSTRet`/`vICMSSTRet` e afins, que o
       layout da NFe pede pra esse código). Vem funcionando em produção — a Focus NFe deve estar
       completando —, então **não mexer**; mas se um dia aparecer rejeição falando em substituição
@@ -2906,11 +2936,18 @@ linha do tempo acima).
    especial a NFC-e de cliente pessoa jurídica, que sai sem o CNPJ e depende de uma confirmação
    com o suporte da Focus NFe antes de mexer.
 
-**Segurança — precisa da ação dela, não dá pra resolver por código**: este arquivo tinha
-credenciais copiadas (CSC da SEFAZ, token do portal Giap, senha da prefeitura) e **o repositório é
-público**. Foram removidas do texto, mas **continuam no histórico do Git** — o certo é regerar as
-três (o passo a passo está no item 1 da seção 8) e atualizar no painel da Focus NFe. Enquanto não
-trocar, elas devem ser tratadas como expostas.
+### O que depende dela pra andar (fim de 02/09/2026)
+
+Três coisas ficaram esperando ação fora do código. Nenhuma delas some sozinha, e as duas primeiras
+já estão prontas pra executar:
+
+1. **Trocar três credenciais.** Este arquivo tinha CSC da SEFAZ, token do portal Giap e a senha do
+   portal da prefeitura copiados — e **o repositório é público**. Foram removidos do texto, mas
+   **continuam no histórico do Git**: o certo é regerar os três (passo a passo no item 1 da seção
+   8) e atualizar no painel da Focus NFe. Enquanto não trocar, tratar como expostos.
+2. **Mandar a mensagem pro suporte da Focus NFe** sobre o campo de CNPJ do destinatário na NFC-e —
+   texto pronto no item 1 da seção 8. É o que destrava a nota pra cliente pessoa jurídica.
+3. **Publicar a próxima tag** quando quiser (nada desta sessão está rodando na loja).
 
 **O que ela pediu pra guardar pra "em breve"** (não retomar sozinho, ela sabe que existe):
 
@@ -2932,5 +2969,6 @@ pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0
 amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
 seção 6).
 
-**Estado do código**: `main` com tudo acima mesclado, `package.json` ainda em `0.9.25` (sem tag
-nova), `tsc`/`lint`/`npm run contraste` limpos e **146 testes** passando.
+**Estado do código**: `main` com os PRs #209 a #212 mesclados, `package.json` ainda em `0.9.25`
+(sem tag nova), `tsc`/`lint`/`npm run contraste` limpos e **146 testes** passando (eram 103 no
+começo do dia — quase todos os novos cobrem as contas de dinheiro e de data que estavam erradas).

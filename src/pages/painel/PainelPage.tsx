@@ -116,11 +116,16 @@ export function PainelPage() {
   // ticket médio, pelo mesmo motivo, é por ORDEM e não por lançamento: uma OS
   // paga em duas formas gera dois lançamentos e derrubava a média.
   const { vendasMes, custosMes, lucrosMes, ticketMedioMes } = useMemo(() => {
+    // Do primeiro dia do mês até hoje. A checagem tem que ser de data
+    // inteira: comparar só o dia do mês (`getDate() <= diaDeHoje`, como era
+    // antes) deixa passar lançamento de mês nenhum — um movimento de 1º de
+    // dezembro entrava no cartão de setembro, porque o dia 1 é menor que o
+    // dia de hoje e a única outra checagem era "não é de antes deste mês".
     const inicioMesAtual = new Date(ano, mes, 1);
+    const fimDeHoje = new Date(ano, mes, diaDeHoje, 23, 59, 59, 999);
     const movimentosDoMes = movimentos.filter((movimento) => {
       const dataMovimento = new Date(movimento.data);
-      if (dataMovimento < inicioMesAtual) return false;
-      return dataMovimento.getDate() <= diaDeHoje;
+      return dataMovimento >= inicioMesAtual && dataMovimento <= fimDeHoje;
     });
 
     const resumo = resumirMovimentos(

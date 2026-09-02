@@ -1,3 +1,4 @@
+import { hojeLocal } from "./datas";
 import { baixarArquivoFocusNfe, cancelarNFCe, cancelarNFSe, FocusNfeError } from "./focusNfe";
 import { supabase } from "./supabase";
 import { criarZip, type ArquivoParaZip } from "./zip";
@@ -109,7 +110,9 @@ export async function salvarArquivoEmitido({
     );
   }
 
-  const competencia = new Date().toISOString().slice(0, 10);
+  // Dia local, nunca `toISOString()` (que é UTC): uma nota emitida às 22h do
+  // dia 31 seria arquivada na competência do mês seguinte. Ver lib/datas.ts.
+  const competencia = hojeLocal();
   const nomeArquivo = `${tipo}-${resposta.numero ?? resposta.ref ?? "sem-numero"}.xml`;
   const caminho = `${tipo}/${competencia.slice(0, 7)}/${crypto.randomUUID()}-${nomeArquivo}`;
 

@@ -4,6 +4,11 @@ import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarJurosParcelas } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
+import {
+  custoDosItens,
+  mapaCustoPecas,
+  mapaCustoServicos,
+} from "@/schemas/metricasCaixa";
 import { listarClientes } from "@/lib/clientes";
 import { listarFuncionarios } from "@/lib/funcionarios";
 import {
@@ -91,29 +96,16 @@ export function OrdensServicoPage() {
   const funcionarioAtualId =
     funcionarios.find((f) => f.operador_id === operador?.id)?.id ?? "";
 
-  const custoPorPeca = useMemo(() => {
-    const mapa = new Map<string, number>();
-    for (const peca of pecas) mapa.set(peca.id, peca.preco_custo ?? 0);
-    return mapa;
-  }, [pecas]);
+  const custoPorPeca = useMemo(() => mapaCustoPecas(pecas), [pecas]);
+  const custoPorServico = useMemo(() => mapaCustoServicos(servicos), [servicos]);
 
-  const custoPorServico = useMemo(() => {
-    const mapa = new Map<string, number>();
-    for (const servico of servicos) mapa.set(servico.id, servico.custo ?? 0);
-    return mapa;
-  }, [servicos]);
-
+  // Usa a mesma conta de custo do Caixa, do Início e de Relações
+  // (schemas/metricasCaixa.ts) em vez de refazer a soma aqui: cada tela que
+  // recalculava lucro por conta própria acabou divergindo das outras — ver
+  // PROJETO_STATUS.md, seção 6, item 40.
   function lucroOrdem(ordem: OrdemServico): number {
-    let lucro = 0;
-    for (const item of ordem.itens ?? []) {
-      const receita = item.quantidade * item.preco_unitario - item.desconto;
-      const custoUnitario =
-        item.tipo === "peca"
-          ? custoPorPeca.get(item.peca_id ?? "") ?? 0
-          : custoPorServico.get(item.servico_id ?? "") ?? 0;
-      lucro += receita - item.quantidade * custoUnitario;
-    }
-    return lucro;
+    const itens = ordem.itens ?? [];
+    return totalOrdem(itens) - custoDosItens(itens, custoPorPeca, custoPorServico);
   }
 
   // Ordens em aberto (ainda não faturadas) sempre aparecem, não importa a

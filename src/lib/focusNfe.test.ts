@@ -84,7 +84,7 @@ describe("montarCorpoNFCe", () => {
   it("monta um item por peça, com os campos fiscais dela e valores formatados com 2 casas", () => {
     const corpo = montarCorpoNFCe({
       ordem: { numero: 1 } as never,
-      itens: [{ peca: peca(), quantidade: 2, precoUnitario: 250 }],
+      itens: [{ peca: peca(), quantidade: 2, precoUnitario: 250, desconto: 0 }],
       cliente: clientePessoaFisica(),
       pagamentos: [{ formaPagamento: "pix", valor: 500 }],
       configuracaoFiscal: configuracaoFiscal(),
@@ -108,10 +108,59 @@ describe("montarCorpoNFCe", () => {
     expect(corpo.formas_pagamento).toEqual([{ forma_pagamento: "17", valor_pagamento: "500.00" }]);
   });
 
+  it("abate o desconto do item, pra nota não valer mais do que o cliente pagou", () => {
+    // Peça de R$250 com R$50 de desconto: a nota tem que fechar em R$200,
+    // que é o que entra no Caixa e o que os pagamentos informam. Ignorar o
+    // desconto (como era antes) fazia a soma dos pagamentos ficar menor que
+    // o total da nota — rejeição na hora de emitir.
+    const corpo = montarCorpoNFCe({
+      ordem: { numero: 1 } as never,
+      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 50 }],
+      cliente: clientePessoaFisica(),
+      pagamentos: [{ formaPagamento: "pix", valor: 200 }],
+      configuracaoFiscal: configuracaoFiscal(),
+    });
+
+    expect(corpo.items[0].valor_bruto).toBe("200.00");
+    expect(corpo.valor_produtos).toBe("200.00");
+    expect(corpo.valor_total).toBe("200.00");
+    // A SEFAZ confere que bruto = quantidade × unitário, então o desconto
+    // entra abatido no preço unitário.
+    expect(Number(corpo.items[0].valor_unitario_comercial)).toBeCloseTo(200, 10);
+  });
+
+  it("divide o desconto pela quantidade quando a linha tem mais de uma peça", () => {
+    const corpo = montarCorpoNFCe({
+      ordem: { numero: 1 } as never,
+      itens: [{ peca: peca(), quantidade: 4, precoUnitario: 250, desconto: 100 }],
+      cliente: clientePessoaFisica(),
+      pagamentos: [{ formaPagamento: "pix", valor: 900 }],
+      configuracaoFiscal: configuracaoFiscal(),
+    });
+
+    expect(corpo.items[0].valor_bruto).toBe("900.00");
+    expect(Number(corpo.items[0].valor_unitario_comercial)).toBeCloseTo(225, 10);
+  });
+
+  it("usa o valor já com desconto como base do IBS/CBS e do ICMS", () => {
+    const corpo = montarCorpoNFCe({
+      ordem: { numero: 1 } as never,
+      itens: [{ peca: peca({ aliquota_icms: 18 }), quantidade: 1, precoUnitario: 100, desconto: 20 }],
+      cliente: clientePessoaFisica(),
+      pagamentos: [{ formaPagamento: "pix", valor: 80 }],
+      configuracaoFiscal: configuracaoFiscal(),
+    });
+
+    expect(corpo.items[0].icms_base_calculo).toBe("80.00");
+    expect(corpo.items[0].ibs_cbs_base_calculo).toBe("80.00");
+    expect(corpo.items[0].cbs_valor).toBe("0.72");
+    expect(corpo.icms_valor_total).toBe("14.40");
+  });
+
   it("identifica o destinatário pessoa física pelo CPF (sem formatação) e deixa o CNPJ de fora", () => {
     const corpo = montarCorpoNFCe({
       ordem: { numero: 1 } as never,
-      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250 }],
+      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
       cliente: clientePessoaFisica(),
       pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
       configuracaoFiscal: configuracaoFiscal(),
@@ -124,7 +173,7 @@ describe("montarCorpoNFCe", () => {
   it("calcula icms_valor_total só quando a peça tem alíquota de ICMS", () => {
     const corpo = montarCorpoNFCe({
       ordem: { numero: 1 } as never,
-      itens: [{ peca: peca({ aliquota_icms: 18 }), quantidade: 1, precoUnitario: 100 }],
+      itens: [{ peca: peca({ aliquota_icms: 18 }), quantidade: 1, precoUnitario: 100, desconto: 0 }],
       cliente: clientePessoaFisica(),
       pagamentos: [{ formaPagamento: "dinheiro", valor: 100 }],
       configuracaoFiscal: configuracaoFiscal(),
@@ -137,7 +186,7 @@ describe("montarCorpoNFCe", () => {
   it("soma mais de uma forma de pagamento em formas_pagamento, cada uma com o código SEFAZ certo", () => {
     const corpo = montarCorpoNFCe({
       ordem: { numero: 1 } as never,
-      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250 }],
+      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
       cliente: clientePessoaFisica(),
       pagamentos: [
         { formaPagamento: "pix", valor: 125 },

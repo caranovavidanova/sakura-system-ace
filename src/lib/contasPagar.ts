@@ -30,9 +30,25 @@ export async function excluirContaPagar(id: string): Promise<void> {
   if (error) throw error;
 }
 
-function proximoVencimento(vencimentoIso: string): string {
+/**
+ * O mesmo dia do mês que vem — segurando o dia no último dia do mês quando
+ * ele não existe lá.
+ *
+ * O jeito direto (`new Date(ano, mes, dia)`, contando com o mês 1-based
+ * virar o mês seguinte no construtor 0-based) tem uma armadilha: o
+ * JavaScript "transborda" data inválida em vez de recusar. Uma conta que
+ * vence **31/01** virava `31 de fevereiro`, que o JavaScript converte pra
+ * **03/03** — ou seja, a conta pulava fevereiro inteiro e ainda mudava de
+ * dia pra sempre (a ocorrência seguinte já nascia dia 3). Acontecia com
+ * todo vencimento em 29, 30 ou 31, que é justamente onde caem aluguel e
+ * financiamento.
+ */
+export function proximoVencimento(vencimentoIso: string): string {
   const [ano, mes, dia] = vencimentoIso.split("-").map(Number);
-  const proxima = new Date(ano, mes, dia);
+  // `mes` vem 1-based do texto; como o construtor conta a partir do zero,
+  // passar `mes` direto já aponta pro mês seguinte.
+  const ultimoDiaDoProximoMes = new Date(ano, mes + 1, 0).getDate();
+  const proxima = new Date(ano, mes, Math.min(dia, ultimoDiaDoProximoMes));
   return `${proxima.getFullYear()}-${String(proxima.getMonth() + 1).padStart(2, "0")}-${String(
     proxima.getDate(),
   ).padStart(2, "0")}`;

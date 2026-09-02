@@ -1,4 +1,5 @@
 import { registrarCotacoes } from "./cotacoesPecas";
+import { hojeLocal } from "./datas";
 import { criarMovimento } from "./estoque";
 import { supabase } from "./supabase";
 import { nomePedido } from "@/types/pedidoCompra";
@@ -79,7 +80,7 @@ export async function importarNotaFiscalCompra(
     .from("pedidos_compra")
     .insert({
       fornecedor_id: fornecedorId,
-      data_pedido: new Date().toISOString().slice(0, 10),
+      data_pedido: hojeLocal(),
       observacao,
       status: "recebido",
       loja_id: lojaId,

@@ -274,3 +274,27 @@ describe("ratearPagamentos", () => {
     expect(ratearPagamentos([], 100)).toEqual([]);
   });
 });
+
+describe("calcularListaParcelas", () => {
+  it("faz as parcelas somarem exatamente o valor cobrado", () => {
+    // R$100 em 3x: duas de R$33,33 e a última de R$33,34 — se todas fossem
+    // R$33,33, a soma daria R$99,99 e o cliente veria um centavo sumindo.
+    const parcelas = calcularListaParcelas(100, 3, new Date(2026, 8, 2));
+    expect(parcelas.map((p) => p.valor)).toEqual([33.33, 33.33, 33.34]);
+    expect(parcelas.reduce((soma, p) => soma + p.valor, 0)).toBeCloseTo(100, 10);
+  });
+
+  it("divide certinho quando não sobra centavo", () => {
+    const parcelas = calcularListaParcelas(300, 3, new Date(2026, 8, 2));
+    expect(parcelas.map((p) => p.valor)).toEqual([100, 100, 100]);
+  });
+
+  it("mantém uma parcela só igual ao total", () => {
+    expect(calcularListaParcelas(99.99, 1, new Date(2026, 8, 2))[0].valor).toBe(99.99);
+  });
+
+  it("vence uma vez por mês, a partir do mês que vem", () => {
+    const parcelas = calcularListaParcelas(300, 3, new Date(2026, 8, 2));
+    expect(parcelas.map((p) => p.vencimento.getMonth())).toEqual([9, 10, 11]);
+  });
+});

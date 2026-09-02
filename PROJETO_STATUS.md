@@ -11,8 +11,10 @@
 > **Cuidado ao ler**: a expressão "nesta sessão" aparece mais de 60 vezes aqui, escrita por sessões
 > diferentes ao longo de meses — **ela não quer dizer a sessão atual**, e não dá pra saber a qual
 > se refere só pelo texto. Trate como "em algum momento do passado". Ao escrever coisa nova,
-> prefira a data (o rodapé "Onde tudo parou" no fim da seção 8 é o marco mais recente) ou o número
-> da versão publicada. Vale uma limpeza dessas expressões quando sobrar tempo.
+> prefira a data ("Onde tudo parou", no fim deste arquivo, é o marco mais recente) ou o número da
+> versão publicada. Uma primeira limpeza foi feita em 02/09/2026 (o histórico fiscal já resolvido e
+> quatro relatórios de sessão viraram resumo) — o resto das expressões "nesta sessão" continua
+> valendo a pena limpar quando sobrar tempo.
 
 ## 1. Quem é a usuária e como trabalhar com ela
 
@@ -251,6 +253,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # OS, Cliente, Funcionário, Produto e Pedido de Compra)
 │   ├── lib/                     # supabase.ts + conexao.ts (decide com qual Supabase/empresa este
 │   │                             # computador fala — ver "Conexão com o banco" na seção 7)
+│   │                             # + datas.ts (hojeLocal()/diaLocal() — o dia no fuso de quem usa,
+│   │                             # nunca toISOString(), que é UTC; ver itens 34 e 42 da seção 6)
+│   │                             # + zip.ts (monta .zip sem biblioteca externa, usado pra baixar
+│   │                             # os XMLs de um mês de uma vez — ver "Notas Fiscais" na seção 7)
 │   │                             # + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
@@ -362,9 +368,14 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │   relatorios/     # RelatoriosPage.tsx (orquestrador de abas) + GraficosSection.tsx (barras +
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
 │   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado, agora conta o
-│   │                   # custo de serviço também, não só de peça)
+│   │                   # custo de serviço também, não só de peça) + ComissoesSection.tsx (comissão
+│   │                   # por funcionário — ver seção 7)
 │   ├── schemas/                  # esquemas zod de validação de formulário + funções de mapeamento
-│   │                             # form↔banco (ex: funcionario.ts — paraValoresFormulario,
+│   │                             # form↔banco, e as contas de dinheiro como funções puras
+│   │                             # testáveis (metricasCaixa.ts — lucro/custo/ticket médio
+│   │                             # compartilhados; faturamento.ts — juros/parcelas/rateio;
+│   │                             # comissoes.ts — comissão por vendedor e por técnico)
+│   │                             # (ex: funcionario.ts — paraValoresFormulario,
 │   │                             # paraNovoFuncionario, paraFilhosPreenchidos). Pasta nova —
 │   │                             # `funcionario.ts`, `cliente.ts`, `peca.ts` até agora (este último
 │   │                             # também guarda o cálculo custo↔margem%↔preço final) — ver
@@ -870,9 +881,11 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
    de Compra, saldo de estoque, cotação por fornecedor) — **não** testa componente React, tela,
    nem nada que dependa do Supabase (esse tipo de teste, de UI/integração, é bem mais trabalhoso de
-   montar e não foi feito ainda). **59 testes**, todos passando. Achou e corrigiu de brinde um bug
+   montar e não foi feito ainda). **145 testes**, todos passando. Achou e corrigiu de brinde um bug
    real de arredondamento de ponto flutuante em `calcularValorCobrado` (`100 * 1.1` podia sair
-   `110.00000000000001` em vez de `110`).
+   `110.00000000000001` em vez de `110`) — e, na varredura de 02/09/2026 (itens 42 a 45), foi
+   escrevendo teste pro comportamento esperado que os bugs de desconto na NFC-e apareceram, dois
+   deles em lugares que a leitura do código já tinha passado batido.
    **Um teste de verdade fora desse padrão, nesta sessão**: a tela de conexão foi validada de ponta
    a ponta no **Electron real** (Playwright + `xvfb-run`, ver item 6 desta seção), inclusive o
    caminho de falha — e ali o sandbox ajuda em vez de atrapalhar, porque a ausência de rede pro
@@ -1479,6 +1492,52 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     do Electron respondem diferente, então validar comportamento de campo nativo tem que ser no
     Electron do projeto, nunca num Chromium qualquer.
 
+42. **Padrão de bug: `toISOString().slice(0, 10)` grava o dia em UTC, não o dia de quem está
+    usando** (achado em 02/09/2026, numa varredura de cálculo pedida por ela). É o item 34 de
+    novo, em **três lugares** que ninguém tinha olhado — e todos os três importam justo à noite,
+    que é quando ela costuma mexer no sistema (das 21h em diante o UTC já virou amanhã, no fuso do
+    Brasil):
+    - `lib/notasFiscais.ts` — a **competência da nota fiscal emitida**. Uma nota emitida às 22h do
+      dia 31 era arquivada no **mês seguinte**: some da divisão daquele mês na tela de Notas
+      Fiscais (e do .zip do mês, ver seção 7), e chega errada pra contabilidade.
+    - `lib/focusNfe.ts` — a **data de emissão** mandada pra Focus NFe. Documento fiscal saindo com
+      a data de amanhã.
+    - `lib/pedidosCompra.ts` — a data do pedido criado ao importar o XML do fornecedor.
+    **Corrigido** com um helper único, `src/lib/datas.ts` (`hojeLocal()` / `diaLocal()`), testado
+    inclusive com o fuso fixado em `America/Sao_Paulo` — a máquina de teste roda em UTC, onde esse
+    erro **não aparece**, então sem fixar o fuso o teste passaria de qualquer jeito. **Lição**:
+    `toISOString()` nunca serve pra saber "que dia é hoje" pro usuário; e um teste de fuso que não
+    fixa o fuso não testa nada.
+43. **Padrão de bug: "mesmo dia do mês que vem" com `new Date(ano, mes, dia)` transborda em vez de
+    recusar** (mesma varredura). Em Contas a Pagar, a conta recorrente com vencimento em **29, 30
+    ou 31** — que é justo onde caem aluguel e financiamento — pulava um mês inteiro: 31/01 virava
+    "31 de fevereiro", que o JavaScript converte pra **03/03**. E não era só um mês perdido: a
+    ocorrência seguinte já nascia dia 3, então o vencimento desandava pra sempre. **Corrigido**
+    segurando o dia no último dia do mês de destino (31/01 → 28/02), com teste cobrindo ano
+    bissexto e virada de ano. **Resíduo conhecido, aceito**: depois de segurar em fevereiro, o dia
+    fica preso no 28 — voltar pro 31 exigiria guardar o dia original numa coluna nova. É bem menos
+    grave que pular um mês, mas se um dia incomodar, é uma migration pequena.
+44. **Padrão de bug: o desconto do item sumia na NFC-e — em três contas diferentes que faziam a
+    mesma coisa** (mesma varredura). `montarItemNFCe()` calculava o valor do item como
+    `quantidade × preço`, ignorando o `desconto` da linha da OS; o total dos produtos e a base do
+    ICMS, calculados à parte no corpo da nota, faziam o mesmo. Consequência: numa OS com desconto
+    em peça, a nota valia **mais do que o cliente pagou**, e como os pagamentos informados são
+    rateados sobre o total da OS (que **já** desconta), a soma dos pagamentos ficava menor que o
+    total da nota — a mesma família de rejeição da SEFAZ dos itens 31 e 32. **Corrigido** com uma
+    função só (`valorLiquidoItem`) usada pelos três lugares. O desconto entra **abatido no preço
+    unitário**, não num campo separado, porque a SEFAZ confere que "valor bruto = quantidade ×
+    unitário" — e porque inventar nome de campo fiscal sem documentação é exatamente o que este
+    projeto já decidiu não fazer (ver item 1 da seção 8). **Lição**: sempre que uma conta de
+    dinheiro aparece em mais de um lugar, ela vai divergir — é a terceira vez que isso acontece
+    aqui (itens 35, 40 e agora este).
+45. **Dois erros menores da mesma varredura, corrigidos junto**: (a) o filtro de "este mês" dos
+    cartões do Início comparava **só o dia do mês** (`getDate() <= hoje`) depois de checar que não
+    era de antes do mês — então um lançamento de 1º de dezembro entrava no cartão de setembro;
+    agora compara data inteira. (b) `calcularListaParcelas()` dividia o total pelo número de
+    parcelas sem arredondar: R$100 em 3x virava "3x de R$ 33,33", que soma R$ 99,99 na frente do
+    cliente. Agora a última parcela absorve a sobra, como faz a maquininha — mesma técnica que o
+    rateio de pagamento da nota já usava.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -1766,7 +1825,14 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   passou por OS nenhuma. Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
   Contas a Pagar), venha a conta de qual dos dois jeitos for.
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
-  (Supabase Storage), vínculo opcional com uma OS. Botão "Versão para o cliente" interpreta o XML
+  (Supabase Storage), vínculo opcional com uma OS. **Baixar o mês inteiro (02/09/2026)**: cada
+  faixa de mês tem um botão "Baixar XMLs do mês (N)" que junta os XMLs daquela competência num
+  `.zip` só (`nfse-2026-08.zip`) — é o formato que a contabilidade pede, e evita clicar nota por
+  nota. O `.zip` é montado sem biblioteca externa (`src/lib/zip.ts`, formato "stored", sem
+  compressão: XML de nota é arquivo pequeno, comprimir não mudaria o tamanho de forma relevante).
+  Cuidados cobertos por teste: nome repetido no mesmo mês vira `nota (2).xml` (senão o
+  descompactador perde um dos dois), nome com acento sai certo no Windows, e o download é feito
+  em lotes de 5 pra um mês cheio não disparar dezenas de requisições juntas. Botão "Versão para o cliente" interpreta o XML
   e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code). **Botão "Cancelar
   nota" (nesta sessão)**: até aqui, cancelar uma nota emitida automaticamente (NFC-e/NFS-e via
   Focus NFe) só dava pra fazer direto no painel deles — as funções `cancelarNFCe`/`cancelarNFSe`
@@ -1783,7 +1849,30 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
   Lucro, Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca
   externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba "Lucratividade" —
-  margem por peça/serviço, período filtrável.
+  margem por peça/serviço, período filtrável; e aba **"Comissões"** (02/09/2026, pedido do pai
+  dela).
+  - **Regras, decididas com ela** (estão escritas também no topo de `src/schemas/comissoes.ts`):
+    os **dois papéis** contam, separados — o **vendedor** da OS leva pela OS inteira que atendeu,
+    o **técnico** só pelos itens que executou; a base é o **lucro** (venda − custo), na
+    porcentagem de `funcionarios.comissao`; e só conta **OS faturada**, pela data do faturamento.
+  - **Não precisou de migration** — `ordens_servico.vendedor_id`,
+    `ordens_servico_itens.tecnico_id` e o campo "Comissão (%)" do cadastro já existiam.
+  - Uma linha por funcionário (vendeu / lucro gerado / comissão a pagar); "Ver as OS" abre o
+    detalhe separado por papel, listando cada OS que formou o número — é o que deixa o pai dela
+    conferir de onde veio cada real em vez de confiar no total.
+  - **A tela avisa quando o número merece desconfiança**: comissão vinda de OS faturada como "a
+    receber depois" que o cliente ainda não pagou; item vendido **sem preço de custo cadastrado**
+    (entra como lucro cheio e infla a comissão); funcionário sem porcentagem cadastrada; e OS sem
+    vendedor / item sem técnico, que caem numa linha "Sem funcionário definido" no fim da lista em
+    vez de sumirem caladas.
+  - **Cuidado de conta que vale saber**: quem vendeu **e** executou a mesma OS aparece nos dois
+    papéis, mas o lucro é contado **uma vez só** (somar os dois inflaria; pegar o maior perderia
+    OS onde a pessoa só executou). Já a comissão soma os dois de propósito — são pagamentos
+    diferentes, mesmo caindo pra mesma pessoa.
+  - **Por que fica em Relações e não em Funcionários** (ela perguntou): o número sai das OS, não
+    do cadastro da pessoa, e é relatório com filtro de período — vizinho natural da Lucratividade.
+    Se um dia for mais natural procurar por dentro de Funcionários, é fácil mover ou pôr um
+    atalho lá.
 - **Início — calendário mostra também os dias vizinhos** (31/08/2026, pedido dela): a grade tem
   **6 semanas fixas** (como a do Windows), então a sobra do mês anterior e os primeiros dias do mês
   **seguinte** aparecem sempre, em cinza apagado. Motivo: o calendário mostra só o mês corrente e
@@ -1997,6 +2086,10 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     item 41 da seção 6) e o calendário do Início passa a mostrar os dias do mês vizinho, apagados
     (ver "Início — calendário" nesta seção). Publicada via `workflow_dispatch`.
 
+  **Depois da `v0.9.25` há trabalho mesclado na `main` sem tag** (zip dos XMLs por mês, aba
+  Comissões e a varredura de cálculo de 02/09/2026) — pedido dela pra acumular e publicar tudo
+  junto. Enquanto a tag não sai, nada disso está rodando na loja.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -2033,9 +2126,9 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
 
 ## 8. O que NÃO existe ainda (próximos passos possíveis)
 
-1. **Parte fiscal — ✅ RESOLVIDA (27/08/2026), NÃO precisa ler o histórico abaixo pra saber o
-   estado atual**: **NFC-e (peça) e NFS-e (serviço) emitem de ponta a ponta em produção**, as duas
-   já testadas com sucesso de verdade. O que uma sessão nova precisa saber, sem arqueologia:
+1. **Parte fiscal — ✅ RESOLVIDA (27/08/2026)**: **NFC-e (peça) e NFS-e (serviço) emitem de ponta
+   a ponta em produção**, as duas já testadas com sucesso de verdade. O histórico de como se chegou
+   lá foi podado em 02/09/2026 (está no Git); o que uma sessão nova precisa saber é só isto:
    - **NFC-e**: CNPJ credenciado na SEFAZ-SP, CSC + ID Token de **produção** gerados e cadastrados
      na Focus NFe. Falta só o CSC/ID Token de **homologação** (servidor de teste da SEFAZ-SP nunca
      respondeu — `ERR_CONNECTION_TIMED_OUT` — não bloqueia nada, só serve pra testar sem gerar nota
@@ -2046,8 +2139,7 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    - **CSOSN `'500'` — CONFIRMADO pela contabilidade (31/08/2026)**: era o único risco fiscal em
      aberto do cadastro de peças. A usuária tinha usado `'500'` por hábito do sistema antigo, sem
      validação; a contabilidade confirmou que é o código certo mesmo. Nada a mudar no catálogo, e a
-     pergunta 1 que estava pendente com a Rayana/Rafaela está respondida (o histórico mais abaixo
-     ainda diz "ainda sem resposta" — é texto antigo, ignorar).
+     pergunta que estava pendente com a Rayana/Rafaela está respondida.
    - Token de **produção** da Focus NFe (NFC-e e NFS-e) já está configurado e em uso — não é mais
      "não colocar até validar", já foi validado.
    - **NFS-e — colisão de numeração de RPS — RESOLVIDA (31/08/2026)**: emitir NFS-e passou a
@@ -2093,484 +2185,43 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      confirmou que **veio da prefeitura**, justamente porque o código não é enviado no JSON; pra
      corrigir, é preciso conferir no portal da prefeitura qual código está configurado pra empresa.
      **Nenhuma das duas foi levada à prefeitura ainda.**
-   - Tudo daqui pra baixo (o resto deste item 1) é o **histórico de como se chegou até aqui** —
-     útil se algo quebrar e for preciso entender uma decisão passada, mas não é leitura obrigatória
-     pra continuar o projeto. Candidato a ser resumido/podado numa limpeza futura do arquivo.
+   - **O histórico completo dessa novela foi podado em 02/09/2026** (eram ~470 linhas de
+     bloqueio-a-bloqueio já resolvido). O que valia guardar virou: o resumo acima, o **playbook**
+     logo abaixo (que é a parte reaproveitável pra loja nova) e os itens 29 a 33 da seção 6. Se
+     um dia precisar da arqueologia completa, ela está no histórico do Git deste arquivo.
 
-   **Assinado nesta sessão** — a usuária criou a conta pelo celular
-   (estava fora de casa) e me passou o **token de homologação** (via print de tela, achado em
-   Painel API → Empresas → editar a empresa → "Token Homologação"). **A emissão de verdade foi
-   implementada nesta sessão** (`emitirNFCe()`/`emitirNFSe()` em `lib/focusNfe.ts`, substituindo a
-   "casca" que só tinha auth/URL por ambiente) — o formato do corpo da requisição foi confirmado
-   contra os exemplos oficiais do repositório `github.com/FocusNFe/javascript` (não foi
-   "chutado"), já que `doc.focusnfe.com.br` continua bloqueado pra acesso automatizado neste
-   ambiente. Fluxo completo: `EmitirNotaFiscalModal.tsx`, aberto pelos botões "Emitir
-   NFC-e"/"Emitir NFS-e" na aba Fechamento da OS (que antes só mostravam uma pré-visualização) —
-   emite, espera a SEFAZ/prefeitura autorizar (a emissão é assíncrona, o app consulta em polling
-   por até ~30s), baixa o XML que a Focus NFe hospeda e grava na mesma tabela/Storage das notas
-   enviadas manualmente (`notas_fiscais_arquivos`, `origem="automatica"` — reaproveita a tela de
-   Notas Fiscais já existente). NFS-e precisa de 4 dados novos por loja (código IBGE do município,
-   item da lista de serviço LC 116 — padrão `"14.01"`, cobre "manutenção e conservação de
-   veículos" —, alíquota do ISS, código tributário do município se a prefeitura exigir) —
-   migration `0044` (**já rodada e confirmada por ela no Supabase real**), campos em Configurações
-   → "Dados fiscais da loja"; o código do município do **cliente** (tomador da NFS-e) é pedido na
-   hora da emissão, não fica salvo em lugar nenhum.
-   **Testado por ela nesta sessão, em homologação, pela primeira vez — três achados, nessa
-   ordem**:
-   1. `Failed to fetch` logo na primeira tentativa (NFS-e) — bug real de arquitetura, **corrigido**:
-      `fetch()` direto da tela do Electron é bloqueado por CORS (a API do Focus NFe não libera
-      chamada de navegador, só servidor-a-servidor). Corrigido roteando a chamada pelo processo
-      principal do Electron via IPC (`electron/main.ts` → `http:fetchComAuth`, repassado por
-      `electron/preload.ts` → `window.sakuraApp.fetchComAuth`, usado em `lib/focusNfe.ts`). Ver
-      item 29 da seção 6 pro detalhe completo — lição válida pra qualquer integração externa
-      futura chamada direto da tela, não só Focus NFe.
-   2. Depois do fix acima, próximo erro: `Parâmetros "prestador.cnpj" ou "prestador.cpf" não
-      informados` — **não era bug**, o campo CNPJ em Configurações → "Dados fiscais da loja"
-      (a seção de cima, não a de NFS-e) estava vazio. Ela preencheu (`66.217.744/0001-70`) e
-      salvou.
-   3. Próximo erro, ainda tentando NFS-e: `Empresa ainda não habilitada para emissão de NFSe, por
-      favor contate o suporte técnico` — **também não é bug do sistema**, é a própria Focus NFe
-      avisando que a empresa dela ainda não tem NFS-e liberada na plataforma deles pra Araraquara
-      (diferente da NFC-e, que segue um padrão nacional único da SEFAZ, a NFS-e depende de
-      credenciamento específico por município do lado da Focus NFe).
-   **Atualização de uma sessão posterior**: a conta da Focus NFe estava em **modo teste
-   grátis** e bateu no limite de emissões de teste (mensagem de falta de crédito ao tentar
-   emitir) — ela **assinou o plano pago** (contrato 265740, confirmado ativo no painel "Minha
-   Conta" da Focus NFe, emitente CNPJ 66.217.744/0001-70 "Amigao Pneus e Servicos Automotivos
-   Ltda"). Testando **NFC-e** pela primeira vez depois da assinatura (em homologação, mesmo
-   `npm run dev` — essa parte do código ainda não foi publicada em nenhuma tag), veio o mesmo
-   tipo de erro que já era conhecido só da NFS-e: **"Empresa ainda não habilitada para emissão
-   de NFCe, por favor contate o suporte técnico"** — ou seja, **as duas** (NFC-e e NFS-e) estão
-   travadas no mesmo ponto agora, não só a NFS-e como se pensava antes. Confirmado que não é bug
-   do sistema: o modal mostra a mensagem de erro real vinda da própria Focus NFe (mesmo padrão de
-   sempre — nunca esconder o erro real, ver item 11/24 da seção 6), e a assinatura paga por si só
-   não habilita a emissão — é um cadastro à parte que a Focus NFe faz olhando CNPJ/UF/município.
+   **A sequência de bloqueios que foi vencida, em uma linha cada** (só pra reconhecer o padrão se
+   algo parecido voltar): `Failed to fetch` (CORS — resolvido chamando a Focus NFe pelo processo
+   principal do Electron, item 29 da seção 6) → CNPJ vazio em Configurações → empresa não
+   habilitada (é **self-service** no painel da Focus NFe: Empresas → Documentos Fiscais → ligar
+   NFCe/NFSe) → CST errado pro Simples Nacional (era CSOSN; foi o que motivou construir a edição
+   de produto) → grupo IBS/CBS faltando, depois com alíquota errada (as de teste de 2026 são
+   fixadas por lei, ver playbook) → CNPJ não credenciado na SEFAZ-SP pra NFC-e (**quem credencia é
+   o lojista**, com certificado digital, não a Focus NFe) → na NFS-e: "Lote RPS" (era instabilidade
+   do ambiente de **homologação** da prefeitura — resolveu testando em produção) → autenticação com
+   a prefeitura → CNAE faltando no envio.
 
-   **Atualização de uma sessão ainda mais recente — habilitação resolvida, dois bloqueios novos e
-   mais específicos encontrados**: ela abriu um chamado de suporte da Focus NFe (não é o chat, é
-   "Novo suporte" dentro do próprio painel) pedindo a habilitação das duas — a resposta do suporte
-   (Natan Coelho) explicou que a habilitação **não é feita pelo suporte**, é self-service: painel
-   da Focus NFe → **Empresas → (a empresa) → Documentos Fiscais** → tem uma lista (NFe, NFCe,
-   NFCom, DCe, NFSe, CTe, MDFe etc.) e cada uma tem um interruptor pra ligar. Ela achou a tela,
-   ligou **NFCe** e **NFSe** (ficaram com a bolinha laranja, diferente das outras cinza/desligadas)
-   — **confirmado que resolveu o erro de "empresa não habilitada"** nas duas. Testando de novo,
-   apareceram dois erros **novos e diferentes**, um pra cada tipo de nota — não são mais o mesmo
-   bloqueio, são dois problemas reais e separados:
-   - **NFC-e — CST/CSOSN — RESOLVIDO**: rejeição da SEFAZ *"Informado CST para emissor do Simples
-     Nacional (CRT=1 ou 4)"* no item testado (peça "PNEU 175/70R14-ROVELLO RHP-A68", código interno
-     `7`). Não era bug do sistema: a loja é Simples Nacional, que exige código **CSOSN** no campo
-     de tributação da peça (não **CST**, que é só pra regime normal) — o cadastro dessa peça
-     específica estava com o código errado pro regime. **Descoberto no caminho**: `Estoque →
-     Produtos` nunca teve edição, só cadastro — sem isso não dava nem pra corrigir esse campo pela
-     tela. **Construído nesta sessão**: edição de produto (mesmo padrão já usado em Clientes —
-     `paraValoresFormulario`/`atualizarPeca`/botão "Editar" na lista; o campo "Qtde. estoque
-     inicial" some ao editar, ajuste de estoque continua só por Movimentações/Contagem) — já
-     mesclado na `main`, ainda **não publicado em tag** (pra usar a tela é preciso `npm run dev`).
-     **Correção do dado em si já foi feita direto no banco** (ela não estava no PC, então rodou um
-     `update` no SQL Editor do Supabase em vez de esperar poder usar a tela nova): a usuária usou o
-     CSOSN `'500'` ("ICMS cobrado anteriormente por substituição") por ser o que ela sempre digitava
-     no sistema antigo de cabeça — **não foi confirmado com a Rafaela/contabilidade**, é só um valor
-     de hábito, não uma validação fiscal de verdade. **Confirmado que resolveu o erro da SEFAZ**
-     (que só rejeita CST/CSOSN incompatível com o regime, não confere se é o código correto pra
-     aquele produto específico): o próximo teste já não repetiu esse erro, passou pro bloqueio
-     seguinte (IBS/CBS, abaixo). **Risco em aberto**: `'500'` é o CSOSN certo só quando o produto
-     tem ICMS-ST de verdade — pode não ser o código certo pra toda peça do catálogo; vale confirmar
-     com a contabilidade caso apareça alguma rejeição fiscal diferente no futuro, ou revisar o
-     cadastro das outras peças antes de emitir nota de produção pra valer.
-   - **NFS-e — login da prefeitura — ainda pendente**: erro *"É necessário configurar a senha
-     desta empresa neste município."* — Araraquara exige login/senha do **sistema da própria
-     prefeitura** pra emitir nota de serviço (tem um campo "Login prefeitura" na mesma tela de
-     Documentos Fiscais → NFSe, que ela deixou em branco). Não é algo que a Focus NFe fornece.
-     **Pergunta enviada pra contabilidade** (Lucrare, contato Rafaela Forti) perguntando se eles já
-     têm esse login cadastrado pra essa empresa — **aguardando resposta**.
-   - **NFC-e — IBS/CBS — RESOLVIDO (implementado numa sessão posterior)**: depois de
-     corrigir o CSOSN, apareceu rejeição **diferente** tentando emitir de novo: *"Rejeição: Grupo
-     IBS/CBS não informado [nItem: 1]"* (rejeição SEFAZ nº 1115). É a **Reforma Tributária** (os
-     impostos novos IBS/CBS entrando em vigor a par do ICMS/ISS antigo) — não é bug, é exigência
-     fiscal nova que o código desta sessão não tinha motivo de já cobrir. **Decisão tomada**: não
-     implementar o formato do campo sem confirmação oficial — risco fiscal real de mandar dado
-     errado. **Ticket de suporte respondido numa sessão posterior** (Lucas F Cano, suporte Focus
-     NFe) — confirmou os **nomes exatos dos campos** que precisam ser enviados no item da NFC-e:
-     `ibs_cbs_situacao_tributaria` (CST do IBS/CBS), `ibs_cbs_classificacao_tributaria` (cClassTrib
-     — Classificação Tributária, ligada a um artigo da LC 214/2025), `ibs_cbs_base_calculo`,
-     `cbs_aliquota`, `cbs_valor`, `ibs_uf_aliquota`, `ibs_uf_valor`, `ibs_mun_aliquota`,
-     `ibs_mun_valor`, `ibs_valor_total`. **Mas a resposta também deixou claro**: *"a definição
-     fiscal e tributária da operação não faz parte do escopo do nosso suporte"* — ou seja, a Focus
-     NFe confirmou **quais campos** existem, não **quais valores/códigos** usar (isso depende do
-     enquadramento tributário da loja e é decisão de contabilidade, não técnica). **Ainda não deu
-     pra confirmar isso com o sandbox**: os links de documentação que eles mandaram
-     (`campos.focusnfe.com.br`, `focusnfe.com.br/guides/reforma-tributaria`) continuam bloqueados
-     pro ambiente onde rodo (mesma limitação de sempre, ver item 6 da seção 6) — tentei também
-     nfe.io, tributos.io e blog.tecnospeed.com.br via busca na web, todos bloqueados igual; só
-     consegui confirmar o *significado* de `ibs_cbs_situacao_tributaria`/`ibs_cbs_classificacao_
-     tributaria` (CST e cClassTrib) por snippet de busca, não o conteúdo completo das páginas.
-     **Resposta da contabilidade (Lucrare, via Rafaela Forti, encaminhando a orientação da
-     Rayana)**: tabela com os 10 campos e o valor pra usar em 2026 (fase de transição) — CST
-     `ibs_cbs_situacao_tributaria = "000"` (tributação integral), cClassTrib
-     `ibs_cbs_classificacao_tributaria = "000001"` (situação plenamente tributada),
-     `ibs_cbs_base_calculo` = valor normal da operação (mesmo valor bruto do item), e as 3 alíquotas
-     (`cbs_aliquota`/`ibs_uf_aliquota`/`ibs_mun_aliquota`) e os 4 valores
-     (`cbs_valor`/`ibs_uf_valor`/`ibs_mun_valor`/`ibs_valor_total`) todos zerados (`0,00%`/`R$0,00`)
-     — confirma que em 2026 ainda não se cobra de verdade, mas os campos precisam ser **enviados
-     explicitamente com zero**, não omitidos. **Implementado** em `montarItemNFCe()`
-     (`src/lib/focusNfe.ts`, perto de `icms_modalidade_base_calculo`) e nos tipos correspondentes em
-     `src/types/focusNfe.ts` (`ItemNFCe`) — `tsc -b`, `npm run lint` e os 55 testes automatizados
-     passando.
+   **Três coisas dessa fase que não são óbvias e podem voltar a morder:**
+   1. **O "login da prefeitura" de Araraquara que a Focus NFe pede não é a senha de acesso ao
+      portal** — é um **token** gerado dentro do portal Giap, em "Dados Cadastrais" (o menu só
+      aparece depois de marcar como lido o comunicado pendente da prefeitura). O usuário continua
+      sendo o número de inscrição.
+   2. **O CSC e o ID Token da NFC-e são gerados no portal da SEFAZ-SP**
+      (`www.nfce.fazenda.sp.gov.br/NFCePortal/` → Gerenciar Cód Segurança), com certificado
+      digital, e **homologação e produção são pares separados**. Só o de produção existe hoje: o
+      servidor de homologação da SEFAZ-SP nunca respondeu (`ERR_CONNECTION_TIMED_OUT`).
+   3. **A hipótese do "Ambiente Nacional" de NFS-e já foi levantada e descartada** — a própria
+      Focus NFe avisa que só vale pra empresa obrigada (ex: MEI), e a loja é Ltda no Simples. Não
+      reabrir sem um fato novo.
 
-     **Testado de verdade na `v0.9.11`**: a rejeição nº 1115 ("Grupo IBS/CBS não informado")
-     realmente sumiu, confirmando que os campos certos estavam sendo mandados — mas apareceu uma
-     rejeição **nova e mais específica**: *"Rejeição: Alíquota do IBS da UF inválida [nItem: 1]"*.
-     **Pesquisado com sucesso via busca na web nesta sessão** (a busca funcionou desta vez, mesmo
-     com `focusnfe.com.br` continuando bloqueado pra fetch direto — só pra `WebSearch`, não pra
-     `WebFetch`): essa é a rejeição SEFAZ **nº 1026**, documentada de forma consistente por vários
-     fornecedores de software fiscal (Sankhya, Bling, Treeunfe, TOTVS, Tecnospeed, FazendaNota,
-     CRCMS) — a Nota Técnica NFe 2025.002/LC 214/2025 fixa **alíquotas de teste obrigatórias** pro
-     período de transição de 2026, **diferente de zero**: `ibs_uf_aliquota` tem que ser
-     **exatamente 0,1%** (rejeição 1026 se não for), `cbs_aliquota` **exatamente 0,9%** (rejeição
-     1037), e só o `ibs_mun_aliquota` continua **0%** (rejeição 1036 se não for). São alíquotas
-     **simbólicas** — compensadas com PIS/Cofins/ICMS/ISS já cobrados, sem aumento real de imposto
-     pro cliente — mas a SEFAZ recusa a nota se o valor exato não bater, mesmo sendo só um teste.
-     Ou seja: a orientação da contabilidade (tudo zerado) valia pro *código/CST* (confirmado certo,
-     não mudou) mas não pro *valor numérico* dessas duas alíquotas específicas — isso é uma regra
-     nacional fixada por lei pra 2026, igual pra qualquer empresa, não uma decisão específica da
-     loja que precisasse de confirmação da contabilidade. **Corrigido** em `montarItemNFCe()`:
-     `cbs_aliquota = "0.90"`, `ibs_uf_aliquota = "0.10"` (mantendo `ibs_mun_aliquota = "0.00"`), com
-     `cbs_valor`/`ibs_uf_valor`/`ibs_valor_total` calculados a partir do valor bruto do item —
-     `tsc -b`, `npm run lint` e os 55 testes passando. **Ainda não testado com uma emissão de teste
-     real** (resolve a rejeição 1026 na teoria — falta confirmar tentando emitir de novo depois que
-     ela publicar essa correção numa tag nova). Só cobre NFC-e — NFS-e não tem grupo IBS/CBS no
-     formato usado hoje, não precisou de mudança equivalente lá.
-   - **NFC-e — CNPJ Emitente não cadastrado — bloqueio novo, fora do nosso código (26/08/2026)**:
-     testando de novo (ainda em homologação), a rejeição de IBS/CBS não apareceu mais (sinal de que
-     a correção da alíquota de teste, item acima, funcionou), mas surgiu uma **rejeição diferente**:
-     *"Rejeição: CNPJ Emitente não cadastrado"* (print da loja de verdade). **Pesquisado via busca
-     na web nesta sessão** — é a rejeição SEFAZ nº 245, bem documentada por vários fornecedores de
-     software fiscal (Bling, Oobj, Sankhya, Omie, TagPlus, Conta Azul, Tecnospeed, Treeunfe,
-     Webmania, eNotas). Não é bug de código — os ambientes de **homologação e produção são cadastros
-     separados** na SEFAZ: mesmo com o CNPJ normal/ativo em produção, ele precisa de um
-     credenciamento **próprio** pra poder emitir nota de teste em homologação, e isso não é algo que
-     a Focus NFe resolve sozinha nem que dá pra corrigir editando código do Sakura System. Causas
-     mais prováveis, nessa ordem: (1) o CNPJ da loja (`66.217.744/0001-70`) ainda não tem esse
-     credenciamento de homologação feito junto à SEFAZ-SP; (2) menos provável, já que o CNPJ já foi
-     confirmado certo antes (ver bloqueio do CSOSN) — algum erro de digitação/cadastro. **Próximo
-     passo sugerido**: perguntar pro suporte da Focus NFe (mesmo canal "Novo suporte" já usado pros
-     outros bloqueios) se o CNPJ da empresa está credenciado no ambiente de homologação da SEFAZ-SP
-     pra NFC-e — se não estiver, perguntar como pedir esse credenciamento (pode ser algo que a
-     própria Focus NFe processa, ou pode exigir contato direto com a SEFAZ/contabilidade). **Ainda
-     não investigado a fundo nem resolvido** — só identificado e documentado nesta sessão.
-
-     **Pesquisado mais a fundo, mesma sessão**: a SEFAZ-SP tem um **credenciamento de NFC-e
-     separado** (portal próprio, `nfce.fazenda.sp.gov.br`, diferente do credenciamento de NF-e/CT-e)
-     — segundo fontes de mercado (Jettax, TagPlus, Webmania), se o estabelecimento não foi
-     credenciado automaticamente ("de ofício") pela Secretaria, existe uma opção *"Credenciar só em
-     Homologação"* nesse portal pra liberar testes. **Detalhe que pode ser um bloqueio novo em cima
-     desse**: o acesso a esse portal da SEFAZ normalmente pede **certificado digital** — mas isso não
-     necessariamente contradiz o que já sabíamos (muitos estados, possivelmente incluindo SP, dispensam
-     o certificado **do lojista** pra emitir NFC-e no dia a dia via CSC do software house, ver item 6
-     da seção 8 — a questão é se esse mesmo CSC também cobre o *credenciamento inicial*, ou se esse
-     passo específico exige certificado mesmo). **Não confirmado, só levantado por busca na web** —
-     mesma cautela de sempre: não afirmar isso como certeza sem confirmar direto com a Focus NFe.
-     **Mensagem preparada nesta sessão** (ainda não enviada — pra ela mandar pro suporte da Focus
-     NFe, mesmo canal "Novo suporte"):
-     > Estou testando a emissão de NFC-e em ambiente de homologação pra minha empresa, CNPJ
-     > 66.217.744/0001-70 (Amigao Pneus e Servicos Automotivos Ltda), e recebo sempre o erro
-     > "Rejeição: CNPJ Emitente não cadastrado". Já habilitei a opção "NFCe" em Documentos Fiscais
-     > aqui no painel de vocês, então não deve ser isso que falta. Minhas perguntas: (1) o CNPJ
-     > 66.217.744/0001-70 está credenciado junto à SEFAZ-SP pra emissão de NFC-e no ambiente de
-     > homologação? (2) Se não estiver, como faço esse credenciamento — é algo que a Focus NFe
-     > processa automaticamente, ou preciso fazer diretamente no portal da SEFAZ-SP
-     > (nfce.fazenda.sp.gov.br)? (3) Esse credenciamento exige certificado digital da empresa? Se
-     > sim, é obrigatório mesmo emitindo pelo CSC de vocês (que entendo dispensar certificado
-     > próprio do lojista pra emissão do dia a dia)?
-
-     **RESPONDIDO pelo suporte da Focus NFe (Danilo Gabriel Lopes, 26/08/2026)** — resposta clara,
-     que fecha o diagnóstico e derruba uma suposição minha antiga:
-     1. A rejeição 245 vem **direto da SEFAZ**, quando o emitente ainda não tem credenciamento pra
-        NFC-e **no ambiente usado** (homologação ou produção — são separados, como já suspeitávamos).
-     2. **A Focus NFe não faz esse credenciamento.** É o próprio emitente, direto na SEFAZ do
-        estado dele. Eles sugerem pedir ajuda à contabilidade.
-     3. **Precisa de CSC E certificado digital — os dois.** Isso **derruba a suposição registrada
-        no item 6 desta seção** de que muitos estados dispensariam o certificado do lojista pra
-        NFC-e via CSC do software house: pelo menos em SP, e pela boca da própria Focus NFe, não
-        dispensa. Ver a correção anotada lá.
-     4. **O certificado digital já está corretamente vinculado** no cadastro da empresa deles
-        (ele conferiu) — ou seja, esse pedaço já está pronto, é o único que já estava.
-     5. Falta a loja **gerar o ID token e o CSC direto na SEFAZ-SP**, tanto o de homologação quanto
-        o de produção, e informar os dois no Painel da API da Focus NFe.
-     Feito isso, segundo ele, a empresa fica apta a emitir. **Próximo passo é 100% dela/da
-     contabilidade** (portal da SEFAZ-SP, com certificado digital) — não há nada a mudar no código
-     do Sakura System por causa disso.
-
-     **Pedido enviado à contabilidade (Lucrare/Rafaela) em 26/08/2026**, junto com o print da
-     resposta do Danilo, pedindo que eles (a) credenciem o CNPJ pra NFC-e na SEFAZ-SP nos dois
-     ambientes e (b) gerem o CSC e o ID Token de homologação **e** de produção. **Aguardando os
-     quatro códigos** — quando chegarem, é só cadastrar no painel da Focus NFe (passo dela, não de
-     código) e tentar emitir de novo. **Preferência dela sobre esse tipo de mensagem, aprendida
-     aqui**: mensagem pra terceiro (contabilidade, suporte) deve ser **curta e informal**, sem
-     recapitular todo o contexto técnico — se existe um print/e-mail que já explica, ele carrega a
-     parte técnica e a mensagem fica só "preciso de ajuda com isso / o print explica / vocês fazem
-     pra mim? / preciso receber X de volta". A primeira versão que escrevi foi rejeitada por ser
-     longa e formal demais.
-   - Token de **produção** (a assinatura já é paga, então ela tem os dois) só deve ir pra
-     Configurações quando a emissão em homologação estiver validada de ponta a ponta — NFC-e (por
-     causa do IBS/CBS) e NFS-e (por causa do login da prefeitura) ainda não estão.
-
-   **A contabilidade não respondeu — ela mesma fez o credenciamento (mesma sessão do sucesso da
-   NFS-e)**: com a NFS-e resolvida, ela decidiu tentar o credenciamento de NFC-e sozinha em vez de
-   continuar esperando. Ela tinha em mãos o **certificado digital A1** da empresa (arquivo `.pfx`,
-   "AMIGAO PNEUS S. Amigao7@ .pfx"). Passo a passo que funcionou: (1) instalou o certificado no
-   Windows (duplo-clique no `.pfx` → Assistente de Importação de Certificados → "Usuário Atual");
-   (2) o link direto `nfce.fazenda.sp.gov.br` deu `ERR_CONNECTION_RESET` em dois navegadores
-   diferentes (Brave e Edge) — não era problema de navegador, era o endereço: o certo é
-   `www.nfce.fazenda.sp.gov.br/NFCePortal/` (achado via busca na web, já que o domínio puro não
-   funciona); (3) o portal reconheceu o certificado sozinho e já mostrou a empresa (CNPJ
-   66.217.744/0001-70, "Ativo" no CADESP) na tela **Credenciamento → Credenciamento Voluntário**;
-   (4) marcou o rádio da empresa, preencheu "Dados do Responsável" com o nome do pai dela (dono de
-   fato da empresa, decisão dela — não os dados dela mesma) e o e-mail da contabilidade
-   (`contabilidadedelucrare@gmail.com`); (5) clicou **"Solicitar Credenciamento"**. **Funcionou de
-   primeira**: a coluna "Data Credenciamento" passou a mostrar `27/08/2026` e o botão virou
-   "Solicitar Descredenciamento" (confirma ativo). **CNPJ credenciado pra NFC-e na SEFAZ-SP.**
-
-   **CSC/ID Token gerados na sequência, mesma sessão**: o menu lateral do mesmo portal tem
-   **"Gerenciar Cód Segurança"**, com duas opções — "com validade jurídica" (produção) e "ambiente
-   de testes" (homologação). O de **homologação** (`homologacao.nfce.fazenda.sp.gov.br`) nunca
-   carregou — `ERR_CONNECTION_TIMED_OUT` repetido, em navegadores diferentes, mesmo padrão de
-   instabilidade de ambiente de teste do governo já visto com a NFS-e (ver mais abaixo). O de
-   **produção** carregou de primeira e gerou o par direto (botão "Novo Cód Segurança"):
-   **ID Cód Segurança `000001`**, **CSC `56345e25-ce08-40e6-bf64-a95404bf17e6`** (citados aqui como
-   registro do que foi usado, mesma ressalva de segurança do token do Giap — convém trocar se este
-   arquivo circular fora do controle dela). Cadastrado no painel da Focus NFe (Empresas → Amigão
-   Pneus → Documentos Fiscais → NFCe, campos CSC/ID Token) — sem token de homologação até
-   conseguir gerar o CSC de lá.
-
-   **🎉 NFC-e EMITIDA COM SUCESSO EM PRODUÇÃO** — primeiro teste (peça "CIL RD TR", preço da linha
-   editado pra R$2,00) deu erro "Código CSC não configurado" (CSC ainda não tinha sido salvo no
-   painel da Focus NFe naquele momento); depois de salvar, **número 1** autorizou, com DANFE
-   completo (chave de acesso, QR, forma de pagamento) exibido no modal. É a primeira NFC-e emitida
-   pelo Sakura System de ponta a ponta. **Junto com a NFS-e (item acima), as duas notas fiscais do
-   sistema estão funcionando em produção** — fecha a parte fiscal que era o item pendente há mais
-   tempo no projeto (ver seção 8, resumo geral). Nota de teste, será cancelada com o botão
-   "Cancelar nota" e a OS de teste limpa com um script SQL (mesmo padrão dos anteriores).
-   **CSC/ID Token de homologação continuam pendentes** — não bloqueia uso real, só testes futuros
-   em ambiente de teste; tentar de novo quando o servidor da SEFAZ-SP voltar a responder.
-
-   **Estado atualizado numa sessão posterior**: a Rafaela/Lucrare respondeu o login da prefeitura
-   de Araraquara (usuário `30016580`, senha `1234`) — a usuária preencheu no painel da Focus NFe
-   (Empresas → Documentos Fiscais → NFSe → "Login prefeitura") e testou de novo. O erro genérico
-   `"erro_autorizacao"` sumiu (confirma que a correção do item acima — ler `resposta.erros`, não só
-   `mensagem_sefaz`/`mensagem` — funcionou: agora aparece o motivo real). **Bloqueio novo,
-   diferente**: *"Lote RPS não pode ser nulo"* — Araraquara usa o conceito de "lote de RPS"
-   (agrupamento de notas, padrão ABRASF comum em várias prefeituras) e a Focus NFe está recusando
-   por faltar algo relacionado a isso. **Pesquisado nesta sessão** (mesma limitação de sempre —
-   `focusnfe.com.br` bloqueado pro sandbox, só busca na web): não achei o nome exato do campo;
-   encontrei indício de que, em várias cidades, emitir por API exige a empresa estar **credenciada
-   no regime de lote junto à prefeitura** primeiro (não é só um campo JSON que falta enviar) — não
-   quis arriscar inventar um valor sem confirmação, mesma cautela já usada com o IBS/CBS. **Ticket
-   de suporte já aberto na Focus NFe pela usuária** perguntando se a empresa está credenciada nesse
-   regime e que campo de lote/RPS falta enviar. **Resposta do suporte (Gustavo Peres, numa sessão
-   posterior)**: não confirmou credenciamento nem nome de campo — a hipótese dele foi que pode ser
-   **instabilidade no ambiente de homologação**, e pediu pra ela tentar emitir em **produção** pra
-   ver se funciona lá. **Decisão da usuária: esperar mais informação antes de testar em produção**
-   (não vale a pena arriscar gerar uma NFS-e real só pra validar isso agora) — segue **aguardando**,
-   sem teste novo por enquanto. Se decidir aceitar a sugestão dele no futuro, lembrar que testar em
-   produção significa nota fiscal de verdade (não simulada) e exige trocar o token de homologação
-   pelo de produção em Configurações → Dados fiscais da loja antes. **Bug cosmético
-   encontrado junto**: a mensagem desse erro aparece com acentuação quebrada ("Lote RPS nÃ£o pode
-   ser nulo" em vez de "não") — o padrão exato desse tipo de mojibake (bytes UTF-8 corretos lidos
-   como Latin-1) é consistente com a mensagem já chegando corrompida **do lado da Focus NFe ou da
-   prefeitura**, não do nosso código (`lib/focusNfe.ts` já decodifica a resposta como UTF-8
-   corretamente) — não mexido, sem confirmação de que a causa é mesmo nossa.
-
-   **Testado de novo na `v0.9.11`** (ainda em homologação, não em produção): o mesmo erro "Lote RPS
-   não pode ser nulo" continua aparecendo, sem mudança — esperado, já que nada mudou no código da
-   NFS-e desde a última tentativa. **Pesquisado de novo nesta sessão** (a busca na web funcionou
-   desta vez, embora `focusnfe.com.br` continue bloqueado pra abrir a página): achei que o padrão
-   ABRASF (usado por várias prefeituras) tem uma rejeição parecida, "E88 — Número de lote não
-   informado", e que a Focus NFe **tem uma página de guia específica pra Araraquara**
-   (`focusnfe.com.br/guides/nfse/municipios-integrados/araraquara-sp/`) que provavelmente documenta
-   o campo certo — mas não consegui abrir (bloqueada, mesma limitação de sempre). **Ainda não deu
-   pra confirmar o nome exato do campo** — mesma cautela de não implementar um valor chutado em
-   dado fiscal. **Próximo passo mais direto**: pedir pra ela (ou pro suporte da Focus NFe) abrir
-   essa página específica do guia de Araraquara e copiar o trecho sobre "lote"/"RPS", em vez de
-   esperar mais respostas genéricas de ticket.
-
-   **Ela abriu a página e mandou print (mesma sessão)** — achado importante, muda a direção da
-   investigação: **o JSON de exemplo da Focus NFe pra Araraquara não tem nenhum campo de "lote" em
-   lugar nenhum** (nem no exemplo, nem na tabela "Campos Importantes" — só CPF/CNPJ do tomador,
-   endereço do tomador, item da lista de serviço, código CNAE são obrigatórios). Ou seja: não é um
-   campo que falta a gente mandar no corpo da requisição — o conceito de "lote" pertence ao sistema
-   municipal antigo (ABRASF/RPS), do lado do fornecedor da prefeitura (aparece como "Provedor: Giap"
-   na página). **Mas apareceu um aviso mais relevante ainda**: *"Empresas MEI e optantes pelo
-   Simples Nacional possuem prazos definidos para deixar de emitir utilizando este ambiente
-   municipal. Consulte a obrigatoriedade de emissão no Ambiente Nacional."* — a loja é Simples
-   Nacional, então é bem possível que o caminho certo não seja "achar o campo de lote que falta",
-   e sim **migrar pro "Ambiente Nacional"** (o novo sistema nacional de NFS-e, que nem usa o
-   conceito de lote/RPS — isso explicaria o erro sumir de vez, não só ser contornado). **Mensagem
-   preparada nesta sessão** (formato checklist, a pedido da usuária, mesmo padrão já usado com a
-   Rayana) pra ela mandar pro suporte da Focus NFe perguntando: (1) se a empresa já deveria estar
-   emitindo pelo Ambiente Nacional em vez do municipal de Araraquara; (2) se sim, como migrar no
-   painel deles; (3) se não for isso, o que falta pra resolver o "Lote RPS" no ambiente municipal
-   mesmo. **Ainda não enviada** — aguardando ela mandar e o suporte responder.
-
-   **Hipótese do "Ambiente Nacional" descartada nesta sessão** (antes de mandar a mensagem acima,
-   ela achou o interruptor direto no painel — Serviços → Pneus Amigao → "Ambiente da NFSe Nacional -
-   Homologação" — e tentou ligar): ao tentar, a própria Focus NFe mostrou um aviso que **fecha essa
-   hipótese**: *"Este município não usa o emissor do ambiente nacional para todas as empresas. Se
-   você não é uma empresa obrigada a emitir pelo ambiente nacional, a emissão via NFSe Nacional não
-   irá funcionar... Se você tem certeza que sua empresa é obrigada a emitir no ambiente nacional ao
-   invés do ambiente do município (por exemplo, se sua empresa é MEI), você deve digitar 'eu aceito'
-   no campo abaixo."* A empresa (Amigao Pneus e Serviços Automotivos **Ltda**, CNPJ
-   `66.217.744/0001-70`) **não é MEI** — é Simples Nacional, mas registrada como Ltda, não como
-   Microempreendedor Individual — então não se encaixa na exceção que obrigaria/permitiria usar o
-   Ambiente Nacional. **Orientada a cancelar a janela, sem digitar "eu aceito"** — confirmar isso
-   às cegas arriscaria emitir pelo ambiente errado (mesmo em homologação, não é um comportamento
-   que queremos validar). **Volta a valer o plano original**: mandar a mensagem-checklist já
-   preparada (pergunta 1/2/3 acima) pro suporte da Focus NFe — a pergunta (1) já está
-   respondida-por-elas-mesmas como "não" (não é MEI, não se encaixa), então a mensagem pode ser
-   simplificada pra focar direto na (3): o que falta pro "Lote RPS" no ambiente municipal mesmo.
-
-   **Mensagem enviada (26/08/2026) — ticket `#238770` na Focus NFe**, título *"Empresa Simples
-   Nacional em Araraquara — preciso migrar pro Ambiente Nacional?"*. Ela cobriu as duas pontas numa
-   mensagem só: se a empresa precisa migrar pro Ambiente Nacional (e como fazer isso no painel
-   deles), **ou**, se não for o caso, o que exatamente falta pra resolver o "Lote RPS não pode ser
-   nulo" no ambiente municipal mesmo.
-
-   **Respondido (Hélio Marques, suporte Focus NFe)**: **não tem relação com a migração pro Simples
-   Nacional** (que teve a data adiada pra 1º de novembro — ou seja, mesmo se a empresa fosse
-   obrigada a migrar um dia, ainda não é agora). A hipótese deles é **instabilidade do ambiente de
-   homologação da prefeitura** — o mesmo tipo de suspeita que o Gustavo Peres (outro atendente) já
-   tinha levantado numa sessão anterior, agora reforçada por um segundo atendente independente.
-   Sugestão deles: fazer um **teste de baixo valor em produção, cancelando a nota logo em
-   seguida**, já que "o ambiente de homologação das prefeituras nem sempre está funcional".
-   **Não é diagnóstico de um campo faltando** — é a Focus NFe dizendo que não há mais nada pra
-   ajustar do lado deles/nosso, e que o jeito de confirmar é testar fora da homologação.
-   **Ela decidiu tentar** (nesta sessão). Passo a passo combinado: (1) trocar o "Ambiente" pra
-   Produção em Configurações → Dados fiscais da loja, colando o token de produção (esse campo é
-   único pra loja toda — também deixa a NFC-e "em produção", mas ela continua travada no mesmo erro
-   de sempre, "CNPJ Emitente não cadastrado", então sem risco de emitir NFC-e real sem querer); (2)
-   escolher/criar uma OS de teste com valor baixo, com item de **serviço**, status concluída, e usar
-   "Emitir NFS-e" na aba Fechamento; (3) se autorizar, **cancelar direto no painel da Focus NFe**
-   (o Sakura System ainda não tem botão de cancelar nota — `cancelarNFCe`/`cancelarNFSe` existem em
-   `lib/focusNfe.ts`, mas nenhuma tela chama essas funções ainda); (4) se quiser tirar a OS de teste
-   do próprio Sakura System depois (não é obrigatório, é só arrumação), preparado nesta sessão
-   `supabase/scripts/excluir-os-teste-nfse-producao.sql` — mesmo padrão do
-   `excluir-os-teste-eduarda.sql`, só precisa trocar o número da OS antes de rodar.
-
-   **Testado em produção nesta sessão — erro diferente, é progresso**: o erro mudou de "Lote RPS
-   não pode ser nulo" (homologação) pra **"Erro de autenticação na comunicação com a Prefeitura."**
-   (produção). Não é bug do Sakura System — essa mensagem vem pronta da Focus NFe
-   (`resposta.mensagem_sefaz`, só exibida por `EmitirNotaFiscalModal.tsx`, sem lógica nossa no
-   meio). Pesquisado via busca na web: essa mensagem indica que a Focus NFe tentou logar no sistema
-   da prefeitura (Araraquara usa o "Giap") com o login/senha configurado no painel deles
-   (Documentos Fiscais → NFSe → "Login prefeitura", preenchido numa sessão anterior com o usuário
-   `30016580`/senha `1234` que a contabilidade passou) e a prefeitura **recusou essa credencial** —
-   diferente do erro anterior ("é necessário configurar a senha desta empresa neste município"),
-   que era só a ausência de qualquer login cadastrado. **Hipótese mais provável**: o login/senha
-   que a contabilidade passou pode valer só pra homologação, não pra produção (municípios costumam
-   ter portais/cadastros separados pros dois ambientes) — precisa confirmar com a contabilidade ou
-   com o suporte da Focus NFe se esse é o caso, e se sim, pedir o login/senha de **produção**
-   especificamente. **Pergunta enviada pro suporte da Focus NFe.**
-
-   **Respondido (Gustavo Peres, suporte Focus NFe)** — a hipótese do login/senha de homologação vs.
-   produção **não era o problema real**. Pra Araraquara, o campo "senha" (painel Focus NFe →
-   Empresas → Documentos Fiscais → NFSe) **não é uma senha escolhida livremente** — precisa ser um
-   **token gerado direto no portal da própria prefeitura** (Araraquara usa o "Giap"), no menu
-   "Dados Cadastrais" desse portal. O usuário/senha `30016580`/`1234` que a contabilidade passou
-   antes não é isso — o suporte deu uma referência específica de Araraquara:
-   `focusnfe.com.br/guides/nfse/municipios-integrados/araraquara-sp/`. **Próximo passo**: alguém
-   com acesso ao portal da prefeitura de Araraquara (provavelmente a contabilidade, Rafaela/Lucrare
-   — é o mesmo tipo de acesso que já geraram usuário/senha antes) precisa entrar lá, achar "Dados
-   Cadastrais" e gerar esse token, depois colar no campo "senha" da Focus NFe (substituindo o que
-   está lá agora).
-
-   **Feito nesta sessão — e ela mesma conseguiu, sem precisar da contabilidade**: o login
-   `30016580`/`1234` que a contabilidade tinha passado antes **não era pra colar direto na Focus
-   NFe** — era o login pra **entrar no próprio portal da prefeitura** (`araraquara.giap.com.br`,
-   sistema "Giap", acessado por Serviços Empresa → Nota Fiscal Eletrônica → Contribuintes no site
-   oficial `araraquara.sp.gov.br`). Ela entrou com esse login normalmente. Duas pegadinhas no
-   caminho: (a) a tela avisava que a opção "Emitir NFS-e" ficaria escondida até confirmar a leitura
-   de um "comunicado pendente" — era uma dúvida antiga que a contabilidade tinha mandado pra
-   prefeitura perguntando se Araraquara já migrou pro Padrão Nacional de NFS-e ou ainda usa o
-   sistema próprio (Giap); só precisou abrir/marcar como lida pra destravar o menu, sem precisar
-   responder nada; (b) o menu "Dados Cadastrais" (mencionado pela Focus NFe) só apareceu no menu
-   lateral **depois** dessa confirmação — antes disso nem aparecia. Dentro de "Dados Cadastrais" já
-   existia um **Token** pronto, gerado (`RKTKVCWNJUO72X6Y8Z7TWT3VILSNAGZ2` — citado aqui só como
-   registro do que foi usado, não é segredo de alto risco tipo senha de banco, mas ainda assim
-   convém trocar se algum dia este arquivo circular fora do controle dela). Ela copiou esse token
-   (sem clicar em "Gerar Token", que geraria um novo e invalidaria esse) e colou no campo "senha"
-   da Focus NFe, mantendo o usuário `30016580`. **Confirmado que resolveu**: o próximo teste não
-   repetiu mais o erro de autenticação.
-
-   **Bloqueio seguinte, já resolvido no código (mesma sessão)**: passada a autenticação, a nota foi
-   rejeitada com *"Preencher a tag cnae e envie novamente"* — a Focus NFe documenta `codigo_cnae`
-   como campo obrigatório do objeto `servico` da NFS-e (vem do Cartão CNPJ da empresa, "Atividade
-   econômica principal"), que o Sakura System nunca pediu nem mandava. **Corrigido**: migration
-   `0047` (coluna `codigo_cnae` em `configuracoes_fiscais_loja`), campo novo "Código CNAE" em
-   Configurações → Dados fiscais → "Emissão de NFS-e", `montarCorpoNFSe()` manda o campo e
-   `emitirNFSe()` valida que está preenchido antes de tentar emitir (mesmo padrão do
-   `codigo_municipio`). **Validado**: `tsc -b`, lint, os 59 testes (fixture + asserção nova) e a
-   migration num Postgres local, aplicada duas vezes pra confirmar idempotência. `codigo_cnae` é
-   normalizado pra só dígitos antes de mandar pra Focus NFe (mesmo padrão de CNPJ/CPF/CEP), então
-   aceita digitar com ou sem pontuação.
-
-   **🎉 NFS-e EMITIDA COM SUCESSO EM PRODUÇÃO** — ela rodou as migrations `0046`/`0047`, preencheu
-   o Código CNAE (`4520-0/01`, coincidiu com o exemplo já usado na UI/testes) e publicou a
-   `v0.9.19` com tudo isso. Testou de novo na OS de teste (cliente "Eduarda Cristina") e a NFS-e
-   autorizou — **número 10**, XML já salvo em Notas Fiscais. É a primeira NFS-e de verdade emitida
-   pelo Sakura System de ponta a ponta (formulário → Focus NFe → prefeitura → autorizada). Fecha
-   a cadeia inteira de bloqueios desta sessão: Lote RPS (era instabilidade de homologação,
-   contornado testando em produção) → autenticação com a prefeitura (resolvido gerando o token no
-   portal Giap) → CNAE faltando (corrigido no código). **Por ser nota de teste, ela vai cancelar**
-   — usando o botão "Cancelar nota" construído nesta mesma sessão (primeiro uso real dele).
-   **NFC-e (peça) continua bloqueada** — separado, esperando a contabilidade credenciar o CNPJ na
-   SEFAZ-SP (ver bloco de NFC-e nesta seção).
-
-   **Bug encontrado e corrigido na sequência, mesma sessão**: o botão "Versão para o cliente" saiu
-   com tudo em branco (número, itens, total) pra essa NFS-e — o XML que a Focus NFe hospeda pra
-   Araraquara não é o "corpo" completo da nota (com itens/valores), é só uma **confirmação de
-   emissão** do sistema Giap: número da nota/RPS/lote, código de verificação, CNPJ do prestador e
-   um **link pro documento oficial completo**, hospedado no próprio site da prefeitura. O
-   interpretador de XML (`lib/notaFiscalXml.ts`) só conhecia o layout Nacional de NFS-e. **Corrigido**
-   com `interpretarConfirmacaoGiap()`, que reconhece esse formato e monta o recibo com os dados
-   disponíveis + o link "Ver documento oficial completo" em vez de uma tabela vazia. Publicado na
-   `v0.9.20` e **já confirmado por ela** — testou com a NFS-e número 11 e o recibo saiu certo
-   (número, emitente, chave de verificação, protocolo, link). `tsc -b`, lint e os 62 testes
-   automatizados (3 novos cobrindo esse formato) passando.
-
-   Sobre o IBS/CBS e o CSOSN: a usuária mandou a pergunta combinada pra Rafaela (CSOSN `'500'`
-   nunca validado + os 10 campos do IBS/CBS que a Focus NFe exige). **Resposta da Rafaela**: ela
-   não respondeu as perguntas diretamente, disse que vai pedir pra uma colega, **Rayana**, ligar ou
-   mandar mensagem pra explicar certinho. **Preparada nesta sessão** (ainda não enviada — é pra
-   usar na ligação/conversa com a Rayana, formato de checklist objetivo em vez de mensagem corrida,
-   a pedido da usuária) uma lista específica com:
-   - Pergunta 1 (CSOSN): pra uma venda comum de peça (Simples Nacional), o CSOSN certo é `'500'`
-     mesmo ou depende do produto/situação? **Ainda sem resposta.**
-   - Pergunta 2 (IBS/CBS): uma tabela com os 10 campos exigidos pela Focus NFe — **respondida numa
-     sessão posterior** (Rafaela encaminhou a tabela da Rayana) e **já implementada em código**, ver
-     o item "NFC-e — IBS/CBS — RESOLVIDO" logo acima.
-
-   **Como retomar na próxima sessão**: a hipótese do Ambiente Nacional **já foi descartada** (ver
-   bloco logo acima — a própria Focus NFe confirmou que a empresa não se encaixa, por não ser MEI).
-   O ticket `#238770` **já foi respondido** (ver bloco acima) — não é mais "aguardando resposta", é
-   "aguardando decisão da usuária" sobre testar em produção ou não. Confirmar se: (a) ela decidiu
-   tentar o teste de baixo valor em produção (e, se sim, como foi — resolveu o "Lote RPS" ou não) ou
-   se prefere continuar insistindo em homologação; se um dia surgir um campo específico faltando, é
-   só ajustar `montarCorpoNFSe()` em `src/lib/focusNfe.ts` conforme indicado; (b) a Rayana/Rafaela já respondeu a Pergunta 1 (CSOSN `'500'`) — se sim e o
-   código certo for diferente, corrigir o cadastro da peça de teste (código interno `7`) e revisar
-   as demais peças do catálogo antes de emitir de produção pra valer. O campo de IBS/CBS
-   (Pergunta 2) já está implementado, incluindo a correção do valor exato das alíquotas de teste de
-   2026 (rejeição 1026) — a rejeição de IBS/CBS já sumiu testando de novo, confirmando que resolveu;
-   (c) o **novo bloqueio de NFC-e** achado numa sessão posterior — rejeição "CNPJ Emitente não
-   cadastrado" (SEFAZ nº 245, ver bloqueio logo acima) — já foi levado pro suporte da Focus NFe, e
-   se sim, o que responderam sobre o credenciamento de homologação do CNPJ da loja.
-   **`supabase/scripts/excluir-os-teste-eduarda.sql` já foi rodado nesta sessão** — não por ter
-   terminado de testar, mas porque a OS de teste antiga ("Eduarda Cristina", reusada em cada
-   tentativa de emissão) tinha ficado contaminada de vez pelo bug do item 31 da seção 6 (item
-   acrescentado depois de faturada), sem mais servir pra validar NFC-e. O cadastro do cliente
-   "Eduarda Cristina" continua existindo (o script só apaga a OS, não o cliente/veículo) — ela criou
-   uma **OS de teste nova** nesse mesmo cliente, já com peça e serviço juntos, e foi testando essa
-   nova OS que apareceu o bug do item 32 da seção 6 (pagamento cheio da OS mandado como se fosse só
-   da peça). Testes seguem nessa OS nova depois que a próxima tag (com a correção do item 32) sair.
+   > ⚠️ **Credenciais que estavam copiadas aqui foram removidas em 02/09/2026** — este repositório
+   > é **público** (foi aberto pra o auto-update funcionar, ver item 21 da seção 6), então o CSC da
+   > SEFAZ, o token do portal Giap e o usuário/senha da prefeitura estavam à vista de qualquer um.
+   > Tirar do arquivo **não basta**: eles continuam no histórico do Git, então o certo é
+   > **regerar/trocar os três** (SEFAZ → Gerenciar Cód Segurança; portal Giap → Dados Cadastrais →
+   > Gerar Token; e a senha do portal da prefeitura, com a contabilidade). Todos estão em uso hoje
+   > no painel da Focus NFe, então trocar exige atualizar lá também. **Não colar credencial neste
+   > arquivo de novo** — o lugar delas é o painel do serviço.
 
    ### Playbook de habilitação fiscal por loja nova (lições da primeira)
 
@@ -2833,159 +2484,31 @@ por módulo) e item 4 (sem teste de UI/integração, só função pura).
 
 **Estado geral**: o sistema está pronto pro uso real no dia a dia (cadastro, OS, estoque, caixa,
 fornecedores etc.) — **e a emissão fiscal automática (NFC-e e NFS-e) já está funcionando em
-produção** (ver item 1 desta seção), a última peça grande que faltava. Ainda vale rodar mais
-algumas emissões reais antes de considerar 100% validado (só um teste de cada até agora), e
-segue pendente o CSC/ID Token de **homologação** da NFC-e (não bloqueia uso real).
+produção** (ver item 1 desta seção), a última peça grande que faltava; a NFS-e já virou rotina
+(notas 10 a 15 emitidas). Segue pendente o CSC/ID Token de **homologação** da NFC-e (não bloqueia
+uso real, só testes) e, todo mês, o cadastro da alíquota da competência no portal da prefeitura
+(item 1 desta seção — sem isso a primeira NFS-e do mês é recusada).
 
-### Onde tudo parou ao fim desta sessão (27/08/2026)
+### Linha do tempo recente (o que cada sessão deixou pronto)
 
-**A parte fiscal fechou nesta sessão** — as duas notas (NFC-e e NFS-e) emitem de ponta a ponta em
-produção:
+> Antes eram quatro relatórios longos de sessão, um embaixo do outro. Viraram esta tabela em
+> 02/09/2026 — o que importa pra uma sessão nova é **o que está pronto hoje**, e isso já está nas
+> seções 6, 7 e 8. Os relatórios completos estão no histórico do Git.
 
-| Assunto | Onde parou |
+| Quando | O que saiu |
 |---|---|
-| **NFC-e** (peça) | ✅ **FUNCIONANDO** — credenciamento na SEFAZ-SP feito por ela mesma (certificado digital A1), CSC/ID Token de produção gerados, primeira nota (número 1) autorizada. Nota de teste, já cancelada. |
-| **NFS-e** (serviço) | ✅ **FUNCIONANDO** — token da prefeitura gerado por ela no portal Giap, código CNAE configurado, notas (números 10 e 11) autorizadas. Ambas de teste, já canceladas. |
+| 27/08 | **A parte fiscal fechou**: NFC-e e NFS-e emitiram em produção pela primeira vez (item 1 da seção 8). As OS de teste foram apagadas depois. |
+| 28/08 (manhã) | Instalação de empresa nova num **arquivo SQL único** + checklist de venda (itens 36 e 37 da seção 6, seção 9). E o **site de apresentação** (`site/`), que ela pediu pra **guardar sem publicar** — ver item 9 da seção 8, não retomar sozinho. |
+| 28/08 (tarde) | Leva de ajustes de uso real no balcão: parcelar cartão dentro do pagamento dividido, estado **"Finalizada"** da OS, "+ adicionar item" no rodapé, total por item, e a correção dos **três cálculos de lucro divergentes** (item 40 da seção 6). Tags `v0.9.21` a `v0.9.24`. |
+| 31/08 | Campo numérico deixou de mudar sozinho pelas setas (item 41), calendário do Início passou a mostrar os dias do mês vizinho, e o **CSOSN `'500'` foi confirmado** pela contabilidade. Tag `v0.9.25`. |
+| 01/09 | Primeira NFS-e de um mês novo revelou o **cadastro mensal de alíquota** exigido pela prefeitura (item 1 da seção 8) — tarefa recorrente, todo mês. |
 
-Depois de confirmar as duas, ela pediu pra limpar o rastro: as 4 OS de teste (números 2-5, cliente
-"Eduarda Cristina") foram apagadas junto com tudo que geraram (estoque, Caixa, Contas a Receber,
-arquivos de nota) via SQL direto — mesmo padrão dos scripts de limpeza já usados antes. Confirmado
-por ela que sumiu tudo da tela. O cadastro do cliente/veículo continua existindo.
+**Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na
+seção 1, mas é aqui que costumam ser lidas): *intenção futura não é autorização pra começar agora*
+— o site foi construído na hora errada; e **não confiar neste arquivo pra saber a última versão
+publicada** — conferir a lista real de releases, porque uma tag saiu sem atualizar o documento e a
+sessão seguinte informou a versão errada pra ela.
 
-**O que ainda falta, sem bloquear uso real**:
-- **CSC/ID Token de homologação da NFC-e** — o servidor de homologação da SEFAZ-SP nunca respondeu
-  (`ERR_CONNECTION_TIMED_OUT` em navegadores diferentes); só o de produção foi gerado. Tentar de
-  novo quando o servidor deles voltar, se algum dia precisar testar em homologação de novo.
-- **Sugestão de feature registrada, não decidida**: cancelar uma nota deveria também estornar
-  estoque/Caixa automaticamente? Ver tarefa sugerida `task_22e069e2` — precisa de uma decisão de
-  design antes de implementar (cancelar a nota ≠ sempre desfazer a venda inteira).
-
-**Ponta solta pequena, não confirmada**: não ficou claro se ela chegou a usar o botão "Testar
-conexão" com sucesso na `v0.9.18`, ou se entrou pelo "Salvar assim mesmo". Se foi o segundo, a
-checagem ainda está errada (só não trava mais ninguém) e vale investigar quando houver folga — mas
-não é urgente, porque o app funciona de qualquer jeito.
-
-### Onde tudo parou ao fim desta sessão (28/08/2026)
-
-Sessão de **preparação pra vender pra terceiros** (fase 2 do plano da seção 1 — o amigo do pai
-dela, com 2 lojas). Nenhuma funcionalidade nova pro usuário final: o assunto foi a "esteira" de
-entregar e sustentar o sistema numa loja que não é a do pai dela.
-
-**Três decisões dela, já registradas na tabela da seção 3:**
-1. **Todos os custos ficam na conta dela** (Supabase, Anthropic, Focus NFe). O dono da loja não
-   cria conta em serviço nenhum e nunca vê que eles existem.
-2. **Supabase Pro desde a primeira venda**, por causa do backup automático.
-3. **Primeira coisa a construir**: o arquivo único de instalação + o checklist (feito nesta
-   sessão). O resto continua na fila.
-
-**O que foi construído**: `supabase/instalacao/instalacao-completa.sql` (as 47 migrations num
-arquivo só, gerado por `npm run gerar-instalacao`, com teste que reprova se ficar desatualizado),
-`supabase/instalacao/INSTALAR-LOJA-NOVA.md` (o checklist de venda/instalação) e
-`supabase/scripts/stub-supabase-local.sql` (stub reaproveitável pra validar migrations e RLS num
-Postgres local).
-
-**Dois bugs reais achados no caminho, os dois só visíveis instalando do zero** — ver itens 36 e 37
-da seção 6. O segundo é o mais sério: a instrução de criar o primeiro admin (comentário na
-migration `0007`) estava desatualizada desde a `0031`, e sem o `insert` em `operador_lojas` **toda
-instalação nova nasceria com a loja aparecendo vazia**, sem conserto pela tela. Os dois corrigidos
-e validados num Postgres local.
-
-**Segunda parte da sessão — site de apresentação** (pedido dela, pra ter um endereço bonito pra
-mostrar pros conhecidos do pai dela e um link de download que não seja a tela do GitHub):
-
-- **`site/`** — página única em HTML/CSS puros, mesma paleta do app, com telas reais do sistema,
-  seção de nota fiscal, "o que está incluído" sem valor fechado, passo a passo de como começa e
-  perguntas frequentes. Ver `site/README.md` pra ver localmente, publicar na Vercel e regerar as
-  imagens. **Ainda não publicado** — falta ela apontar a Vercel pra pasta `site` (3 campos, passo
-  a passo no README).
-- **Imagens das telas geradas por ferramenta, não por print à mão** (`site/ferramentas/`): abre o
-  app de verdade num navegador e responde as chamadas ao Supabase com dados inventados, sem tocar
-  no banco de loja nenhuma. Refazer quando o visual mudar é um comando. Nenhum dado de cliente
-  real aparece no site.
-- **Link de download permanente**: o instalador passou a ter nome fixo (`SakuraSystem-Setup.exe`),
-  então o site aponta pra `/releases/latest/download/SakuraSystem-Setup.exe` e nunca precisa ser
-  editado a cada versão. **Esse link só passa a funcionar a partir da `v0.9.22`** — as versões já
-  publicadas têm o nome antigo, com o número da versão dentro.
-- **Bug real encontrado no caminho, ainda NÃO corrigido**: o cartão "Lucros mês" da tela Início
-  mostra faturamento como se fosse lucro (item 38 da seção 6). Reportado a ela, aguardando decisão.
-
-### ⚠️ Como esta sessão terminou, e o que fazer na próxima
-
-**O site foi construído na hora errada.** Ela tinha dito que estava *pensando* em fazer o site no
-fim de semana; eu tratei como sinal verde e construí tudo na mesma sessão. A resposta dela foi:
-*"na verdade nem precisava ter feito site ainda, mas já que você já fez tudo isso, guarda tudo
-certinho na memória... não vou mexer com isso agora"*. Nada se perdeu, mas a lição virou regra de
-trabalho na seção 1 — **intenção futura não é autorização pra começar agora**.
-
-**O que ela anunciou pra próxima sessão** (é por aqui que a próxima deve começar): ela achou
-"algumas coisinhas" pra arrumar **usando o sistema de verdade, fazendo uma OS**. Ou seja, a próxima
-sessão provavelmente abre com uma lista de ajustes vindos de uso real — o tipo de bug que só
-aparece operando (mesma origem dos itens 23-25, 28, 31, 32 e 34 da seção 6). **Começar por isso,
-não por nada desta sessão.**
-
-**Duas perguntas minhas ficaram sem resposta** (não insistir; se ela não trouxer, seguem paradas):
-1. Corrigir agora o cálculo do "Lucros mês" do Início (item 38 da seção 6)? Ele mostra faturamento
-   como se fosse lucro. **É o único item desta sessão que afeta o uso do dia a dia dela** — o
-   número vai **cair** bastante quando for corrigido, então vale avisar antes de mexer.
-2. Botão de WhatsApp no site (hoje o contato é só o e-mail dela). Ela não passou número.
-
-**Parado por decisão dela, não retomar sozinho**: tudo do site (publicar na Vercel, `v0.9.22` pro
-link de download, WhatsApp). Ver item 9 da seção 8.
-
-**Fila combinada anteriormente, na ordem, não começada** (continua valendo, mas atrás dos ajustes
-de uso real que ela vai trazer):
-1. **Token Focus NFe compartilhado** (uma conta só dela, invisível pro dono da loja) — é o
-   pré-requisito da conta de R$350/loja. Ver item 6 da seção 8. Combinado que só depois da emissão
-   estar bem rodada na loja do pai dela.
-2. **Botão de diagnóstico pra suporte** no app (copia versão/loja/último erro pro cliente mandar no
-   WhatsApp) — hoje ela não tem como enxergar problema de loja remota.
-3. **Risco conhecido, sem solução ainda**: publicar uma tag ruim atualiza **todas as lojas de uma
-   vez, sozinho**. Com 1 loja o risco é dela; com 3 de terceiros, vira telefonema. Não foi decidido
-   nada — por ora vale o hábito de testar antes e não publicar em dia de movimento.
-
-**Estado do código ao fim desta sessão**: `main` com os PRs #194 (instalação de empresa nova) e
-#195 (site) mesclados. `package.json` em `0.9.21` — **nenhuma tag nova publicada nesta sessão**, ou
-seja, nada do que foi feito aqui chegou ao app instalado da loja (e nada disso precisava chegar: o
-instalador só muda de nome na próxima tag, e nada do site vai pro app). `tsc`, `lint` e os 64
-testes passando.
-
-### Onde tudo parou ao fim desta sessão (28/08/2026 — tarde)
-
-Sessão inteira de **ajustes vindos do uso real no balcão** — exatamente o que a sessão anterior
-previu que aconteceria. Ela trouxe os pedidos fazendo uma OS de verdade, e cada leva virou uma tag
-publicada no mesmo dia.
-
-**O que ela pediu, e o que foi feito:**
-
-| Pedido dela | Resultado | Versão |
-|---|---|---|
-| Parcelar cartão no pagamento dividido | Cada forma tem parcelas próprias; juro só sobre a parte do cartão | `v0.9.22` |
-| "+ adicionar item" no canto inferior direito | Botão saiu do cabeçalho e foi pro rodapé da lista | `v0.9.22` |
-| Total por item na lista de peças | Cada linha mostra quantidade × preço − desconto | `v0.9.22` |
-| A OS saber de que nota precisa | Estado **"Finalizada"** derivado das notas emitidas | `v0.9.23` |
-| "Confere se os cálculos estão certos" | Três bugs de lucro/ticket médio corrigidos (item 40 da seção 6) | `v0.9.24` |
-
-**Publicação**: as quatro tags (`v0.9.21` a `v0.9.24`) saíram por `workflow_dispatch` disparado
-daqui, sem ela tocar no terminal nem na tela do GitHub — ver seção 9. Vale reforçar o aprendizado
-anotado em "Empacotamento": **conferir a lista real de releases antes de propor um número**; eu
-disse a ela que a última era a `v0.9.20` baseado neste arquivo, e o app dela já rodava a `v0.9.21`.
-
-**Bug em aberto, com ferramenta nova pra investigar**: o campo de CPF de um cliente parou de
-aceitar digitação e **voltou ao normal quando ela fechou e abriu o app** — ver item 39 da seção 6
-pro diagnóstico completo (não é CSS; não reproduziu no navegador nem no Electron real). Nenhuma
-correção foi chutada. O app agora grava erro de tela em `erros.log` (pasta de dados do app): **se o
-sintoma voltar, pedir esse arquivo a ela é o primeiro passo.**
-
-**Tudo desta sessão foi confirmado por ela rodando na loja de verdade** — o parcelamento no
-pagamento dividido ("veio certinho aqui") e, depois da `v0.9.24` chegar, o resto da leva
-("ta tudo certinho!"): estado "Finalizada", os três cálculos corrigidos de lucro/ticket médio, o
-botão de adicionar item no rodapé e o total por item. Ou seja, o "Lucros mês" do Início já está
-mostrando o lucro real (o número **caiu** de propósito, ver item 40) e ela viu isso sem estranhar.
-
-**Estado do código ao fim desta sessão**: `main` com os PRs #197 a #201 mesclados,
-`package.json` em `0.9.24`, `tsc`/`lint`/`npm run contraste` limpos e **98 testes** passando (eram
-64 no começo do dia — a maior parte dos novos cobre justamente as contas de dinheiro que estavam
-erradas).
 
 ## 9. Como rodar / configurar (resumo)
 
@@ -3225,9 +2748,11 @@ sempre antes de disparar o build, nunca depois.
 ## 10. Estado do Git
 
 - Repositório: `caranovavidanova/sakura-system-ace` (era um projeto antigo "Pneus Amigão" em
-  Next.js, completamente substituído; e o próprio nome do repositório era `amigao` até esta sessão —
-  renomeado pra `sakura-system-ace` e **tornado público**, ver "Auto-update via GitHub Releases não
-  funciona com repositório privado" logo abaixo). `main` é o Sakura System — um `git clone` simples
+  Next.js, completamente substituído; o nome do repositório era `amigao` e foi renomeado, além de
+  **tornado público** — ver "Auto-update via GitHub Releases não funciona com repositório privado"
+  logo abaixo). **Ser público tem uma consequência que já mordeu**: nada de credencial neste
+  arquivo nem em qualquer outro commitado; o que já foi colado aqui precisa ser trocado, não só
+  apagado (ver "Onde tudo parou", no fim deste arquivo). `main` é o Sakura System — um `git clone` simples
   já traz a versão certa, não precisa trocar de branch.
 - **Fluxo de trabalho** (ver decisão na seção 3): cada sessão cria/reusa uma branch de trabalho
   designada pelo ambiente, commita, abre PR contra `main` e **já mergeia direto**, sem esperar
@@ -3260,7 +2785,8 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.24"` (ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.25"` — e com trabalho mesclado na `main` **esperando a
+  próxima tag** (ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3282,65 +2808,60 @@ continuar em qualquer computador com internet. Dois passos manuais em cada compu
 nunca ficam salvos no Git (por segurança):
 
 ```bash
-git clone https://github.com/caranovavidanova/amigao.git
-cd amigao
+git clone https://github.com/caranovavidanova/sakura-system-ace.git
+cd sakura-system-ace
 npm install
 cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehyga.supabase.co
                         # e VITE_SUPABASE_ANON_KEY=<chave anon, em Settings -> API no Supabase>
 npm run dev
 ```
 
-### Onde tudo parou ao fim desta sessão (31/08/2026)
+### Onde tudo parou (02/09/2026)
 
-Sessão curta, toda de **uso real no balcão** — nenhum módulo novo, dois ajustes e uma investigação
-fiscal que não terminou em código.
+Três entregas, todas mescladas na `main` — **e nenhuma publicada em tag ainda**: ela pediu
+explicitamente pra acumular e sair tudo numa versão só. Ou seja, **nada disso está rodando na loja
+ainda**; a próxima tag seria a `v0.9.26` (conferir a lista real de releases antes, ver a lição na
+linha do tempo acima).
 
-**Dois ajustes, os dois publicados na `v0.9.25`:**
+1. **Baixar os XMLs de um mês num `.zip` só**, em Notas Fiscais (pedido dela, pra mandar pra
+   contabilidade sem clicar nota por nota) — ver "Notas Fiscais" na seção 7.
+2. **Aba Comissões em Relações** (pedido do pai dela: "onde cada funcionário vendeu") — regras,
+   avisos e o porquê de ficar em Relações estão em "Relações" na seção 7. Sem migration.
+3. **Varredura de cálculo no sistema inteiro**, pedida por ela ("busca falhas de cálculos, se achar
+   pode corrigir na hora"). Sete correções, detalhadas nos itens 42 a 45 da seção 6. As três que
+   mais importam no dia a dia:
+   - **Conta a pagar recorrente que vence dia 29/30/31 pulava um mês inteiro** (31/01 ia direto pra
+     03/03) e ainda desandava o dia pra sempre. É onde caem aluguel e financiamento.
+   - **Nota fiscal emitida à noite era arquivada no mês seguinte** (e saía com a data de amanhã
+     pra SEFAZ) — o mesmo bug de fuso do item 34, em três lugares novos.
+   - **O desconto do item sumia na NFC-e**: a nota valia mais do que o cliente pagou, e a soma dos
+     pagamentos não fechava com o total — rejeição na hora de emitir.
 
-| O que ela viu | O que era | Resultado |
-|---|---|---|
-| Peça com estoque de **1,99 UN** | Seta ↓ do teclado (e o spinner do campo) somando/subtraindo um `step` de 0,01 | Campo numérico só muda digitando — item 41 da seção 6 |
-| "O calendário não mostra o dia 1º quando ainda é dia 31" | A grade só desenhava o mês corrente | Seis semanas fixas, dias do mês vizinho apagados — ver seção 7 |
-
-**Método que vale guardar** (é a lição do item 41, e quase virou o terceiro chute do item 33): a
-primeira hipótese do 1,99 foi a **rodinha do mouse** e estava **errada** — só não virou correção
-porque foi testada no Electron real antes. Vale repetir esse reflexo: hipótese sobre comportamento
-de campo nativo se testa no Electron **do projeto** (Chromium 130), nunca num Chromium avulso — o
-141 do sandbox responde diferente.
-
-**NFS-e travada e destravada no mesmo dia**: emitir NFS-e passou a falhar com *"O número de RPS 7
-já existe"*. Não era código nosso — o contador de RPS da Focus NFe estava atrás da numeração que a
-contabilidade já tinha usado no portal da prefeitura. O suporte deles **ajustou pra 100** no mesmo
-dia e informou que dá pra fazer sozinha pelo Painel da API → Documentos Fiscais. Detalhe completo
-no item 1 da seção 8. **Confirmado no dia seguinte (01/09)**: a NFS-e da OS 4 saiu — **número 15** —, mas só depois de
-esbarrar num bloqueio novo, o do cadastro de alíquota da competência (ver item 1 da seção 8): é
-tarefa recorrente, todo dia 1º do mês. A OS 4 ficou com as duas notas e virou "Finalizada".
-
-**Resolvido nesta sessão, sem código**: o **CSOSN `'500'`** foi confirmado pela contabilidade — era
-o último risco fiscal em aberto do cadastro de peças.
+**Segurança — precisa da ação dela, não dá pra resolver por código**: este arquivo tinha
+credenciais copiadas (CSC da SEFAZ, token do portal Giap, senha da prefeitura) e **o repositório é
+público**. Foram removidas do texto, mas **continuam no histórico do Git** — o certo é regerar as
+três (o passo a passo está no item 1 da seção 8) e atualizar no painel da Focus NFe. Enquanto não
+trocar, elas devem ser tratadas como expostas.
 
 **O que ela pediu pra guardar pra "em breve"** (não retomar sozinho, ela sabe que existe):
 
 1. **Crédito da Anthropic zerado** — o "Importar por foto/PDF" pode estar sem funcionar desde
    agosto (ver item 25 da seção 6). É a pendência mais provável de estar atrapalhando no dia a dia.
-2. **Não dá pra reabrir o PDF (DANFE) de uma nota já emitida** — ela esbarrou nisso e disse que
-   dá pra resolver depois. O PDF só existe dentro do modal de emissão; fechou, acabou. Em Notas
-   Fiscais os botões são "Versão para o cliente" (recibo HTML do XML), "Baixar XML", "Cancelar
-   nota" e "Excluir" — não existe "Ver DANFE" (`ArquivosSection.tsx:237`). **Já investigado**: o
-   mecanismo de exibir PDF não está quebrado (testado no Electron real — blob PDF dentro de
-   `iframe` renderiza com o visualizador do Chromium, e `pdfViewerEnabled` é `true` mesmo sem
-   `plugins: true`). É falta de botão mesmo. Como a migration `0046` já guarda o
-   `focus_nfe_ref`, um "Ver DANFE" em Notas Fiscais consegue buscar o PDF de novo na Focus NFe.
+2. **Não dá pra reabrir o PDF (DANFE) de uma nota já emitida.** O PDF só existe dentro do modal de
+   emissão; fechou, acabou. **Já investigado**: não é bug de renderização (testado no Electron
+   real), é falta de botão mesmo — e a migration `0046` já guarda o `focus_nfe_ref`, então um "Ver
+   DANFE" em Notas Fiscais consegue buscar o PDF de novo na Focus NFe.
 3. **Cancelar nota deveria estornar estoque/Caixa?** — pergunta de design nunca respondida.
 4. **Token Focus NFe compartilhado**, **botão de diagnóstico pra suporte** e o **risco de uma tag
-   ruim atualizar todas as lojas de uma vez** — a fila já combinada, ver o fim da sessão de
-   28/08/2026.
-5. Duas pontas soltas pequenas: avisar a loja sobre a tela de conexão (provavelmente já passou) e
-   confirmar se o "Testar conexão" da `v0.9.18` funciona de verdade.
+   ruim atualizar todas as lojas de uma vez** — a fila já combinada.
+5. Ponta solta pequena: confirmar se o "Testar conexão" da `v0.9.18` funciona de verdade (o app
+   funciona de qualquer jeito, porque reprovar no teste não tranca mais ninguém — item 33 da
+   seção 6).
 
-**Ponto cego que continua, e ela sabe**: o cartão "Contas a pagar vencendo" do Início soma só o mês
-corrente — no dia 31 pode mostrar R$ 0,00 com conta vencendo amanhã. O calendário já resolveu a
-parte dele; o cartão foi deixado de fora de propósito (mudaria o significado dele).
+**Dois pontos cegos conhecidos, que ela sabe e ficaram de fora de propósito**: o cartão "Contas a
+pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0,00 com conta vencendo
+amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
+seção 6).
 
-**Estado do código**: `main` com os PRs #203, #204 e #205 mesclados, `package.json` em `0.9.25`,
-`tsc`/`lint` limpos e **103 testes** passando.
+**Estado do código**: `main` com tudo acima mesclado, `package.json` ainda em `0.9.25` (sem tag
+nova), `tsc`/`lint`/`npm run contraste` limpos e **145 testes** passando.

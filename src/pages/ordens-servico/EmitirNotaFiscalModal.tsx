@@ -116,7 +116,12 @@ export function EmitirNotaFiscalModal({
           .map((item) => {
             const peca = pecas.find((p) => p.id === item.peca_id);
             if (!peca) return null;
-            return { peca, quantidade: item.quantidade, precoUnitario: item.preco_unitario };
+            return {
+              peca,
+              quantidade: item.quantidade,
+              precoUnitario: item.preco_unitario,
+              desconto: item.desconto,
+            };
           })
           .filter((item): item is NonNullable<typeof item> => item !== null);
 

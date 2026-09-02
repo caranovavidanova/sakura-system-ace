@@ -73,17 +73,26 @@ export interface ParcelaCalculada {
   valor: number;
 }
 
+// As parcelas precisam somar exatamente o valor cobrado. Dividir e mostrar
+// o mesmo número em todas dá diferença de centavo (R$100 em 3x viraria
+// "3x de R$33,33", que soma R$99,99): a última parcela absorve a sobra,
+// como faz a maquininha — mesma técnica de `ratearPagamentos` abaixo.
 export function calcularListaParcelas(
   valorCobrado: number,
   parcelas: number,
   apartirDe: Date = new Date(),
 ): ParcelaCalculada[] {
-  const valorParcela = valorCobrado / parcelas;
-  return Array.from({ length: parcelas }, (_, i) => ({
-    numero: i + 1,
-    vencimento: addMeses(apartirDe, i + 1),
-    valor: valorParcela,
-  }));
+  const valorParcela = Math.round((valorCobrado / parcelas) * 100) / 100;
+  return Array.from({ length: parcelas }, (_, i) => {
+    const ultima = i === parcelas - 1;
+    return {
+      numero: i + 1,
+      vencimento: addMeses(apartirDe, i + 1),
+      valor: ultima
+        ? Math.round((valorCobrado - valorParcela * (parcelas - 1)) * 100) / 100
+        : valorParcela,
+    };
+  });
 }
 
 export function somarLinhasPagamento(linhas: LinhaPagamentoValues[]): number {

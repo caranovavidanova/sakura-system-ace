@@ -1538,6 +1538,32 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     cliente. Agora a última parcela absorve a sobra, como faz a maquininha — mesma técnica que o
     rateio de pagamento da nota já usava.
 
+46. **Varredura só da parte fiscal (02/09/2026)** — pedida logo depois da varredura de cálculo.
+    Cinco defeitos corrigidos, todos do tipo "falha em silêncio":
+    - **Alíquota do ISS em branco virava 0% na nota.** `montarCorpoNFSe()` mandava
+      `aliquota_iss ?? 0` sem checar nada — diferente do código do município e do CNAE, que já
+      tinham guarda. A prefeitura autorizaria a nota com ISS zerado e o problema só apareceria
+      depois, com a contabilidade. Agora a emissão para antes, explicando o que falta.
+    - **A `ref` da emissão sumia quando a espera vencia.** A emissão é assíncrona: o sistema manda
+      a nota e fica consultando por ~30s. Estourando esse tempo, a mensagem antiga dizia "consulte
+      de novo" — **sem dizer o quê**: a `ref` (o único jeito de achar a nota no painel da Focus
+      NFe) só existia dentro daquela função e se perdia. Como a nota **pode ter saído autorizada**,
+      o caminho natural seria clicar em emitir de novo e acabar com **duas notas válidas pra mesma
+      venda**. Agora a `ref` aparece na mensagem, junto com o aviso de conferir antes de reemitir.
+    - **Excluir uma nota autorizada não avisava nada.** O botão "Excluir" de Notas Fiscais tratava
+      nota emitida pelo sistema como arquivo qualquer: apagava o registro e o XML, **sem desfazer
+      nada na SEFAZ** — a nota continua valendo lá fora, o XML (guarda obrigatória de 5 anos) some,
+      e a OS volta a aparecer como "falta nota", convidando a emitir a segunda. Agora, só nesse
+      caso, a confirmação explica isso e aponta pro botão "Cancelar nota", que é o certo.
+    - **Competência da nota emitida gravava o dia da emissão**, enquanto o upload manual grava
+      sempre o dia 1º — dois formatos na mesma coluna. Normalizado (`primeiroDiaDoMesLocal()`).
+    - **`valor_servicos` e `aliquota` da NFS-e iam como número sem arredondar** — são os únicos
+      valores do corpo que não são texto com 2 casas, e soma de item em ponto flutuante pode
+      produzir `90.00000000000001`, que iria assim pro XML.
+    **Lição comum aos cinco**: a parte fiscal quase nunca falha com erro na tela — ela falha
+    autorizando algo errado, ou perdendo o rastro de um documento que já existe lá fora. Ao mexer
+    aqui, a pergunta útil não é "isso dá erro?", é "se isso estiver errado, alguém fica sabendo?".
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -2223,6 +2249,41 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    > no painel da Focus NFe, então trocar exige atualizar lá também. **Não colar credencial neste
    > arquivo de novo** — o lugar delas é o painel do serviço.
 
+   ### O que ainda está frágil na parte fiscal (varredura de 02/09/2026)
+
+   Nenhum destes é bug de código pra sair corrigindo — são limites conhecidos, e três deles
+   dependem de confirmação de fora. Ficam aqui pra ninguém "descobrir" de novo:
+
+   1. **NFC-e pra cliente pessoa jurídica sai sem o CNPJ dele** (como "consumidor não
+      identificado"). O corpo da nota só tem `nome_destinatario`/`cpf_destinatario`, então PJ vai
+      em branco. É válido, mas o cliente não usa essa nota no crédito dele, e acima de R$10 mil a
+      identificação passa a ser exigida. **O que falta**: confirmar com o suporte da Focus NFe o
+      nome do campo de CNPJ do destinatário — deliberadamente **não** foi chutado (inventar nome
+      de campo fiscal já custou caro aqui). Enquanto isso, a tela de emissão avisa quando o
+      cliente é PJ, em vez de deixar passar calado.
+   2. **CSOSN `500` é enviado sem os campos de ICMS-ST** (`vBCSTRet`/`vICMSSTRet` e afins, que o
+      layout da NFe pede pra esse código). Vem funcionando em produção — a Focus NFe deve estar
+      completando —, então **não mexer**; mas se um dia aparecer rejeição falando em substituição
+      tributária, é aqui que se olha primeiro.
+   3. **Não existe trava no banco contra duas notas do mesmo tipo pra mesma OS.** A proteção hoje é
+      só de tela (o botão some quando a OS já tem a nota). Os dois caminhos que furam isso estão
+      cobertos por aviso desde 02/09/2026 (a `ref` perdida e a exclusão de nota autorizada, item 46
+      da seção 6), mas uma `unique (ordem_servico_id, tipo)` — considerando que nota cancelada
+      precisa permitir reemissão — resolveria de vez. Não foi feito: exige migration e uma decisão
+      sobre o caso da reemissão.
+   4. **Os dados da loja em Configurações → "Dados fiscais" quase não vão pra nota.** Só o **CNPJ**
+      é enviado (mais inscrição municipal, código do município, CNAE e alíquota na NFS-e). Razão
+      social, inscrição estadual, endereço e regime tributário **não saem na nota** — a emitente de
+      verdade é a empresa cadastrada no painel da Focus NFe. Esses campos aqui alimentam o
+      **documento de garantia**, não a nota. Corrigir um endereço aqui e esperar que a nota mude é
+      um engano fácil de cometer.
+   5. **A `ref` da emissão não é guardada antes do envio.** Ela é gerada na hora
+      (`os<numero>-<tipo>-<timestamp>`) e só vai pro banco depois que a nota volta autorizada. É
+      por isso que o item 46 da seção 6 teve que se contentar em **mostrar** a `ref` quando a
+      espera vence, em vez de recuperar sozinho. Guardar antes exigiria uma linha "em andamento" em
+      `notas_fiscais_arquivos` (migration). O timestamp na `ref` é de propósito e **não deve virar
+      fixo**: é ele que permite reemitir depois de cancelar uma nota.
+
    ### Playbook de habilitação fiscal por loja nova (lições da primeira)
 
    Escrito a pedido da usuária **enquanto a primeira loja ainda está travada**, justamente pra que
@@ -2827,15 +2888,23 @@ linha do tempo acima).
    contabilidade sem clicar nota por nota) — ver "Notas Fiscais" na seção 7.
 2. **Aba Comissões em Relações** (pedido do pai dela: "onde cada funcionário vendeu") — regras,
    avisos e o porquê de ficar em Relações estão em "Relações" na seção 7. Sem migration.
-3. **Varredura de cálculo no sistema inteiro**, pedida por ela ("busca falhas de cálculos, se achar
-   pode corrigir na hora"). Sete correções, detalhadas nos itens 42 a 45 da seção 6. As três que
-   mais importam no dia a dia:
+3. **Duas varreduras seguidas**, pedidas por ela — primeiro de cálculo em geral, depois só da
+   parte fiscal. **Doze correções no total** (itens 42 a 46 da seção 6). Da varredura de cálculo,
+   as três que mais importam no dia a dia:
    - **Conta a pagar recorrente que vence dia 29/30/31 pulava um mês inteiro** (31/01 ia direto pra
      03/03) e ainda desandava o dia pra sempre. É onde caem aluguel e financiamento.
    - **Nota fiscal emitida à noite era arquivada no mês seguinte** (e saía com a data de amanhã
      pra SEFAZ) — o mesmo bug de fuso do item 34, em três lugares novos.
    - **O desconto do item sumia na NFC-e**: a nota valia mais do que o cliente pagou, e a soma dos
      pagamentos não fechava com o total — rejeição na hora de emitir.
+
+   E da varredura fiscal, as duas que podiam gerar **nota duplicada** (o pior estrago possível
+   aqui): a `ref` da emissão sumia quando a espera pela SEFAZ vencia — mesmo com a nota podendo
+   ter saído autorizada —, e excluir uma nota autorizada não avisava que ela continua valendo lá
+   fora. Junto: alíquota do ISS em branco virava 0% na nota sem ninguém reclamar. O que **não** foi
+   mexido, e por quê, está em "O que ainda está frágil na parte fiscal" (seção 8, item 1) — em
+   especial a NFC-e de cliente pessoa jurídica, que sai sem o CNPJ e depende de uma confirmação
+   com o suporte da Focus NFe antes de mexer.
 
 **Segurança — precisa da ação dela, não dá pra resolver por código**: este arquivo tinha
 credenciais copiadas (CSC da SEFAZ, token do portal Giap, senha da prefeitura) e **o repositório é
@@ -2864,4 +2933,4 @@ amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no di
 seção 6).
 
 **Estado do código**: `main` com tudo acima mesclado, `package.json` ainda em `0.9.25` (sem tag
-nova), `tsc`/`lint`/`npm run contraste` limpos e **145 testes** passando.
+nova), `tsc`/`lint`/`npm run contraste` limpos e **146 testes** passando.

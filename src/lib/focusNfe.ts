@@ -120,6 +120,7 @@ function aguardar(ms: number): Promise<void> {
 // nota continua processando do lado deles; dá pra consultar de novo depois).
 async function aguardarAutorizacao(
   consultar: () => Promise<RespostaFocusNfe>,
+  ref: string,
 ): Promise<RespostaFocusNfe> {
   const tentativas = 10;
   const intervaloMs = 3000;
@@ -128,9 +129,16 @@ async function aguardarAutorizacao(
     if (resposta.status !== "processando_autorizacao") return resposta;
     await aguardar(intervaloMs);
   }
+  // A `ref` precisa aparecer aqui. O pedido de emissão JÁ FOI ENVIADO — a
+  // nota pode estar autorizada do lado da SEFAZ mesmo com a espera vencendo
+  // aqui —, e ela é o único jeito de achar essa nota no painel da Focus NFe.
+  // Sem esse dado na tela, o caminho natural seria clicar em "emitir" de
+  // novo e acabar com DUAS notas fiscais válidas pra mesma venda.
   throw new FocusNfeError(
-    "A SEFAZ está demorando mais que o normal pra responder — a nota continua sendo " +
-      "processada. Consulte de novo em alguns instantes antes de tentar emitir outra vez.",
+    "A SEFAZ está demorando mais que o normal pra responder. **A nota já foi enviada** e pode " +
+      `sair autorizada — não emita de novo sem conferir antes no painel da Focus NFe pela ` +
+      `referência ${ref}. Se ela tiver saído, avise pra registrarmos aqui; se não, dá pra ` +
+      "emitir de novo com segurança.",
   );
 }
 
@@ -312,8 +320,14 @@ export async function emitirNFCe(dados: DadosEmissaoNFCe): Promise<RespostaFocus
     corpo,
   });
 
-  return aguardarAutorizacao(() =>
-    consultarNFCe(ref, configuracaoFiscal.focus_nfe_token as string, configuracaoFiscal.focus_nfe_ambiente),
+  return aguardarAutorizacao(
+    () =>
+      consultarNFCe(
+        ref,
+        configuracaoFiscal.focus_nfe_token as string,
+        configuracaoFiscal.focus_nfe_ambiente,
+      ),
+    ref,
   );
 }
 
@@ -392,13 +406,16 @@ export function montarCorpoNFSe({
           : undefined,
     },
     servico: {
-      aliquota: configuracaoFiscal.aliquota_iss ?? 0,
+      // Arredondados: são os únicos valores que saem como número (o resto do
+      // corpo é texto com 2 casas), e soma de item em ponto flutuante pode
+      // produzir coisa como 90.00000000000001 — que viraria isso no XML.
+      aliquota: arredondar(configuracaoFiscal.aliquota_iss ?? 0),
       discriminacao,
       iss_retido: "false",
       item_lista_servico: configuracaoFiscal.item_lista_servico || "14.01",
       codigo_tributario_municipio: configuracaoFiscal.codigo_tributario_municipio ?? undefined,
       codigo_cnae: (configuracaoFiscal.codigo_cnae ?? "").replace(/\D/g, ""),
-      valor_servicos: valorServicos,
+      valor_servicos: arredondar(valorServicos),
     },
   };
 }
@@ -422,6 +439,15 @@ export async function emitirNFSe(dados: DadosEmissaoNFSe): Promise<RespostaFocus
         "loja, seção \"Emissão de NFS-e\" (está no Cartão CNPJ da empresa).",
     );
   }
+  // Sem essa checagem, alíquota em branco virava 0% na nota, sem erro nenhum:
+  // a prefeitura autorizaria um ISS zerado e o problema só apareceria depois,
+  // com a contabilidade. É o mesmo cuidado já aplicado ao município e ao CNAE.
+  if (!configuracaoFiscal.aliquota_iss) {
+    throw new FocusNfeError(
+      "Alíquota do ISS não configurada — cadastre em Configurações → Dados fiscais da loja, " +
+        "seção \"Emissão de NFS-e\". Sem ela a nota sairia com ISS zerado.",
+    );
+  }
 
   const ref = montarRefNota(ordem.numero, "nfse");
   const corpo = montarCorpoNFSe(dados);
@@ -434,8 +460,14 @@ export async function emitirNFSe(dados: DadosEmissaoNFSe): Promise<RespostaFocus
     corpo,
   });
 
-  return aguardarAutorizacao(() =>
-    consultarNFSe(ref, configuracaoFiscal.focus_nfe_token as string, configuracaoFiscal.focus_nfe_ambiente),
+  return aguardarAutorizacao(
+    () =>
+      consultarNFSe(
+        ref,
+        configuracaoFiscal.focus_nfe_token as string,
+        configuracaoFiscal.focus_nfe_ambiente,
+      ),
+    ref,
   );
 }
 

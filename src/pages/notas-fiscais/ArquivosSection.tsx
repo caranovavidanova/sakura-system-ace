@@ -123,7 +123,22 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   }
 
   async function handleExcluir(arquivo: NotaFiscalArquivo) {
-    if (!confirm(`Excluir o arquivo "${arquivo.nome_arquivo}"?`)) return;
+    // Excluir aqui apaga só o registro e o XML guardados no sistema — não
+    // desfaz nada na SEFAZ/prefeitura. Numa nota emitida pelo sistema e
+    // ainda autorizada isso é quase sempre um engano: a nota continua
+    // valendo lá fora, o XML (que precisa ser guardado por 5 anos) some, e a
+    // OS volta a aparecer como "falta nota", convidando a emitir uma
+    // segunda nota pra mesma venda. Quem quer desfazer a nota usa "Cancelar
+    // nota", que é o botão do lado.
+    const emitidaEValida = arquivo.origem === "automatica" && arquivo.status === "autorizado";
+    const aviso = emitidaEValida
+      ? `A nota "${arquivo.nome_arquivo}" foi emitida por aqui e está AUTORIZADA.\n\n` +
+        "Excluir apaga só o registro no sistema — a nota continua valendo na SEFAZ/prefeitura, " +
+        "o XML sai do arquivo (a lei pede pra guardar por 5 anos) e a OS volta a aparecer como " +
+        "\"falta nota\", o que pode acabar em duas notas pra mesma venda.\n\n" +
+        "Pra desfazer a nota de verdade, use \"Cancelar nota\".\n\nExcluir mesmo assim?"
+      : `Excluir o arquivo "${arquivo.nome_arquivo}"?`;
+    if (!confirm(aviso)) return;
     try {
       await excluirArquivo(arquivo);
       await carregar();

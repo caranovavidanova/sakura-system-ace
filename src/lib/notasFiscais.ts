@@ -1,5 +1,6 @@
 import { baixarArquivoFocusNfe, cancelarNFCe, cancelarNFSe, FocusNfeError } from "./focusNfe";
 import { supabase } from "./supabase";
+import { criarZip, type ArquivoParaZip } from "./zip";
 import type { AmbienteFocusNfe } from "@/types/configuracao";
 import type { RespostaFocusNfe } from "@/types/focusNfe";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
@@ -194,18 +195,55 @@ export async function buscarConteudoArquivo(arquivo: NotaFiscalArquivo): Promise
   return data.text();
 }
 
+function salvarComoDownload(conteudo: Blob, nomeArquivo: string): void {
+  const url = URL.createObjectURL(conteudo);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nomeArquivo;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export async function baixarArquivo(arquivo: NotaFiscalArquivo): Promise<void> {
   const { data, error } = await supabase.storage
     .from("notas-fiscais")
     .download(arquivo.storage_path);
   if (error) throw error;
 
-  const url = URL.createObjectURL(data);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = arquivo.nome_arquivo;
-  link.click();
-  URL.revokeObjectURL(url);
+  salvarComoDownload(data, arquivo.nome_arquivo);
+}
+
+// Baixa de uma vez todos os XMLs de um mês, num .zip só — é o formato que a
+// contabilidade costuma pedir, e evita clicar "Baixar XML" nota por nota.
+export async function baixarZipDoMes(
+  arquivos: NotaFiscalArquivo[],
+  nomeZip: string,
+): Promise<void> {
+  if (arquivos.length === 0) return;
+
+  // Em lotes, não todos de uma vez: um mês cheio pode ter dezenas de notas, e
+  // disparar todas as requisições juntas costuma acabar em erro de limite.
+  const TAMANHO_DO_LOTE = 5;
+  const conteudos: ArquivoParaZip[] = [];
+
+  for (let inicio = 0; inicio < arquivos.length; inicio += TAMANHO_DO_LOTE) {
+    const lote = arquivos.slice(inicio, inicio + TAMANHO_DO_LOTE);
+    const baixados = await Promise.all(
+      lote.map(async (arquivo) => {
+        const { data, error } = await supabase.storage
+          .from("notas-fiscais")
+          .download(arquivo.storage_path);
+        if (error) throw error;
+        return {
+          nome: arquivo.nome_arquivo,
+          conteudo: new Uint8Array(await data.arrayBuffer()),
+        };
+      }),
+    );
+    conteudos.push(...baixados);
+  }
+
+  salvarComoDownload(criarZip(conteudos), nomeZip);
 }
 
 export async function excluirArquivo(arquivo: NotaFiscalArquivo): Promise<void> {

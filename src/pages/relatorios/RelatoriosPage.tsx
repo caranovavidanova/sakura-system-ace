@@ -2,19 +2,24 @@ import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarMovimentosCaixa } from "@/lib/caixa";
+import { listarContasReceber } from "@/lib/contasReceber";
+import { listarFuncionarios } from "@/lib/funcionarios";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarOrdens } from "@/lib/ordensServico";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { MovimentoCaixa } from "@/types/caixa";
+import type { ContaReceber } from "@/types/contaReceber";
+import type { Funcionario } from "@/types/funcionario";
 import type { OrdemServico } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
+import { ComissoesSection } from "./ComissoesSection";
 import { GraficosSection } from "./GraficosSection";
 import { LucratividadeSection } from "./LucratividadeSection";
 
-type Aba = "graficos" | "lucratividade";
+type Aba = "graficos" | "lucratividade" | "comissoes";
 
 export function RelatoriosPage() {
   const { lojaAtual } = useAuth();
@@ -23,6 +28,8 @@ export function RelatoriosPage() {
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [contasReceber, setContasReceber] = useState<ContaReceber[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -33,17 +40,27 @@ export function RelatoriosPage() {
         return;
       }
       try {
-        const [movimentosCarregados, ordensCarregadas, pecasCarregadas, servicosCarregados] =
-          await Promise.all([
-            listarMovimentosCaixa(lojaAtual.id),
-            listarOrdens(lojaAtual.id),
-            listarPecas(),
-            listarServicos(),
-          ]);
+        const [
+          movimentosCarregados,
+          ordensCarregadas,
+          pecasCarregadas,
+          servicosCarregados,
+          funcionariosCarregados,
+          contasCarregadas,
+        ] = await Promise.all([
+          listarMovimentosCaixa(lojaAtual.id),
+          listarOrdens(lojaAtual.id),
+          listarPecas(),
+          listarServicos(),
+          listarFuncionarios(lojaAtual.id),
+          listarContasReceber(lojaAtual.id),
+        ]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
         setPecas(pecasCarregadas);
         setServicos(servicosCarregados);
+        setFuncionarios(funcionariosCarregados);
+        setContasReceber(contasCarregadas);
       } catch (err) {
         console.error("Erro ao carregar relações:", err);
         setErro(mensagemDeErro(err));
@@ -87,6 +104,11 @@ export function RelatoriosPage() {
           ativa={aba === "lucratividade"}
           onClick={() => setAba("lucratividade")}
         />
+        <AbaBotao
+          label="Comissões"
+          ativa={aba === "comissoes"}
+          onClick={() => setAba("comissoes")}
+        />
       </div>
 
       {carregando ? (
@@ -98,8 +120,16 @@ export function RelatoriosPage() {
           pecas={pecas}
           servicos={servicos}
         />
-      ) : (
+      ) : aba === "lucratividade" ? (
         <LucratividadeSection ordens={ordens} pecas={pecas} servicos={servicos} />
+      ) : (
+        <ComissoesSection
+          ordens={ordens}
+          pecas={pecas}
+          servicos={servicos}
+          funcionarios={funcionarios}
+          contasReceber={contasReceber}
+        />
       )}
     </div>
   );

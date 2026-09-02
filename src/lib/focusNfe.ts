@@ -1,3 +1,4 @@
+import { hojeLocal } from "./datas";
 import type { AmbienteFocusNfe, ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type {
@@ -151,10 +152,16 @@ function formatarValor(valor: number): string {
   return valor.toFixed(2);
 }
 
+function arredondar(valor: number): number {
+  return Math.round(valor * 100) / 100;
+}
+
 export interface ItemParaNFCe {
   peca: Peca;
   quantidade: number;
   precoUnitario: number;
+  /** Desconto em reais dado naquela linha da OS (0 quando não houve). */
+  desconto: number;
 }
 
 export interface PagamentoParaNota {
@@ -170,10 +177,29 @@ export interface DadosEmissaoNFCe {
   configuracaoFiscal: ConfiguracaoFiscalLoja;
 }
 
+/**
+ * O que a linha vale de verdade: quantidade × preço menos o desconto dado
+ * nela. Fica numa função só porque o mesmo número é usado em três lugares
+ * (o item, o total dos produtos e a base do ICMS) e antes cada um refazia a
+ * conta — dois deles esquecendo o desconto.
+ */
+function valorLiquidoItem(item: ItemParaNFCe): number {
+  return arredondar(item.quantidade * item.precoUnitario - item.desconto);
+}
+
 function montarItemNFCe(item: ItemParaNFCe, numeroItem: number): ItemNFCe {
-  const { peca, quantidade, precoUnitario } = item;
-  const valorBruto = quantidade * precoUnitario;
+  const { peca, quantidade } = item;
   const aliquota = peca.aliquota_icms ?? 0;
+
+  // O desconto da linha entra abatido no preço unitário, e não como um campo
+  // separado, porque a SEFAZ confere que "valor bruto = quantidade × preço
+  // unitário" — mandar o bruto já com desconto sem mexer no unitário seria
+  // recusado. Ignorar o desconto (como era antes) deixava a nota valendo
+  // mais do que o cliente pagou: os pagamentos informados são rateados sobre
+  // o total da OS, que **já** desconta, então a soma dos pagamentos ficava
+  // menor que o total da nota e a SEFAZ rejeitava a emissão.
+  const valorBruto = valorLiquidoItem(item);
+  const precoUnitario = quantidade > 0 ? valorBruto / quantidade : 0;
 
   return {
     numero_item: String(numeroItem),
@@ -230,10 +256,10 @@ export function montarCorpoNFCe({
   pagamentos,
   configuracaoFiscal,
 }: DadosEmissaoNFCe): NFCeCorpo {
-  const valorProdutos = itens.reduce((soma, item) => soma + item.quantidade * item.precoUnitario, 0);
+  const valorProdutos = itens.reduce((soma, item) => soma + valorLiquidoItem(item), 0);
   const valorIcmsTotal = itens.reduce((soma, item) => {
     const aliquota = item.peca.aliquota_icms ?? 0;
-    return aliquota > 0 ? soma + (item.quantidade * item.precoUnitario * aliquota) / 100 : soma;
+    return aliquota > 0 ? soma + (valorLiquidoItem(item) * aliquota) / 100 : soma;
   }, 0);
 
   return {
@@ -341,7 +367,9 @@ export function montarCorpoNFSe({
   const cnpjOuCpf = (cliente.cpf_cnpj ?? "").replace(/\D/g, "");
 
   return {
-    data_emissao: new Date().toISOString().slice(0, 10),
+    // Dia local — com toISOString() a nota emitida à noite sairia com a
+    // data de amanhã. Ver lib/datas.ts.
+    data_emissao: hojeLocal(),
     prestador: {
       cnpj: (configuracaoFiscal.cnpj ?? "").replace(/\D/g, ""),
       inscricao_municipal: configuracaoFiscal.inscricao_municipal ?? "",

@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { useAuth } from "@/contexts/AuthContext";
 import { mensagemDeErro } from "@/lib/errors";
-import { baixarArquivo, enviarArquivo, excluirArquivo, listarArquivos } from "@/lib/notasFiscais";
+import {
+  baixarArquivo,
+  baixarZipDoMes,
+  enviarArquivo,
+  excluirArquivo,
+  listarArquivos,
+} from "@/lib/notasFiscais";
 import { listarOrdens } from "@/lib/ordensServico";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
@@ -38,6 +44,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
   const [arquivoVisualizando, setArquivoVisualizando] = useState<NotaFiscalArquivo | null>(null);
   const [arquivoCancelando, setArquivoCancelando] = useState<NotaFiscalArquivo | null>(null);
+  const [mesBaixando, setMesBaixando] = useState<string | null>(null);
 
   async function carregar() {
     if (!lojaAtual) {
@@ -99,6 +106,19 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
     } catch (err) {
       console.error("Erro ao baixar XML:", err);
       setErro(mensagemDeErro(err));
+    }
+  }
+
+  async function handleBaixarMes(chave: string, arquivosDoMes: NotaFiscalArquivo[]) {
+    setErro(null);
+    setMesBaixando(chave);
+    try {
+      await baixarZipDoMes(arquivosDoMes, `${tipo}-${chave}.zip`);
+    } catch (err) {
+      console.error("Erro ao baixar os XMLs do mês:", err);
+      setErro(mensagemDeErro(err));
+    } finally {
+      setMesBaixando(null);
     }
   }
 
@@ -210,10 +230,19 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
       ) : (
         [...grupos.entries()].map(([chave, arquivosDoMes]) => (
           <div key={chave} className="overflow-hidden sakura-card">
-            <div className="bg-sakura-pink-soft px-4 py-3">
+            <div className="flex items-center justify-between gap-3 bg-sakura-pink-soft px-4 py-3">
               <h3 className="text-sm font-semibold text-sakura-purple-dark">
                 {formatarCompetencia(arquivosDoMes[0].competencia)}
               </h3>
+              <button
+                onClick={() => handleBaixarMes(chave, arquivosDoMes)}
+                disabled={mesBaixando !== null}
+                className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50 disabled:hover:no-underline"
+              >
+                {mesBaixando === chave
+                  ? "Preparando..."
+                  : `Baixar XMLs do mês (${arquivosDoMes.length})`}
+              </button>
             </div>
             <table className="w-full text-left text-sm">
               <thead className="text-sakura-purple-dark/90">

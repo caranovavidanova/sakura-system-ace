@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diaLocal, hojeLocal } from "./datas";
+import { diaLocal, hojeLocal, primeiroDiaDoMesLocal } from "./datas";
 
 describe("diaLocal", () => {
   it("devolve o dia no formato YYYY-MM-DD", () => {
@@ -27,5 +27,9 @@ describe("diaLocal", () => {
 
   it("hojeLocal responde o dia de hoje", () => {
     expect(hojeLocal()).toBe(new Date().toLocaleDateString("sv-SE"));
+  });
+
+  it("primeiroDiaDoMesLocal cai sempre no dia 1º do mês de hoje", () => {
+    expect(primeiroDiaDoMesLocal()).toBe(`${hojeLocal().slice(0, 7)}-01`);
   });
 });

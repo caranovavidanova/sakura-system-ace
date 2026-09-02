@@ -267,6 +267,21 @@ export function EmitirNotaFiscalModal({
             </label>
           )}
 
+          {/* A NFC-e hoje só sabe identificar destinatário pessoa física (CPF).
+              Pra cliente pessoa jurídica ela sai como "consumidor não
+              identificado" — o que é válido, mas o cliente não consegue usar
+              a nota no crédito dele, e acima de R$10 mil a identificação
+              passa a ser exigida. Enquanto o campo de CNPJ do destinatário
+              não for confirmado com o suporte da Focus NFe, pelo menos isso
+              não acontece mais sem ela saber. */}
+          {tipoNota === "NFC-e" && cliente?.tipo_pessoa === "juridica" && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Este cliente é pessoa jurídica, e a NFC-e vai sair <strong>sem o CNPJ dele</strong>
+              {" "}(como consumidor não identificado). Se ele precisa da nota no nome da empresa,
+              essa não é a nota certa — fale com a contabilidade antes.
+            </p>
+          )}
+
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
             {configuracaoFiscal?.focus_nfe_ambiente === "homologacao"
               ? "Ambiente de homologação — esta nota é só de teste, sem valor fiscal."

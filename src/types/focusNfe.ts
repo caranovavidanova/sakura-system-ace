@@ -4,10 +4,16 @@
 // exatos, confirmados contra esses exemplos. Os campos da resposta
 // (RespostaFocusNfe) que vêm sem asterisco de dúvida abaixo (status,
 // status_sefaz, mensagem_sefaz, chave_nfe, numero, serie,
-// caminho_xml_nota_fiscal, caminho_danfe) foram confirmados pra NFC-e; os
-// mesmos nomes são usados como melhor esforço pra NFS-e (a Focus NFe reusa o
-// mesmo formato de resposta pros dois documentos), mas isso **ainda não foi
-// validado contra uma emissão de teste real** — ver PROJETO_STATUS.md.
+// caminho_xml_nota_fiscal, caminho_danfe) foram confirmados pra NFC-e — e,
+// desde as emissões reais de NFS-e em produção (notas 10, 11 e 15), também
+// pra NFS-e: a Focus NFe reusa o mesmo formato de resposta pros dois
+// documentos, e o XML da NFS-e chegou e foi salvo por esse mesmo caminho.
+//
+// O que NÃO está aqui, de propósito: `cnpj_destinatario` na NFC-e. Cliente
+// pessoa jurídica sai hoje como consumidor não identificado; o nome exato do
+// campo precisa ser confirmado com o suporte da Focus NFe antes de entrar —
+// inventar nome de campo fiscal já custou caro neste projeto (ver
+// PROJETO_STATUS.md, seção 8, item 1).
 
 export type StatusEmissaoFocusNfe =
   | "processando_autorizacao"

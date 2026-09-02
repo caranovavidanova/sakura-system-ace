@@ -20,3 +20,16 @@ export function diaLocal(dataIso: string | Date): string {
 export function hojeLocal(): string {
   return diaLocal(new Date());
 }
+
+/**
+ * O primeiro dia do mês corrente, no fuso local, como "YYYY-MM-DD".
+ *
+ * É o formato que a coluna `notas_fiscais_arquivos.competencia` espera (mês
+ * de competência, sempre no dia 1º) — o upload manual de XML já gravava
+ * assim, mas a emissão automática gravava o dia da emissão, deixando os dois
+ * caminhos com formatos diferentes na mesma coluna.
+ */
+export function primeiroDiaDoMesLocal(): string {
+  const hoje = new Date();
+  return diaLocal(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+}

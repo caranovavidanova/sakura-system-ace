@@ -2112,9 +2112,12 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     item 41 da seção 6) e o calendário do Início passa a mostrar os dias do mês vizinho, apagados
     (ver "Início — calendário" nesta seção). Publicada via `workflow_dispatch`.
 
-  **Depois da `v0.9.25` há trabalho mesclado na `main` sem tag** (zip dos XMLs por mês, aba
-  Comissões e a varredura de cálculo de 02/09/2026) — pedido dela pra acumular e publicar tudo
-  junto. Enquanto a tag não sai, nada disso está rodando na loja.
+  - `v0.9.26`: a leva acumulada de 02/09/2026 — **baixar os XMLs de um mês num `.zip` só**
+    (Notas Fiscais), **aba Comissões** em Relações, e as **12 correções** das duas varreduras
+    (7 de cálculo + 5 fiscais, itens 42 a 46 da seção 6). É a primeira versão em que a conta a
+    pagar recorrente do dia 29/30/31 para de pular um mês, a nota emitida à noite para de cair na
+    competência errada, e o desconto do item deixa de sumir na NFC-e. Publicada via
+    `workflow_dispatch`.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -2909,10 +2912,8 @@ npm run dev
 
 ### Onde tudo parou (02/09/2026)
 
-Três entregas, todas mescladas na `main` — **e nenhuma publicada em tag ainda**: ela pediu
-explicitamente pra acumular e sair tudo numa versão só. Ou seja, **nada disso está rodando na loja
-ainda**; a próxima tag seria a `v0.9.26` (conferir a lista real de releases antes, ver a lição na
-linha do tempo acima).
+Três entregas, acumuladas a pedido dela e publicadas juntas na **`v0.9.26`** — ou seja, tudo
+abaixo já chega na loja pelo auto-update.
 
 1. **Baixar os XMLs de um mês num `.zip` só**, em Notas Fiscais (pedido dela, pra mandar pra
    contabilidade sem clicar nota por nota) — ver "Notas Fiscais" na seção 7.
@@ -2947,7 +2948,9 @@ já estão prontas pra executar:
    8) e atualizar no painel da Focus NFe. Enquanto não trocar, tratar como expostos.
 2. **Mandar a mensagem pro suporte da Focus NFe** sobre o campo de CNPJ do destinatário na NFC-e —
    texto pronto no item 1 da seção 8. É o que destrava a nota pra cliente pessoa jurídica.
-3. **Publicar a próxima tag** quando quiser (nada desta sessão está rodando na loja).
+3. ~~Publicar a próxima tag~~ — **feito**: `v0.9.26` publicada em 02/09/2026, então tudo desta
+   sessão chega na loja sozinho pelo auto-update, na próxima vez que o programa for fechado e
+   aberto.
 
 **O que ela pediu pra guardar pra "em breve"** (não retomar sozinho, ela sabe que existe):
 
@@ -2969,6 +2972,7 @@ pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0
 amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
 seção 6).
 
-**Estado do código**: `main` com os PRs #209 a #212 mesclados, `package.json` ainda em `0.9.25`
-(sem tag nova), `tsc`/`lint`/`npm run contraste` limpos e **146 testes** passando (eram 103 no
-começo do dia — quase todos os novos cobrem as contas de dinheiro e de data que estavam erradas).
+**Estado do código**: `main` com os PRs #209 a #214 mesclados, **publicada a `v0.9.26`** (tudo
+acima já chega na loja pelo auto-update), `tsc`/`lint`/`npm run contraste` limpos e **146 testes**
+passando (eram 103 no começo do dia — quase todos os novos cobrem as contas de dinheiro e de data
+que estavam erradas).

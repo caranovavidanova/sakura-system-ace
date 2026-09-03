@@ -9,11 +9,12 @@
 // pra NFS-e: a Focus NFe reusa o mesmo formato de resposta pros dois
 // documentos, e o XML da NFS-e chegou e foi salvo por esse mesmo caminho.
 //
-// O que NÃO está aqui, de propósito: `cnpj_destinatario` na NFC-e. Cliente
-// pessoa jurídica sai hoje como consumidor não identificado; o nome exato do
-// campo precisa ser confirmado com o suporte da Focus NFe antes de entrar —
-// inventar nome de campo fiscal já custou caro neste projeto (ver
-// PROJETO_STATUS.md, seção 8, item 1).
+// Destinatário pessoa jurídica na NFC-e: os nomes de campo abaixo
+// (`cnpj_destinatario` e `indicador_inscricao_estadual_destinatario`) foram
+// confirmados pelo suporte da Focus NFe em 03/09/2026 — não são chute. Junto
+// veio a regra de que a inscrição estadual do destinatário NÃO deve ser
+// enviada nesse caso, por isso não existe campo `inscricao_estadual_destinatario`
+// aqui (ver PROJETO_STATUS.md, seção 8, item 1).
 
 export type StatusEmissaoFocusNfe =
   | "processando_autorizacao"
@@ -88,7 +89,14 @@ export interface NFCeCorpo {
   finalidade_emissao: string;
   cnpj_emitente: string;
   nome_destinatario: string;
-  cpf_destinatario: string;
+  // Um dos dois, nunca os dois juntos: pessoa física manda `cpf_destinatario`,
+  // pessoa jurídica manda `cnpj_destinatario` + o indicador de IE abaixo com
+  // "9" (não contribuinte). Venda de balcão sem cliente identificado vai com
+  // os três vazios/ausentes — é o "consumidor não identificado", válido na
+  // NFC-e até o limite de valor da UF (em geral R$ 10.000,00).
+  cpf_destinatario?: string;
+  cnpj_destinatario?: string;
+  indicador_inscricao_estadual_destinatario?: string;
   informacoes_adicionais_contribuinte?: string;
   valor_produtos: string;
   valor_desconto: string;

@@ -78,6 +78,9 @@ export function EmitirNotaFiscalModal({
   const itensServico = (ordem.itens ?? []).filter((item) => item.tipo === "servico");
   const totalPecas = totalPorTipo(ordem.itens ?? [], "peca");
   const totalServicos = totalPorTipo(ordem.itens ?? [], "servico");
+  // Mesma regra que `montarDestinatarioNFCe` usa pra decidir se identifica a
+  // empresa na nota — se mudar lá, muda aqui.
+  const cnpjClienteValido = (cliente?.cpf_cnpj ?? "").replace(/\D/g, "").length === 14;
 
   useEffect(() => {
     async function carregar() {
@@ -267,18 +270,18 @@ export function EmitirNotaFiscalModal({
             </label>
           )}
 
-          {/* A NFC-e hoje só sabe identificar destinatário pessoa física (CPF).
-              Pra cliente pessoa jurídica ela sai como "consumidor não
-              identificado" — o que é válido, mas o cliente não consegue usar
-              a nota no crédito dele, e acima de R$10 mil a identificação
-              passa a ser exigida. Enquanto o campo de CNPJ do destinatário
-              não for confirmado com o suporte da Focus NFe, pelo menos isso
-              não acontece mais sem ela saber. */}
-          {tipoNota === "NFC-e" && cliente?.tipo_pessoa === "juridica" && (
+          {/* A NFC-e já sabe identificar destinatário pessoa jurídica pelo
+              CNPJ. O que ela não tem como adivinhar é um CNPJ faltando ou
+              incompleto no cadastro do cliente: nesse caso a nota sai como
+              "consumidor não identificado" — válido, mas o cliente não usa
+              essa nota no crédito dele, e acima de R$10 mil a SEFAZ passa a
+              exigir a identificação. Melhor ela saber disso antes de emitir
+              do que descobrir depois. */}
+          {tipoNota === "NFC-e" && cliente?.tipo_pessoa === "juridica" && !cnpjClienteValido && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Este cliente é pessoa jurídica, e a NFC-e vai sair <strong>sem o CNPJ dele</strong>
-              {" "}(como consumidor não identificado). Se ele precisa da nota no nome da empresa,
-              essa não é a nota certa — fale com a contabilidade antes.
+              Este cliente é pessoa jurídica, mas está <strong>sem o CNPJ no cadastro</strong> —
+              a nota vai sair como consumidor não identificado. Se ele precisa da nota no nome da
+              empresa, cadastre o CNPJ dele em Clientes antes de emitir.
             </p>
           )}
 

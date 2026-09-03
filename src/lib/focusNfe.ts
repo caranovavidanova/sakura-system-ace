@@ -254,6 +254,47 @@ function montarItemNFCe(item: ItemParaNFCe, numeroItem: number): ItemNFCe {
   };
 }
 
+/**
+ * Como o destinatário entra na NFC-e, conforme o suporte da Focus NFe
+ * (03/09/2026): pessoa física vai com `cpf_destinatario`; pessoa jurídica vai
+ * com `cnpj_destinatario` mais `indicador_inscricao_estadual_destinatario`
+ * "9" (não contribuinte) — e a inscrição estadual do destinatário não deve
+ * ser enviada de jeito nenhum nesse caso.
+ *
+ * Sem cliente, ou com o documento faltando/incompleto no cadastro, a nota sai
+ * como "consumidor não identificado" (todos os campos vazios), que é o
+ * comportamento válido de sempre — mandar um documento pela metade seria pior,
+ * porque a SEFAZ rejeita a nota inteira. Quem avisa a usuária desse caso é a
+ * tela de emissão, antes de mandar.
+ */
+export function montarDestinatarioNFCe(
+  cliente: Cliente | null,
+): Pick<
+  NFCeCorpo,
+  | "nome_destinatario"
+  | "cpf_destinatario"
+  | "cnpj_destinatario"
+  | "indicador_inscricao_estadual_destinatario"
+> {
+  const documento = (cliente?.cpf_cnpj ?? "").replace(/\D/g, "");
+
+  if (cliente?.tipo_pessoa === "juridica") {
+    return documento.length === 14
+      ? {
+          nome_destinatario: cliente.nome,
+          cnpj_destinatario: documento,
+          indicador_inscricao_estadual_destinatario: "9",
+        }
+      : { nome_destinatario: "" };
+  }
+
+  if (cliente?.tipo_pessoa === "fisica") {
+    return { nome_destinatario: cliente.nome, cpf_destinatario: documento };
+  }
+
+  return { nome_destinatario: "", cpf_destinatario: "" };
+}
+
 function montarRefNota(numeroOrdem: number, sufixo: string): string {
   return `os${numeroOrdem}-${sufixo}-${Date.now()}`;
 }
@@ -278,9 +319,7 @@ export function montarCorpoNFCe({
     consumidor_final: "1",
     finalidade_emissao: "1",
     cnpj_emitente: (configuracaoFiscal.cnpj ?? "").replace(/\D/g, ""),
-    nome_destinatario: cliente?.tipo_pessoa === "fisica" ? cliente.nome : "",
-    cpf_destinatario:
-      cliente?.tipo_pessoa === "fisica" ? (cliente.cpf_cnpj ?? "").replace(/\D/g, "") : "",
+    ...montarDestinatarioNFCe(cliente),
     valor_produtos: formatarValor(valorProdutos),
     valor_desconto: "0.00",
     valor_total: formatarValor(valorProdutos),

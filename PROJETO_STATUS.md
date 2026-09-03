@@ -2257,47 +2257,42 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    Nenhum destes é bug de código pra sair corrigindo — são limites conhecidos, e três deles
    dependem de confirmação de fora. Ficam aqui pra ninguém "descobrir" de novo:
 
-   1. **NFC-e pra cliente pessoa jurídica sai sem o CNPJ dele** (como "consumidor não
-      identificado"). O corpo da nota só tem `nome_destinatario`/`cpf_destinatario`, então PJ vai
-      em branco. É válido, mas o cliente não usa essa nota no crédito dele, e acima de R$10 mil a
-      identificação passa a ser exigida. **O que falta**: confirmar com o suporte da Focus NFe o
-      nome do campo de CNPJ do destinatário — deliberadamente **não** foi chutado (inventar nome
-      de campo fiscal já custou caro aqui). Enquanto isso, a tela de emissão avisa quando o
-      cliente é PJ, em vez de deixar passar calado.
+   1. ✅ **NFC-e pra cliente pessoa jurídica — RESOLVIDO (03/09/2026)**. A nota saía como
+      "consumidor não identificado" porque o corpo só tinha `cpf_destinatario`; faltava saber o
+      nome exato do campo de CNPJ, que deliberadamente não foi chutado. **O suporte da Focus NFe
+      confirmou**, e está implementado: pessoa jurídica vai com `cnpj_destinatario` **mais**
+      `indicador_inscricao_estadual_destinatario` com o valor `"9"` (não contribuinte, que pode ou
+      não ter IE) — e a **inscrição estadual do destinatário não deve ser enviada** nesse caso, de
+      jeito nenhum. Fica tudo em `montarDestinatarioNFCe()` (`src/lib/focusNfe.ts`), com teste.
+      **Ainda não emitida uma NFC-e de PJ de verdade** — o código está pronto e testado, mas a
+      confirmação na SEFAZ só vem na primeira venda pra empresa.
 
-      **Mensagem preparada em 02/09/2026 pra ela mandar** (canal "Novo suporte" do painel da Focus
-      NFe, o mesmo já usado nos outros chamados) — **ainda não confirmado se foi enviada**:
+      **Três coisas que vieram junto na mesma resposta e valem guardar:**
+      - **O nome do destinatário é opcional na NFC-e** (pode ser omitido). O sistema manda mesmo
+        assim quando tem cliente cadastrado — não atrapalha, e ajuda quem recebe a nota.
+      - **Venda com entrega a domicílio exige o endereço completo do destinatário** (`<enderDest>`).
+        O Sakura System **não manda endereço nenhum** na NFC-e hoje: como é venda de balcão
+        (`presenca_comprador: "1"`), não se aplica. Se um dia a loja passar a entregar, isso vira
+        campo obrigatório e precisa ser construído.
+      - **Acima do limite da UF (em geral R$ 10.000,00) a SEFAZ exige a identificação completa do
+        destinatário.** Uma NFC-e desse valor sem cliente identificado será recusada — hoje não há
+        nenhuma trava no sistema avisando disso antes de emitir.
 
-      > Oi! Emito NFC-e por aqui pela API de vocês (v2) e quase sempre é venda pra pessoa física —
-      > mando `nome_destinatario` e `cpf_destinatario` e sai certinho.
-      >
-      > Agora começou a aparecer cliente pessoa jurídica, que precisa da nota no CNPJ da empresa
-      > dele. Duas perguntas:
-      >
-      > 1. Qual é o campo pra mandar o CNPJ do destinatário na NFC-e? É `cnpj_destinatario`, junto
-      >    com o `nome_destinatario`?
-      > 2. Muda mais alguma coisa no corpo da nota quando o destinatário é empresa em vez de pessoa
-      >    física?
-      >
-      > Meu CNPJ aqui é 66.217.744/0001-70.
-      >
-      > Obrigada!
-
-      **Quando a resposta chegar**: o campo entra em `NFCeCorpo` (`src/types/focusNfe.ts`) e em
-      `montarCorpoNFCe()` (`src/lib/focusNfe.ts`), onde hoje o destinatário só é preenchido pra
-      `tipo_pessoa === "fisica"`. O aviso amarelo de PJ em `EmitirNotaFiscalModal.tsx` sai junto.
-
-      **Pergunta opcional, do item 2 abaixo, pra aproveitar o mesmo chamado** (é sobre
-      comportamento da API deles, não sobre tributação — a Focus NFe já avisou que definição
-      tributária não é escopo do suporte):
-
-      > Aproveitando: minhas peças usam CSOSN 500 e eu não mando nenhum campo de substituição
-      > tributária no item (vBCSTRet, vICMSSTRet). As notas estão saindo autorizadas normalmente —
-      > vocês completam esses campos automaticamente, ou é algo que eu deveria estar mandando?
+      **O que sobra de risco**: cliente PJ **sem CNPJ preenchido no cadastro**. Nesse caso a nota
+      volta a sair como consumidor não identificado (mandar um CNPJ pela metade faria a SEFAZ
+      recusar a nota inteira) — a tela de emissão avisa antes de mandar, pedindo pra cadastrar o
+      CNPJ em Clientes.
    2. **CSOSN `500` é enviado sem os campos de ICMS-ST** (`vBCSTRet`/`vICMSSTRet` e afins, que o
-      layout da NFe pede pra esse código). Vem funcionando em produção — a Focus NFe deve estar
-      completando —, então **não mexer**; mas se um dia aparecer rejeição falando em substituição
-      tributária, é aqui que se olha primeiro.
+      layout da NFe pede pra esse código) — e **a suposição antiga de que a Focus NFe completava
+      isso sozinha está errada**. Perguntado no mesmo chamado de 03/09/2026, o suporte respondeu
+      que *"a API não completa nem insere automaticamente informações fiscais ou tributárias que
+      não tenham sido enviadas na requisição"*, e que a parametrização é responsabilidade do
+      emitente, com apoio da contabilidade. **Na prática as notas continuam sendo autorizadas
+      assim** (é o que roda em produção desde agosto), então **não sair mexendo às cegas** — mas
+      isso deixou de ser "está tudo certo" e virou **pergunta pra contabilidade**: com CSOSN 500,
+      essas peças deveriam estar levando valor de ICMS-ST retido? Se a resposta for sim, é mudança
+      em `montarItemNFCe()` — e vale conferir as notas já emitidas. Se aparecer rejeição falando em
+      substituição tributária, é aqui que se olha primeiro.
    3. **Não existe trava no banco contra duas notas do mesmo tipo pra mesma OS.** A proteção hoje é
       só de tela (o botão some quando a OS já tem a nota). Os dois caminhos que furam isso estão
       cobertos por aviso desde 02/09/2026 (a `ref` perdida e a exclusão de nota autorizada, item 46
@@ -2933,9 +2928,20 @@ abaixo já chega na loja pelo auto-update.
    aqui): a `ref` da emissão sumia quando a espera pela SEFAZ vencia — mesmo com a nota podendo
    ter saído autorizada —, e excluir uma nota autorizada não avisava que ela continua valendo lá
    fora. Junto: alíquota do ISS em branco virava 0% na nota sem ninguém reclamar. O que **não** foi
-   mexido, e por quê, está em "O que ainda está frágil na parte fiscal" (seção 8, item 1) — em
-   especial a NFC-e de cliente pessoa jurídica, que sai sem o CNPJ e depende de uma confirmação
-   com o suporte da Focus NFe antes de mexer.
+   mexido, e por quê, está em "O que ainda está frágil na parte fiscal" (seção 8, item 1).
+
+### 03/09/2026 — a resposta do suporte da Focus NFe chegou
+
+Ela mandou a mensagem que estava preparada e colou a resposta. Duas coisas saíram dali:
+
+1. **NFC-e pra cliente pessoa jurídica está implementada** — `cnpj_destinatario` +
+   `indicador_inscricao_estadual_destinatario: "9"`, sem inscrição estadual do destinatário. Ver o
+   item 1 de "O que ainda está frágil na parte fiscal" (seção 8) pro detalhe, inclusive as duas
+   exceções que o suporte levantou (entrega a domicílio e o limite de R$ 10 mil da UF) e o caso
+   que continua saindo sem identificação: PJ sem CNPJ no cadastro.
+2. **A suposição sobre o CSOSN 500 caiu** — a Focus NFe **não** completa campo fiscal que a gente
+   não manda. Nada quebrou (as notas continuam sendo autorizadas), mas virou pergunta pra
+   contabilidade, registrada no item 2 da mesma lista.
 
 ### O que depende dela pra andar (fim de 02/09/2026)
 
@@ -2946,8 +2952,11 @@ já estão prontas pra executar:
    portal da prefeitura copiados — e **o repositório é público**. Foram removidos do texto, mas
    **continuam no histórico do Git**: o certo é regerar os três (passo a passo no item 1 da seção
    8) e atualizar no painel da Focus NFe. Enquanto não trocar, tratar como expostos.
-2. **Mandar a mensagem pro suporte da Focus NFe** sobre o campo de CNPJ do destinatário na NFC-e —
-   texto pronto no item 1 da seção 8. É o que destrava a nota pra cliente pessoa jurídica.
+2. ~~Mandar a mensagem pro suporte da Focus NFe~~ — **feito em 03/09/2026**, e a NFC-e pra
+   cliente pessoa jurídica já está implementada (ver a seção logo acima). **Sobrou uma pergunta
+   nova, essa pra contabilidade**: com CSOSN 500, as peças deveriam levar valor de ICMS-ST retido
+   na nota? A Focus NFe confirmou que não completa isso sozinha — detalhe no item 2 de "O que
+   ainda está frágil na parte fiscal" (seção 8).
 3. ~~Publicar a próxima tag~~ — **feito**: `v0.9.26` publicada em 02/09/2026, então tudo desta
    sessão chega na loja sozinho pelo auto-update, na próxima vez que o programa for fechado e
    aberto.
@@ -2972,7 +2981,8 @@ pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0
 amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
 seção 6).
 
-**Estado do código**: `main` com os PRs #209 a #214 mesclados, **publicada a `v0.9.26`** (tudo
-acima já chega na loja pelo auto-update), `tsc`/`lint`/`npm run contraste` limpos e **146 testes**
-passando (eram 103 no começo do dia — quase todos os novos cobrem as contas de dinheiro e de data
-que estavam erradas).
+**Estado do código**: `main` com os PRs #209 a #214 mesclados, **publicada a `v0.9.26`**, mais a
+NFC-e de destinatário pessoa jurídica de 03/09/2026 — essa ainda **sem tag publicada**, então não
+chegou na loja. `tsc`/`lint` limpos e **149 testes** passando (eram 103 no começo de 02/09 — quase
+todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o destinatário
+da NFC-e).

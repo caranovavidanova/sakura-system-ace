@@ -168,6 +168,60 @@ describe("montarCorpoNFCe", () => {
 
     expect(corpo.cpf_destinatario).toBe("04391541629");
     expect(corpo.nome_destinatario).toBe("Silvio Criscolin");
+    expect(corpo.cnpj_destinatario).toBeUndefined();
+    expect(corpo.indicador_inscricao_estadual_destinatario).toBeUndefined();
+  });
+
+  it("identifica o destinatário pessoa jurídica pelo CNPJ, com indicador de IE 9 e sem CPF", () => {
+    const corpo = montarCorpoNFCe({
+      ordem: { numero: 1 } as never,
+      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
+      cliente: clientePessoaFisica({
+        tipo_pessoa: "juridica",
+        nome: "Transportadora Bouganville Ltda",
+        cpf_cnpj: "66.217.744/0001-70",
+      }),
+      pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
+      configuracaoFiscal: configuracaoFiscal(),
+    });
+
+    expect(corpo.cnpj_destinatario).toBe("66217744000170");
+    expect(corpo.nome_destinatario).toBe("Transportadora Bouganville Ltda");
+    // O suporte da Focus NFe (03/09/2026) foi explícito: 9 = não contribuinte,
+    // e a inscrição estadual do destinatário não vai de jeito nenhum.
+    expect(corpo.indicador_inscricao_estadual_destinatario).toBe("9");
+    expect(corpo.cpf_destinatario).toBeUndefined();
+    expect(corpo).not.toHaveProperty("inscricao_estadual_destinatario");
+  });
+
+  it("deixa a nota como consumidor não identificado quando a empresa está sem CNPJ no cadastro", () => {
+    const corpo = montarCorpoNFCe({
+      ordem: { numero: 1 } as never,
+      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
+      cliente: clientePessoaFisica({ tipo_pessoa: "juridica", cpf_cnpj: "66.217.744" }),
+      pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
+      configuracaoFiscal: configuracaoFiscal(),
+    });
+
+    // Mandar um CNPJ pela metade faria a SEFAZ recusar a nota inteira; sem
+    // identificação ela é aceita (a tela de emissão avisa antes de mandar).
+    expect(corpo.cnpj_destinatario).toBeUndefined();
+    expect(corpo.indicador_inscricao_estadual_destinatario).toBeUndefined();
+    expect(corpo.nome_destinatario).toBe("");
+  });
+
+  it("emite como consumidor não identificado quando a OS não tem cliente", () => {
+    const corpo = montarCorpoNFCe({
+      ordem: { numero: 1 } as never,
+      itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
+      cliente: null,
+      pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
+      configuracaoFiscal: configuracaoFiscal(),
+    });
+
+    expect(corpo.nome_destinatario).toBe("");
+    expect(corpo.cpf_destinatario).toBe("");
+    expect(corpo.cnpj_destinatario).toBeUndefined();
   });
 
   it("calcula icms_valor_total só quando a peça tem alíquota de ICMS", () => {

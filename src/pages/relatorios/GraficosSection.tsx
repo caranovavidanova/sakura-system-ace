@@ -11,9 +11,12 @@ import type { OrdemServico } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 
-type Periodo = "diario" | "semanal" | "mensal";
+type Periodo = "diario" | "semanal" | "mensal" | "anual";
 
-const QTD_BUCKETS: Record<Periodo, number> = { diario: 14, semanal: 8, mensal: 6 };
+// Quantas colunas o gráfico mostra em cada modo. No anual são 5 anos: menos
+// que isso não deixa comparar nada, e mais só vai mostrar coluna zerada de
+// antes da loja usar o sistema.
+const QTD_BUCKETS: Record<Periodo, number> = { diario: 14, semanal: 8, mensal: 6, anual: 5 };
 
 const CORES = { vendas: "#1baf7a", custos: "#eb6834", lucro: "#4a3aa7" };
 
@@ -36,6 +39,9 @@ function inicioDaSemana(data: Date): Date {
 
 function chaveDoMovimento(dataIso: string, periodo: Periodo): string {
   const d = new Date(dataIso);
+  if (periodo === "anual") {
+    return String(d.getFullYear());
+  }
   if (periodo === "mensal") {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
@@ -49,7 +55,9 @@ function gerarChavesBuckets(periodo: Periodo, hoje: Date): string[] {
   const qtd = QTD_BUCKETS[periodo];
   const chaves: string[] = [];
   for (let i = qtd - 1; i >= 0; i--) {
-    if (periodo === "diario") {
+    if (periodo === "anual") {
+      chaves.push(String(hoje.getFullYear() - i));
+    } else if (periodo === "diario") {
       const d = new Date(hoje);
       d.setDate(d.getDate() - i);
       chaves.push(paraDataLocal(d.toISOString()));
@@ -81,6 +89,9 @@ const MESES_ABREV = [
 ];
 
 function rotuloBucket(chave: string, periodo: Periodo): string {
+  if (periodo === "anual") {
+    return chave;
+  }
   if (periodo === "mensal") {
     const [ano, mes] = chave.split("-").map(Number);
     return `${MESES_ABREV[mes - 1]}/${String(ano).slice(2)}`;
@@ -95,6 +106,7 @@ const PERIODOS: { chave: Periodo; label: string }[] = [
   { chave: "diario", label: "Diário" },
   { chave: "semanal", label: "Semanal" },
   { chave: "mensal", label: "Mensal" },
+  { chave: "anual", label: "Anual" },
 ];
 
 interface GraficosSectionProps {
@@ -133,6 +145,7 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
   const hojeStr = paraDataLocal(hoje.toISOString());
   const inicioSemana = inicioDaSemana(hoje);
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const inicioAno = new Date(hoje.getFullYear(), 0, 1);
 
   const totalHoje = totaisPorDia.find(([dia]) => dia === hojeStr)?.[1] ?? 0;
   const totalSemana = entradas
@@ -140,6 +153,9 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
     .reduce((total, m) => total + m.valor, 0);
   const totalMes = entradas
     .filter((m) => new Date(m.data) >= inicioMes)
+    .reduce((total, m) => total + m.valor, 0);
+  const totalAno = entradas
+    .filter((m) => new Date(m.data) >= inicioAno)
     .reduce((total, m) => total + m.valor, 0);
 
   const { categorias, vendas, custos, lucro } = useMemo(() => {
@@ -181,7 +197,7 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="sakura-card p-4">
           <p className="text-xs text-sakura-muted">Vendas hoje</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
@@ -198,6 +214,12 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
           <p className="text-xs text-sakura-muted">Vendas este mês</p>
           <p className="text-xl font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalMes)}
+          </p>
+        </div>
+        <div className="sakura-card p-4">
+          <p className="text-xs text-sakura-muted">Vendas este ano</p>
+          <p className="text-xl font-semibold text-sakura-purple-dark">
+            {formatarMoeda(totalAno)}
           </p>
         </div>
       </div>

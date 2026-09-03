@@ -2137,6 +2137,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     competência errada, e o desconto do item deixa de sumir na NFC-e. Publicada via
     `workflow_dispatch`.
 
+  - `v0.9.27`: a leva de 03/09/2026 — **NFC-e no CNPJ do cliente pessoa jurídica** (item 1 da
+    seção 8), período **Anual** nos gráficos de Relações, a aba **Comissões dentro de
+    Funcionários** e o botão do calendário visível em todo campo de data. Publicada via
+    `workflow_dispatch`, com o instalador e o `latest.yml` confirmados na release.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3015,8 +3020,8 @@ pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0
 amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
 seção 6).
 
-**Estado do código**: `main` com os PRs #209 a #214 mesclados, **publicada a `v0.9.26`**, mais o
-trabalho de 03/09/2026 (NFC-e de destinatário pessoa jurídica + os três ajustes de tela acima) —
-esse ainda **sem tag publicada**, então não chegou na loja. `tsc`/`lint` limpos e **149 testes** passando (eram 103 no começo de 02/09 — quase
+**Estado do código**: `main` em dia, com o trabalho de 03/09/2026 (NFC-e de destinatário pessoa
+jurídica + os três ajustes de tela acima) já **publicado na `v0.9.27`** — chega na loja sozinho
+pelo auto-update, na próxima vez que o programa for fechado e aberto. `tsc`/`lint` limpos e **149 testes** passando (eram 103 no começo de 02/09 — quase
 todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o destinatário
 da NFC-e).

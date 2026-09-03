@@ -44,8 +44,30 @@ input[type="radio"] {
   accent-color: var(--color-sakura-pink);
 }
 
+/* O botãozinho de abrir o calendário (dentro de todo campo de data). O ícone
+   nativo do Chromium é um quadradinho preto minúsculo, sem nada indicando que
+   dá pra clicar — a usuária relatou que mal dava pra ver. Aqui ele ganha
+   tamanho, respiro e um fundo arredondado: vira um botão de verdade.
+
+   ⚠️ Cuidado ao mexer nas cores: o `filter: invert(100%)` (que é o que deixa
+   o ícone preto branco, sobre o card escuro) vale pro elemento inteiro,
+   fundo incluído — então a cor de fundo precisa ser escrita AO CONTRÁRIO do
+   que aparece na tela. O `rgba(0, 0, 0, ...)` abaixo é o que vira um cinza
+   claro depois da inversão; escrever branco ali sumiria com o fundo. */
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(100%);
+  cursor: pointer;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 3px;
+  margin-left: 2px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.2);
+  opacity: 1;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(0, 0, 0, 0.42);
 }
 
 /* Setinhas de somar/subtrair dentro dos campos numéricos: escondidas de

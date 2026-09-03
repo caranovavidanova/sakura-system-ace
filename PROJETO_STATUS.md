@@ -157,10 +157,14 @@ Três fases, nessa ordem, sem pressa de pular etapa:
   `globals.css`, fora de `@layer`, tem prioridade **maior** que classes do Tailwind (que ficam
   dentro de `@layer`), não importa a especificidade — reset globais (`*`, seletores soltos)
   precisam ficar dentro de `@layer base`.
-- Checkbox/rádio usam `accent-color` na paleta do app; ícone do calendário em `input[type=date]`
-  tem filtro de cor pro tom roxo. **Não mexido de propósito**: a seta do `<select>` continua
-  nativa (os ~15 selects do app têm paddings variados, arriscaria desalinhar sem conferir cada um
-  visualmente).
+- Checkbox/rádio usam `accent-color` na paleta do app. O **botão de abrir o calendário** dentro de
+  `input[type=date]` é o ícone nativo do Chromium com `filter: invert(100%)` (pra ficar branco
+  sobre o card escuro) e, desde 03/09/2026, com tamanho, respiro e fundo arredondado — antes era
+  um quadradinho minúsculo que ela mal enxergava. **Pegadinha ao mexer**: o `invert` vale pro
+  elemento inteiro, fundo incluído, então a cor de fundo é escrita ao contrário do que aparece na
+  tela (o `rgba(0,0,0,…)` do CSS é o cinza claro que se vê). **Não mexido de propósito**: a seta do
+  `<select>` continua nativa (os ~15 selects do app têm paddings variados, arriscaria desalinhar
+  sem conferir cada um visualmente).
 - **Logo**: `public/sakura-icon.svg` (flor de 5 pétalas arredondadas + estames, favicon/ícone da
   janela) e `public/sakura-logo.svg` (só o wordmark "Sakura System" / "by Sakura Corp" em itálico
   serifado, sem a flor — usado no menu lateral via `Logo.tsx`). Ambos desenhados à mão em SVG,
@@ -348,7 +352,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora); LojasSection.tsx
 │   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
 │   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas)
-│   │   funcionarios/   # FuncionarioForm.tsx (orquestrador enxuto, ~140 linhas) com abas "Dados
+│   │   funcionarios/   # FuncionariosPage.tsx (orquestrador de abas Cadastro/Comissões) +
+│   │                   # FuncionariosSection.tsx (lista + formulário) + ComissoesSection.tsx
+│   │                   # (comissão por funcionário, veio de relatorios/ em 03/09/2026 — ver
+│   │                   # seção 7) + FuncionarioForm.tsx (orquestrador enxuto, ~140 linhas) com abas "Dados
 │   │                   # gerais" e "Família" + campos/ (um componente por grupo de campos:
 │   │                   # IdentificacaoFields, DocumentosFields, EnderecoFields, ContatoFields,
 │   │                   # CargoAdmissaoFields, FiliacaoFields, ConjugeFields, FilhosFields — este
@@ -368,8 +375,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │   relatorios/     # RelatoriosPage.tsx (orquestrador de abas) + GraficosSection.tsx (barras +
 │   │                   # radar, ex-conteúdo do antigo módulo "Relatórios") + LucratividadeSection.tsx
 │   │                   # (margem por peça/serviço, ex-módulo "Lucratividade" separado, agora conta o
-│   │                   # custo de serviço também, não só de peça) + ComissoesSection.tsx (comissão
-│   │                   # por funcionário — ver seção 7)
+│   │                   # custo de serviço também, não só de peça). A aba Comissões morava aqui e
+│   │                   # foi pra funcionarios/ em 03/09/2026.
 │   ├── schemas/                  # esquemas zod de validação de formulário + funções de mapeamento
 │   │                             # form↔banco, e as contas de dinheiro como funções puras
 │   │                             # testáveis (metricasCaixa.ts — lucro/custo/ticket médio
@@ -1821,8 +1828,39 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   passou a mostrar o **total da linha** (quantidade × preço − desconto) além do preço unitário, pra
   não haver confusão em par de peça (2x pneu, por exemplo).
 
-- **Funcionários**: cadastro RH completo (documentos, endereço, cargo/admissão, família/filhos,
-  abas "Dados gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente.
+- **Funcionários** (duas abas desde 03/09/2026): **"Cadastro"** — RH completo (documentos,
+  endereço, cargo/admissão, família/filhos; o formulário em si tem as sub-abas "Dados
+  gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente. E
+  **"Comissões"** (02/09/2026, pedido do pai dela; morava em Relações até 03/09/2026, quando ela
+  pediu pra mover pra cá).
+  - **A página virou orquestrador de abas** (mesmo padrão de Fornecedores/Caixa): a lista + o
+    formulário saíram pra `FuncionariosSection.tsx`, e `ComissoesSection.tsx` mudou de pasta junto.
+    Os dados que só a aba Comissões usa (OS, peças, serviços, contas a receber — 4 consultas) só
+    são buscados quando alguém abre essa aba, pra não deixar mais lenta a tela de quem só veio
+    cadastrar funcionário.
+  - **Regras, decididas com ela** (estão escritas também no topo de `src/schemas/comissoes.ts`):
+    os **dois papéis** contam, separados — o **vendedor** da OS leva pela OS inteira que atendeu,
+    o **técnico** só pelos itens que executou; a base é o **lucro** (venda − custo), na
+    porcentagem de `funcionarios.comissao`; e só conta **OS faturada**, pela data do faturamento.
+  - **Não precisou de migration** — `ordens_servico.vendedor_id`,
+    `ordens_servico_itens.tecnico_id` e o campo "Comissão (%)" do cadastro já existiam.
+  - Uma linha por funcionário (vendeu / lucro gerado / comissão a pagar); "Ver as OS" abre o
+    detalhe separado por papel, listando cada OS que formou o número — é o que deixa o pai dela
+    conferir de onde veio cada real em vez de confiar no total.
+  - **A tela avisa quando o número merece desconfiança**: comissão vinda de OS faturada como "a
+    receber depois" que o cliente ainda não pagou; item vendido **sem preço de custo cadastrado**
+    (entra como lucro cheio e infla a comissão); funcionário sem porcentagem cadastrada; e OS sem
+    vendedor / item sem técnico, que caem numa linha "Sem funcionário definido" no fim da lista em
+    vez de sumirem caladas.
+  - **Cuidado de conta que vale saber**: quem vendeu **e** executou a mesma OS aparece nos dois
+    papéis, mas o lucro é contado **uma vez só** (somar os dois inflaria; pegar o maior perderia
+    OS onde a pessoa só executou). Já a comissão soma os dois de propósito — são pagamentos
+    diferentes, mesmo caindo pra mesma pessoa.
+  - **Por que fica em Funcionários e não em Relações**: ficou em Relações quando nasceu (o número
+    sai das OS, não do cadastro da pessoa), mas ela pediu pra mover em 03/09/2026 — na cabeça de
+    quem usa, comissão é assunto de funcionário. Consequência de permissão: quem enxerga
+    Funcionários passa a enxergar comissão. Sem novidade de verdade — o cadastro de funcionário já
+    mostra salário e a porcentagem de comissão de cada um.
   **Formulário refatorado nesta sessão** pro padrão novo `react-hook-form` + `zod` (ver "Padrão de
   formulário" na seção 4) — primeiro do app nesse estilo, orquestrador caiu de 601 pra ~140 linhas,
   campos organizados em `campos/*Fields.tsx` por grupo. Comportamento pro usuário final não mudou
@@ -1873,32 +1911,12 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   acesso à rede) — só quando ela rodar a migration e testar na loja.
 - **Relações** (ex-"Relatórios", label mudou antes; agora também absorveu o módulo antigo
   "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
-  Lucro, Diário/Semanal/Mensal) + radar comparando o período atual com o anterior, sem biblioteca
-  externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba "Lucratividade" —
-  margem por peça/serviço, período filtrável; e aba **"Comissões"** (02/09/2026, pedido do pai
-  dela).
-  - **Regras, decididas com ela** (estão escritas também no topo de `src/schemas/comissoes.ts`):
-    os **dois papéis** contam, separados — o **vendedor** da OS leva pela OS inteira que atendeu,
-    o **técnico** só pelos itens que executou; a base é o **lucro** (venda − custo), na
-    porcentagem de `funcionarios.comissao`; e só conta **OS faturada**, pela data do faturamento.
-  - **Não precisou de migration** — `ordens_servico.vendedor_id`,
-    `ordens_servico_itens.tecnico_id` e o campo "Comissão (%)" do cadastro já existiam.
-  - Uma linha por funcionário (vendeu / lucro gerado / comissão a pagar); "Ver as OS" abre o
-    detalhe separado por papel, listando cada OS que formou o número — é o que deixa o pai dela
-    conferir de onde veio cada real em vez de confiar no total.
-  - **A tela avisa quando o número merece desconfiança**: comissão vinda de OS faturada como "a
-    receber depois" que o cliente ainda não pagou; item vendido **sem preço de custo cadastrado**
-    (entra como lucro cheio e infla a comissão); funcionário sem porcentagem cadastrada; e OS sem
-    vendedor / item sem técnico, que caem numa linha "Sem funcionário definido" no fim da lista em
-    vez de sumirem caladas.
-  - **Cuidado de conta que vale saber**: quem vendeu **e** executou a mesma OS aparece nos dois
-    papéis, mas o lucro é contado **uma vez só** (somar os dois inflaria; pegar o maior perderia
-    OS onde a pessoa só executou). Já a comissão soma os dois de propósito — são pagamentos
-    diferentes, mesmo caindo pra mesma pessoa.
-  - **Por que fica em Relações e não em Funcionários** (ela perguntou): o número sai das OS, não
-    do cadastro da pessoa, e é relatório com filtro de período — vizinho natural da Lucratividade.
-    Se um dia for mais natural procurar por dentro de Funcionários, é fácil mover ou pôr um
-    atalho lá.
+  Lucro, **Diário/Semanal/Mensal/Anual**) + radar comparando o período atual com o anterior, sem
+  biblioteca externa de gráficos, paleta categórica própria (verde/laranja/violeta); aba
+  "Lucratividade" — margem por peça/serviço, período filtrável. **O "Anual" entrou em 03/09/2026**
+  (pedido dela): mostra 5 anos, e os cartões do topo ganharam um quarto, "Vendas este ano".
+  **A aba "Comissões" saiu daqui em 03/09/2026** — foi pra dentro de Funcionários, a pedido dela
+  (ver o módulo Funcionários logo abaixo).
 - **Início — calendário mostra também os dias vizinhos** (31/08/2026, pedido dela): a grade tem
   **6 semanas fixas** (como a do Windows), então a sobra do mês anterior e os primeiros dias do mês
   **seguinte** aparecem sempre, em cinza apagado. Motivo: o calendário mostra só o mês corrente e
@@ -2912,8 +2930,9 @@ abaixo já chega na loja pelo auto-update.
 
 1. **Baixar os XMLs de um mês num `.zip` só**, em Notas Fiscais (pedido dela, pra mandar pra
    contabilidade sem clicar nota por nota) — ver "Notas Fiscais" na seção 7.
-2. **Aba Comissões em Relações** (pedido do pai dela: "onde cada funcionário vendeu") — regras,
-   avisos e o porquê de ficar em Relações estão em "Relações" na seção 7. Sem migration.
+2. **Aba Comissões** (pedido do pai dela: "onde cada funcionário vendeu") — nasceu dentro de
+   Relações e foi movida pra Funcionários no dia seguinte, a pedido dela; regras e avisos estão em
+   "Funcionários" na seção 7. Sem migration.
 3. **Duas varreduras seguidas**, pedidas por ela — primeiro de cálculo em geral, depois só da
    parte fiscal. **Doze correções no total** (itens 42 a 46 da seção 6). Da varredura de cálculo,
    as três que mais importam no dia a dia:
@@ -2942,6 +2961,21 @@ Ela mandou a mensagem que estava preparada e colou a resposta. Duas coisas saír
 2. **A suposição sobre o CSOSN 500 caiu** — a Focus NFe **não** completa campo fiscal que a gente
    não manda. Nada quebrou (as notas continuam sendo autorizadas), mas virou pergunta pra
    contabilidade, registrada no item 2 da mesma lista.
+
+### 03/09/2026 — três ajustes de tela pedidos por ela
+
+Vieram junto com três fotos da tela da loja, usando o sistema de verdade:
+
+1. **Gráficos de Relações ganharam o período "Anual"** (5 anos), e os cartões do topo ganharam um
+   quarto: "Vendas este ano".
+2. **A aba Comissões saiu de Relações e foi pra dentro de Funcionários** — ver o módulo
+   Funcionários na seção 7 pro desenho e pra consequência de permissão.
+3. **O botão de abrir o calendário ficou visível** — era um quadradinho minúsculo dentro do campo
+   de data; ganhou tamanho e fundo arredondado. Vale pra todo campo de data do app (é uma regra só
+   no `globals.css`), não só o de Comissões onde ela reparou.
+
+Conferidos renderizando os componentes de verdade (`GraficosSection` e `ComissoesSection`) com
+dados falsos, pelo caminho de preview descrito no item 6 da seção 6 — não é só leitura de código.
 
 ### O que depende dela pra andar (fim de 02/09/2026)
 
@@ -2981,8 +3015,8 @@ pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0
 amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
 seção 6).
 
-**Estado do código**: `main` com os PRs #209 a #214 mesclados, **publicada a `v0.9.26`**, mais a
-NFC-e de destinatário pessoa jurídica de 03/09/2026 — essa ainda **sem tag publicada**, então não
-chegou na loja. `tsc`/`lint` limpos e **149 testes** passando (eram 103 no começo de 02/09 — quase
+**Estado do código**: `main` com os PRs #209 a #214 mesclados, **publicada a `v0.9.26`**, mais o
+trabalho de 03/09/2026 (NFC-e de destinatário pessoa jurídica + os três ajustes de tela acima) —
+esse ainda **sem tag publicada**, então não chegou na loja. `tsc`/`lint` limpos e **149 testes** passando (eram 103 no começo de 02/09 — quase
 todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o destinatário
 da NFC-e).

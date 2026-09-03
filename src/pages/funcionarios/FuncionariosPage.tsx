@@ -1,22 +1,41 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarContasReceber } from "@/lib/contasReceber";
 import { mensagemDeErro } from "@/lib/errors";
-import {
-  atualizarFuncionario,
-  criarFuncionario,
-  listarFuncionarios,
-} from "@/lib/funcionarios";
+import { listarFuncionarios } from "@/lib/funcionarios";
+import { listarOrdens } from "@/lib/ordensServico";
+import { listarPecas } from "@/lib/pecas";
+import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import type { Funcionario, NovoFuncionario, NovoFuncionarioFilho } from "@/types/funcionario";
-import { FuncionarioForm } from "./FuncionarioForm";
+import type { ContaReceber } from "@/types/contaReceber";
+import type { Funcionario } from "@/types/funcionario";
+import type { OrdemServico } from "@/types/os";
+import type { Peca } from "@/types/peca";
+import type { Servico } from "@/types/servico";
+import { ComissoesSection } from "./ComissoesSection";
+import { FuncionariosSection } from "./FuncionariosSection";
+
+type Aba = "cadastro" | "comissoes";
 
 export function FuncionariosPage() {
   const { lojaAtual } = useAuth();
+  const [aba, setAba] = useState<Aba>("cadastro");
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [formulario, setFormulario] = useState<"novo" | Funcionario | null>(null);
+
+  // Dados que só a aba Comissões usa. Ficam separados de propósito: são 4
+  // consultas (OS, peças, serviços, contas a receber) que não fazem falta
+  // nenhuma pra quem só veio cadastrar funcionário, então só são buscadas
+  // quando essa aba é aberta pela primeira vez.
+  const [dadosComissoes, setDadosComissoes] = useState<{
+    ordens: OrdemServico[];
+    pecas: Peca[];
+    servicos: Servico[];
+    contasReceber: ContaReceber[];
+  } | null>(null);
+  const [carregandoComissoes, setCarregandoComissoes] = useState(false);
 
   async function carregar() {
     if (!isSupabaseConfigured || !lojaAtual) {
@@ -37,52 +56,44 @@ export function FuncionariosPage() {
 
   useEffect(() => {
     carregar();
+    setDadosComissoes(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lojaAtual?.id]);
 
-  async function handleSalvar(funcionario: NovoFuncionario, filhos: NovoFuncionarioFilho[]) {
-    if (!lojaAtual) return;
-    if (formulario && formulario !== "novo") {
-      await atualizarFuncionario(formulario.id, funcionario, filhos);
-    } else {
-      await criarFuncionario(funcionario, lojaAtual.id, filhos);
+  useEffect(() => {
+    async function carregarComissoes() {
+      if (aba !== "comissoes" || dadosComissoes || !isSupabaseConfigured || !lojaAtual) return;
+      setCarregandoComissoes(true);
+      setErro(null);
+      try {
+        const [ordens, pecas, servicos, contasReceber] = await Promise.all([
+          listarOrdens(lojaAtual.id),
+          listarPecas(),
+          listarServicos(),
+          listarContasReceber(lojaAtual.id),
+        ]);
+        setDadosComissoes({ ordens, pecas, servicos, contasReceber });
+      } catch (err) {
+        console.error("Erro ao carregar comissões:", err);
+        setErro(mensagemDeErro(err));
+      } finally {
+        setCarregandoComissoes(false);
+      }
     }
-    setFormulario(null);
-    await carregar();
-  }
-
-  async function handleAlternarStatus(funcionario: Funcionario) {
-    try {
-      await atualizarFuncionario(funcionario.id, { ativo: !funcionario.ativo });
-      await carregar();
-    } catch (err) {
-      console.error("Erro ao atualizar status do funcionário:", err);
-      setErro(mensagemDeErro(err));
-    }
-  }
+    carregarComissoes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aba, lojaAtual?.id]);
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <BotaoVoltar />
-          <div>
-            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
-              Funcionários
-            </h1>
-            <p className="text-sm text-sakura-muted">
-              Técnicos, vendedores e demais funcionários — selecionáveis na Ordem de Serviço
-            </p>
-          </div>
+      <header className="flex items-center gap-3">
+        <BotaoVoltar />
+        <div>
+          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Funcionários</h1>
+          <p className="text-sm text-sakura-muted">
+            Técnicos, vendedores e demais funcionários — e quanto cada um tem de comissão a receber
+          </p>
         </div>
-        {!formulario && (
-          <button
-            onClick={() => setFormulario("novo")}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
-          >
-            + Novo funcionário
-          </button>
-        )}
       </header>
 
       {!isSupabaseConfigured && (
@@ -93,75 +104,65 @@ export function FuncionariosPage() {
         </p>
       )}
 
-      {formulario && (
-        <FuncionarioForm
-          funcionarioExistente={formulario === "novo" ? undefined : formulario}
-          onSalvar={handleSalvar}
-          onCancelar={() => setFormulario(null)}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+
+      <div className="flex gap-1 border-b border-sakura-gray/30">
+        <AbaBotao label="Cadastro" ativa={aba === "cadastro"} onClick={() => setAba("cadastro")} />
+        <AbaBotao
+          label="Comissões"
+          ativa={aba === "comissoes"}
+          onClick={() => setAba("comissoes")}
+        />
+      </div>
+
+      {aba === "cadastro" ? (
+        carregando ? (
+          <p className="text-sm text-sakura-muted">Carregando...</p>
+        ) : !lojaAtual ? (
+          <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Seu usuário não tem loja atribuída. Fale com o administrador.
+          </p>
+        ) : (
+          <FuncionariosSection
+            funcionarios={funcionarios}
+            lojaId={lojaAtual.id}
+            onRecarregar={carregar}
+          />
+        )
+      ) : carregandoComissoes || !dadosComissoes ? (
+        <p className="text-sm text-sakura-muted">Carregando...</p>
+      ) : (
+        <ComissoesSection
+          ordens={dadosComissoes.ordens}
+          pecas={dadosComissoes.pecas}
+          servicos={dadosComissoes.servicos}
+          funcionarios={funcionarios}
+          contasReceber={dadosComissoes.contasReceber}
         />
       )}
-
-      {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
-      )}
-
-      {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
-      ) : funcionarios.length === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhum funcionário cadastrado ainda.</p>
-      ) : (
-        <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nome</th>
-                <th className="px-4 py-3 font-medium">Cargo</th>
-                <th className="px-4 py-3 font-medium">Login</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {funcionarios.map((funcionario) => (
-                <tr key={funcionario.id} className="border-t border-sakura-gray/20">
-                  <td className="px-4 py-3">{funcionario.nome}</td>
-                  <td className="px-4 py-3">{funcionario.cargo || "—"}</td>
-                  <td className="px-4 py-3">
-                    {funcionario.operador?.usuario ? `@${funcionario.operador.usuario}` : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        funcionario.ativo
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-sakura-gray/20 text-sakura-muted"
-                      }`}
-                    >
-                      {funcionario.ativo ? "Ativo" : "Inativo"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setFormulario(funcionario)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleAlternarStatus(funcionario)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        {funcionario.ativo ? "Inativar" : "Reativar"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
+  );
+}
+
+function AbaBotao({
+  label,
+  ativa,
+  onClick,
+}: {
+  label: string;
+  ativa: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+        ativa
+          ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
+          : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

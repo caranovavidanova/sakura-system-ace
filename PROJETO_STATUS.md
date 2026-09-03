@@ -2614,6 +2614,8 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 28/08 (tarde) | Leva de ajustes de uso real no balcão: parcelar cartão dentro do pagamento dividido, estado **"Finalizada"** da OS, "+ adicionar item" no rodapé, total por item, e a correção dos **três cálculos de lucro divergentes** (item 40 da seção 6). Tags `v0.9.21` a `v0.9.24`. |
 | 31/08 | Campo numérico deixou de mudar sozinho pelas setas (item 41), calendário do Início passou a mostrar os dias do mês vizinho, e o **CSOSN `'500'` foi confirmado** pela contabilidade. Tag `v0.9.25`. |
 | 01/09 | Primeira NFS-e de um mês novo revelou o **cadastro mensal de alíquota** exigido pela prefeitura (item 1 da seção 8) — tarefa recorrente, todo mês. |
+| 02/09 | Baixar os XMLs de um mês num **`.zip` só**, a aba **Comissões**, e as **12 correções** das duas varreduras (itens 42 a 46 da seção 6). Tag `v0.9.26`. |
+| 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 
 **Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na
 seção 1, mas é aqui que costumam ser lidas): *intenção futura não é autorização pra começar agora*
@@ -2928,7 +2930,7 @@ cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehy
 npm run dev
 ```
 
-### Onde tudo parou (02/09/2026)
+### Onde parou em 02/09/2026 (histórico — o marco mais recente é o de 03/09, logo abaixo)
 
 Três entregas, acumuladas a pedido dela e publicadas juntas na **`v0.9.26`** — ou seja, tudo
 abaixo já chega na loja pelo auto-update.
@@ -2954,7 +2956,12 @@ abaixo já chega na loja pelo auto-update.
    fora. Junto: alíquota do ISS em branco virava 0% na nota sem ninguém reclamar. O que **não** foi
    mexido, e por quê, está em "O que ainda está frágil na parte fiscal" (seção 8, item 1).
 
-### 03/09/2026 — a resposta do suporte da Focus NFe chegou
+### Onde tudo parou (03/09/2026)
+
+Tudo desta data já está **publicado na `v0.9.27`** e **confirmado por ela rodando na loja** ("tudo
+certo" depois do auto-update). Foram duas frentes:
+
+#### 1. A resposta do suporte da Focus NFe chegou
 
 Ela mandou a mensagem que estava preparada e colou a resposta. Duas coisas saíram dali:
 
@@ -2967,7 +2974,7 @@ Ela mandou a mensagem que estava preparada e colou a resposta. Duas coisas saír
    não manda. Nada quebrou (as notas continuam sendo autorizadas), mas virou pergunta pra
    contabilidade, registrada no item 2 da mesma lista.
 
-### 03/09/2026 — três ajustes de tela pedidos por ela
+#### 2. Três ajustes de tela pedidos por ela
 
 Vieram junto com três fotos da tela da loja, usando o sistema de verdade:
 
@@ -2982,23 +2989,24 @@ Vieram junto com três fotos da tela da loja, usando o sistema de verdade:
 Conferidos renderizando os componentes de verdade (`GraficosSection` e `ComissoesSection`) com
 dados falsos, pelo caminho de preview descrito no item 6 da seção 6 — não é só leitura de código.
 
-### O que depende dela pra andar (fim de 02/09/2026)
+### O que depende dela pra andar (03/09/2026)
 
-Três coisas ficaram esperando ação fora do código. Nenhuma delas some sozinha, e as duas primeiras
-já estão prontas pra executar:
+Duas coisas esperando ação **fora do código** — nenhuma some sozinha, e nenhuma bloqueia o uso do
+sistema hoje:
 
 1. **Trocar três credenciais.** Este arquivo tinha CSC da SEFAZ, token do portal Giap e a senha do
    portal da prefeitura copiados — e **o repositório é público**. Foram removidos do texto, mas
    **continuam no histórico do Git**: o certo é regerar os três (passo a passo no item 1 da seção
    8) e atualizar no painel da Focus NFe. Enquanto não trocar, tratar como expostos.
-2. ~~Mandar a mensagem pro suporte da Focus NFe~~ — **feito em 03/09/2026**, e a NFC-e pra
-   cliente pessoa jurídica já está implementada (ver a seção logo acima). **Sobrou uma pergunta
-   nova, essa pra contabilidade**: com CSOSN 500, as peças deveriam levar valor de ICMS-ST retido
-   na nota? A Focus NFe confirmou que não completa isso sozinha — detalhe no item 2 de "O que
-   ainda está frágil na parte fiscal" (seção 8).
-3. ~~Publicar a próxima tag~~ — **feito**: `v0.9.26` publicada em 02/09/2026, então tudo desta
-   sessão chega na loja sozinho pelo auto-update, na próxima vez que o programa for fechado e
-   aberto.
+2. **Perguntar pra contabilidade sobre o CSOSN 500**: com esse código, as peças deveriam levar
+   valor de ICMS-ST retido na nota? Virou pergunta em 03/09/2026, quando a Focus NFe confirmou que
+   **não** completa sozinha campo fiscal que a gente não manda (a suposição antiga era o
+   contrário). As notas continuam sendo autorizadas assim desde agosto, então **não é urgente e
+   não é pra mexer às cegas** — detalhe no item 2 de "O que ainda está frágil na parte fiscal"
+   (seção 8).
+
+E, todo mês, o de sempre: **cadastrar a alíquota da competência no portal da prefeitura** antes da
+primeira NFS-e do mês (item 1 da seção 8) — sem isso a nota é recusada.
 
 **O que ela pediu pra guardar pra "em breve"** (não retomar sozinho, ela sabe que existe):
 
@@ -3020,8 +3028,8 @@ pagar vencendo" do Início soma só o mês corrente (no dia 31 pode mostrar R$ 0
 amanhã); e a conta recorrente, depois de segurar em fevereiro, fica presa no dia 28 (item 43 da
 seção 6).
 
-**Estado do código**: `main` em dia, com o trabalho de 03/09/2026 (NFC-e de destinatário pessoa
-jurídica + os três ajustes de tela acima) já **publicado na `v0.9.27`** — chega na loja sozinho
-pelo auto-update, na próxima vez que o programa for fechado e aberto. `tsc`/`lint` limpos e **149 testes** passando (eram 103 no começo de 02/09 — quase
-todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o destinatário
-da NFC-e).
+**Estado do código (fim de 03/09/2026)**: `main` em dia, nada esperando publicação — a `v0.9.27` é
+a última tag e **ela confirmou que chegou na loja pelo auto-update e está tudo certo**.
+`tsc`/`lint`/`npm run contraste` limpos e **149 testes** passando (eram 103 no começo de 02/09 —
+quase todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o
+destinatário da NFC-e).

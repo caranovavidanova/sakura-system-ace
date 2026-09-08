@@ -1,8 +1,10 @@
 import { z } from "zod";
 import type {
+  ItemOS,
   NovaOrdemServico,
   NovoItemOS,
   OrdemServico,
+  PatchItemOS,
   PatchOrdemServico,
 } from "@/types/os";
 
@@ -90,6 +92,47 @@ export function paraItensValidos(itens: ItemFormValues[]): NovoItemOS[] {
       preco_unitario: paraNumero(item.preco_unitario),
       desconto: paraNumero(item.desconto),
     }));
+}
+
+// Corrigir um item já lançado usa um formulário próprio, de um item só
+// (`ItemExistenteRow`), fora do formulário grande da OS. A diferença é que
+// aqui não dá pra "descartar linha vazia" como `paraItensValidos` faz: se
+// faltar descrição ou quantidade, a correção precisa reclamar na tela em vez
+// de sumir com o item.
+export const itemExistenteFormSchema = itemFormSchema
+  .refine((item) => item.descricao.trim().length > 0, {
+    message: "Descreva a peça ou o serviço.",
+    path: ["descricao"],
+  })
+  .refine((item) => paraNumero(item.quantidade) > 0, {
+    message: "A quantidade precisa ser maior que zero.",
+    path: ["quantidade"],
+  });
+
+export function paraValoresItemExistente(item: ItemOS): ItemFormValues {
+  return {
+    tipo: item.tipo,
+    peca_id: item.peca_id ?? "",
+    servico_id: item.servico_id ?? "",
+    tecnico_id: item.tecnico_id ?? "",
+    descricao: item.descricao,
+    quantidade: String(item.quantidade),
+    preco_unitario: paraDisplayNumero(item.preco_unitario),
+    desconto: paraDisplayNumero(item.desconto),
+  };
+}
+
+export function paraPatchItem(valores: ItemFormValues): PatchItemOS {
+  return {
+    tipo: valores.tipo,
+    peca_id: valores.peca_id || null,
+    servico_id: valores.servico_id || null,
+    tecnico_id: valores.tecnico_id || null,
+    descricao: valores.descricao.trim(),
+    quantidade: paraNumero(valores.quantidade),
+    preco_unitario: paraNumero(valores.preco_unitario),
+    desconto: paraNumero(valores.desconto),
+  };
 }
 
 export function totalItensFormulario(itens: ItemFormValues[]): number {

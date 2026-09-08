@@ -1753,6 +1753,28 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   seção 6) — depois de faturada, o "+ adicionar item" some e a peça/serviço esquecido vira uma OS
   nova; faturar (o botão "Confirmar faturamento") agora pede confirmação explícita antes, avisando
   que essa trava passa a valer.
+  **Corrigir um item já lançado (08/09/2026, pedido dela usando o sistema: digitou R$120 num
+  alinhamento que era R$60 e não tinha como consertar pela tela)**: cada linha de "Já lançados
+  nesta OS" ganhou um "Editar" que abre ali mesmo os campos do item (tipo, peça/serviço,
+  quantidade, preço, desconto, técnico) — `ItemExistenteRow.tsx`. É salvo na hora, item por item,
+  **sem** passar pelo "Salvar alterações" da OS (que continua cuidando só dos campos de cima e dos
+  itens novos). Três coisas que valem saber:
+  - **O estoque se acerta sozinho.** A saída que o item original gerou continua valendo, então só
+    a **diferença** é lançada (`diferencasDeEstoque()` em `lib/ordensServico.ts`, testada): mudou
+    só o preço → nenhuma movimentação; quantidade subiu → saída da diferença (motivo "uso em OS");
+    quantidade caiu, peça trocada ou peça virou serviço → entrada de volta (motivo "ajuste"). A
+    referência sai como "OS 12 (correção de item)", pra dar pra achar em Movimentações.
+  - **Trava em dois casos**, os dois com aviso na tela explicando: OS já **faturada** (o pagamento
+    já entrou no Caixa com o total antigo — mesma razão do item 31 da seção 6) e OS que já tem
+    **nota fiscal emitida** e não cancelada (corrigir aqui deixaria a nota diferente da OS). No
+    segundo caso o caminho é cancelar a nota antes (Notas Fiscais → "Cancelar nota").
+  - **Não tem "Remover"** — só editar. Um item lançado por engano ainda precisa ser transformado em
+    outro item pela edição; excluir de vez não foi construído (não foi pedido, e teria a mesma
+    conversa de estoque/nota). Fácil de acrescentar depois, se fizer falta.
+  - **Não é auditado**: `ordens_servico_itens` não está na lista de tabelas cobertas pelo trigger
+    de auditoria (migration `0040`, ver seção 5). Agora que dá pra mexer em valor de item, incluir
+    essa tabela virou candidato natural — é uma migration pequena, no mesmo padrão, ainda **não
+    feita**.
   Não existe mais seletor manual de status no form — o cabeçalho mostra o status atual (badge) e,
   enquanto "em_andamento", um botão **"Encerrar OS"** que marca como concluída e já abre a tela de
   faturamento na sequência, num fluxo só. **`OrdemServicoForm.tsx` migrado nesta sessão** pro

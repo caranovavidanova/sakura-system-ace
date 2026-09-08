@@ -2,10 +2,11 @@ import type { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from "re
 import { useFieldArray } from "react-hook-form";
 import { itemFormVazio, totalItensFormulario, type OrdemServicoFormValues } from "@/schemas/ordemServico";
 import type { Funcionario } from "@/types/funcionario";
-import type { ItemOS } from "@/types/os";
+import type { ItemOS, PatchItemOS } from "@/types/os";
 import { totalOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
+import { ItemExistenteRow } from "../ItemExistenteRow";
 import { ItemOSRow } from "../ItemOSRow";
 
 export function ItensFields({
@@ -16,6 +17,9 @@ export function ItensFields({
   itensExistentes,
   ehEdicao,
   podeAdicionarItem,
+  podeEditarItem,
+  avisoItens,
+  onEditarItem,
   pecas,
   servicos,
   funcionarios,
@@ -27,6 +31,9 @@ export function ItensFields({
   itensExistentes: ItemOS[];
   ehEdicao: boolean;
   podeAdicionarItem: boolean;
+  podeEditarItem: boolean;
+  avisoItens: string | null;
+  onEditarItem: (item: ItemOS, patch: PatchItemOS) => Promise<void>;
   pecas: Peca[];
   servicos: Servico[];
   funcionarios: Funcionario[];
@@ -39,31 +46,21 @@ export function ItensFields({
     <section>
       <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Peças e serviços</h3>
 
-      {!podeAdicionarItem && (
-        <p className="mb-3 text-xs text-sakura-muted">
-          Esta OS já foi faturada — pra acrescentar peça ou serviço, abra uma OS nova.
-        </p>
-      )}
+      {avisoItens && <p className="mb-3 text-xs text-sakura-muted">{avisoItens}</p>}
 
       {itensExistentes.length > 0 && (
         <div className="mb-3 space-y-1.5 rounded-lg bg-sakura-gray/5 p-3">
           <p className="mb-1 text-xs font-medium text-sakura-purple-dark/85">Já lançados nesta OS</p>
           {itensExistentes.map((item) => (
-            <div
+            <ItemExistenteRow
               key={item.id}
-              className="flex items-center justify-between text-sm text-sakura-purple-dark/80"
-            >
-              <span>
-                {item.tipo === "peca" ? "Peça" : "Serviço"} — {item.descricao} ({item.quantidade}x)
-                {item.tecnico?.nome ? ` · técnico: ${item.tecnico.nome}` : ""}
-              </span>
-              <span>
-                {(item.quantidade * item.preco_unitario - item.desconto).toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </span>
-            </div>
+              item={item}
+              podeEditar={podeEditarItem}
+              pecas={pecas}
+              servicos={servicos}
+              funcionarios={funcionarios}
+              onSalvar={onEditarItem}
+            />
           ))}
         </div>
       )}

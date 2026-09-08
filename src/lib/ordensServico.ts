@@ -4,9 +4,11 @@ import { criarContaReceber } from "./contasReceber";
 import { buscarDepositoPadraoId } from "./depositos";
 import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
 import type {
+  ItemOS,
   NovaOrdemServico,
   NovoItemOS,
   OrdemServico,
+  PatchItemOS,
   PatchOrdemServico,
 } from "@/types/os";
 
@@ -101,9 +103,8 @@ export async function atualizarOrdem(
   if (error) throw error;
 }
 
-// Só acrescenta itens novos numa OS já existente — editar/remover um item já
-// salvo exigiria desfazer a baixa de estoque que ele já gerou, o que fica
-// pra uma etapa própria (ver PROJETO_STATUS.md).
+// Só acrescenta itens novos numa OS já existente — corrigir um item já
+// salvo é outro caminho, `editarItemOrdem()` logo abaixo.
 export async function adicionarItensOrdem(
   ordemId: string,
   numeroOrdem: number,
@@ -113,6 +114,95 @@ export async function adicionarItensOrdem(
 ): Promise<void> {
   await inserirItens(ordemId, numeroOrdem, itens, lojaId);
   await atualizarOrdem(ordemId, {}, operadorId);
+}
+
+// Quantidade sai do banco como numeric(12,2) — arredondar antes de comparar
+// evita uma diferença de centésimo de milésimo virar uma movimentação de
+// estoque fantasma (2.3 - 2.0 dá 0.2999999999999998 em ponto flutuante).
+function arredondarQuantidade(valor: number): number {
+  return Math.round(valor * 100) / 100;
+}
+
+// Editar um item já lançado pode mexer no estoque: a saída que o item
+// original gerou continua valendo, então o que precisa ser lançado é só a
+// diferença. Um mapa peça → diferença cobre todos os casos de uma vez
+// (mudou a quantidade, trocou a peça, virou serviço, ou o contrário) sem uma
+// cascata de ifs — e some sozinho quando só o preço muda, que é o caso mais
+// comum de correção.
+export function diferencasDeEstoque(
+  original: ItemOS,
+  novo: PatchItemOS,
+): Map<string, number> {
+  const diferencas = new Map<string, number>();
+
+  function somar(pecaId: string | null, quantidade: number) {
+    if (!pecaId) return;
+    diferencas.set(pecaId, (diferencas.get(pecaId) ?? 0) + quantidade);
+  }
+
+  if (original.tipo === "peca") somar(original.peca_id, -original.quantidade);
+  if (novo.tipo === "peca") somar(novo.peca_id, novo.quantidade);
+
+  return new Map(
+    [...diferencas]
+      .map(([pecaId, diferenca]) => [pecaId, arredondarQuantidade(diferenca)] as const)
+      .filter(([, diferenca]) => diferenca !== 0),
+  );
+}
+
+async function lancarDiferencasDeEstoque(
+  diferencas: Map<string, number>,
+  numeroOrdem: number,
+  lojaId: string,
+): Promise<void> {
+  if (diferencas.size === 0) return;
+
+  const depositoId = await buscarDepositoPadraoId(lojaId);
+  const { error } = await supabase.from("estoque_movimentos").insert(
+    [...diferencas].map(([pecaId, diferenca]) => ({
+      peca_id: pecaId,
+      deposito_id: depositoId,
+      tipo: diferenca > 0 ? ("saida" as const) : ("entrada" as const),
+      quantidade: Math.abs(diferenca),
+      // Saiu mais peça pra essa OS: é uso em OS, igual ao lançamento
+      // original. Voltou peça pra prateleira: é ajuste — não existe
+      // "des-uso em OS", e "ajuste" é o que descreve a verdade do que
+      // aconteceu (alguém corrigiu um lançamento).
+      motivo: diferenca > 0 ? ("uso_em_os" as const) : ("ajuste" as const),
+      referencia: `${nomeOrdem(numeroOrdem)} (correção de item)`,
+      loja_id: lojaId,
+    })),
+  );
+  if (error) throw error;
+}
+
+// Corrige um item já lançado numa OS (preço digitado errado, quantidade
+// trocada, peça errada). Só faz sentido enquanto a OS ainda não foi
+// faturada: depois do faturamento o pagamento já entrou no Caixa com o total
+// antigo, e mexer no item deixaria os dois discordando — quem chama precisa
+// garantir isso antes (a tela já esconde o botão).
+export async function editarItemOrdem(
+  itemOriginal: ItemOS,
+  patch: PatchItemOS,
+  numeroOrdem: number,
+  operadorId: string,
+  lojaId: string,
+): Promise<void> {
+  const diferencas = diferencasDeEstoque(itemOriginal, patch);
+
+  const { error } = await supabase
+    .from("ordens_servico_itens")
+    .update(patch)
+    .eq("id", itemOriginal.id);
+  if (error) throw error;
+
+  // O estoque vem depois de propósito: sem transação de verdade aqui, o
+  // pior caso é a correção do item salvar e a movimentação falhar — que dá
+  // erro na tela e é conferível em Movimentações. O contrário (movimentar
+  // estoque de uma correção que não gravou) seria uma sobra invisível.
+  await lancarDiferencasDeEstoque(diferencas, numeroOrdem, lojaId);
+
+  await atualizarOrdem(itemOriginal.ordem_servico_id, {}, operadorId);
 }
 
 // Marca a OS como "concluída" — usado pelo botão "Encerrar OS", que já leva

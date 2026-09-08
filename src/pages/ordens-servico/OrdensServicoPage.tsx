@@ -16,6 +16,7 @@ import {
   atualizarOrdem,
   concluirOrdem,
   criarOrdem,
+  editarItemOrdem,
   faturarOrdem,
   listarOrdens,
 } from "@/lib/ordensServico";
@@ -28,9 +29,11 @@ import type { Cliente } from "@/types/cliente";
 import type { JurosParcela } from "@/types/configuracao";
 import type { Funcionario } from "@/types/funcionario";
 import type {
+  ItemOS,
   NovaOrdemServico,
   NovoItemOS,
   OrdemServico,
+  PatchItemOS,
   PatchOrdemServico,
 } from "@/types/os";
 import {
@@ -40,7 +43,7 @@ import {
   totalPorTipo,
 } from "@/types/os";
 import type { NotaFiscalArquivo } from "@/types/notaFiscal";
-import { agruparNotasPorOrdem } from "@/schemas/situacaoFiscal";
+import { agruparNotasPorOrdem, temAlgumaNotaValida } from "@/schemas/situacaoFiscal";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { FaturamentoCard } from "./FaturamentoCard";
@@ -127,10 +130,13 @@ export function OrdensServicoPage() {
     });
   }, [ordens, busca, dataInicio, dataFim]);
 
-  async function carregar() {
+  // Devolve as ordens recarregadas (ou null se nem chegou a consultar): quem
+  // corrige um item precisa da versão nova da OS que está aberta na tela, e
+  // `setOrdens` sozinho não serve — `ordemEmEdicao` é um estado à parte.
+  async function carregar(): Promise<OrdemServico[] | null> {
     if (!isSupabaseConfigured || !lojaAtual) {
       setCarregando(false);
-      return;
+      return null;
     }
     setCarregando(true);
     setErro(null);
@@ -174,9 +180,12 @@ export function OrdensServicoPage() {
         if (ordemParaAbrir) setOrdemEmEdicao(ordemParaAbrir);
         navigate(location.pathname, { replace: true, state: null });
       }
+
+      return ordensCarregadas;
     } catch (err) {
       console.error("Erro ao carregar ordens de serviço:", err);
       setErro(mensagemDeErro(err));
+      return null;
     } finally {
       setCarregando(false);
     }
@@ -211,6 +220,24 @@ export function OrdensServicoPage() {
     }
     setOrdemEmEdicao(null);
     await carregar();
+  }
+
+  // Corrigir um item já lançado é salvo na hora, item por item — não espera o
+  // "Salvar alterações" da OS, que cuida só dos campos de cima e dos itens
+  // novos. A trava de OS faturada é repetida aqui de propósito: a tela já
+  // esconde o botão, mas quem grava não pode depender disso (mesmo cuidado de
+  // `handleSalvarEdicao`).
+  async function handleEditarItem(item: ItemOS, patch: PatchItemOS) {
+    if (!operador || !lojaAtual || !ordemEmEdicao) return;
+    if (ordemEmEdicao.status === "faturada") {
+      throw new Error(
+        "Esta OS já foi faturada — não dá mais pra corrigir peça ou serviço nela.",
+      );
+    }
+    await editarItemOrdem(item, patch, ordemEmEdicao.numero, operador.id, lojaAtual.id);
+    const ordensAtualizadas = await carregar();
+    const ordemAtualizada = ordensAtualizadas?.find((o) => o.id === ordemEmEdicao.id);
+    if (ordemAtualizada) setOrdemEmEdicao(ordemAtualizada);
   }
 
   async function handleEncerrar(ordem: OrdemServico) {
@@ -285,6 +312,7 @@ export function OrdensServicoPage() {
           funcionarioAtualId={funcionarioAtualId}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
+          onEditarItem={handleEditarItem}
           onEncerrar={handleEncerrar}
           onCancelar={() => setMostrarFormulario(false)}
         />
@@ -298,9 +326,11 @@ export function OrdensServicoPage() {
           funcionarios={funcionarios}
           funcionarioAtualId={funcionarioAtualId}
           ordemExistente={ordemEmEdicao}
+          temNotaEmitida={temAlgumaNotaValida(notasPorOrdem.get(ordemEmEdicao.id) ?? [])}
           abaInicial={abaInicialEdicao}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
+          onEditarItem={handleEditarItem}
           onEncerrar={handleEncerrar}
           onCancelar={() => setOrdemEmEdicao(null)}
         />

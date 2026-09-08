@@ -15,9 +15,11 @@ import {
 import type { Cliente } from "@/types/cliente";
 import type { Funcionario } from "@/types/funcionario";
 import type {
+  ItemOS,
   NovaOrdemServico,
   NovoItemOS,
   OrdemServico,
+  PatchItemOS,
   PatchOrdemServico,
 } from "@/types/os";
 import { STATUS_COM_FECHAMENTO, STATUS_LABEL, nomeOrdem } from "@/types/os";
@@ -34,6 +36,8 @@ interface OrdemServicoFormProps {
   funcionarios: Funcionario[];
   funcionarioAtualId: string;
   ordemExistente?: OrdemServico;
+  /** Se a OS já tem nota fiscal válida (não cancelada) ligada a ela. */
+  temNotaEmitida?: boolean;
   abaInicial?: "detalhes" | "fechamento";
   onSalvarNova: (ordem: NovaOrdemServico, itens: NovoItemOS[]) => Promise<void>;
   onSalvarEdicao: (
@@ -41,6 +45,7 @@ interface OrdemServicoFormProps {
     patch: PatchOrdemServico,
     novosItens: NovoItemOS[],
   ) => Promise<void>;
+  onEditarItem: (item: ItemOS, patch: PatchItemOS) => Promise<void>;
   onEncerrar: (ordem: OrdemServico) => Promise<void>;
   onCancelar: () => void;
 }
@@ -63,9 +68,11 @@ export function OrdemServicoForm({
   funcionarios,
   funcionarioAtualId,
   ordemExistente,
+  temNotaEmitida = false,
   abaInicial = "detalhes",
   onSalvarNova,
   onSalvarEdicao,
+  onEditarItem,
   onEncerrar,
   onCancelar,
 }: OrdemServicoFormProps) {
@@ -97,6 +104,22 @@ export function OrdemServicoForm({
   );
 
   const itensExistentes = ordemExistente?.itens ?? [];
+
+  // Depois de faturada, o pagamento já entrou no Caixa com o total daquele
+  // momento — mexer nos itens deixaria os dois discordando (ver
+  // PROJETO_STATUS.md, seção 6, item 31). Corrigir um item já lançado tem
+  // ainda uma trava a mais: se a nota fiscal já saiu, o que está na nota
+  // deixaria de bater com a OS, e isso não se conserta sozinho.
+  const ehFaturada = ordemExistente?.status === "faturada";
+  const podeAdicionarItem = !ehFaturada;
+  const podeEditarItem = !!ordemExistente && !ehFaturada && !temNotaEmitida;
+  const avisoItens = ehFaturada
+    ? "Esta OS já foi faturada — o pagamento já foi lançado no Caixa com o total de então, " +
+      "então não dá pra acrescentar nem corrigir item. Pra qualquer mudança, abra uma OS nova."
+    : temNotaEmitida
+      ? "Esta OS já tem nota fiscal emitida — corrigir um item aqui deixaria a nota diferente " +
+        "da OS. Cancele a nota em Notas Fiscais antes de mexer."
+      : null;
 
   async function aoSubmeter(valores: OrdemServicoFormValues) {
     setErro(null);
@@ -228,7 +251,10 @@ export function OrdemServicoForm({
             setValue={setValue}
             itensExistentes={itensExistentes}
             ehEdicao={!!ordemExistente}
-            podeAdicionarItem={ordemExistente?.status !== "faturada"}
+            podeAdicionarItem={podeAdicionarItem}
+            podeEditarItem={podeEditarItem}
+            avisoItens={avisoItens}
+            onEditarItem={onEditarItem}
             pecas={pecas}
             servicos={servicos}
             funcionarios={funcionarios}

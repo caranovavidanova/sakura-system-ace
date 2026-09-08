@@ -20,6 +20,12 @@ export interface ItemOS {
 
 export type NovoItemOS = Omit<ItemOS, "id" | "ordem_servico_id" | "tecnico">;
 
+// O que dá pra mudar num item que já está lançado na OS. É o mesmo conjunto
+// de campos de um item novo — a diferença é que aqui o item já existe no
+// banco (e, se for peça, já baixou estoque), então quem grava precisa
+// comparar com o valor antigo pra acertar a diferença.
+export type PatchItemOS = NovoItemOS;
+
 export interface OrdemServico {
   id: string;
   numero: number;

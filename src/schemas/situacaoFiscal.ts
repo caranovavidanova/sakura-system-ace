@@ -25,6 +25,14 @@ function notaValida(nota: NotaFiscalArquivo, tipo: TipoNotaFiscal): boolean {
   return nota.tipo === tipo && nota.status !== "cancelado";
 }
 
+// Se a OS tem alguma nota que ainda vale (cancelada não conta). Usado pra
+// travar a correção de item já lançado: mexer no valor depois da nota
+// emitida deixaria a nota discordando da OS, e isso não se conserta sozinho
+// — precisa cancelar a nota antes.
+export function temAlgumaNotaValida(notasDaOrdem: NotaFiscalArquivo[]): boolean {
+  return notasDaOrdem.some((nota) => nota.status !== "cancelado");
+}
+
 export const NOTA_LABEL: Record<TipoNotaFiscal, string> = {
   nfe: "NFC-e",
   nfse: "NFS-e",

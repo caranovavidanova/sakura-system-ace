@@ -2164,6 +2164,10 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     Funcionários** e o botão do calendário visível em todo campo de data. Publicada via
     `workflow_dispatch`, com o instalador e o `latest.yml` confirmados na release.
 
+  - `v0.9.28`: **corrigir um item já lançado numa OS** (08/09/2026, pedido dela: digitou R$120 num
+    alinhamento que era R$60 e não tinha conserto pela tela) — ver "Ordens de Serviço" na seção 7.
+    Publicada via `workflow_dispatch`. **Ainda não confirmada por ela rodando na loja.**
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -2921,8 +2925,8 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.25"` — e com trabalho mesclado na `main` **esperando a
-  próxima tag** (ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.28"` — a mesma versão da última tag publicada, nada
+  esperando publicação (ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3055,3 +3059,21 @@ a última tag e **ela confirmou que chegou na loja pelo auto-update e está tudo
 `tsc`/`lint`/`npm run contraste` limpos e **149 testes** passando (eram 103 no começo de 02/09 —
 quase todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o
 destinatário da NFC-e).
+
+### Onde tudo parou (08/09/2026)
+
+Uma entrega só, publicada na **`v0.9.28`**: **dá pra corrigir um item já lançado numa OS**. Ela
+digitou R$120 num alinhamento e num balanceamento que eram R$60 e descobriu que a lista "Já
+lançados nesta OS" nunca teve edição — o único conserto era abrir outra OS ou mexer no banco à
+mão. Desenho completo, travas e o que ficou de fora: "Ordens de Serviço", seção 7.
+
+**Duas pontas soltas que nasceram junto**, nenhuma bloqueia nada:
+
+1. **Confirmar com ela que o "Editar" funciona na loja** — a `v0.9.28` foi publicada, mas ainda
+   não houve retorno. Vale conferir junto se aquela OS ficou com o total certo (R$ 1.113,00 no
+   lugar de R$ 1.233,00), porque ela também tinha em mãos um SQL de correção manual: pode ser que
+   tenha resolvido por lá antes da versão chegar.
+2. **Auditoria não cobre `ordens_servico_itens`** — agora que dá pra mexer em valor de item, essa
+   tabela virou candidata natural ao trigger da migration `0040`. Migration pequena, no mesmo
+   padrão, **oferecida e não pedida** (exigiria ela rodar SQL no Supabase, e a edição funciona sem
+   isso).

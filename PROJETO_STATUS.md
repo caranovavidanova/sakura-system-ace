@@ -1571,6 +1571,31 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     autorizando algo errado, ou perdendo o rastro de um documento que já existe lá fora. Ao mexer
     aqui, a pergunta útil não é "isso dá erro?", é "se isso estiver errado, alguém fica sabendo?".
 
+47. **A importação de nota do fornecedor copiava o código de ICMS DELE pro cadastro da loja**
+    (09/09/2026, reportado por ela com print). Emitir NFC-e passou a falhar com *"Rejeição:
+    Informado CST para emissor do Simples Nacional (CRT=1 ou 4) [nItem:1]"*. Causa: quem é do
+    Simples usa **CSOSN** (3 dígitos), quem é do regime normal usa **CST** (2 dígitos) — e tanto
+    o "Importar XML de nota fiscal" quanto o "Importar por foto" gravavam em `pecas.cst_ou_csosn`
+    o código que veio na nota do **fornecedor**. Fornecedor do regime normal manda CST, a peça
+    nasce com um código que a nota dela nunca vai aceitar, e o erro só aparece semanas depois, na
+    emissão.
+    **Dois agravantes que fizeram isso custar caro**: (a) a mensagem da SEFAZ diz só o número do
+    item (`[nItem:1]`), **nunca o nome da peça** — achar qual das peças da OS está errada é
+    adivinhação; (b) o campo parecia preenchido, então não havia nada na tela sugerindo problema.
+    **Corrigido em três frentes**, com a regra isolada em `src/schemas/tributacao.ts` (funções
+    puras, 17 testes): as duas importações deixam de copiar o código do fornecedor quando ele não
+    serve pro regime da loja (usam o CSOSN que a **própria loja** mais usa no cadastro dela, ou
+    campo em branco — nunca um código inventado por aqui); e a tela de emissão passa a conferir
+    antes de mandar, listando **o nome de cada peça** e o motivo. **É aviso, não trava** (mesma
+    lição do item 33): a lista de códigos válidos envelhece com mudança de legislação, e barrar a
+    emissão por causa de um palpite daqui seria pior que deixar a SEFAZ decidir.
+    **Cuidado que apareceu no preview e vale pra qualquer tela nova**: o primeiro desenho colocava
+    o campo de CSOSN **dentro** da faixa amarela de aviso (`bg-amber-50`, fundo claro) — e
+    `globals.css` força `input { color: #fff }` fora de `@layer`, então o campo nasceu ilegível.
+    É a família dos itens 14/17, e o `npm run contraste` **não pega** esse caso (fundo e texto
+    ficam em elementos diferentes). Regra prática: **campo de formulário nunca vai dentro de uma
+    faixa de aviso clara** — o aviso fica só com o texto, e o campo desce pro fundo escuro do card.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -1712,7 +1737,9 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   nota fiscal (pode ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através
   da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
   cadastra em lote (`ImportarNotasFiscaisModal.tsx`). Chave da Anthropic fica só como secret da
-  Edge Function.
+  Edge Function. **Desde 09/09/2026, o CST/CSOSN lido na nota do fornecedor já entra corrigido
+  pro padrão da loja** (a coluna continua editável), com aviso quando algum produto ficar sem um
+  código que sirva — ver item 47 da seção 6.
 - **Serviços**: catálogo simples (descrição, código opcional, preço padrão, **custo** — ex: mão de
   obra, usado pela aba Lucratividade —, categoria de serviço opcional), sem estoque/fiscal. Vem
   semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
@@ -1743,7 +1770,10 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   `lib/pedidosCompra.ts` → `importarNotaFiscalCompra()`). Terceiro e último dos três passos
   combinados com a usuária antes da emissão de nota fiscal (ver seção 8, item 5) — sem garantia do
   fornecedor na compra ainda (diferente da garantia ao cliente já implementada), sem ordem
-  definida pra atacar isso.
+  definida pra atacar isso. **Desde 09/09/2026 a importação não copia mais o código de ICMS do
+  fornecedor pras peças novas** (era o que gerava nota rejeitada, ver item 47 da seção 6): quando
+  o código do XML não serve pro regime da loja, aparece um aviso e um campo "CSOSN das peças
+  novas", já preenchido com o código que a própria loja mais usa no cadastro dela.
 - **Ordens de Serviço**: cada OS tem um número sequencial **por loja** (`numero`, 1/2/3...,
   atribuído por trigger no insert) — é como a OS é identificada em toda tela ("OS 12"), nunca mais
   o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
@@ -1775,6 +1805,12 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     de auditoria (migration `0040`, ver seção 5). Agora que dá pra mexer em valor de item, incluir
     essa tabela virou candidato natural — é uma migration pequena, no mesmo padrão, ainda **não
     feita**.
+
+  **Aviso de código fiscal antes de emitir (09/09/2026)**: a aba Fechamento → "Emitir NFC-e"
+  agora confere o CST/CSOSN de cada peça da nota contra o regime da loja **antes** de mandar, e
+  lista pelo nome as que não servem ("BIEL SUSP GM DT ACO LD/LE — está com o CST 00, que é do
+  regime normal — sua loja é Simples Nacional e usa CSOSN"). Substitui o `[nItem:1]` enigmático
+  que a SEFAZ devolve. **Não bloqueia a emissão** — ver item 47 da seção 6.
   Não existe mais seletor manual de status no form — o cabeçalho mostra o status atual (badge) e,
   enquanto "em_andamento", um botão **"Encerrar OS"** que marca como concluída e já abre a tela de
   faturamento na sequência, num fluxo só. **`OrdemServicoForm.tsx` migrado nesta sessão** pro
@@ -2925,8 +2961,8 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.28"` — a mesma versão da última tag publicada, nada
-  esperando publicação (ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.28"` — com trabalho mesclado na `main` **esperando a próxima
+  tag** (a correção do código de ICMS na importação, ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3060,20 +3096,29 @@ a última tag e **ela confirmou que chegou na loja pelo auto-update e está tudo
 quase todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o
 destinatário da NFC-e).
 
-### Onde tudo parou (08/09/2026)
+### Onde tudo parou (08-09/09/2026)
 
-Uma entrega só, publicada na **`v0.9.28`**: **dá pra corrigir um item já lançado numa OS**. Ela
-digitou R$120 num alinhamento e num balanceamento que eram R$60 e descobriu que a lista "Já
-lançados nesta OS" nunca teve edição — o único conserto era abrir outra OS ou mexer no banco à
-mão. Desenho completo, travas e o que ficou de fora: "Ordens de Serviço", seção 7.
+**1. Corrigir um item já lançado numa OS** — publicado na **`v0.9.28`** e **confirmado por ela
+usando na loja**: ela digitou R$120 num alinhamento e num balanceamento que eram R$60, editou
+pela tela nova e a OS fechou nos R$ 1.113,00 certos. A lista "Já lançados nesta OS" nunca tinha
+tido edição — o único conserto antes era abrir outra OS ou mexer no banco à mão. Desenho
+completo, travas e o que ficou de fora: "Ordens de Serviço", seção 7.
 
-**Duas pontas soltas que nasceram junto**, nenhuma bloqueia nada:
+**2. O código de ICMS do fornecedor virava o código da peça dela** — descoberto logo em seguida,
+quando a NFC-e dessa mesma OS foi recusada com *"Informado CST para emissor do Simples Nacional
+[nItem:1]"*. Não tinha relação com a edição: a peça estava cadastrada com um **CST** (regime
+normal) porque a importação de nota do fornecedor copiava o código dele direto pro cadastro. Ela
+corrigiu a peça à mão e emitiu; o conserto de código veio depois — item 47 da seção 6 tem a
+história inteira, inclusive a armadilha de contraste que apareceu no preview.
 
-1. **Confirmar com ela que o "Editar" funciona na loja** — a `v0.9.28` foi publicada, mas ainda
-   não houve retorno. Vale conferir junto se aquela OS ficou com o total certo (R$ 1.113,00 no
-   lugar de R$ 1.233,00), porque ela também tinha em mãos um SQL de correção manual: pode ser que
-   tenha resolvido por lá antes da versão chegar.
-2. **Auditoria não cobre `ordens_servico_itens`** — agora que dá pra mexer em valor de item, essa
+**Duas pontas soltas, nenhuma bloqueia nada:**
+
+1. **Auditoria não cobre `ordens_servico_itens`** — agora que dá pra mexer em valor de item, essa
    tabela virou candidata natural ao trigger da migration `0040`. Migration pequena, no mesmo
    padrão, **oferecida e não pedida** (exigiria ela rodar SQL no Supabase, e a edição funciona sem
    isso).
+2. **Vale conferir o cadastro das outras peças** que entraram por importação antes de 09/09/2026:
+   as que vieram de fornecedor do regime normal podem estar com CST guardado, e cada uma vai
+   recusar a nota na primeira venda. A correção nova só vale pra importação **daqui pra frente** —
+   o que já está no cadastro continua como está. Agora, pelo menos, o aviso na tela de emissão diz
+   o nome da peça em vez de `[nItem:1]`.

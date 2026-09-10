@@ -15,11 +15,13 @@ import { listarMovimentosCaixaPorOrdem } from "@/lib/caixa";
 import { salvarArquivoEmitido } from "@/lib/notasFiscais";
 import { buscarPecasPorIds } from "@/lib/pecas";
 import { ratearPagamentos } from "@/schemas/faturamento";
+import { motivoCodigoIncompativel } from "@/schemas/tributacao";
 import type { Cliente } from "@/types/cliente";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { RespostaFocusNfe } from "@/types/focusNfe";
 import type { OrdemServico } from "@/types/os";
 import { totalPorTipo } from "@/types/os";
+import type { Peca } from "@/types/peca";
 
 interface EmitirNotaFiscalModalProps {
   ordem: OrdemServico;
@@ -67,6 +69,7 @@ export function EmitirNotaFiscalModal({
   const [erro, setErro] = useState("");
   const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(null);
   const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [pecasDaNota, setPecasDaNota] = useState<Peca[]>([]);
   const [codigoMunicipioCliente, setCodigoMunicipioCliente] = useState("");
   const [resultado, setResultado] = useState<RespostaFocusNfe | null>(null);
   const [danfeUrl, setDanfeUrl] = useState<string | null>(null);
@@ -82,17 +85,44 @@ export function EmitirNotaFiscalModal({
   // empresa na nota — se mudar lá, muda aqui.
   const cnpjClienteValido = (cliente?.cpf_cnpj ?? "").replace(/\D/g, "").length === 14;
 
+  // Peça com código de ICMS que não bate com o regime da loja faz a SEFAZ
+  // recusar a nota inteira, e a mensagem dela só diz o número do item
+  // ("[nItem:1]"), nunca o nome da peça. Conferir aqui transforma isso num
+  // aviso com nome e sobrenome, antes de gastar a viagem até a SEFAZ.
+  const pecasComProblemaFiscal =
+    tipoNota === "NFC-e"
+      ? pecasDaNota
+          .map((peca) => ({
+            descricao: peca.descricao,
+            motivo: motivoCodigoIncompativel(
+              peca.cst_ou_csosn,
+              configuracaoFiscal?.regime_tributario ?? null,
+            ),
+          }))
+          .filter((item): item is { descricao: string; motivo: string } => item.motivo !== null)
+      : [];
+
   useEffect(() => {
     async function carregar() {
       setCarregando(true);
       setErro("");
       try {
-        const [config, clienteCompleto] = await Promise.all([
+        // As peças vêm antes de emitir (não só na hora de montar a nota) pra
+        // dar pra conferir o código de ICMS de cada uma e avisar aqui,
+        // enquanto ainda dá pra corrigir — ver o aviso mais abaixo.
+        const idsDasPecas = (ordem.itens ?? [])
+          .filter((item) => item.tipo === "peca")
+          .map((item) => item.peca_id)
+          .filter((id): id is string => Boolean(id));
+
+        const [config, clienteCompleto, pecas] = await Promise.all([
           buscarConfiguracaoFiscal(ordem.loja_id),
           buscarClientePorId(ordem.cliente_id),
+          idsDasPecas.length > 0 ? buscarPecasPorIds(idsDasPecas) : Promise.resolve([]),
         ]);
         setConfiguracaoFiscal(config);
         setCliente(clienteCompleto);
+        setPecasDaNota(pecas);
         if (clienteCompleto.codigo_municipio) {
           setCodigoMunicipioCliente(clienteCompleto.codigo_municipio);
         }
@@ -103,7 +133,8 @@ export function EmitirNotaFiscalModal({
       }
     }
     carregar();
-  }, [ordem.loja_id, ordem.cliente_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordem.id, ordem.loja_id, ordem.cliente_id]);
 
   async function handleEmitir() {
     if (!configuracaoFiscal || !cliente || !operador || !lojaAtual) return;
@@ -283,6 +314,33 @@ export function EmitirNotaFiscalModal({
               a nota vai sair como consumidor não identificado. Se ele precisa da nota no nome da
               empresa, cadastre o CNPJ dele em Clientes antes de emitir.
             </p>
+          )}
+
+          {/* Aviso, nunca tranca: a lista de códigos válidos envelhece com
+              mudança de legislação, e barrar a emissão por causa de um
+              palpite daqui seria pior que deixar a SEFAZ decidir (mesma lição
+              do item 33 do PROJETO_STATUS.md). O botão de emitir continua
+              liberado. */}
+          {pecasComProblemaFiscal.length > 0 && (
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <p>
+                <strong>
+                  {pecasComProblemaFiscal.length === 1
+                    ? "Uma peça desta nota está"
+                    : `${pecasComProblemaFiscal.length} peças desta nota estão`}{" "}
+                  com o código de ICMS que a SEFAZ não aceita pra sua loja
+                </strong>{" "}
+                — provavelmente a nota vai ser recusada. Dá pra corrigir em Estoque → Produtos →
+                Editar, e emitir depois.
+              </p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                {pecasComProblemaFiscal.map((peca) => (
+                  <li key={peca.descricao}>
+                    <strong>{peca.descricao}</strong> — {peca.motivo}.
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">

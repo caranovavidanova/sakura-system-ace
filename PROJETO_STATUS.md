@@ -3134,17 +3134,24 @@ PR, merge, `workflow_dispatch` com `ref: "main"`. **Não publicar sozinho.** Enq
 computador da loja continua na `v0.9.28`, ou seja: **a edição de item já está lá, mas o aviso de
 código fiscal e a correção da importação ainda não.**
 
-**Duas pontas soltas, nenhuma bloqueia nada:**
+**Uma ponta solta, não bloqueia nada:**
 
 1. **Auditoria não cobre `ordens_servico_itens`** — agora que dá pra mexer em valor de item, essa
    tabela virou candidata natural ao trigger da migration `0040`. Migration pequena, no mesmo
    padrão, **oferecida e não pedida** (exigiria ela rodar SQL no Supabase, e a edição funciona sem
    isso).
-2. **Vale conferir o cadastro das outras peças** que entraram por importação antes de 09/09/2026:
-   as que vieram de fornecedor do regime normal podem estar com CST guardado, e cada uma vai
-   recusar a nota na primeira venda. A correção nova só vale pra importação **daqui pra frente** —
-   o que já está no cadastro continua como está. Depois da `v0.9.29` chegar, pelo menos, o aviso na
-   tela de emissão passa a dizer o nome da peça em vez de `[nItem:1]`. **Um atalho pra não esperar
-   a peça dar problema numa venda**: no SQL Editor do Supabase, `select descricao, cst_ou_csosn
-   from pecas where ativo and (cst_ou_csosn is null or length(trim(cst_ou_csosn)) <> 3)` lista de
-   uma vez toda peça que não está com um CSOSN de 3 dígitos.
+
+**✅ O resto do cadastro de peças foi conferido e está limpo (10/09/2026).** A dúvida era se outras
+peças importadas antes da correção também estariam com CST guardado, prontas pra recusar uma nota
+na primeira venda. Ela rodou no SQL Editor:
+
+```sql
+select descricao, cst_ou_csosn
+from pecas
+where ativo and (cst_ou_csosn is null or length(trim(cst_ou_csosn)) <> 3);
+```
+
+**Zero linhas** — toda peça ativa está com um CSOSN de 3 dígitos. A `BIEL SUSP GM DT ACO LD/LE`
+era a única, e já foi corrigida à mão. **Não reabrir esse assunto**; a consulta fica aqui só como
+receita, caso um dia entre peça de fornecedor novo por uma versão antiga do app (`pecas` é
+compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).

@@ -135,6 +135,7 @@ export function ProdutosSection({
       {mostrarImportar && (
         <ImportarNotasFiscaisModal
           categorias={categorias}
+          pecas={pecas}
           lojaId={lojaId}
           onFechar={() => setMostrarImportar(false)}
           onImportado={onRecarregar}

@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Combobox } from "@/components/Combobox";
+import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { criarMovimento } from "@/lib/estoque";
 import { mensagemDeErro } from "@/lib/errors";
 import { lerNotasFiscais } from "@/lib/iaNotaFiscal";
 import { OPCOES_ORIGEM } from "@/lib/origemMercadoria";
 import { criarPeca } from "@/lib/pecas";
+import {
+  codigoParaPecaImportada,
+  csosnMaisUsado,
+  motivoCodigoIncompativel,
+  regimeUsaCsosn,
+} from "@/schemas/tributacao";
 import type { Categoria } from "@/types/categoria";
+import type { RegimeTributario } from "@/types/configuracao";
 import type { ItemNotaFiscalExtraido } from "@/types/itemNotaFiscal";
+import type { Peca } from "@/types/peca";
 
 interface ItemRevisao extends ItemNotaFiscalExtraido {
   incluir: boolean;
@@ -15,6 +24,8 @@ interface ItemRevisao extends ItemNotaFiscalExtraido {
 
 interface ImportarNotasFiscaisModalProps {
   categorias: Categoria[];
+  /** Só pra descobrir o código de ICMS que a loja mais usa no próprio cadastro. */
+  pecas: Peca[];
   lojaId: string;
   onFechar: () => void;
   onImportado: () => Promise<void>;
@@ -22,6 +33,7 @@ interface ImportarNotasFiscaisModalProps {
 
 export function ImportarNotasFiscaisModal({
   categorias,
+  pecas,
   lojaId,
   onFechar,
   onImportado,
@@ -31,6 +43,16 @@ export function ImportarNotasFiscaisModal({
   const [lendo, setLendo] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [regime, setRegime] = useState<RegimeTributario | null>(null);
+
+  // O regime da loja decide se o código de ICMS lido na nota do fornecedor
+  // serve ou não. Falhar aqui não derruba a importação: sem regime,
+  // `codigoParaPecaImportada` mantém o comportamento antigo.
+  useEffect(() => {
+    buscarConfiguracaoFiscal(lojaId)
+      .then((config) => setRegime(config?.regime_tributario ?? null))
+      .catch((err) => console.error("Erro ao carregar o regime tributário da loja:", err));
+  }, [lojaId]);
 
   async function handleLer() {
     if (arquivos.length === 0) return;
@@ -38,8 +60,19 @@ export function ImportarNotasFiscaisModal({
     setErro(null);
     try {
       const extraidos = await lerNotasFiscais(arquivos);
+      // A nota lida é do FORNECEDOR: o código de ICMS que vem nela é o do
+      // regime dele, não o da loja. Copiar isso direto pro cadastro já fez
+      // a SEFAZ recusar uma NFC-e ("Informado CST para emissor do Simples
+      // Nacional"), então aqui ele já entra corrigido pro padrão da loja —
+      // e a coluna CST/CSOSN da tabela continua editável.
+      const padraoDaLoja = csosnMaisUsado(pecas.map((peca) => peca.cst_ou_csosn));
       setItens(
-        extraidos.map((item) => ({ ...item, incluir: true, categoria_id: null })),
+        extraidos.map((item) => ({
+          ...item,
+          cst_ou_csosn: codigoParaPecaImportada(item.cst_ou_csosn, regime, padraoDaLoja),
+          incluir: true,
+          categoria_id: null,
+        })),
       );
     } catch (err) {
       console.error("Erro ao ler notas fiscais:", err);
@@ -56,6 +89,10 @@ export function ImportarNotasFiscaisModal({
         : atual.map((item, i) => (i === indice ? { ...item, ...mudanca } : item)),
     );
   }
+
+  const itensComCodigoIncompativel = (itens ?? []).filter(
+    (item) => item.incluir && motivoCodigoIncompativel(item.cst_ou_csosn, regime) !== null,
+  );
 
   async function handleCadastrar(e: React.FormEvent) {
     e.preventDefault();
@@ -185,6 +222,21 @@ export function ImportarNotasFiscaisModal({
 
         {itens !== null && (
           <form onSubmit={handleCadastrar} className="space-y-4">
+            {/* Aviso, não tranca: dá pra cadastrar assim mesmo e acertar
+                depois em Estoque → Produtos. Só evita a surpresa de descobrir
+                isso lá na frente, na recusa da SEFAZ. */}
+            {itensComCodigoIncompativel.length > 0 && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                {itensComCodigoIncompativel.length === 1
+                  ? "Um produto está"
+                  : `${itensComCodigoIncompativel.length} produtos estão`}{" "}
+                sem um <strong>{regimeUsaCsosn(regime) ? "CSOSN" : "CST"}</strong> que sirva pra
+                sua loja — a coluna <strong>CST/CSOSN</strong> da tabela é editável, dá pra
+                preencher aqui mesmo. Sem isso, a nota fiscal dessas peças vai ser recusada
+                quando você for emitir.
+              </p>
+            )}
+
             {itens.length === 0 ? (
               <p className="text-sm text-sakura-muted">
                 Não consegui identificar nenhum produto nessas fotos.

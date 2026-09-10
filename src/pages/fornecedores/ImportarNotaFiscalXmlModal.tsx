@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Combobox } from "@/components/Combobox";
+import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { criarFornecedor } from "@/lib/fornecedores";
 import { extrairNotaFiscalXml, lerTextoXml, normalizarCnpj } from "@/lib/notaFiscalXmlFornecedor";
 import { criarPeca } from "@/lib/pecas";
 import { importarNotaFiscalCompra } from "@/lib/pedidosCompra";
+import {
+  codigoParaPecaImportada,
+  csosnMaisUsado,
+  motivoCodigoIncompativel,
+  regimeUsaCsosn,
+} from "@/schemas/tributacao";
+import type { RegimeTributario } from "@/types/configuracao";
 import type { Deposito } from "@/types/deposito";
 import type { Fornecedor } from "@/types/fornecedor";
 import type { ItemNotaFiscalXml, NotaFiscalXmlExtraida } from "@/types/notaFiscalXmlFornecedor";
@@ -57,6 +65,22 @@ export function ImportarNotaFiscalXmlModal({
   const [depositoId, setDepositoId] = useState(depositos[0]?.id ?? "");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [regime, setRegime] = useState<RegimeTributario | null>(null);
+  // O código de ICMS que as peças novas vão receber. Nasce com o que a loja
+  // mais usa no próprio cadastro — não com o do fornecedor, que pode ser de
+  // outro regime (ver `codigoParaPecaImportada`).
+  const [codigoIcmsNovas, setCodigoIcmsNovas] = useState(
+    () => csosnMaisUsado(pecas.map((peca) => peca.cst_ou_csosn)) ?? "",
+  );
+
+  // O regime da loja decide se o código do fornecedor serve ou não. Falhar
+  // aqui não pode derrubar a importação: sem regime, `codigoParaPecaImportada`
+  // simplesmente mantém o comportamento antigo (copia o código da nota).
+  useEffect(() => {
+    buscarConfiguracaoFiscal(lojaId)
+      .then((config) => setRegime(config?.regime_tributario ?? null))
+      .catch((err) => console.error("Erro ao carregar o regime tributário da loja:", err));
+  }, [lojaId]);
 
   async function handleLer() {
     if (!arquivo) return;
@@ -145,7 +169,7 @@ export function ImportarNotaFiscalXmlModal({
             cest: null,
             cfop_padrao: item.cfop_padrao,
             origem: item.origem,
-            cst_ou_csosn: item.cst_ou_csosn,
+            cst_ou_csosn: codigoParaPecaImportada(item.cst_ou_csosn, regime, codigoIcmsNovas),
             aliquota_icms: item.aliquota_icms,
             categoria_id: null,
             prazo_garantia_dias: null,
@@ -178,6 +202,15 @@ export function ImportarNotaFiscalXmlModal({
       setSalvando(false);
     }
   }
+
+  // Só as peças que vão ser CRIADAS agora (sem `pecaId`) importam aqui: peça
+  // já cadastrada mantém o código que ela tem, a importação não mexe nisso.
+  const pecasNovasComCodigoDeOutroRegime = (itens ?? []).filter(
+    (item) =>
+      item.incluir &&
+      !item.pecaId &&
+      motivoCodigoIncompativel(item.cst_ou_csosn, regime) !== null,
+  );
 
   const quantidadeSelecionada =
     itens?.filter((item) => item.incluir && item.quantidadeEditavel > 0).length ?? 0;
@@ -282,6 +315,36 @@ export function ImportarNotaFiscalXmlModal({
                 </select>
               </label>
             </div>
+
+            {/* Antes, o código de ICMS do fornecedor era copiado direto pro
+                cadastro da peça. Fornecedor do regime normal manda CST, que a
+                SEFAZ recusa numa nota do Simples Nacional — e o erro só
+                aparecia lá na frente, ao emitir, dizendo "[nItem:1]" sem
+                nome de peça nenhum. */}
+            {pecasNovasComCodigoDeOutroRegime.length > 0 && (
+              <div className="space-y-3">
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  {pecasNovasComCodigoDeOutroRegime.length === 1
+                    ? "Uma peça nova desta nota vem"
+                    : `${pecasNovasComCodigoDeOutroRegime.length} peças novas desta nota vêm`}{" "}
+                  com o código de ICMS <strong>do fornecedor</strong>, que não serve pra sua loja
+                  {regimeUsaCsosn(regime) ? " (Simples Nacional)" : ""}. Escolha abaixo o código
+                  que elas devem receber no seu cadastro — em branco, a peça fica sem código e
+                  você preenche depois em Estoque → Produtos.
+                </p>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-sakura-purple-dark/80">
+                    {regimeUsaCsosn(regime) ? "CSOSN" : "CST"} das peças novas
+                  </span>
+                  <input
+                    value={codigoIcmsNovas}
+                    onChange={(e) => setCodigoIcmsNovas(e.target.value)}
+                    placeholder={regimeUsaCsosn(regime) ? "Ex: 500" : "Ex: 00"}
+                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+                  />
+                </label>
+              </div>
+            )}
 
             {itens.length === 0 ? (
               <p className="text-sm text-sakura-muted">Não encontrei nenhum item nessa nota.</p>

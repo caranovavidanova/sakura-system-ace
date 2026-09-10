@@ -2202,7 +2202,16 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
 
   - `v0.9.28`: **corrigir um item já lançado numa OS** (08/09/2026, pedido dela: digitou R$120 num
     alinhamento que era R$60 e não tinha conserto pela tela) — ver "Ordens de Serviço" na seção 7.
-    Publicada via `workflow_dispatch`. **Ainda não confirmada por ela rodando na loja.**
+    Publicada via `workflow_dispatch` e **confirmada por ela usando na loja** (editou os dois itens
+    e a OS fechou nos R$ 1.113,00 certos).
+
+  **⏸ A PRÓXIMA TAG SERÁ A `v0.9.29`, E ELA AINDA NÃO FOI PUBLICADA — de propósito.** A `main` já
+  carrega a correção do código de ICMS na importação (item 47 da seção 6), pronta e validada, mas
+  em 10/09/2026 ela pediu pra **deixar pendente** e voltar noutra sessão: *"ainda nao, deixa
+  pendente... volto em outra sessao"*. **Não publicar por conta própria** — quando ela retomar,
+  é o passo 1 de "Gerar o instalador Windows e publicar uma versão nova" (seção 9): subir o
+  `package.json` pra `0.9.29`, mesclar, e disparar o `workflow_dispatch`. Conferir a lista real de
+  releases antes, como sempre.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -2962,7 +2971,8 @@ sempre antes de disparar o build, nunca depois.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.28"` — com trabalho mesclado na `main` **esperando a próxima
-  tag** (a correção do código de ICMS na importação, ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+  tag (`v0.9.29`), segurada a pedido dela** em 10/09/2026 (a correção do código de ICMS na
+  importação; ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3111,6 +3121,19 @@ normal) porque a importação de nota do fornecedor copiava o código dele diret
 corrigiu a peça à mão e emitiu; o conserto de código veio depois — item 47 da seção 6 tem a
 história inteira, inclusive a armadilha de contraste que apareceu no preview.
 
+### ⏸ O ponto exato onde parou (10/09/2026) — LEIA ISTO PRIMEIRO
+
+**A `v0.9.29` está pronta pra sair e NÃO foi publicada, por decisão dela.** A correção do item 2
+acima já está mesclada na `main`, validada (`tsc`/lint/contraste limpos, **176 testes** passando)
+e com as duas telas conferidas por preview renderizado — só falta a tag. Ela pediu pra segurar:
+*"ainda nao, deixa pendente, atualiza o projeto status, volto em outra sessao"*.
+
+**Quando ela retomar, o primeiro passo é perguntar se é pra publicar** — e, se sim, seguir "Gerar
+o instalador Windows e publicar uma versão nova" (seção 9): subir o `package.json` pra `0.9.29`,
+PR, merge, `workflow_dispatch` com `ref: "main"`. **Não publicar sozinho.** Enquanto isso, o
+computador da loja continua na `v0.9.28`, ou seja: **a edição de item já está lá, mas o aviso de
+código fiscal e a correção da importação ainda não.**
+
 **Duas pontas soltas, nenhuma bloqueia nada:**
 
 1. **Auditoria não cobre `ordens_servico_itens`** — agora que dá pra mexer em valor de item, essa
@@ -3120,5 +3143,8 @@ história inteira, inclusive a armadilha de contraste que apareceu no preview.
 2. **Vale conferir o cadastro das outras peças** que entraram por importação antes de 09/09/2026:
    as que vieram de fornecedor do regime normal podem estar com CST guardado, e cada uma vai
    recusar a nota na primeira venda. A correção nova só vale pra importação **daqui pra frente** —
-   o que já está no cadastro continua como está. Agora, pelo menos, o aviso na tela de emissão diz
-   o nome da peça em vez de `[nItem:1]`.
+   o que já está no cadastro continua como está. Depois da `v0.9.29` chegar, pelo menos, o aviso na
+   tela de emissão passa a dizer o nome da peça em vez de `[nItem:1]`. **Um atalho pra não esperar
+   a peça dar problema numa venda**: no SQL Editor do Supabase, `select descricao, cst_ou_csosn
+   from pecas where ativo and (cst_ou_csosn is null or length(trim(cst_ou_csosn)) <> 3)` lista de
+   uma vez toda peça que não está com um CSOSN de 3 dígitos.

@@ -1,10 +1,13 @@
 import { chromium } from "/opt/node22/lib/node_modules/playwright/index.mjs";
 import { mkdirSync } from "node:fs";
-import { TABELAS, SESSAO } from "./dados-demo.mjs";
+import { instalarBancoFalso, tabelasSemDados } from "./banco-falso.mjs";
 
 // Gera as imagens do site rodando o app DE VERDADE num navegador, com as
 // chamadas ao Supabase interceptadas e respondidas com dados inventados —
-// nada toca o banco de nenhuma loja. Ver site/ferramentas/README.md.
+// nada toca o banco de nenhuma loja. Ver site/README.md.
+//
+// Pra um print de TODAS as telas do sistema (e não só as do site), use
+// gerar-catalogo-telas.mjs, que compartilha o mesmo banco falso.
 
 const BASE = "http://localhost:5199";
 const SAIDA = process.argv[2] || "site/telas";
@@ -26,54 +29,7 @@ const contexto = await navegador.newContext({
   timezoneId: "America/Sao_Paulo",
 });
 
-const chamadasSemDados = new Set();
-
-await contexto.route("**demo.supabase.co/**", async (rota) => {
-  const req = rota.request();
-  const url = new URL(req.url());
-  const caminho = url.pathname;
-
-  // --- login ---
-  if (caminho.startsWith("/auth/v1/token")) {
-    return rota.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSAO) });
-  }
-  if (caminho.startsWith("/auth/v1/user")) {
-    return rota.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SESSAO.user) });
-  }
-  if (caminho.startsWith("/auth/v1/logout")) {
-    return rota.fulfill({ status: 204, body: "" });
-  }
-
-  // --- dados (PostgREST) ---
-  if (caminho.startsWith("/rest/v1/")) {
-    const tabela = caminho.replace("/rest/v1/", "").split("?")[0];
-    let linhas = TABELAS[tabela];
-    if (!linhas) {
-      chamadasSemDados.add(tabela);
-      linhas = [];
-    }
-
-    // aplica os filtros ".eq()" que viram "campo=eq.valor" na URL
-    for (const [campo, valor] of url.searchParams.entries()) {
-      if (["select", "order", "limit", "offset"].includes(campo)) continue;
-      if (!valor.startsWith("eq.")) continue;
-      const alvo = valor.slice(3);
-      linhas = linhas.filter((l) => l[campo] === undefined || String(l[campo]) === alvo);
-    }
-
-    // .maybeSingle()/.single() pedem um objeto, não uma lista
-    const querObjeto = (req.headers()["accept"] || "").includes("vnd.pgrst.object");
-    const corpo = querObjeto ? (linhas[0] ?? null) : linhas;
-    return rota.fulfill({
-      status: 200,
-      contentType: "application/json",
-      headers: { "content-range": `0-${Math.max(linhas.length - 1, 0)}/${linhas.length}` },
-      body: JSON.stringify(corpo),
-    });
-  }
-
-  return rota.fulfill({ status: 200, contentType: "application/json", body: "[]" });
-});
+await instalarBancoFalso(contexto);
 
 const pagina = await contexto.newPage();
 pagina.on("console", (m) => {
@@ -97,8 +53,9 @@ for (const [arquivo, rota, titulo] of TELAS) {
   console.log(`  ✓ ${titulo} -> ${arquivo}.jpg`);
 }
 
-if (chamadasSemDados.size) {
-  console.log("tabelas sem dado de demonstração:", [...chamadasSemDados].join(", "));
+const faltando = tabelasSemDados();
+if (faltando.size) {
+  console.log("tabelas sem dado de demonstração:", [...faltando].join(", "));
 }
 
 await navegador.close();

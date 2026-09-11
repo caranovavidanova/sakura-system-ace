@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MiniCalendario, type EventoCalendario } from "@/components/MiniCalendario";
 import { VeiculoIcone } from "@/components/VeiculoIcone";
+import { Valor, Variacao } from "@/components/Valor";
+import { Explicacao } from "@/components/Explicacao";
 import { useAuth } from "@/contexts/AuthContext";
 import { feriadosNacionais } from "@/lib/feriados";
 import { mensagemDeErro } from "@/lib/errors";
@@ -9,11 +11,20 @@ import { listarMovimentosCaixa } from "@/lib/caixa";
 import { listarClientes } from "@/lib/clientes";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
+import { formatarMoeda } from "@/schemas/dinheiro";
+import { mapaCustoPecas, mapaCustoServicos } from "@/schemas/metricasCaixa";
 import {
-  mapaCustoPecas,
-  mapaCustoServicos,
-  resumirMovimentos,
-} from "@/schemas/metricasCaixa";
+  DIAS_PARA_ALERTAR_OS,
+  contasVencendoAte,
+  diasDesde,
+  janelaDoMesAteODia,
+  mesmaJanelaNoMesAnterior,
+  metricasDoPeriodo,
+  rotuloDeIdade,
+  valoresPorCartao,
+  variacoesPorCartao,
+  SUBIR_E_BOM,
+} from "@/schemas/painelInicio";
 import { chaveData, diasDoCalendario } from "@/lib/calendario";
 import { listarContasPagar } from "@/lib/contasPagar";
 import {
@@ -25,7 +36,10 @@ import { AvisoAliquotaCompetencia } from "@/components/AvisoAliquotaCompetencia"
 import { avisoAliquotaCompetencia } from "@/schemas/aliquotaCompetencia";
 import { listarOrdens } from "@/lib/ordensServico";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { CARTOES_INICIO_PADRAO } from "@/types/configuracao";
+import {
+  CARTAO_METRICA_DESCRICAO,
+  CARTOES_INICIO_PADRAO,
+} from "@/types/configuracao";
 import type { CartaoMetrica, ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type { Peca } from "@/types/peca";
@@ -34,10 +48,6 @@ import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
 import { nomeOrdem } from "@/types/os";
 import type { OrdemServico } from "@/types/os";
-
-function formatarMoeda(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 const TITULO_CARTAO: Record<CartaoMetrica, string> = {
   vendas_mes: "Vendas mês",
@@ -55,6 +65,12 @@ const COR_CARTAO: Record<CartaoMetrica, string> = {
   contas_pagar_vencendo: "#D99A4E",
 };
 
+/** Reconstrói a data a partir de "YYYY-MM-DD", sem fuso no meio do caminho. */
+function dataDaChave(chave: string): Date {
+  const [ano, mes, dia] = chave.split("-").map(Number);
+  return new Date(ano, mes - 1, dia);
+}
+
 export function PainelPage() {
   const { lojaAtual } = useAuth();
   const navigate = useNavigate();
@@ -69,6 +85,20 @@ export function PainelPage() {
   const [confirmandoAliquota, setConfirmandoAliquota] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const hoje = new Date();
+  // Data como texto ("2026-09-11") pra usar de dependência dos useMemo: um
+  // `new Date()` é um objeto novo a cada render e faria tudo recalcular
+  // sempre.
+  const chaveDeHoje = chaveData(hoje);
+
+  // Qual mês o calendário está mostrando — só ele anda com as setas ‹ ›. Os
+  // cartões continuam sempre no mês corrente: "Vendas mês" mudando junto com
+  // a navegação do calendário seria uma armadilha.
+  const [mesVisivel, setMesVisivel] = useState(() => ({
+    ano: hoje.getFullYear(),
+    mes: hoje.getMonth(),
+  }));
 
   useEffect(() => {
     async function carregar() {
@@ -114,7 +144,6 @@ export function PainelPage() {
     carregar();
   }, [lojaAtual]);
 
-  const hoje = new Date();
   const avisoAliquota = avisoAliquotaCompetencia(configFiscal, hoje);
 
   async function handleConfirmarAliquota() {
@@ -131,62 +160,33 @@ export function PainelPage() {
     }
   }
 
-  const ano = hoje.getFullYear();
-  const mes = hoje.getMonth();
-  const diaDeHoje = hoje.getDate();
+  // Toda conta de dinheiro desta tela vive em `schemas/painelInicio.ts` e
+  // `schemas/metricasCaixa.ts`, como função pura testada. Aqui é só ligar os
+  // fios — é o Início que já mostrou faturamento no lugar de lucro uma vez
+  // (PROJETO_STATUS.md, seção 6, item 40).
+  const { valores, variacoes } = useMemo(() => {
+    const referencia = dataDaChave(chaveDeHoje);
+    const custoPeca = mapaCustoPecas(pecas);
+    const custoServico = mapaCustoServicos(servicos);
 
-  // Custo aqui é o custo de verdade: o que a loja pagou pelas peças e pelo
-  // serviço vendidos (`pecas.preco_custo` / `servicos.custo`) MAIS as saídas
-  // lançadas à mão (aluguel, sucata...). Antes só as saídas manuais entravam
-  // nessa conta — numa loja que não lança despesa nenhuma, o cartão "Lucros
-  // mês" acabava mostrando o faturamento inteiro como se fosse lucro. O
-  // ticket médio, pelo mesmo motivo, é por ORDEM e não por lançamento: uma OS
-  // paga em duas formas gera dois lançamentos e derrubava a média.
-  const { vendasMes, custosMes, lucrosMes, ticketMedioMes } = useMemo(() => {
-    // Do primeiro dia do mês até hoje. A checagem tem que ser de data
-    // inteira: comparar só o dia do mês (`getDate() <= diaDeHoje`, como era
-    // antes) deixa passar lançamento de mês nenhum — um movimento de 1º de
-    // dezembro entrava no cartão de setembro, porque o dia 1 é menor que o
-    // dia de hoje e a única outra checagem era "não é de antes deste mês".
-    const inicioMesAtual = new Date(ano, mes, 1);
-    const fimDeHoje = new Date(ano, mes, diaDeHoje, 23, 59, 59, 999);
-    const movimentosDoMes = movimentos.filter((movimento) => {
-      const dataMovimento = new Date(movimento.data);
-      return dataMovimento >= inicioMesAtual && dataMovimento <= fimDeHoje;
-    });
-
-    const resumo = resumirMovimentos(
-      movimentosDoMes,
-      mapaCustoPecas(pecas),
-      mapaCustoServicos(servicos),
+    const atual = metricasDoPeriodo(
+      movimentos,
+      janelaDoMesAteODia(referencia),
+      custoPeca,
+      custoServico,
+    );
+    const anterior = metricasDoPeriodo(
+      movimentos,
+      mesmaJanelaNoMesAnterior(referencia),
+      custoPeca,
+      custoServico,
     );
 
     return {
-      vendasMes: resumo.entradas,
-      custosMes: resumo.saidas + resumo.custoDeAquisicao,
-      lucrosMes: resumo.lucro,
-      ticketMedioMes: resumo.ticketMedio,
+      valores: valoresPorCartao(atual, contasVencendoAte(contas, referencia)),
+      variacoes: variacoesPorCartao(atual, anterior),
     };
-  }, [movimentos, pecas, servicos, ano, mes, diaDeHoje]);
-
-  const contasVencendoMes = useMemo(() => {
-    let total = 0;
-    for (const conta of contas) {
-      if (conta.status !== "pendente") continue;
-      const [anoVencimento, mesVencimento] = conta.vencimento.split("-").map(Number);
-      if (anoVencimento !== ano || mesVencimento - 1 !== mes) continue;
-      total += conta.valor;
-    }
-    return total;
-  }, [contas, ano, mes]);
-
-  const valoresPorMetrica: Record<CartaoMetrica, string> = {
-    vendas_mes: formatarMoeda(vendasMes),
-    custos_mes: formatarMoeda(custosMes),
-    lucro_mes: formatarMoeda(lucrosMes),
-    ticket_medio_mes: formatarMoeda(ticketMedioMes),
-    contas_pagar_vencendo: formatarMoeda(contasVencendoMes),
-  };
+  }, [movimentos, pecas, servicos, contas, chaveDeHoje]);
 
   const filaDeAtendimento = ordens
     .filter((o) => o.status === "em_andamento")
@@ -198,9 +198,8 @@ export function PainelPage() {
   // é isso que faz uma conta que vence dia 1º já aparecer no dia 31, no
   // pedaço apagadinho do mês que vem.
   const eventosDoCalendario = useMemo(() => {
-    const dias = diasDoCalendario(ano, mes);
+    const dias = diasDoCalendario(mesVisivel.ano, mesVisivel.mes);
     const chavesVisiveis = new Set(dias.map(chaveData));
-    const chaveDeHoje = chaveData(hoje);
 
     const feriadosPorData = new Map<string, string>();
     for (const anoVisivel of new Set(dias.map((d) => d.getFullYear()))) {
@@ -244,8 +243,7 @@ export function PainelPage() {
     }
 
     return eventos;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ano, mes, clientes, contas]);
+  }, [mesVisivel, clientes, contas, chaveDeHoje]);
 
   return (
     <div className="space-y-6">
@@ -283,7 +281,10 @@ export function PainelPage() {
               <CartaoValor
                 key={chave}
                 titulo={TITULO_CARTAO[chave]}
-                valor={valoresPorMetrica[chave]}
+                explicacao={CARTAO_METRICA_DESCRICAO[chave]}
+                valor={valores[chave]}
+                variacao={variacoes[chave]}
+                subirEBom={SUBIR_E_BOM[chave]}
                 cor={COR_CARTAO[chave]}
               />
             ))}
@@ -315,7 +316,7 @@ export function PainelPage() {
                         <th className="px-4 py-3 font-medium">Nº</th>
                         <th className="px-4 py-3 font-medium">Cliente</th>
                         <th className="px-4 py-3 font-medium">Veículo</th>
-                        <th className="px-4 py-3 font-medium">Aberta em</th>
+                        <th className="px-4 py-3 font-medium">Aberta</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -333,7 +334,7 @@ export function PainelPage() {
                           <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
                           <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
                           <td className="px-4 py-3">
-                            {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
+                            <Idade desde={ordem.data_abertura} hoje={hoje} />
                           </td>
                         </tr>
                       ))}
@@ -343,7 +344,12 @@ export function PainelPage() {
               )}
             </section>
 
-            <MiniCalendario ano={ano} mes={mes} eventos={eventosDoCalendario} />
+            <MiniCalendario
+              ano={mesVisivel.ano}
+              mes={mesVisivel.mes}
+              eventos={eventosDoCalendario}
+              aoMudarMes={(ano, mes) => setMesVisivel({ ano, mes })}
+            />
           </div>
 
           <section className="sakura-card p-4">
@@ -377,6 +383,9 @@ export function PainelPage() {
                             .filter(Boolean)
                             .join(" ")}`}
                       </p>
+                      <p className="mt-0.5 text-rotulo">
+                        <Idade desde={ordem.data_abertura} hoje={hoje} prefixo="No pátio" />
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -389,13 +398,46 @@ export function PainelPage() {
   );
 }
 
+/**
+ * "há 3 dias" em vez de "09/09" — a data crua obriga a contar nos dedos, e um
+ * carro parado no pátio é dinheiro parado. A partir de
+ * `DIAS_PARA_ALERTAR_OS` a cor muda, que é o que faz alguém agir.
+ */
+function Idade({
+  desde,
+  hoje,
+  prefixo,
+}: {
+  desde: string;
+  hoje: Date;
+  prefixo?: string;
+}) {
+  const dias = diasDesde(desde, hoje);
+  const alerta = dias >= DIAS_PARA_ALERTAR_OS;
+  return (
+    <span
+      className={alerta ? "font-medium text-amber-400" : "text-sakura-muted"}
+      title={`Desde ${new Date(desde).toLocaleDateString("pt-BR")}`}
+    >
+      {prefixo ? `${prefixo} ` : ""}
+      {rotuloDeIdade(dias)}
+    </span>
+  );
+}
+
 function CartaoValor({
   titulo,
+  explicacao,
   valor,
+  variacao,
+  subirEBom,
   cor,
 }: {
   titulo: string;
-  valor: string;
+  explicacao: string;
+  valor: number;
+  variacao: number | null;
+  subirEBom: boolean;
   cor: string;
 }) {
   return (
@@ -411,9 +453,16 @@ function CartaoValor({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-rotulo text-sakura-muted">{titulo}</p>
-        <span className="text-sakura-purple-dark/70">›</span>
+        <Explicacao titulo={titulo} texto={explicacao} />
       </div>
-      <p className="mt-2 text-titulo font-semibold text-sakura-purple-dark">{valor}</p>
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <Valor valor={valor} className="text-metrica font-semibold" />
+        <Variacao
+          percentual={variacao}
+          subirEBom={subirEBom}
+          comparadoCom="o mesmo período do mês passado"
+        />
+      </div>
     </div>
   );
 }

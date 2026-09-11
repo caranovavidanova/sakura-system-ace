@@ -5,6 +5,7 @@ import {
   mapaCustoServicos,
   resumirMovimentos,
 } from "@/schemas/metricasCaixa";
+import { Valor } from "@/components/Valor";
 import { nomeOrdem } from "@/types/os";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
@@ -129,8 +130,11 @@ export function DiarioSection({
         </div>
         <div className="sakura-card p-4">
           <p className="text-rotulo text-sakura-muted">Lucro do dia</p>
-          <p className="text-destaque font-semibold text-sakura-purple-dark">
-            {formatarMoeda(totalLucro)}
+          {/* Dia de prejuízo existe (o lucro desconta custo de aquisição e as
+              saídas lançadas à mão) e precisa parecer prejuízo — daí o
+              <Valor>, o mesmo dos cartões do Início. */}
+          <p>
+            <Valor valor={totalLucro} className="text-destaque font-semibold" />
           </p>
         </div>
       </div>
@@ -193,7 +197,9 @@ export function DiarioSection({
                       {m.tipo === "saida" ? "− " : ""}
                       {formatarMoeda(m.valor)}
                     </td>
-                    <td className="px-4 py-3">{lucro !== null ? formatarMoeda(lucro) : "—"}</td>
+                    <td className="px-4 py-3">
+                      {lucro !== null ? <Valor valor={lucro} classeDeCor="" /> : "—"}
+                    </td>
                   </tr>
                 );
               })}
@@ -203,8 +209,12 @@ export function DiarioSection({
                 <td className="px-4 py-3" colSpan={4}>
                   Total do dia
                 </td>
-                <td className="px-4 py-3">{formatarMoeda(entradas - saidas)}</td>
-                <td className="px-4 py-3">{formatarMoeda(totalLucro)}</td>
+                <td className="px-4 py-3">
+                  <Valor valor={entradas - saidas} classeDeCor="" />
+                </td>
+                <td className="px-4 py-3">
+                  <Valor valor={totalLucro} classeDeCor="" />
+                </td>
               </tr>
             </tfoot>
           </table>

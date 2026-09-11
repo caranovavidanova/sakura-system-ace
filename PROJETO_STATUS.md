@@ -251,7 +251,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # do dia a dia + menu de três pontinhos pro que não dá pra
 │   │                             # desfazer — ver item 51 da seção 6), LojaSwitcher.tsx
 │   │                             # (seletor de loja ativa, só aparece com 2+ lojas — fica no
-│   │                             # rodapé da Sidebar), VersaoApp.tsx (mostra a versão do app,
+│   │                             # rodapé da Sidebar), Valor.tsx (valor em dinheiro com o
+│   │                             # negativo parecendo negativo — cor, seta e sinal; exporta
+│   │                             # também <Variacao>, o "+12% vs. mês passado" dos cartões do
+│   │                             # Início — ver item 54 da seção 6), Explicacao.tsx (o "?" que
+│   │                             # explica um número em uma frase, em portal pro <body> como o
+│   │                             # menu de ações), VersaoApp.tsx (mostra a versão do app,
 │   │                             # pequena, no canto inferior direito, lendo
 │   │                             # window.sakuraApp.version exposto pelo preload), Combobox.tsx
 │   │                             # (select com busca por digitação — abre mostrando a lista
@@ -400,7 +405,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # testáveis (metricasCaixa.ts — lucro/custo/ticket médio
 │   │                             # compartilhados; faturamento.ts — juros/parcelas/rateio;
 │   │                             # comissoes.ts — comissão por vendedor e por técnico;
-│   │                             # dinheiro.ts — paraCentavos/deCentavos/arredondarCentavo/somar,
+│   │                             # painelInicio.ts — as contas da tela Início: janela dos
+│   │                             # cartões, comparação com a mesma fatia do mês anterior,
+│   │                             # contas a vencer nos próximos 15 dias e idade de uma OS;
+│   │                             # dinheiro.ts — paraCentavos/deCentavos/arredondarCentavo/somar
+│   │                             # + formatarMoeda,
 │   │                             # as contas de centavo num lugar só: a MESMA expressão de
 │   │                             # arredondamento estava copiada 12 vezes em 7 arquivos, ver
 │   │                             # item 49 da seção 6) + arquitetura.test.ts (não testa conta
@@ -1836,6 +1845,22 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     teste de regra que nunca falhou na frente de alguém não prova nada (a primeira versão do teste
     de arquitetura, item 49, passou batido justo na forma mais comum do bug).
 
+54. **Duas cores de texto no mesmo elemento: vence a que o Tailwind escreveu por último NO CSS,
+    não a última do `class=` (11/09/2026).** O componente `<Valor>` nasceu pra uma coisa só —
+    fazer prejuízo parecer prejuízo no Início — e a primeira versão recebia a cor junto com o
+    tamanho, num `className` só: `text-red-400` (do componente) e `text-sakura-purple-dark` (de
+    quem chamava) acabavam no mesmo elemento. Resultado: **o prejuízo saiu na tela com a cor de
+    sempre**, ou seja, o componente não fazia exatamente aquilo que ele existia pra fazer.
+    Leitura de código não pegou; renderizar a tela pegou na primeira olhada.
+    É a terceira cara da mesma família (itens 14 e 51): ali era camada — CSS fora de `@layer`
+    vence classe do Tailwind, e classe do Tailwind vence `@layer base`; aqui é **ordem dentro da
+    mesma camada**, onde a ordem do atributo `class` não conta pra nada.
+    **Corrigido** separando a cor do positivo num parâmetro próprio (`classeDeCor`), de modo que
+    nunca existam duas. **A trava é teste, não este parágrafo**: `Valor.test.tsx` renderiza o
+    componente com `renderToStaticMarkup` (sem navegador, roda no `npm test` normal) e reprova se
+    sair mais de uma cor de texto no elemento. Foi conferido reintroduzindo o bug de propósito e
+    vendo o teste ficar vermelho.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -2274,17 +2299,46 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   calendário mostra `dd/mm` quando o evento é de outro mês. `components/MiniCalendario.tsx` recebe
   evento com `data` ISO (era só o número do dia); `lib/calendario.ts` guarda as duas funções puras
   (`diasDoCalendario`, `chaveData` — essa usa `toLocaleDateString("sv-SE")`, nunca `toISOString`,
-  pelo motivo do item 34 da seção 6), com teste. **Ponto cego que continua**: o cartão "Contas a
-  pagar vencendo" soma só o mês corrente (`PainelPage.tsx`), então no dia 31 ele pode mostrar
-  R$ 0,00 com uma conta vencendo amanhã — não foi mexido, ela sabe.
+  pelo motivo do item 34 da seção 6), com teste. **Desde 11/09/2026 o calendário também anda de
+  mês**, com as setas ‹ › no cabeçalho e um "Voltar para hoje" que só aparece fora do mês
+  corrente (item `TL-04` do guia) — a grade de 6 semanas resolvia o dia 31, mas "o que vence mês
+  que vem?" continuava sem resposta. **Os cartões não seguem a navegação de propósito**: eles são
+  sempre do mês corrente, senão "Vendas mês" mudaria junto e viraria armadilha.
 - **Início**: 3 cartões de tendência personalizáveis (Configurações → "Cartões do Início", padrão
-  Vendas/Lucro/Ticket médio, sem gráfico — só valor + seta; **"Lucros mês" e "Ticket médio" foram
+  Vendas/Lucro/Ticket médio; **"Lucros mês" e "Ticket médio" foram
   corrigidos em 28/08/2026** — o lucro passou a descontar o custo real de peça e serviço, e o
   ticket médio a dividir por OS e não por lançamento de Caixa; ver item 40 da seção 6. O número do
   lucro **caiu bastante** com a correção, porque antes mostrava o faturamento quase inteiro),
   calendário do mês com feriados
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
   "Veículos no pátio" (com ícone por tipo/cor).
+  **Os cartões foram retrabalhados em 11/09/2026 (item `TL-04` do guia de melhorias)**, em quatro
+  frentes — todas com a conta em `schemas/painelInicio.ts`, como função pura testada:
+  - **"Contas a pagar vencendo" deixou de olhar o mês corrente** e passou a somar os **próximos
+    15 dias corridos**, já incluindo o que passou do vencimento. Era o ponto cego conhecido: no
+    dia 31 o cartão mostrava R$ 0,00 com uma conta vencendo no dia seguinte, porque a fronteira
+    do mês não quer dizer nada pra quem paga conta.
+  - **Número negativo agora parece negativo**: cor de alerta, seta pra baixo e o sinal escrito
+    (`components/Valor.tsx`). Antes um "Lucro mês −R$ 8.368,00" saía igualzinho a um número
+    positivo, nesta que é a tela que o dono olha todo dia de relance. As três marcas juntas são
+    de propósito — cor sozinha não serve pra quem não distingue vermelho de verde. O mesmo
+    componente passou a ser usado no "Lucro do dia" e nos totais do Caixa Diário, pelo mesmo
+    motivo; o resto das tabelas de dinheiro do app ainda usa o texto cru (troca mecânica, pode
+    ir acontecendo conforme cada tela for mexida).
+  - **A seta "›" genérica virou a variação de verdade** ("↑ +12%"), medida contra **a mesma fatia
+    do mês anterior** (do dia 1º até o mesmo dia) — comparar meio mês com um mês inteiro diria
+    que a loja está sempre caindo. Sem período anterior, **não aparece nada**, em vez de uma seta
+    que promete tendência e não entrega. Verde/vermelho dependem do cartão: custo subindo não
+    sai em verde.
+  - **Cada cartão ganhou um "?"** com a definição em uma frase (`components/Explicacao.tsx`,
+    texto em `CARTAO_METRICA_DESCRICAO`). Existe porque a definição de "lucro" deste sistema já
+    mudou uma vez e o número caiu bastante — sem a explicação, quem olha acha que o negócio
+    piorou.
+  **E "OS abertas" e "Veículos no pátio" passaram a dizer há quanto tempo** ("ontem", "há 6
+  dias"), em cor de alerta a partir de 3 dias (`DIAS_PARA_ALERTAR_OS`) — a data crua obrigava a
+  contar nos dedos, e carro parado no pátio é dinheiro parado. A data exata continua no
+  balãozinho do mouse. **O limite de 3 dias é constante no código, não configuração de tela** —
+  virar ajuste por loja pediria migration.
   **Aviso da alíquota do mês (11/09/2026, item `TR-11.2` do guia de melhorias)**: no topo do
   Início, uma faixa avisa que a alíquota daquela competência precisa ser cadastrada no portal da
   prefeitura antes da primeira NFS-e do mês — com o passo a passo curto e um botão "Já cadastrei"
@@ -3300,8 +3354,9 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.30"` — publicada em 11/09/2026, com a `main` em dia e
-  **nada esperando tag** (ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.30"` — é a última tag publicada, mas a `main` **já tem cinco
+  itens esperando tag** (`TR-02.1`, `TR-02.2`, `TR-02.3`, `TR-01.1` e `TL-04`), por decisão dela
+  de acumular (ver "O ponto exato onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3741,12 +3796,14 @@ Postgres local e a `0049` sozinha duas vezes num banco com dado plantado.
 
 ### ⏸ O ponto exato onde parou (11/09/2026, fim do dia) — LEIA ISTO PRIMEIRO
 
-**Os três itens `P0` da Etapa 2 do guia saíram e estão na `main`. Nada foi publicado em tag** —
-o computador da loja segue na `v0.9.30`, então nada disso chegou lá ainda. **Perguntar a ela se é
-pra publicar** antes de mexer em versão (ver "Gerar o instalador Windows", seção 9).
+**Cinco itens da Etapa 2 do guia saíram e estão na `main`. Nada foi publicado em tag** — o
+computador da loja segue na `v0.9.30`, então nada disso chegou lá ainda; ela decidiu esperar e
+publicar tudo junto. **Perguntar a ela se é pra publicar** antes de mexer em versão (ver "Gerar
+o instalador Windows", seção 9).
 
-Os três são de ergonomia de balcão, e o fio comum é o mesmo: o app foi desenhado pra ser usado só
-de teclado, e faltava a outra metade disso.
+Os três primeiros são de ergonomia de balcão, e o fio comum é o mesmo: o app foi desenhado pra
+ser usado só de teclado, e faltava a outra metade disso. (Os outros dois, `TR-01.1` e `TL-04`,
+estão no fim desta seção.)
 
 1. **`TR-02.2` — foco de teclado visível** em todo campo, botão e link (PR #233).
 2. **`TR-02.3` — foco preso dentro do modal**, com `Esc`, devolução do foco e fundo inerte
@@ -3757,10 +3814,9 @@ de teclado, e faltava a outra metade disso.
 O que cada um faz está em "Estado atual por módulo" (seção 7, no começo, junto dos outros
 comportamentos globais); o que se aprendeu está nos itens **51 e 52** da seção 6.
 
-**Uma pergunta aberta pra ela**, que é decisão de gosto e não de código: "Editar" e "Inativar"
-viraram **ícone** nas listas (com o nome aparecendo no balãozinho do mouse), que é o que o guia
-pedia. Se ela achar melhor manter a **palavra escrita** na linha, é trocar uma palavra por lista.
-Vale mostrar uma tela pra ela antes de publicar tag.
+**A pergunta aberta sobre os ícones foi respondida (11/09/2026)**: ela viu a tela de Clientes
+renderizada e escolheu **manter o ícone** (lápis pra editar, três pontinhos pro resto). Não
+reabrir.
 
 **Como foi validado**: além de `tsc`, lint, os 296 testes nos dois fusos e o `npm run contraste`,
 as duas mudanças foram dirigidas **no Electron real** (Playwright + `xvfb`, renderizando os
@@ -3778,7 +3834,38 @@ significa está em "Estado atual por módulo"; as três lições, no item **53**
 elas, que **a premissa do guia estava errada** sobre o tamanho das tabelas, e que o `TR-02.1`
 tinha quebrado em silêncio o gerador do catálogo de telas.
 
-**Da Etapa 2, ainda não foram feitos**: `TR-01.3` (auditoria de contraste WCAG), `TL-04` (cartões
-e calendário do Início), `TL-08` (cadastrar cliente sem sair da OS), `TL-11`/`TL-12` (estoque
-mínimo e campos fiscais), `TL-27` (categoria obrigatória no caixa) e `FN-03` (WhatsApp). Ela
-escolhe o próximo pelo código do item — não sair fazendo a lista inteira.
+**E, escolhido por ela na mesma conversa, saiu o `TL-04` — os cartões e o calendário do Início.**
+O que cada pedaço faz está em "Início", na seção 7; a lição nova está no item **54** da seção 6.
+Em uma linha cada: "Contas a pagar vencendo" passou a olhar 15 dias corridos em vez do mês (era o
+ponto cego do dia 31); prejuízo virou vermelho com seta e sinal, inclusive no Caixa Diário; a
+seta "›" que não indicava nada virou a variação real contra a mesma fatia do mês anterior; cada
+cartão ganhou um "?" com a definição em uma frase; e OS aberta e carro no pátio passaram a dizer
+"há 6 dias", em amarelo a partir de 3. **Do `TL-04` ficou de fora, de propósito, só o item P2**
+(mais opções de cartão: OS abertas, contas a receber vencidas, peças abaixo do mínimo).
+
+**Uma coisa que apareceu no caminho e NÃO foi mexida**, porque é do `TR-01.3` e meio-arrumar
+seria pior: há vermelho escuro (`text-red-600`/`text-red-700`) usado **sobre card escuro** em
+vários lugares — a coluna de saída do Caixa Diário e as mensagens de erro embaixo dos campos de
+formulário são os dois casos claros. São sobra do tema claro antigo, e o `npm run contraste` não
+pega porque fundo e letra ficam em elementos diferentes (mesma limitação já anotada no item 17).
+São 92 ocorrências de vermelho escuro no app, quase todas legítimas (`bg-red-50` + `text-red-700`
+juntos); separar as legítimas das ilegíveis é justamente o trabalho do `TR-01.3`.
+
+**Da Etapa 2, ainda não foram feitos**: `TR-01.3` (auditoria de contraste WCAG), `TL-08`
+(cadastrar cliente sem sair da OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais), `TL-27`
+(categoria obrigatória no caixa) e `FN-03` (WhatsApp). Ela escolhe o próximo pelo código do item
+— não sair fazendo a lista inteira.
+
+**Nada disso foi publicado em tag** — o computador da loja segue na `v0.9.30`. Ela decidiu, em
+11/09/2026, **esperar** e publicar junto com o que vier depois (mesmo combinado da `v0.9.29`).
+Então já são **cinco** itens prontos na `main` e fora da loja: `TR-02.1`, `TR-02.2`, `TR-02.3`,
+`TR-01.1` e `TL-04`. Quando ela disser pra publicar, é o passo a passo de "Gerar o instalador
+Windows e publicar uma versão nova" (seção 9) — subir o `package.json`, PR, merge,
+`workflow_dispatch` com `ref: "main"`. **Não publicar sozinho.**
+
+**Como o `TL-04` foi validado**: `tsc`, lint e `npm run contraste` limpos, **327 testes** passando
+nos dois fusos (eram 296), as 54 telas do catálogo geradas de novo sem nenhuma falha, e a tela
+renderizada de verdade (Playwright + `xvfb`, com o Supabase respondido por dados de mentira) em
+cinco situações: cartões normais, prejuízo, variação contra o mês anterior, "?" aberto, calendário
+no mês seguinte e OS envelhecida. Foi a renderização que pegou o bug do item 54 — o código lia
+certo.

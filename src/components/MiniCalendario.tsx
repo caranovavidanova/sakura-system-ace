@@ -10,6 +10,12 @@ interface MiniCalendarioProps {
   ano: number;
   mes: number; // 0-11
   eventos: EventoCalendario[];
+  /**
+   * Quando informado, aparecem as setas ‹ › pra andar de mês (e um "Hoje" pra
+   * voltar). A grade de 6 semanas resolveu o dia 31 — mostrar o comecinho do
+   * mês que vem —, mas "o que vence mês que vem?" continuava sem resposta.
+   */
+  aoMudarMes?: (ano: number, mes: number) => void;
 }
 
 const DIAS_SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -28,8 +34,13 @@ const NOMES_MES = [
   "Dezembro",
 ];
 
-export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
-  const chaveDeHoje = chaveData(new Date());
+const CLASSE_SETA =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg text-sakura-purple transition hover:bg-white/10";
+
+export function MiniCalendario({ ano, mes, eventos, aoMudarMes }: MiniCalendarioProps) {
+  const agora = new Date();
+  const chaveDeHoje = chaveData(agora);
+  const noMesDeHoje = ano === agora.getFullYear() && mes === agora.getMonth();
 
   const eventosPorData = new Map<string, EventoCalendario[]>();
   for (const evento of eventos) {
@@ -38,11 +49,53 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
     eventosPorData.set(evento.data, lista);
   }
 
+  // `new Date(ano, mes ± 1, 1)` resolve a virada de ano sozinho — dezembro
+  // mais um vira janeiro do ano seguinte, sem conta na mão.
+  function irParaMes(passo: number) {
+    const destino = new Date(ano, mes + passo, 1);
+    aoMudarMes?.(destino.getFullYear(), destino.getMonth());
+  }
+
   return (
     <div className="sakura-card p-4">
-      <p className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
-        {NOMES_MES[mes]}
-      </p>
+      <div className="mb-3 flex items-center justify-between gap-1">
+        {aoMudarMes && (
+          <button
+            type="button"
+            onClick={() => irParaMes(-1)}
+            aria-label="Mês anterior"
+            title="Mês anterior"
+            className={CLASSE_SETA}
+          >
+            ‹
+          </button>
+        )}
+        <p className="text-corpo font-semibold text-sakura-purple-dark">
+          {NOMES_MES[mes]} de {ano}
+        </p>
+        {aoMudarMes && (
+          <button
+            type="button"
+            onClick={() => irParaMes(1)}
+            aria-label="Próximo mês"
+            title="Próximo mês"
+            className={CLASSE_SETA}
+          >
+            ›
+          </button>
+        )}
+      </div>
+
+      {aoMudarMes && !noMesDeHoje && (
+        <button
+          type="button"
+          onClick={() => aoMudarMes(agora.getFullYear(), agora.getMonth())}
+          className="mb-3 w-full rounded-lg bg-white/10 py-1 text-rotulo font-medium text-sakura-pink hover:bg-white/20"
+        >
+          Voltar para hoje
+        </button>
+      )}
+
       <div className="grid grid-cols-7 gap-1 text-center text-rotulo">
         {DIAS_SEMANA.map((dia, i) => (
           <div key={i} className="py-1 font-medium text-sakura-purple-dark/75">

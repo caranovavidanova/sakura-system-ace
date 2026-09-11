@@ -74,6 +74,34 @@ export const CARTAO_METRICA_LABEL: Record<CartaoMetrica, string> = {
   contas_pagar_vencendo: "Contas a pagar vencendo",
 };
 
+/**
+ * Quantos dias à frente o cartão "Contas a pagar vencendo" enxerga.
+ *
+ * Mora aqui, e não junto da conta em `schemas/painelInicio.ts`, porque a
+ * explicação do cartão (logo abaixo) precisa citar esse número — e número
+ * escrito duas vezes é número que uma hora diverge.
+ */
+export const DIAS_DE_CONTAS_VENCENDO = 15;
+
+/**
+ * O que cada cartão conta, em uma frase, pro "?" ao lado do título.
+ *
+ * Não é enfeite: a definição de "lucro" deste sistema já mudou uma vez
+ * (PROJETO_STATUS.md, seção 6, item 40) e o número caiu bastante de um dia
+ * pro outro. Sem a definição à mão, quem olha conclui que o negócio piorou.
+ */
+export const CARTAO_METRICA_DESCRICAO: Record<CartaoMetrica, string> = {
+  vendas_mes:
+    "Tudo que entrou no caixa do dia 1º até hoje: ordens de serviço faturadas mais as entradas lançadas à mão.",
+  custos_mes:
+    "O que a loja pagou pelas peças e pelos serviços vendidos no mês, mais as saídas lançadas à mão (aluguel, sucata, fornecedor).",
+  lucro_mes:
+    "Vendas menos o custo das peças e serviços vendidos, menos as saídas lançadas no caixa.",
+  ticket_medio_mes:
+    "Quanto rendeu, em média, cada ordem de serviço faturada no mês — a média é por ordem, não por pagamento, então dividir em duas formas não muda o número.",
+  contas_pagar_vencendo: `Soma das contas ainda não pagas que vencem nos próximos ${DIAS_DE_CONTAS_VENCENDO} dias, já incluindo as que passaram do vencimento.`,
+};
+
 // Custos não entra no padrão de propósito — a usuária achou estranho mostrar
 // algo "negativo" logo de cara no Início; continua disponível pra quem
 // quiser escolher em Configurações → "Cartões do Início".

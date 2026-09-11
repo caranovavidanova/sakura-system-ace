@@ -1,9 +1,8 @@
 import type { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
-import { itemFormVazio, totalItensFormulario, type OrdemServicoFormValues } from "@/schemas/ordemServico";
+import { itemFormVazio, type OrdemServicoFormValues } from "@/schemas/ordemServico";
 import type { Funcionario } from "@/types/funcionario";
 import type { ItemOS, PatchItemOS } from "@/types/os";
-import { totalOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 import { ItemExistenteRow } from "../ItemExistenteRow";
@@ -15,7 +14,6 @@ export function ItensFields({
   watch,
   setValue,
   itensExistentes,
-  ehEdicao,
   podeAdicionarItem,
   podeEditarItem,
   avisoItens,
@@ -23,13 +21,14 @@ export function ItensFields({
   pecas,
   servicos,
   funcionarios,
+  saldoPorPeca,
+  saldoCarregado,
 }: {
   control: Control<OrdemServicoFormValues>;
   register: UseFormRegister<OrdemServicoFormValues>;
   watch: UseFormWatch<OrdemServicoFormValues>;
   setValue: UseFormSetValue<OrdemServicoFormValues>;
   itensExistentes: ItemOS[];
-  ehEdicao: boolean;
   podeAdicionarItem: boolean;
   podeEditarItem: boolean;
   avisoItens: string | null;
@@ -37,10 +36,10 @@ export function ItensFields({
   pecas: Peca[];
   servicos: Servico[];
   funcionarios: Funcionario[];
+  saldoPorPeca: Map<string, number>;
+  saldoCarregado: boolean;
 }) {
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
-  const itensAssistidos = watch("itens");
-  const totalGeral = totalOrdem(itensExistentes) + totalItensFormulario(itensAssistidos);
 
   return (
     <section>
@@ -76,6 +75,8 @@ export function ItensFields({
             pecas={pecas}
             servicos={servicos}
             funcionarios={funcionarios}
+            saldoPorPeca={saldoPorPeca}
+            saldoCarregado={saldoCarregado}
             onRemover={() => remove(index)}
           />
         ))}
@@ -99,11 +100,6 @@ export function ItensFields({
           </button>
         </div>
       )}
-
-      <p className="mt-3 text-right text-corpo font-semibold text-sakura-purple-dark">
-        Total {ehEdicao ? "geral" : "previsto"}:{" "}
-        {totalGeral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-      </p>
     </section>
   );
 }

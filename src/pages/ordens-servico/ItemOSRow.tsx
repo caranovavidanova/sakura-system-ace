@@ -1,5 +1,6 @@
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Combobox } from "@/components/Combobox";
+import { avisoPecaSemCusto, avisoSaldoInsuficiente } from "@/schemas/avisosOrdemServico";
 import {
   paraDisplayNumero,
   totalItensFormulario,
@@ -18,6 +19,14 @@ interface ItemOSRowProps {
   pecas: Peca[];
   servicos: Servico[];
   funcionarios: Funcionario[];
+  /**
+   * Saldo em estoque por peça (id da peça → saldo da loja). Chega vazio
+   * enquanto a consulta de movimentações não voltou — nesse meio-tempo os
+   * avisos ficam calados, que é melhor que anunciar "estoque zerado" pra
+   * tudo enquanto carrega.
+   */
+  saldoPorPeca: Map<string, number>;
+  saldoCarregado: boolean;
   onRemover: () => void;
 }
 
@@ -29,6 +38,8 @@ export function ItemOSRow({
   pecas,
   servicos,
   funcionarios,
+  saldoPorPeca,
+  saldoCarregado,
   onRemover,
 }: ItemOSRowProps) {
   const tipo = watch(`itens.${index}.tipo`);
@@ -65,6 +76,18 @@ export function ItemOSRow({
   // sem ter que multiplicar de cabeça.
   const item = watch(`itens.${index}`);
   const totalItem = item ? totalItensFormulario([item]) : 0;
+
+  // Os dois avisos de peça (item TL-08 do guia). Nenhum deles impede de
+  // salvar: o balcão não pode parar por causa de cadastro incompleto — a
+  // regra é avisar enquanto ainda é barato consertar. As frases em si são
+  // funções puras testadas em `schemas/avisosOrdemServico.ts`.
+  const pecaEscolhida = tipo === "peca" ? pecas.find((p) => p.id === pecaId) : undefined;
+  const saldoDaPeca = pecaEscolhida ? saldoPorPeca.get(pecaEscolhida.id) : undefined;
+  const avisoEstoque =
+    pecaEscolhida && saldoCarregado
+      ? avisoSaldoInsuficiente(watch(`itens.${index}.quantidade`), saldoDaPeca)
+      : null;
+  const avisoCusto = avisoPecaSemCusto(pecaEscolhida);
 
   return (
     <div className="space-y-2 rounded-lg border border-sakura-gray/30 p-3">
@@ -165,12 +188,31 @@ export function ItemOSRow({
         </label>
       </div>
 
-      <p className="text-right text-rotulo text-sakura-purple-dark/90">
-        Total deste item:{" "}
-        <span className="font-semibold text-sakura-purple-dark">
-          {totalItem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-        </span>
-      </p>
+      {(avisoEstoque || avisoCusto) && (
+        <div className="space-y-1">
+          {avisoEstoque && <p className="text-rotulo text-amber-300">{avisoEstoque}</p>}
+          {avisoCusto && <p className="text-rotulo text-amber-300">{avisoCusto}</p>}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-3">
+        {/* O saldo só aparece aqui quando NÃO há aviso de estoque: o aviso
+            já começa dizendo o saldo, e mostrar os dois seguidos era a mesma
+            informação repetida em duas linhas coladas. */}
+        <p className="text-rotulo text-sakura-muted">
+          {pecaEscolhida && saldoCarregado && !avisoEstoque
+            ? `Saldo em estoque: ${(saldoDaPeca ?? 0).toLocaleString("pt-BR")}${
+                pecaEscolhida.unidade ? ` ${pecaEscolhida.unidade}` : ""
+              }`
+            : ""}
+        </p>
+        <p className="text-rotulo text-sakura-purple-dark/90">
+          Total deste item:{" "}
+          <span className="font-semibold text-sakura-purple-dark">
+            {totalItem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          </span>
+        </p>
+      </div>
     </div>
   );
 }

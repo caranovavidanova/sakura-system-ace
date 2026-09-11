@@ -23,6 +23,15 @@ interface ComboboxProps {
    * opção da lista desfaz o que foi digitado (comportamento de sempre).
    */
   permitirLivre?: boolean;
+  /**
+   * Botão fixo no fim da lista, pra uma ação que não é "escolher uma das
+   * opções" — hoje o "+ Cadastrar novo cliente/veículo" da abertura de OS.
+   * Fica no fim de propósito: quem procurou e não achou já rolou a lista
+   * inteira, e é exatamente aí que a vontade de cadastrar aparece. Continua
+   * aparecendo quando a busca não acha nada, que é o momento em que ele mais
+   * importa.
+   */
+  acaoExtra?: { rotulo: string; onAcionar: () => void };
 }
 
 // Remove acento pra busca em português não exigir digitar "ç"/"ã" certinho
@@ -56,6 +65,7 @@ export function Combobox({
   className,
   id,
   permitirLivre,
+  acaoExtra,
 }: ComboboxProps) {
   const [aberto, setAberto] = useState(false);
   const [filtro, setFiltro] = useState("");
@@ -78,6 +88,12 @@ export function Combobox({
 
   const mostrarOpcaoVazia = opcaoVazia !== undefined && filtro.trim() === "";
 
+  // Ordem dos itens navegáveis pelo teclado: [opção vazia?] → opções → [ação
+  // extra?]. Guardar isso em duas constantes evita repetir a aritmética de
+  // deslocamento em cada lugar que precisa dela.
+  const deslocamento = mostrarOpcaoVazia ? 1 : 0;
+  const indiceAcaoExtra = acaoExtra ? deslocamento + opcoesFiltradas.length : -1;
+
   function abrir() {
     if (desabilitado) return;
     setFiltro("");
@@ -91,6 +107,34 @@ export function Combobox({
     setAberto(false);
   }
 
+  function acionarExtra() {
+    // Fecha a lista ANTES de chamar a ação: ela costuma abrir um modal, e
+    // uma lista suspensa esquecida aberta por trás dele ficaria pendurada na
+    // tela sem dono.
+    setFiltro("");
+    setAberto(false);
+
+    // E TIRA O FOCO deste campo. Parece detalhe e não é — achado testando o
+    // fluxo no app de verdade: o `Modal` devolve o foco pro elemento que o
+    // abriu (é o que faz quem usa só teclado continuar de onde parou), e
+    // esse elemento seria justo este input. Ao fechar o modal, o `onFocus`
+    // daqui reabria a lista, e o campo voltava a mostrar o filtro VAZIO —
+    // ou seja, logo depois de cadastrar um cliente o campo Cliente parecia
+    // em branco, que é exatamente a impressão de "não funcionou" que o
+    // cadastro rápido existe pra evitar.
+    //
+    // Sem foco aqui, o modal não tem pra onde devolver, e o campo fica
+    // fechado mostrando o que foi escolhido. O preço é pequeno e conhecido:
+    // quem cancelar o modal volta sem foco em campo nenhum, em vez de voltar
+    // pra este. Uma tentativa anterior de resolver isso com uma "marca pra
+    // ignorar o próximo foco" foi descartada por ser frágil — o clique que
+    // sobra do próprio mousedown consumia a marca antes da hora, e o bug
+    // voltava.
+    inputRef.current?.blur();
+
+    acaoExtra?.onAcionar();
+  }
+
   function aoTeclar(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!aberto) {
       if (e.key === "ArrowDown" || e.key === "Enter") {
@@ -99,7 +143,7 @@ export function Combobox({
       }
       return;
     }
-    const total = opcoesFiltradas.length + (mostrarOpcaoVazia ? 1 : 0);
+    const total = deslocamento + opcoesFiltradas.length + (acaoExtra ? 1 : 0);
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setIndiceAtivo((i) => Math.min(i + 1, total - 1));
@@ -110,8 +154,10 @@ export function Combobox({
       e.preventDefault();
       if (mostrarOpcaoVazia && indiceAtivo === 0) {
         selecionar("");
+      } else if (acaoExtra && indiceAtivo === indiceAcaoExtra) {
+        acionarExtra();
       } else {
-        const opcao = opcoesFiltradas[indiceAtivo - (mostrarOpcaoVazia ? 1 : 0)];
+        const opcao = opcoesFiltradas[indiceAtivo - deslocamento];
         if (opcao) {
           selecionar(opcao.valor);
         } else if (permitirLivre && filtro.trim()) {
@@ -202,7 +248,7 @@ export function Combobox({
             )
           ) : (
             opcoesFiltradas.map((opcao, indice) => {
-              const indiceReal = indice + (mostrarOpcaoVazia ? 1 : 0);
+              const indiceReal = indice + deslocamento;
               return (
                 <button
                   type="button"
@@ -219,6 +265,24 @@ export function Combobox({
                 </button>
               );
             })
+          )}
+
+          {acaoExtra && (
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                // Mesma razão do resto da lista: a seleção acontece no
+                // mousedown, nunca num onClick separado — ver item 16 da
+                // seção 6 do PROJETO_STATUS.md.
+                e.preventDefault();
+                acionarExtra();
+              }}
+              className={`block w-full border-t border-sakura-gray/25 px-3 py-2 text-left text-corpo font-medium text-sakura-pink ${
+                indiceAtivo === indiceAcaoExtra ? "bg-sakura-purple/20" : "hover:bg-white/5"
+              }`}
+            >
+              {acaoExtra.rotulo}
+            </button>
           )}
         </div>
       )}

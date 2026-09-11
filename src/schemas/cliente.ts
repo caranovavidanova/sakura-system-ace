@@ -10,7 +10,7 @@ import type {
 // (inclusive ano/km_atual, que no banco são number | null) — a conversão pra
 // NovoCliente/VeiculoFormulario acontece só na borda, em paraNovoCliente() e
 // paraVeiculosPreenchidos().
-const veiculoFormSchema = z.object({
+export const veiculoFormSchema = z.object({
   id: z.string().optional(),
   placa: z.string(),
   marca: z.string(),

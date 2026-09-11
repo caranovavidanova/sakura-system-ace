@@ -53,6 +53,38 @@ export async function criarCliente(
   return clienteCriado as Cliente;
 }
 
+/**
+ * Acrescenta UM veículo a um cliente que já existe.
+ *
+ * Existe separado de `atualizarCliente` porque aquela função reescreve a
+ * lista inteira de veículos do cliente (apaga o que não está no formulário) —
+ * o que é certo vindo do cadastro completo de Clientes, mas seria um tiro no
+ * pé vindo do cadastro rápido dentro da OS, que só conhece o carro que está
+ * chegando agora. Aqui é um insert simples, e nenhum veículo antigo é tocado.
+ */
+export async function criarVeiculo(
+  clienteId: string,
+  veiculo: VeiculoFormulario,
+): Promise<Veiculo> {
+  const { data, error } = await supabase
+    .from("veiculos")
+    .insert({
+      placa: veiculo.placa,
+      marca: veiculo.marca,
+      modelo: veiculo.modelo,
+      ano: veiculo.ano,
+      cor: veiculo.cor,
+      tipo: veiculo.tipo,
+      km_atual: veiculo.km_atual,
+      cliente_id: clienteId,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Veiculo;
+}
+
 export async function atualizarCliente(
   id: string,
   cliente: NovoCliente,

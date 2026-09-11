@@ -10,9 +10,10 @@ import {
   paraCamposComuns,
   paraItensValidos,
   paraValoresFormulario,
+  totaisDaOrdem,
   type OrdemServicoFormValues,
 } from "@/schemas/ordemServico";
-import type { Cliente } from "@/types/cliente";
+import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
 import type { Funcionario } from "@/types/funcionario";
 import type {
   ItemOS,
@@ -25,6 +26,7 @@ import type {
 import { STATUS_COM_FECHAMENTO, STATUS_LABEL, nomeOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
+import { NovoClienteRapidoModal, NovoVeiculoRapidoModal } from "./CadastroRapidoModais";
 import { DetalhesFields } from "./campos/DetalhesFields";
 import { ItensFields } from "./campos/ItensFields";
 import { FechamentoTab } from "./FechamentoTab";
@@ -35,6 +37,11 @@ interface OrdemServicoFormProps {
   servicos: Servico[];
   funcionarios: Funcionario[];
   funcionarioAtualId: string;
+  /** OS já existentes da loja — usadas só pra saber o KM da última passagem do carro. */
+  ordens: OrdemServico[];
+  /** Saldo em estoque por peça, pro aviso de estoque ao lançar um item. */
+  saldoPorPeca: Map<string, number>;
+  saldoCarregado: boolean;
   ordemExistente?: OrdemServico;
   /** Se a OS já tem nota fiscal válida (não cancelada) ligada a ela. */
   temNotaEmitida?: boolean;
@@ -47,7 +54,21 @@ interface OrdemServicoFormProps {
   ) => Promise<void>;
   onEditarItem: (item: ItemOS, patch: PatchItemOS) => Promise<void>;
   onEncerrar: (ordem: OrdemServico) => Promise<void>;
+  /**
+   * Cadastro rápido feito de dentro da OS. As duas devolvem o id do registro
+   * criado pra que o formulário já deixe ele escolhido — sair da OS pra
+   * cadastrar e voltar do zero é exatamente o que o item TL-08 veio matar.
+   */
+  onCadastrarCliente: (
+    cliente: NovoCliente,
+    veiculos: VeiculoFormulario[],
+  ) => Promise<{ clienteId: string; veiculoId: string | null }>;
+  onCadastrarVeiculo: (clienteId: string, veiculo: VeiculoFormulario) => Promise<string>;
   onCancelar: () => void;
+}
+
+function formatarMoeda(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function formatarData(iso: string | null | undefined): string {
@@ -67,6 +88,9 @@ export function OrdemServicoForm({
   servicos,
   funcionarios,
   funcionarioAtualId,
+  ordens,
+  saldoPorPeca,
+  saldoCarregado,
   ordemExistente,
   temNotaEmitida = false,
   abaInicial = "detalhes",
@@ -74,10 +98,13 @@ export function OrdemServicoForm({
   onSalvarEdicao,
   onEditarItem,
   onEncerrar,
+  onCadastrarCliente,
+  onCadastrarVeiculo,
   onCancelar,
 }: OrdemServicoFormProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [encerrando, setEncerrando] = useState(false);
+  const [cadastroRapido, setCadastroRapido] = useState<"cliente" | "veiculo" | null>(null);
   const temFechamento =
     !!ordemExistente && STATUS_COM_FECHAMENTO.includes(ordemExistente.status);
   const [aba, setAba] = useState<"detalhes" | "fechamento">(
@@ -151,7 +178,30 @@ export function OrdemServicoForm({
     }
   }
 
+  // Cadastrar de dentro da OS só vale a pena se o registro novo já entrar
+  // escolhido — senão o operador ainda teria que procurá-lo na lista.
+  async function cadastrarClienteRapido(
+    cliente: NovoCliente,
+    veiculos: VeiculoFormulario[],
+  ) {
+    const { clienteId, veiculoId } = await onCadastrarCliente(cliente, veiculos);
+    setValue("cliente_id", clienteId, { shouldValidate: true });
+    setValue("veiculo_id", veiculoId ?? "");
+    setCadastroRapido(null);
+  }
+
+  async function cadastrarVeiculoRapido(veiculo: VeiculoFormulario) {
+    const veiculoId = await onCadastrarVeiculo(watch("cliente_id"), veiculo);
+    setValue("veiculo_id", veiculoId);
+    setCadastroRapido(null);
+  }
+
+  const totais = totaisDaOrdem(itensExistentes, watch("itens"));
+  const nomeDoClienteEscolhido =
+    clientes.find((c) => c.id === watch("cliente_id"))?.nome ?? "este cliente";
+
   return (
+    <>
     <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-6 sakura-card p-6 shadow-sm">
       {ordemExistente ? (
         <div className="flex items-center justify-between border-b border-sakura-gray/20 pb-4">
@@ -242,6 +292,10 @@ export function OrdemServicoForm({
             errors={errors}
             clientes={clientes}
             funcionarios={funcionarios}
+            ordens={ordens}
+            ordemAtualId={ordemExistente?.id}
+            onCadastrarCliente={() => setCadastroRapido("cliente")}
+            onCadastrarVeiculo={() => setCadastroRapido("veiculo")}
           />
 
           <ItensFields
@@ -250,7 +304,6 @@ export function OrdemServicoForm({
             watch={watch}
             setValue={setValue}
             itensExistentes={itensExistentes}
-            ehEdicao={!!ordemExistente}
             podeAdicionarItem={podeAdicionarItem}
             podeEditarItem={podeEditarItem}
             avisoItens={avisoItens}
@@ -258,32 +311,81 @@ export function OrdemServicoForm({
             pecas={pecas}
             servicos={servicos}
             funcionarios={funcionarios}
+            saldoPorPeca={saldoPorPeca}
+            saldoCarregado={saldoCarregado}
           />
         </div>
       )}
 
-      <div className="flex justify-end gap-3 border-t border-sakura-gray/20 pt-4">
-        <button
-          type="button"
-          onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
-        >
-          Cancelar
-        </button>
-        {aba === "detalhes" && (
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
-          >
-            {isSubmitting
-              ? "Salvando..."
-              : ordemExistente
-                ? "Salvar alterações"
-                : "Abrir ordem de serviço"}
-          </button>
+      {/* Barra fixa do rodapé: o total ficava no meio da tela, logo abaixo
+          da lista de itens — então com a OS cheia de peça ele saía de vista,
+          que é justamente quando importa. Grudada aqui embaixo, ele (e o
+          botão de salvar) acompanham a rolagem.
+
+          `sticky` e não `fixed` de propósito: elemento `fixed` dentro de um
+          `sakura-card` se prende ao card por causa do `backdrop-filter`
+          (PROJETO_STATUS.md, seção 6, item 51), e o resultado seria uma
+          barra flutuando no lugar errado. O fundo precisa ser opaco porque a
+          lista de itens passa POR TRÁS dela ao rolar. */}
+      <div className="sticky bottom-0 z-10 -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sakura-gray/25 bg-[#160f16] px-4 py-3">
+        {aba === "detalhes" ? (
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span className="text-rotulo text-sakura-muted">
+              Peças {formatarMoeda(totais.pecas)}
+            </span>
+            <span className="text-rotulo text-sakura-muted">
+              Serviços {formatarMoeda(totais.servicos)}
+            </span>
+            <span className="text-corpo font-semibold text-sakura-purple-dark">
+              Total {ordemExistente ? "geral" : "previsto"} {formatarMoeda(totais.total)}
+            </span>
+          </div>
+        ) : (
+          <span />
         )}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancelar}
+            className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          >
+            Cancelar
+          </button>
+          {aba === "detalhes" && (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {isSubmitting
+                ? "Salvando..."
+                : ordemExistente
+                  ? "Salvar alterações"
+                  : "Abrir ordem de serviço"}
+            </button>
+          )}
+        </div>
       </div>
     </form>
+
+    {/* Os modais ficam FORA do <form> da OS: um <form> dentro de outro é
+        HTML inválido, e é isso que deixa cada modal ter o próprio botão de
+        enviar — o que faz o Enter avançar de campo aqui dentro igual ao
+        resto do app, sem tratamento especial. */}
+    {cadastroRapido === "cliente" && (
+      <NovoClienteRapidoModal
+        onFechar={() => setCadastroRapido(null)}
+        onCadastrar={cadastrarClienteRapido}
+      />
+    )}
+    {cadastroRapido === "veiculo" && (
+      <NovoVeiculoRapidoModal
+        nomeDoCliente={nomeDoClienteEscolhido}
+        onFechar={() => setCadastroRapido(null)}
+        onCadastrar={cadastrarVeiculoRapido}
+      />
+    )}
+    </>
   );
 }

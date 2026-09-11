@@ -2199,7 +2199,9 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   saber: (a) o aviso **só aparece pra quem emite NFS-e** (loja com token da Focus NFe e inscrição
   municipal preenchidos) — quem não emite nunca vê; (b) **toda NFS-e autorizada no mês marca a
   competência sozinha** (se a prefeitura autorizou, a alíquota está cadastrada), então na prática
-  ele só aparece antes da primeira nota; (c) o mesmo aviso aparece dentro da janela de emitir
+  ele só aparece antes da primeira nota — valendo só pras notas emitidas **depois** desse código
+  existir, então no primeiro mês o aviso aparece mesmo com a alíquota já cadastrada, e o caminho é
+  clicar em "Já cadastrei" uma vez; (c) o mesmo aviso aparece dentro da janela de emitir
   NFS-e, sem o botão — ali o que resolve é ir no portal. A regra é função pura testada
   (`schemas/aliquotaCompetencia.ts`), o texto do passo a passo é editável em Configurações →
   Dados fiscais (padrão: Araraquara/Giap), e a competência confirmada fica em
@@ -2421,15 +2423,16 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     importação de XML do fornecedor de copiar o código de ICMS dele pro cadastro da peça (item 47
     da seção 6). Ficou segurada a pedido dela de 10/09 a 11/09/2026 e foi publicada em 11/09 via
     `workflow_dispatch`, depois de ela confirmar — instalador e `latest.yml` confirmados na
-    release. **Ainda não confirmada por ela rodando na loja.**
+    release. Chegou na máquina dela junto com a `v0.9.30` (ver abaixo).
 
   - `v0.9.30`: leva o botão **"Ver DANFE"** (reabrir o PDF de uma nota já emitida, em Notas
     Fiscais e na aba Fechamento da OS) e o **aviso da alíquota da competência** no Início — os
     itens `TR-11.1` e `TR-11.2` do guia de melhorias. Publicada via `workflow_dispatch` **depois**
     de ela rodar as migrations `0048` e `0049`, que era a ordem obrigatória (sem as colunas da
-    `0049`, "Salvar dados fiscais" daria erro de coluna inexistente). **Ainda não confirmada por
-    ela rodando na loja** — e a busca do PDF na Focus NFe é justamente o que não dá pra testar
-    daqui.
+    `0049`, "Salvar dados fiscais" daria erro de coluna inexistente). **Instalada por ela no
+    mesmo dia** ("pronto, instalado a nova versao") — o que ainda não foi testado em uso real é o
+    "Ver DANFE" numa nota de verdade (a busca do PDF na Focus NFe é justamente o que não dá pra
+    testar daqui) e o aviso da alíquota aparecendo no Início.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -3446,6 +3449,8 @@ mais importam antes da terceira empresa:
 
 ### Onde parou em 10/09/2026 (histórico — o marco mais recente é o de 11/09, no fim do arquivo)
 
+> A `v0.9.29` que esta seção dá como pendente **foi publicada em 11/09/2026**, com o "sim" dela.
+
 **A `v0.9.29` está pronta pra sair e NÃO foi publicada, por decisão dela.** A correção do item 2
 de "Onde tudo parou (08-09/09/2026)" — o código de ICMS do fornecedor virando o código da peça —
 já está mesclada na `main`, validada (`tsc`/lint/contraste limpos, 176 testes passando na época)
@@ -3566,13 +3571,23 @@ loja.**
 2. ✅ **Migrations `0048` e `0049` rodadas por ela** no SQL Editor, as duas com "Success. No rows
    returned" — e a `0049` **antes** da tag, que era a ordem obrigatória. Nada pendente de SQL:
    `0001` a `0049` estão todas aplicadas.
-3. ✅ **`v0.9.30` publicada** — "Ver DANFE" e aviso da alíquota do mês. Instalador e `latest.yml`
-   confirmados na release; o auto-update leva pro PC da loja sozinho.
+3. ✅ **`v0.9.30` publicada e INSTALADA por ela** no mesmo dia ("pronto, instalado a nova
+   versao") — "Ver DANFE" e aviso da alíquota do mês.
 
-**O que falta é confirmação de uso real**, não código: abrir o "Ver DANFE" numa nota de verdade
-(a busca do PDF na Focus NFe é o que não dá pra testar daqui) e ver o aviso da alíquota aparecer
-no Início. Se o "Ver DANFE" falhar, a mensagem na tela já diz o motivo — e o primeiro lugar pra
-olhar é se o token da Focus NFe está preenchido em Configurações → Dados fiscais.
+**O que falta é confirmação de uso real**, não código — e é só isso que sobrou desta sessão:
+
+- **Abrir o "Ver DANFE" numa nota de verdade** (Notas Fiscais → uma nota emitida pelo sistema, ou
+  OS → aba Fechamento). É a única parte que não dá pra testar daqui: a busca do PDF fala com a
+  Focus NFe, e este ambiente não alcança rede externa. Se der errado, **a mensagem na tela já diz
+  o motivo** — e o primeiro lugar pra olhar é se o token da Focus NFe está preenchido em
+  Configurações → Dados fiscais.
+- **O aviso da alíquota no Início — ele APARECE agora, e isso está certo.** A coluna
+  `competencia_aliquota_confirmada` nasce vazia com a migration `0049`, e o "se cala sozinho
+  depois de uma NFS-e autorizada" só vale pras notas emitidas **daqui pra frente** — as de
+  setembro saíram antes desse código existir. Então, na primeira abertura depois de atualizar, o
+  aviso de setembro está lá mesmo com a alíquota já cadastrada no portal. O caminho é clicar em
+  **"Já cadastrei"** (é verdade: ela cadastrou em 01/09) e ele some até 1º de outubro. **Não
+  tratar isso como bug** — é só o primeiro mês, que começa sem histórico.
 
 #### O que esta sessão fez
 
@@ -3616,8 +3631,9 @@ Postgres local e a `0049` sozinha duas vezes num banco com dado plantado.
 
 #### O que depende dela agora
 
-1. **Confirmar na loja**: as duas versões chegando pelo auto-update, o "Ver DANFE" numa nota de
-   verdade e o aviso da alíquota aparecendo no Início.
+1. **Confirmar em uso real** o "Ver DANFE" numa nota de verdade (o aviso da alíquota, pelo
+   motivo acima, só se testa de verdade em 1º de outubro). A instalação da `v0.9.30` já está
+   confirmada.
 3. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), só depois de vê-lo verde
    algumas vezes — item 48 da seção 6.
 4. **As três credenciais expostas continuam para trocar** (CSC da SEFAZ, token do portal Giap,

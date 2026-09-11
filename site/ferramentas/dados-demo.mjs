@@ -2,6 +2,8 @@
 // Nenhum cliente, placa ou CPF de verdade da loja do pai dela.
 const LOJA = "10000000-0000-0000-0000-000000000001";
 const OP = "20000000-0000-0000-0000-000000000001";
+const OP2 = "20000000-0000-0000-0000-000000000002";
+const OP3 = "20000000-0000-0000-0000-000000000003";
 
 const hoje = new Date();
 const dia = (n) => {
@@ -41,7 +43,7 @@ const item = (tipo, id, descricao, qtd, preco) => ({
   id: Math.random().toString(36).slice(2), tipo, descricao,
   quantidade: qtd, preco_unitario: preco, desconto: 0,
   peca_id: tipo === "peca" ? id : null, servico_id: tipo === "servico" ? id : null,
-  tecnico: { nome: "Anderson Lima" },
+  tecnico_id: "f1", tecnico: { nome: "Anderson Lima" },
 });
 
 export const ordens = [
@@ -67,10 +69,11 @@ export const ordens = [
     descricao_problema: "", forma_pagamento: o.status === "faturada" ? "Pix" : null,
     parcelas: 1, data_abertura: dia(o.abertura),
     data_fechamento: o.status === "faturada" ? dia(o.abertura + 0.3) : null,
-    vendedor_id: null, criado_por_id: OP, atualizado_por_id: OP,
+    vendedor_id: o.numero % 2 === 0 ? "f2" : "f3",
+    criado_por_id: OP, atualizado_por_id: OP,
     cliente: { nome: cli.nome },
     veiculo: { placa: v.placa, marca: v.marca, modelo: v.modelo, cor: v.cor, tipo: v.tipo },
-    vendedor: { nome: "Marcos Andrade" },
+    vendedor: { nome: o.numero % 2 === 0 ? "Bruna Tavares" : "Marcos Andrade" },
     criado_por: { nome: "Marcos Andrade" },
     atualizado_por: { nome: "Marcos Andrade" },
     itens: o.itens,
@@ -168,24 +171,235 @@ export const estoque = [
   { id: "e9", loja_id: LOJA, deposito_id: "d1", peca_id: "p2", tipo: "saida", quantidade: 4, motivo: "uso_em_os", referencia: "OS 145", criado_em: dia(-0.3) },
 ];
 
+// ---------------------------------------------------------------------------
+// A partir daqui: dados das tabelas que faltavam pra conseguir tirar uma
+// imagem de TODAS as telas do sistema (não só as 5 que o site usa).
+// Continua tudo inventado — nenhum dado real de loja nenhuma.
+// ---------------------------------------------------------------------------
+
+export const categoriasServicos = [
+  { id: "cs1", nome: "Pneus", criado_em: dia(-400) },
+  { id: "cs2", nome: "Suspensão", criado_em: dia(-400) },
+  { id: "cs3", nome: "Freios", criado_em: dia(-400) },
+  { id: "cs4", nome: "Alinhamento", criado_em: dia(-400) },
+  { id: "cs5", nome: "Outros Serviços", criado_em: dia(-400) },
+];
+
+export const categoriasCaixa = [
+  { id: "cc1", nome: "Aluguel", tipo: "saida", criado_em: dia(-400) },
+  { id: "cc2", nome: "Folha de pagamento", tipo: "saida", criado_em: dia(-400) },
+  { id: "cc3", nome: "Energia elétrica", tipo: "saida", criado_em: dia(-400) },
+  { id: "cc4", nome: "Compra de peças", tipo: "saida", criado_em: dia(-400) },
+  { id: "cc5", nome: "Venda de sucata", tipo: "entrada", criado_em: dia(-400) },
+  { id: "cc6", nome: "Aporte do sócio", tipo: "entrada", criado_em: dia(-400) },
+];
+
+export const fornecedores = [
+  { id: "fo1", nome: "Distribuidora Central de Pneus Ltda", cnpj: "11.222.333/0001-44", telefone: "(16) 3301-7788", email: "vendas@exemplo.com.br", cep: "14810-100", rua: "Av. dos Trabalhadores", numero: "2300", bairro: "Distrito Industrial", cidade: "Araraquara", uf: "SP", ativo: true, criado_em: dia(-320) },
+  { id: "fo2", nome: "Auto Peças Bandeirantes S/A", cnpj: "22.333.444/0001-55", telefone: "(16) 3322-9090", email: "pedidos@exemplo.com.br", cep: "14020-500", rua: "Rua São Sebastião", numero: "455", bairro: "Centro", cidade: "Ribeirão Preto", uf: "SP", ativo: true, criado_em: dia(-280) },
+  { id: "fo3", nome: "Suspensão & Cia Comércio", cnpj: "33.444.555/0001-66", telefone: "(11) 4004-2211", email: "comercial@exemplo.com.br", cep: "09070-200", rua: "Av. Industrial", numero: "1180", bairro: "Jardim", cidade: "Santo André", uf: "SP", ativo: true, criado_em: dia(-210) },
+  { id: "fo4", nome: "Baterias do Vale Distribuidora", cnpj: "44.555.666/0001-77", telefone: "(16) 3355-1200", email: "atendimento@exemplo.com.br", cep: "14807-000", rua: "Rua Carlos Gomes", numero: "77", bairro: "Vila Melhado", cidade: "Araraquara", uf: "SP", ativo: false, criado_em: dia(-160) },
+];
+
+const itemPedido = (id, pedido, pecaId, descricao, unidade, pedida, preco, recebida) => ({
+  id, pedido_compra_id: pedido, peca_id: pecaId,
+  quantidade_pedida: pedida, preco_unitario: preco, quantidade_recebida: recebida,
+  peca: { descricao, unidade },
+});
+
+export const pedidosCompra = [
+  {
+    id: "pc1", numero: 34, loja_id: LOJA, fornecedor_id: "fo1", status: "pendente",
+    data_pedido: diaCurto(-1), observacao: "Reposição da linha de pneu aro 14 e 16.",
+    operador_id: OP, criado_em: dia(-1), fornecedor: { nome: fornecedores[0].nome },
+    itens: [
+      itemPedido("pi1", "pc1", "p1", "Pneu 175/70 R14", "UN", 20, 238.5, 0),
+      itemPedido("pi2", "pc1", "p2", "Pneu 205/60 R16", "UN", 12, 402, 0),
+    ],
+  },
+  {
+    id: "pc2", numero: 33, loja_id: LOJA, fornecedor_id: "fo3", status: "parcial",
+    data_pedido: diaCurto(-6), observacao: "Chegou metade; o resto fica pra semana que vem.",
+    operador_id: OP, criado_em: dia(-6), fornecedor: { nome: fornecedores[2].nome },
+    itens: [
+      itemPedido("pi3", "pc2", "p3", "Amortecedor dianteiro", "UN", 10, 291, 6),
+    ],
+  },
+  {
+    id: "pc3", numero: 32, loja_id: LOJA, fornecedor_id: "fo2", status: "recebido",
+    data_pedido: diaCurto(-13), observacao: "",
+    operador_id: OP, criado_em: dia(-13), fornecedor: { nome: fornecedores[1].nome },
+    itens: [
+      itemPedido("pi4", "pc3", "p4", "Pastilha de freio dianteira", "JG", 14, 118.4, 14),
+      itemPedido("pi5", "pc3", "p5", "Bateria 60Ah", "UN", 6, 365, 6),
+    ],
+  },
+];
+
+export const cotacoes = [
+  { id: "ct1", peca_id: "p1", fornecedor_id: "fo1", preco: 238.5, criado_em: dia(-1), fornecedor: { nome: fornecedores[0].nome } },
+  { id: "ct2", peca_id: "p1", fornecedor_id: "fo2", preco: 251, criado_em: dia(-40), fornecedor: { nome: fornecedores[1].nome } },
+  { id: "ct3", peca_id: "p2", fornecedor_id: "fo1", preco: 402, criado_em: dia(-1), fornecedor: { nome: fornecedores[0].nome } },
+  { id: "ct4", peca_id: "p3", fornecedor_id: "fo3", preco: 291, criado_em: dia(-6), fornecedor: { nome: fornecedores[2].nome } },
+  { id: "ct5", peca_id: "p3", fornecedor_id: "fo2", preco: 305.9, criado_em: dia(-70), fornecedor: { nome: fornecedores[1].nome } },
+  { id: "ct6", peca_id: "p4", fornecedor_id: "fo2", preco: 118.4, criado_em: dia(-13), fornecedor: { nome: fornecedores[1].nome } },
+  { id: "ct7", peca_id: "p5", fornecedor_id: "fo4", preco: 372, criado_em: dia(-90), fornecedor: { nome: fornecedores[3].nome } },
+];
+
+export const contasReceber = [
+  { id: "cr1", loja_id: LOJA, cliente_id: "c2", ordem_servico_id: "os145", descricao: "OS 145 — 4 pneus + alinhamento", valor: 2588, vencimento: diaCurto(6), status: "pendente", data_recebimento: null, caixa_movimento_id: null, operador_id: OP, criado_em: dia(-0.3), cliente: { nome: "Transportes Boa Vista Ltda" } },
+  { id: "cr2", loja_id: LOJA, cliente_id: "c4", ordem_servico_id: null, descricao: "Serviço faturado no fim do mês (frota)", valor: 1340, vencimento: diaCurto(-3), status: "pendente", data_recebimento: null, caixa_movimento_id: null, operador_id: OP, criado_em: dia(-18), cliente: { nome: "Eduardo Salles" } },
+  { id: "cr3", loja_id: LOJA, cliente_id: "c1", ordem_servico_id: null, descricao: "Parcela 2/2 do jogo de amortecedores", valor: 720, vencimento: diaCurto(-12), status: "recebido", data_recebimento: diaCurto(-11), caixa_movimento_id: "cx-e3", operador_id: OP, criado_em: dia(-40), cliente: { nome: "Ricardo Menezes" } },
+];
+
+const mesCompetencia = (n) => {
+  const d = new Date(hoje);
+  d.setMonth(d.getMonth() + n, 1);
+  return d.toISOString().slice(0, 10);
+};
+
+const nota = (id, tipo, comp, nome, numero, origem, status, cliente, ref) => ({
+  id, loja_id: LOJA, tipo, competencia: comp, nome_arquivo: nome,
+  storage_path: `${tipo}/${comp.slice(0, 7)}/${id}-${nome}`,
+  ordem_servico_id: null, operador_id: OP, criado_em: dia(-2),
+  origem, numero, chave_acesso: numero ? "3526" + String(numero).padStart(40, "0") : null,
+  status, focus_nfe_ref: ref,
+  ordem_servico: cliente ? { cliente: { nome: cliente } } : null,
+  operador: { nome: "Marcos Andrade" },
+});
+
+export const notasFiscais = [
+  nota("nf1", "nfe", mesCompetencia(0), "NFCe-000000241.xml", 241, "automatica", "autorizado", "Ricardo Menezes", "os148-nfce-1739"),
+  nota("nf2", "nfe", mesCompetencia(0), "NFCe-000000240.xml", 240, "automatica", "autorizado", "Camila Rocha", "os144-nfce-1738"),
+  nota("nf3", "nfe", mesCompetencia(0), "NFCe-000000239.xml", 239, "automatica", "cancelado", "Eduardo Salles", "os142-nfce-1737"),
+  nota("nf4", "nfe", mesCompetencia(-1), "NFCe-000000238.xml", 238, "manual", null, null, null),
+  nota("nf5", "nfse", mesCompetencia(0), "NFSe-00000015.xml", 15, "automatica", "autorizado", "Juliana Prado", "os146-nfse-1741"),
+  nota("nf6", "nfse", mesCompetencia(0), "NFSe-00000014.xml", 14, "automatica", "autorizado", "Ricardo Menezes", "os143-nfse-1740"),
+  nota("nf7", "nfse", mesCompetencia(-1), "NFSe-00000013.xml", 13, "manual", null, null, null),
+];
+
+export const auditoria = [
+  { id: "au1", tabela: "pecas", registro_id: "p1", acao: "atualizar", operador_id: OP, criado_em: dia(-0.1), operador: { nome: "Marcos Andrade" }, dados_antes: { descricao: "Pneu 175/70 R14", preco_venda: 369.9 }, dados_depois: { descricao: "Pneu 175/70 R14", preco_venda: 389.9 } },
+  { id: "au2", tabela: "ordens_servico", registro_id: "os146", acao: "atualizar", operador_id: OP, criado_em: dia(-0.4), operador: { nome: "Marcos Andrade" }, dados_antes: { numero: 146, status: "em_andamento" }, dados_depois: { numero: 146, status: "concluida" } },
+  { id: "au3", tabela: "contas_pagar", registro_id: "cp9", acao: "excluir", operador_id: OP, criado_em: dia(-1.2), operador: { nome: "Marcos Andrade" }, dados_antes: { descricao: "Assinatura de software (duplicada)", valor: 149 }, dados_depois: null },
+  { id: "au4", tabela: "clientes", registro_id: "c3", acao: "atualizar", operador_id: OP, criado_em: dia(-2.1), operador: { nome: "Marcos Andrade" }, dados_antes: { nome: "Juliana Prado", telefone: "(16) 98111-0000" }, dados_depois: { nome: "Juliana Prado", telefone: "(16) 98111-2233" } },
+  { id: "au5", tabela: "operadores", registro_id: OP2, acao: "atualizar", operador_id: OP, criado_em: dia(-5), operador: { nome: "Marcos Andrade" }, dados_antes: { usuario: "bruna", admin: false }, dados_depois: { usuario: "bruna", admin: true } },
+];
+
+export const contagens = [
+  { id: "cg1", loja_id: LOJA, deposito_id: "d1", peca_id: "p1", quantidade_contada: 21, saldo_sistema: 22, diferenca: -1, observacao: "Um pneu estava no setor de montagem.", operador_id: OP, criado_em: dia(-3) },
+  { id: "cg2", loja_id: LOJA, deposito_id: "d1", peca_id: "p4", quantidade_contada: 13, saldo_sistema: 13, diferenca: 0, observacao: "", operador_id: OP, criado_em: dia(-3) },
+  { id: "cg3", loja_id: LOJA, deposito_id: "d1", peca_id: "p5", quantidade_contada: 12, saldo_sistema: 12, diferenca: 0, observacao: "", operador_id: OP, criado_em: dia(-10) },
+];
+
+export const funcionarios = [
+  { id: "f1", loja_id: LOJA, nome: "Anderson Lima", cargo: "Mecânico", operador_id: null, ativo: true, criado_em: dia(-300),
+    cpf: "111.222.333-44", rg: "12.345.678-9", cnh_categoria: "B", cnh_numero: "01234567890", data_nascimento: "1988-03-15", estado_civil: "casado", tipo_sanguineo: "O+",
+    cep: "14801-000", endereco: "Rua das Palmeiras", numero: "120", bairro: "Vila Xavier", cidade: "Araraquara", estado: "SP", complemento: "", telefone: "(16) 3333-1010", celular: "(16) 99123-4567", email: "anderson@exemplo.com.br",
+    pis: "123.45678.90-1", codigo_registro: "004", cbo: "9144-05", salario: 2850, comissao: 5, admissao: "2019-02-04", data_ferias: "2026-11-03",
+    pai: "José Lima", mae: "Marta Lima", naturalidade: "Araraquara/SP", sexo: "masculino", conjuge_nome: "Renata Lima", conjuge_nascimento: "1990-07-22", data_casamento: "2014-05-10", conjuge_telefone: "", conjuge_celular: "(16) 99888-7766",
+    operador: null, filhos: [{ id: "fl1", funcionario_id: "f1", nome: "Pedro Lima", data_nascimento: "2016-08-19", criado_em: dia(-300) }] },
+  { id: "f2", loja_id: LOJA, nome: "Bruna Tavares", cargo: "Balconista", operador_id: OP2, ativo: true, criado_em: dia(-220),
+    cpf: "222.333.444-55", rg: "23.456.789-0", cnh_categoria: "AB", cnh_numero: "09876543210", data_nascimento: "1995-11-02", estado_civil: "solteiro", tipo_sanguineo: "A+",
+    cep: "14803-100", endereco: "Rua Padre Duarte", numero: "980", bairro: "Centro", cidade: "Araraquara", estado: "SP", complemento: "Apto 42", telefone: "", celular: "(16) 99555-2211", email: "bruna@exemplo.com.br",
+    pis: "234.56789.01-2", codigo_registro: "005", cbo: "5211-10", salario: 2250, comissao: 3, admissao: "2022-06-13", data_ferias: "",
+    pai: "Carlos Tavares", mae: "Sônia Tavares", naturalidade: "Matão/SP", sexo: "feminino", conjuge_nome: "", conjuge_nascimento: "", data_casamento: "", conjuge_telefone: "", conjuge_celular: "",
+    operador: { usuario: "bruna" }, filhos: [] },
+  { id: "f3", loja_id: LOJA, nome: "Marcos Andrade", cargo: "Gerente", operador_id: OP, ativo: true, criado_em: dia(-400),
+    cpf: "333.444.555-66", rg: "34.567.890-1", cnh_categoria: "B", cnh_numero: "11223344556", data_nascimento: "1979-01-28", estado_civil: "casado", tipo_sanguineo: "B+",
+    cep: "14800-500", endereco: "Av. Bento de Abreu", numero: "45", bairro: "Jardim Nova", cidade: "Araraquara", estado: "SP", complemento: "", telefone: "", celular: "(16) 99777-1234", email: "marcos@exemplo.com.br",
+    pis: "345.67890.12-3", codigo_registro: "001", cbo: "1423-10", salario: 4600, comissao: 2, admissao: "2016-01-11", data_ferias: "2026-12-15",
+    pai: "Antônio Andrade", mae: "Célia Andrade", naturalidade: "Araraquara/SP", sexo: "masculino", conjuge_nome: "Paula Andrade", conjuge_nascimento: "1982-04-09", data_casamento: "2008-09-20", conjuge_telefone: "", conjuge_celular: "(16) 99666-5544",
+    operador: { usuario: "demo" }, filhos: [
+      { id: "fl2", funcionario_id: "f3", nome: "Laura Andrade", data_nascimento: "2011-02-14", criado_em: dia(-400) },
+      { id: "fl3", funcionario_id: "f3", nome: "Miguel Andrade", data_nascimento: "2014-10-05", criado_em: dia(-400) },
+    ] },
+  { id: "f4", loja_id: LOJA, nome: "Rogério Pinto", cargo: "Mecânico", operador_id: null, ativo: false, criado_em: dia(-500),
+    cpf: "444.555.666-77", rg: "", cnh_categoria: "", cnh_numero: "", data_nascimento: "1983-05-30", estado_civil: "", tipo_sanguineo: "",
+    cep: "", endereco: "", numero: "", bairro: "", cidade: "", estado: "", complemento: "", telefone: "", celular: "(16) 99444-3322", email: "",
+    pis: "", codigo_registro: "003", cbo: "", salario: 2600, comissao: 4, admissao: "2018-03-01", data_ferias: "",
+    pai: "", mae: "", naturalidade: "", sexo: "masculino", conjuge_nome: "", conjuge_nascimento: "", data_casamento: "", conjuge_telefone: "", conjuge_celular: "",
+    operador: null, filhos: [] },
+];
+
+// Tabela "achatada" dos itens das OS — é o que a tela de Garantias consulta
+// direto (a garantia não tem tabela própria: sai do item de peça + o prazo
+// cadastrado na peça + a data em que a OS foi fechada).
+export const ordensItens = ordens.flatMap((o) =>
+  o.itens.map((i) => ({
+    ...i,
+    ordem_servico_id: o.id,
+    ordem: {
+      id: o.id,
+      data_fechamento: o.data_fechamento ?? dia(-1),
+      cliente: { nome: o.cliente.nome },
+      veiculo: { placa: o.veiculo.placa },
+    },
+    peca: i.peca_id
+      ? {
+          descricao: i.descricao,
+          prazo_garantia_dias: pecas.find((p) => p.id === i.peca_id)?.prazo_garantia_dias ?? 90,
+        }
+      : null,
+  })),
+);
+
+export const operadores = [
+  operador,
+  { id: OP2, usuario: "bruna", nome: "Bruna Tavares", admin: false, permissoes: ["painel", "clientes", "ordens_servico", "estoque", "caixa"], ativo: true, deve_trocar_senha: false, criado_em: dia(-220) },
+  { id: OP3, usuario: "anderson", nome: "Anderson Lima", admin: false, permissoes: ["painel", "ordens_servico", "estoque"], ativo: true, deve_trocar_senha: false, criado_em: dia(-300) },
+];
+
+export const configuracoesFiscais = [{
+  loja_id: LOJA, cnpj: "12.345.678/0001-99", razao_social: "Auto Center Modelo Comércio de Pneus Ltda",
+  nome_fantasia: "Auto Center Modelo", inscricao_estadual: "111.222.333.444", inscricao_municipal: "30012345",
+  regime_tributario: "simples_nacional", cep: "14801-000", rua: "Av. Bento de Abreu", numero: "1500",
+  bairro: "Vila Melhado", cidade: "Araraquara", uf: "SP", telefone: "(16) 3333-0000", email: "contato@exemplo.com.br",
+  focus_nfe_token: "••••••••••••••••••••••••", focus_nfe_ambiente: "producao",
+  codigo_municipio: "3503208", item_lista_servico: "14.01", aliquota_iss: 3, codigo_tributario_municipio: "452000100",
+  codigo_cnae: "4520001",
+}];
+
+export const jurosParcelas = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => ({
+  loja_id: LOJA, numero_parcelas: n, juros_percentual: Number((1.99 + (n - 2) * 0.75).toFixed(2)),
+}));
+
+export const configGarantia = [{
+  loja_id: LOJA,
+  texto:
+    "Garantimos os serviços e as peças aplicadas no veículo {veiculo}, do cliente {cliente}, " +
+    "conforme os itens abaixo:\n\n{itens}\n\nA garantia cobre defeito de fabricação da peça e " +
+    "falha de montagem do serviço executado. Não cobre desgaste natural, mau uso, batida ou " +
+    "problema causado por outra peça fora de especificação.\n\nAraraquara, {data}.",
+}];
+
 export const TABELAS = {
   lojas, clientes, veiculos, pecas, servicos, depositos,
   ordens_servico: ordens,
+  ordens_servico_itens: ordensItens,
   caixa_movimentos: caixa,
   contas_pagar: contasPagar,
+  contas_receber: contasReceber,
   estoque_movimentos: estoque,
-  operadores: [operador],
+  contagens_estoque: contagens,
+  operadores,
   operador_lojas: [{ operador_id: OP, loja_id: LOJA, loja: lojas[0] }],
   configuracoes_painel_inicio: [{ loja_id: LOJA, cartoes: ["vendas_mes", "lucro_mes", "ticket_medio_mes"] }],
-  contas_receber: [], notas_fiscais_arquivos: [], fornecedores: [],
-  pedidos_compra: [], cotacoes_pecas: [], contagens_estoque: [],
-  categorias, categorias_servicos: [], categorias_caixa: [],
-  funcionarios: [{ id: "f1", loja_id: LOJA, nome: "Anderson Lima", cargo: "Mecânico", ativo: true, operador_id: null, criado_em: dia(-300) }],
-  auditoria: [], configuracoes_garantia: [], configuracoes_fiscais_loja: [],
-  configuracoes_juros_parcelas: [], funcionario_filhos: [], ordens_servico_itens: [],
-  pedidos_compra_itens: [],
+  configuracoes_fiscais_loja: configuracoesFiscais,
+  configuracoes_juros_parcelas: jurosParcelas,
+  configuracoes_garantia: configGarantia,
+  notas_fiscais_arquivos: notasFiscais,
+  fornecedores,
+  pedidos_compra: pedidosCompra,
+  pedidos_compra_itens: pedidosCompra.flatMap((p) => p.itens),
+  cotacoes_pecas: cotacoes,
+  categorias,
+  categorias_servicos: categoriasServicos,
+  categorias_caixa: categoriasCaixa,
+  funcionarios,
+  funcionario_filhos: funcionarios.flatMap((f) => f.filhos),
+  auditoria,
 };
-
 export const SESSAO = {
   access_token: "demo-access-token", token_type: "bearer", expires_in: 3600,
   expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: "demo-refresh-token",

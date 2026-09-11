@@ -203,7 +203,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Conexão com o Supabase no app instalado | Digitada na primeira abertura e guardada **naquele computador** (`conexao.json` na pasta de dados do app) — **não** embutida no build | Um instalador só passa a servir qualquer empresa (fase 2). Os secrets saíram do `release.yml` de propósito: embutidos, o instalador entregue a um cliente novo viria apontando pro banco de outra empresa. Em `npm run dev` o `.env` continua valendo. Ver seção 7 |
 | Chave da IA (leitura de nota fiscal por foto) | Fica só como secret de uma Supabase Edge Function — nunca no app Electron instalado | Cada loja (projeto Supabase próprio) paga pela própria conta Anthropic, sem expor a chave a quem tem acesso ao computador. Ver seção 7 e item 8 da seção 8 |
 | Quem paga a infraestrutura das lojas clientes (28/08/2026) | **Tudo na conta da usuária** — Supabase, Anthropic e Focus NFe. O dono da loja não cria conta em serviço nenhum e nunca vê que eles existem | Decisão explícita dela. É o que justifica a mensalidade e o que permite dar suporte de verdade; em troca, o dado dos clientes das lojas fica sob responsabilidade dela — daí o backup ser obrigatório, não opcional. **Substitui** o modelo antigo de "cada loja cria a própria conta Anthropic" descrito na linha acima e no item 6 da seção 8 |
-| Plano do Supabase por empresa cliente (28/08/2026) | **Pro desde a primeira venda** (~R$145/mês por empresa, já dentro da conta do R$350/loja) | O plano grátis não guarda cópia de segurança automática — perder o dado de uma loja de terceiro seria muito pior que esse custo. O grátis também pausa o projeto sozinho após dias sem uso. **Não confirmado**: o grátis parece ter um teto baixo de projetos por organização (algo como 2), o que faria a 3ª empresa já ser paga de qualquer jeito — conferir no painel do Supabase antes de usar isso numa conta de custo |
+| Plano do Supabase por empresa cliente (28/08/2026, corrigido em 10/09/2026) | **Pro desde a primeira venda** — mas a cobrança é **por organização, não por empresa**: US$25 cobre a organização com o 1º projeto, e cada projeto a mais custa a partir de US$10/mês | O plano grátis não guarda cópia de segurança automática — perder o dado de uma loja de terceiro seria muito pior que esse custo. **Os dois pontos que estavam "não confirmados" foram confirmados em 10/09/2026**: o grátis permite no máximo **2 projetos ativos por organização** e **pausa o projeto sozinho depois de 1 semana** sem uso. **Correção importante da conta antiga**: o "~R$145/mês por empresa" registrado aqui antes estava errado — 4 empresas numa organização só custam US$25 + 3×US$10 = US$55 (~R$280), não 4×US$145. Ver "Onde tudo parou (10/09/2026)" |
 | Instalação de empresa nova | Um arquivo SQL único (`supabase/instalacao/instalacao-completa.sql`, gerado por `npm run gerar-instalacao`) + o checklist `supabase/instalacao/INSTALAR-LOJA-NOVA.md` | Colar as ~47 migrations uma por uma era o maior risco operacional da venda: pular uma ou trocar a ordem não dá erro na hora, só quebra depois na tela do app. Ver itens 36 e 37 da seção 6 |
 | Site de apresentação (28/08/2026) | Pasta `site/` no próprio repositório, **HTML/CSS puros sem build**, publicado na Vercel com Root Directory = `site` | Uma página só não justifica um segundo `node_modules`; sem build não há risco de quebrar o build/teste do app, e a usuária consegue editar um texto sem rodar nada. Reaproveita a conexão da Vercel que já existia no repositório e só atrapalhava (check falhando nos PRs) |
 | Nome do arquivo do instalador (28/08/2026) | Fixo: `SakuraSystem-Setup.exe` (`build.artifactName` no `package.json`), sem o número da versão | Permite ao site apontar pra um endereço permanente (`/releases/latest/download/SakuraSystem-Setup.exe`) que sempre entrega a última versão, sem editar o site a cada lançamento. Seguro pro auto-update: o `latest.yml` guarda o nome do arquivo, então a próxima versão já aponta sozinha pro nome novo |
@@ -430,9 +430,16 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # node_modules, e assim não atrapalha build/teste do app).
 │                                  # index.html (todo o texto), styles.css (mesma paleta do app),
 │                                  # telas/*.jpg (imagens do sistema com dados inventados),
-│                                  # ferramentas/ (gera essas imagens rodando o app de verdade
-│                                  # num navegador, com o Supabase interceptado — ver
-│                                  # site/README.md), README.md (como ver, publicar na Vercel e
+│                                  # ferramentas/ (abre o app de verdade num navegador com o
+│                                  # Supabase respondido por dados inventados, e fotografa as
+│                                  # telas — ver site/README.md): banco-falso.mjs (o Supabase de
+│                                  # mentira, compartilhado) + dados-demo.mjs (os dados
+│                                  # inventados, cobrem TODAS as tabelas) + gerar-telas.mjs (as
+│                                  # 5 imagens do site) + gerar-catalogo-telas.mjs (as 54 telas
+│                                  # do sistema, inclusive formulários/abas/janelas que só
+│                                  # aparecem depois de clicar; escreve junto um catalogo.json
+│                                  # com título e explicação de cada uma — ver "Onde tudo parou
+│                                  # (10/09/2026)"), README.md (como ver, publicar na Vercel e
 │                                  # regerar as imagens)
 ├── build/icon.png                # ícone do app (1024x1024, gerado a partir de public/sakura-icon.svg)
 ├── scripts/gerar-instalacao-completa.mjs # `npm run gerar-instalacao` — regera
@@ -2596,6 +2603,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
    | 3 lojas fase 2 (4+15+15 carros/dia reais, +30% margem crescimento) | ~1.150 OS/mês, ~1.724 notas/mês | Start | R$521,30 | R$173,77 | **R$350,00** (decidido) |
    | 30 lojas (30 carros/dia média, sem margem extra) | 23.400 OS/mês, 35.100 notas/mês | Growth | R$5.626,00 | R$187,53 | R$375,07 |
 
+   > ⚠️ **Corrigido em 10/09/2026**: a composição abaixo trata o Supabase Pro como custo **por
+   > empresa**, e ele é cobrado **por organização** — US$25 com o 1º projeto incluso, e cada
+   > projeto a mais a partir de US$10/mês. Onde estas linhas somam um Supabase Pro por empresa,
+   > o número está alto. O resto do método (volume = carros/dia × dias × 1,5) continua valendo.
+
    Composição de custo fixo usada em cada linha (além do Focus NFe, que varia por volume):
    Supabase Pro ≈ R$145 (cenários 1 loja/Pneus Amigão/3 lojas) ou Pro + compute add-on "Large"
    ≈ R$756 (cenário 30 lojas, câmbio ~R$5,60/USD); Claude Pro ≈ R$110 (cenários menores) ou
@@ -3121,10 +3133,103 @@ normal) porque a importação de nota do fornecedor copiava o código dele diret
 corrigiu a peça à mão e emitiu; o conserto de código veio depois — item 47 da seção 6 tem a
 história inteira, inclusive a armadilha de contraste que apareceu no preview.
 
+### Guia de plataformas, custos e telas (10/09/2026, mais tarde no mesmo dia)
+
+**Nada do aplicativo mudou nesta parte da sessão** — a pendência da `v0.9.29` continua exatamente
+como está descrita na seção seguinte, que é a que importa ler primeiro.
+
+Ela pediu um documento em PDF, para uma **meta "imaginária" de 10 lojas**: quais plataformas
+sustentam o projeto, quanto custa hoje, quanto custaria com 10 lojas — e, junto, uma imagem de
+**todas** as telas do sistema com uma explicação de cada uma. O cenário de 10 lojas foi definido
+por ela: **4 empresas** (uma com 1 loja, duas com 2 e uma com 5), ou seja 4 projetos Supabase e
+10 CNPJs emitindo nota.
+
+**O documento foi entregue como arquivo, não commitado** (41 páginas, 6,3 MB — binário grande não
+tem por que entrar no repositório). Se precisar de novo, é só refazer: o texto ficou em
+`conteudo.mjs` e a montagem em `montar.mjs`, ambos gerados na hora, fora do repositório.
+
+#### O que ficou no repositório
+
+A ferramenta que já existia para gerar as 5 imagens do site foi estendida para fotografar as **54
+telas** do sistema (formulários, abas, janelas de confirmação e as seções recolhíveis de
+Configurações — tudo que só aparece depois de clicar em alguma coisa). Ver a descrição de
+`site/ferramentas/` na seção 4.
+
+**Está numa branch, não na `main`**: `claude/cool-lamport-uzyh8w`, commitada e enviada, **sem PR
+aberto** — diferente do fluxo de sempre da seção 3 (abrir PR e mesclar direto), porque nesta
+sessão não houve pedido para abrir PR. **Se ninguém mesclar, esse trabalho fica parado nessa
+branch.**
+
+Duas armadilhas que apareceram construindo isso, já resolvidas dentro do gerador, mas que valem
+para qualquer teste automatizado de tela no futuro:
+
+1. **Navegar duas vezes para o mesmo endereço não remonta a tela** — muda só o `#`, então o
+   formulário aberto na cena anterior continuava aberto na foto seguinte. A solução foi passar por
+   uma rota neutra antes de abrir a rota alvo.
+2. **O botão das seções recolhíveis contém o título *e* a descrição**, então não casa por texto
+   exato — precisa casar por trecho.
+
+Os dados de demonstração (`dados-demo.mjs`) ganharam as tabelas que faltavam — fornecedores,
+pedidos de compra, cotações, contas a receber, notas fiscais, auditoria, contagens, configurações
+e funcionários completos — e as OS passaram a ter **vendedor e técnico preenchidos**, sem o que a
+aba Comissões aparecia vazia.
+
+> **Ideia registrada, não pedida:** essa ferramenta é meio caminho para o teste de tela que falta
+> no projeto (item 4 da seção 6 — hoje só há teste de função pura). Ela já abre o app de verdade
+> com dados controlados; faltaria comparar o resultado em vez de só fotografar.
+
+#### Os números que saíram (e o quanto confiar neles)
+
+| Cenário | Custo/mês | Por loja |
+|---|---|---|
+| Hoje (1 loja, Pneus Amigão) | R$ 213,40 | R$ 213,40 |
+| 10 lojas, **uma conta só** na Focus NFe | R$ 953,50 | **R$ 95,35** |
+| 10 lojas, uma assinatura Focus NFe por empresa | R$ 1.604,50 | R$ 160,45 |
+
+Premissa de volume: 10 carros/dia por loja, 26 dias úteis → ~2.600 OS/mês e ~3.900 notas/mês.
+Câmbio US$ 1 = R$ 5,10.
+
+**Três coisas que valem mais que os números:**
+
+1. **A conta única na Focus NFe vale ~R$ 650/mês** nesse cenário. É o argumento financeiro para a
+   mudança de "token por loja" para "token compartilhado" que já estava registrada como pendência
+   (item 6 da seção 8) — antes ela era justificada por conforto e aparência; agora tem preço.
+2. **O custo por loja despenca de R$ 213 para R$ 95** ao sair de 1 para 10 lojas, só por diluição
+   de custo fixo. Contra o preço de R$ 350/loja decidido para a fase 2, a margem sobe de 50% para
+   ~73%.
+3. **O gargalo continua não sendo dinheiro nem código** — é o credenciamento fiscal de cada CNPJ
+   novo (certificado digital, SEFAZ, prefeitura, alíquota mensal), que depende da contabilidade do
+   cliente e varia por estado e município. O playbook do item 1 da seção 8 continua sendo a peça
+   central para crescer, e a recomendação de tratar "usar o sistema" e "emitir nota" como duas
+   ativações separadas ficou reforçada.
+
+> ⚠️ **Onde os números são frágeis:** os preços do **Supabase** e da **API da Anthropic** foram
+> conferidos nesta sessão. Os da **Focus NFe não** — o site deles é bloqueado pela rede do
+> ambiente onde eu rodo, então os valores usados continuam sendo os do levantamento de agosto de
+> 2026. Antes de fechar qualquer conta, conferir em `focusnfe.com.br/precos`.
+
+#### O que o sistema precisaria para aguentar 10 lojas
+
+Levantado no documento; nada disso foi construído. Em ordem de peso, os três primeiros são os que
+mais importam antes da terceira empresa:
+
+1. **Token da Focus NFe compartilhado** (já era pendência conhecida — agora com preço).
+2. **Publicar versão nova em etapas.** Hoje uma tag atualiza **todas** as lojas ao mesmo tempo,
+   automaticamente. Com uma loja isso é ótimo; com dez lojas de terceiros, uma versão ruim vira
+   dez telefonemas simultâneos. Já estava na fila combinada dela ("risco de uma tag ruim atualizar
+   todas as lojas de uma vez") e este levantamento reforçou.
+3. **Backup do banco** — consequência de sair do plano grátis do Supabase (ver a linha corrigida
+   na seção 3).
+4. Botão de diagnóstico para suporte (já estava na fila dela) e algum aviso de que uma loja
+   **parou** de emitir nota — hoje só se descobre quando ligam.
+5. RLS por módulo (item 1 da seção 6) e teste de tela (item 4) — as duas dívidas conhecidas que
+   mudam de gravidade quando o sistema roda na loja dos outros.
+
 ### ⏸ O ponto exato onde parou (10/09/2026) — LEIA ISTO PRIMEIRO
 
 **A `v0.9.29` está pronta pra sair e NÃO foi publicada, por decisão dela.** A correção do item 2
-acima já está mesclada na `main`, validada (`tsc`/lint/contraste limpos, **176 testes** passando)
+de "Onde tudo parou (08-09/09/2026)" — o código de ICMS do fornecedor virando o código da peça —
+já está mesclada na `main`, validada (`tsc`/lint/contraste limpos, **176 testes** passando)
 e com as duas telas conferidas por preview renderizado — só falta a tag. Ela pediu pra segurar:
 *"ainda nao, deixa pendente, atualiza o projeto status, volto em outra sessao"*.
 

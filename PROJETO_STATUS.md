@@ -496,6 +496,19 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # `npm run test:watch` fica observando arquivo mudar. Testes
 │                                  # ficam ao lado do arquivo testado (`<arquivo>.test.ts`), não
 │                                  # numa pasta `__tests__` separada.
+├── MELHORIAS.md                  # GUIA DE MELHORIAS (11/09/2026) — um cardápio priorizado de mais
+│                                  # de cem sugestões: 12 eixos transversais (TR-nn), as 54 telas
+│                                  # uma a uma (TL-nn), 15 funcionalidades que faltam (FN-nn) e um
+│                                  # roteiro em 5 etapas. Cada item tem prompt pronto, critério de
+│                                  # aceite e um "não mexer".
+│                                  # **NÃO é ordem de execução** — ela escolhe o que entra em cada
+│                                  # sessão, pelo código do item (ex: "faz o TR-11.1").
+│                                  # **De propósito, este arquivo NÃO é carregado sozinho** (não
+│                                  # está nos `@imports` do CLAUDE.md): são 227 KB, que em toda
+│                                  # sessão nova gastariam contexto que faz falta pro trabalho de
+│                                  # verdade. Abrir só quando ela citar um item ou pedir sugestão
+│                                  # de próximo passo.
+│                                  # A Etapa 1 dele já foi feita (ver "onde parou", 11/09/2026).
 ├── CHANGELOG.md                  # fechado até [0.1.3] - 2026-07-29; segue tudo em v1.0.0 não tagueada
 └── .env (local, não commitado)   # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave "anon"/publishable)
 ```
@@ -3432,9 +3445,13 @@ compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
 #### O que esta sessão fez
 
-Ela trouxe um **guia de melhorias** (`MELHORIAS.md`, gerado fora daqui a partir do
-`PROJETO_STATUS.md`, do PDF das 54 telas e de uma pesquisa de mercado/acessibilidade): 12 eixos
-transversais, as 54 telas uma a uma, 15 funcionalidades novas e um roteiro em 5 etapas. **É um
+Ela trouxe um **guia de melhorias** — que a partir de 11/09/2026 está **commitado na raiz do
+repositório, em `MELHORIAS.md`**, pra a próxima sessão não depender de ela anexar de novo. Ele
+**não** é carregado sozinho (não entrou nos `@imports` do `CLAUDE.md`): são 227 KB, e gastar isso
+de contexto em toda sessão atrapalharia mais que ajudaria — abrir só quando ela citar um item pelo
+código ou pedir sugestão de próximo passo. Foi gerado fora daqui, a partir do
+`PROJETO_STATUS.md`, do PDF das 54 telas e de uma pesquisa de mercado/acessibilidade, e traz 12
+eixos transversais, as 54 telas uma a uma, 15 funcionalidades novas e um roteiro em 5 etapas. **É um
 cardápio, não ordem de execução.** Ela escolheu a **Etapa 1 — "fundação barata que protege tudo o
 resto"**, que são cinco itens curtos cujo objetivo é parar de deixar erro conhecido voltar.
 Os cinco saíram, e o detalhe técnico de cada um está nos **itens 48, 49 e 50 da seção 6**:

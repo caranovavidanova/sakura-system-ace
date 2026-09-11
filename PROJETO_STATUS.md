@@ -3934,12 +3934,60 @@ ficam em "Ordens de Serviço" (seção 7); a lição, no item 57 da seção 6. E
 "Gerar o instalador Windows e publicar uma versão nova" (seção 9): subir o `package.json` pra
 `0.9.33`, PR, merge, `workflow_dispatch` com `ref: "main"`. Não publicar sozinho.
 
-#### Da Etapa 2, ainda não foram feitos
+#### O que falta do guia inteiro (levantado em 11/09/2026 — não precisa refazer a conta)
 
-`TR-01.3` (auditoria de contraste WCAG — o item que o achado acima alimenta), `TL-11`/`TL-12`
-(estoque mínimo e campos fiscais) e `FN-03` (WhatsApp). O `TL-27` e o `TL-08` saíram desta lista
-em 11/09/2026 — estão feitos, ver as levas 4 e 5 acima. **Ela escolhe o próximo pelo código do
-item — não sair fazendo a lista inteira.**
+Ela perguntou "o que falta do guia?" e a resposta foi levantada do `MELHORIAS.md` de verdade, item
+por item. **Fica registrado aqui pra uma sessão nova não gastar meia hora redescobrindo** — e vale
+até alguém mexer no guia ou fechar mais itens.
+
+O guia tem **130 itens**. O roteiro da Parte 4 escolhe **51** deles e organiza em 5 etapas; os
+outros **79 ficam fora do roteiro** — e isso não é descuido: são todos P1/P2 e melhoria de tela a
+tela. **Nenhum P0 do guia ficou fora do roteiro.**
+
+| Etapa | Feito | Falta |
+|---|---|---|
+| **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
+| **2** — o que dói hoje, no balcão | 9 de 13 | **4** |
+| **3** — confiança nos números | 0 de 7 | **7** |
+| **4** — antes da segunda empresa | 0 de 12 | **12** |
+| **5** — escala e produto | 0 de 15 | **15** |
+
+**Da Etapa 2 faltam 4**: `TR-01.3` (auditoria de contraste WCAG — o item que o achado do vermelho
+escuro, logo acima, alimenta), `TL-11` + `TL-12` (estoque mínimo e campos fiscais explicados — **os
+dois pedem migration**) e `FN-03` (WhatsApp). O `TL-27` e o `TL-08` saíram desta lista em
+11/09/2026 — ver as levas 4 e 5 acima.
+
+**Duas etapas mudam de peso por causa da venda, e vale dizer em voz alta:**
+
+- **Etapa 3 (7 itens)** é a que o guia descreve como *"fecha a área com o pior histórico do
+  projeto"* — e ele tem razão: já foram **cinco** divergências de conta de dinheiro aqui (itens
+  35, 40, 44 e 49 da seção 6). São testes de propriedade no rateio, teste-ouro do corpo da nota,
+  constraints no banco (inclusive "uma nota por OS por tipo", que hoje só é protegido pela tela —
+  ver item 3 de "O que ainda está frágil na parte fiscal"), teste de tela nos cinco formulários
+  que mexem em dinheiro, e fechamento de caixa do dia.
+- **Etapa 4 (12 itens) está INTEIRA por fazer, e o guia a trata como pré-requisito da venda**:
+  *"Nenhuma loja de terceiro deveria entrar antes desta etapa fechar. Não por perfeccionismo:
+  porque cada item aqui é uma coisa que, dando errado com dado de outra empresa, não tem conserto
+  pela tela."* São RLS por módulo, backup de verdade, canal de teste antes de atualizar todas as
+  lojas de uma vez, como voltar uma versão, botão de diagnóstico, o token da Focus NFe fora do
+  alcance do operador, e contrato/papéis de LGPD. **Isso importa agora**: a fase 2 (as duas lojas
+  do amigo do pai dela, seção 1) está no horizonte, e três desses doze já apareciam soltos na fila
+  dela por outros caminhos (token compartilhado, diagnóstico, risco de uma tag ruim atualizar todo
+  mundo).
+
+**Da Etapa 0 do guia, uma coisa continua aberta**: as duas primeiras (publicar a `v0.9.29`,
+mesclar a branch do gerador de telas) foram resolvidas em 11/09/2026; **trocar as três credenciais
+expostas** no histórico público não — não é código, é uma tarde dela (ver item 5 de "O que depende
+dela agora").
+
+**Como esse levantamento foi feito**, se precisar refazer depois de fechar mais itens: varrer os
+títulos ``### `CODIGO` `` do `MELHORIAS.md` (as famílias são `TR-`, `TL-` e `FN-`; a prioridade
+vem no próprio título, `**P0 · E2**`, exceto nas telas, que trazem a prioridade em cada sub-item)
+e cruzar com a lista de feitos. Duas telas contam como feitas **com uma sobra**: `TL-04` e `TL-08`
+tiveram o sub-item P2 deixado de fora de propósito (mais opções de cartão no Início; "repetir a
+última OS deste veículo").
+
+**Ela escolhe o próximo pelo código do item — não sair fazendo a lista inteira.**
 
 #### Estado do código
 

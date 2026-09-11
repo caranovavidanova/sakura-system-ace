@@ -1,3 +1,4 @@
+import { arredondarCentavo } from "./dinheiro";
 import { z } from "zod";
 import type { PagamentoOrdem } from "@/lib/ordensServico";
 import type { JurosParcela } from "@/types/configuracao";
@@ -58,7 +59,7 @@ export function calcularJurosPercentual(
 // centavo silencioso que só apareceria numa comparação exata mais adiante
 // (o teste automatizado pegou esse caso — ver faturamento.test.ts).
 export function calcularValorCobrado(total: number, jurosPercentual: number): number {
-  return Math.round(total * (1 + jurosPercentual / 100) * 100) / 100;
+  return arredondarCentavo(total * (1 + jurosPercentual / 100));
 }
 
 function addMeses(data: Date, meses: number): Date {
@@ -82,14 +83,14 @@ export function calcularListaParcelas(
   parcelas: number,
   apartirDe: Date = new Date(),
 ): ParcelaCalculada[] {
-  const valorParcela = Math.round((valorCobrado / parcelas) * 100) / 100;
+  const valorParcela = arredondarCentavo(valorCobrado / parcelas);
   return Array.from({ length: parcelas }, (_, i) => {
     const ultima = i === parcelas - 1;
     return {
       numero: i + 1,
       vencimento: addMeses(apartirDe, i + 1),
       valor: ultima
-        ? Math.round((valorCobrado - valorParcela * (parcelas - 1)) * 100) / 100
+        ? arredondarCentavo(valorCobrado - valorParcela * (parcelas - 1))
         : valorParcela,
     };
   });
@@ -150,7 +151,20 @@ export function somarLinhasCobradas(
     (total, linha) => total + linha.valorCobrado,
     0,
   );
-  return Math.round(soma * 100) / 100;
+  return arredondarCentavo(soma);
+}
+
+// Quanto os juros do cartão acrescentam, no pagamento dividido: a diferença
+// entre o que o cliente vai pagar de verdade e o que ele combinou. Vive aqui,
+// e não na tela, porque conta de dinheiro do sistema mora em src/schemas/
+// como função pura testada (PROJETO_STATUS.md, seção 6, item 40).
+export function jurosDasLinhas(
+  linhas: LinhaPagamentoValues[],
+  jurosParcelas: JurosParcela[],
+): number {
+  return arredondarCentavo(
+    somarLinhasCobradas(linhas, jurosParcelas) - somarLinhasPagamento(linhas),
+  );
 }
 
 // `ordens_servico.parcelas` é um número só, então no pagamento dividido
@@ -197,11 +211,11 @@ export function ratearPagamentos<T extends { valor: number }>(
   const fator = totalDestino / somaOriginal;
   const rateados = pagamentos.map((p) => ({
     ...p,
-    valor: Math.round(p.valor * fator * 100) / 100,
+    valor: arredondarCentavo(p.valor * fator),
   }));
 
   const somaSemUltima = rateados.slice(0, -1).reduce((soma, p) => soma + p.valor, 0);
-  rateados[rateados.length - 1].valor = Math.round((totalDestino - somaSemUltima) * 100) / 100;
+  rateados[rateados.length - 1].valor = arredondarCentavo(totalDestino - somaSemUltima);
 
   return rateados;
 }

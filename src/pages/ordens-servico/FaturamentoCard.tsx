@@ -11,6 +11,7 @@ import {
   calcularValorCobrado,
   faturamentoFormSchema,
   faturamentoFormVazio,
+  jurosDasLinhas,
   formaPermiteParcelar,
   paraPagamentos,
   parcelasDaOrdem,
@@ -88,7 +89,7 @@ export function FaturamentoCard({
   const linhasBatem = Math.abs(diferencaLinhasPagamento) < 0.01;
   const linhasCalculadas = calcularLinhasPagamento(linhasPagamento, jurosParcelas);
   const totalCobradoDividido = somarLinhasCobradas(linhasPagamento, jurosParcelas);
-  const jurosDividido = Math.round((totalCobradoDividido - somaLinhasPagamento) * 100) / 100;
+  const jurosDividido = jurosDasLinhas(linhasPagamento, jurosParcelas);
 
   const formaPagamentoField = register("formaPagamento");
 

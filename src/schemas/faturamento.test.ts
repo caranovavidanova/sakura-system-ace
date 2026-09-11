@@ -5,6 +5,7 @@ import {
   calcularListaParcelas,
   calcularValorCobrado,
   faturamentoFormVazio,
+  jurosDasLinhas,
   paraPagamentos,
   parcelasDaOrdem,
   somarLinhasCobradas,
@@ -296,5 +297,32 @@ describe("calcularListaParcelas", () => {
   it("vence uma vez por mês, a partir do mês que vem", () => {
     const parcelas = calcularListaParcelas(300, 3, new Date(2026, 8, 2));
     expect(parcelas.map((p) => p.vencimento.getMonth())).toEqual([9, 10, 11]);
+  });
+});
+
+describe("jurosDasLinhas", () => {
+  it("cobra juros só sobre a parte que passou no cartão", () => {
+    // R$100 no Pix à vista + R$100 no cartão em 2x a 3%: os juros são 3% de
+    // 100 (a parte do cartão), não de 200 (a OS inteira).
+    const linhas = [
+      { formaPagamento: "pix", valor: "100", parcelas: "1" },
+      { formaPagamento: "cartao_credito", valor: "100", parcelas: "2" },
+    ];
+    expect(jurosDasLinhas(linhas, jurosParcelas)).toBe(3);
+  });
+
+  it("não cobra nada quando nenhuma linha é cartão parcelado", () => {
+    const linhas = [
+      { formaPagamento: "pix", valor: "60", parcelas: "1" },
+      { formaPagamento: "dinheiro", valor: "40", parcelas: "1" },
+    ];
+    expect(jurosDasLinhas(linhas, jurosParcelas)).toBe(0);
+  });
+
+  it("fecha no centavo", () => {
+    const linhas = [{ formaPagamento: "cartao_credito", valor: "33.33", parcelas: "2" }];
+    // 3% de 33,33 é 0,9999 — precisa sair fechado no centavo, não com cauda.
+    const juros = jurosDasLinhas(linhas, jurosParcelas);
+    expect(juros).toBe(Number(juros.toFixed(2)));
   });
 });

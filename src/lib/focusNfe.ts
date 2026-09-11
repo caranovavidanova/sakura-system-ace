@@ -1,4 +1,5 @@
 import { hojeLocal } from "./datas";
+import { arredondarCentavo as arredondar } from "@/schemas/dinheiro";
 import type { AmbienteFocusNfe, ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type {
@@ -158,10 +159,6 @@ function codigoFormaPagamentoSefaz(formaPagamento: string): string {
 
 function formatarValor(valor: number): string {
   return valor.toFixed(2);
-}
-
-function arredondar(valor: number): number {
-  return Math.round(valor * 100) / 100;
 }
 
 export interface ItemParaNFCe {

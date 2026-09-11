@@ -1,4 +1,5 @@
 import { custoDosItens, type MapaCusto } from "./metricasCaixa";
+import { arredondarCentavo as arredondar } from "./dinheiro";
 import type { ItemOS, OrdemServico } from "@/types/os";
 
 /**
@@ -84,10 +85,6 @@ export interface EntradaComissoes {
   ordensAReceber: Set<string>;
   de: string;
   ate: string;
-}
-
-function arredondar(valor: number): number {
-  return Math.round(valor * 100) / 100;
 }
 
 // A data vem do banco em UTC — pegar o "dia" com `.slice(0, 10)` pegaria o dia

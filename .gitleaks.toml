@@ -1,0 +1,49 @@
+# Configuração da varredura de segredo (roda no CI, job "segredos").
+#
+# Por que existe um arquivo próprio em vez de só usar as regras de fábrica:
+# elas foram testadas contra os formatos de credencial que ESTE projeto
+# manuseia, e deixavam passar justamente os dois mais importantes — a chave
+# secreta do Supabase (`sb_secret_...`) e a chave da Anthropic (`sk-ant-...`).
+# As duas já apareceram na vida real do projeto: uma chave `sb_secret_...` foi
+# colada num chat por engano (PROJETO_STATUS.md, seção 6, item 3) e a
+# ANTHROPIC_API_KEY é o segredo da Edge Function que lê nota fiscal por foto.
+#
+# Um aviso honesto sobre o alcance disto: varredura automática pega credencial
+# com FORMATO reconhecível. Ela não pega — e não tem como pegar — as três
+# credenciais que de fato vazaram neste repositório (o CSC da SEFAZ, o token do
+# portal da prefeitura e a senha do portal), porque são texto comum, sem
+# formato nenhum que as distinga de uma palavra qualquer. Contra essas, a
+# proteção é a regra escrita no topo do PROJETO_STATUS.md: credencial mora no
+# painel do serviço, nunca num arquivo do repositório.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "supabase-chave-secreta"
+description = "Chave secreta do Supabase (sb_secret_...). Essa chave ignora RLS e dá acesso total ao banco da loja."
+regex = '''sb_secret_[A-Za-z0-9_\-]{20,}'''
+keywords = ["sb_secret_"]
+
+[[rules]]
+id = "anthropic-chave-api"
+description = "Chave da API da Anthropic (sk-ant-...). O lugar dela é o secret da Edge Function no Supabase, nunca um arquivo."
+regex = '''sk-ant-[A-Za-z0-9_\-]{20,}'''
+keywords = ["sk-ant-"]
+
+[[rules]]
+id = "supabase-service-role-antiga"
+description = "Chave do Supabase no formato antigo (JWT). A anon/publishable pode ser pública; a service_role, jamais — e as duas têm a mesma cara."
+regex = '''eyJ[A-Za-z0-9_\-]{10,}\.eyJ[A-Za-z0-9_\-]{20,}\.[A-Za-z0-9_\-]{20,}'''
+keywords = ["eyJ"]
+
+[allowlist]
+description = "O que não é segredo, apesar de parecer"
+paths = [
+  # Guarda hash de integridade em base64, que às vezes parece um token.
+  '''package-lock\.json''',
+  # Só nomes de variável, sem valor nenhum — é o modelo que ela copia pra .env.
+  '''\.env\.example''',
+  # Este próprio arquivo cita os formatos que procura.
+  '''\.gitleaks\.toml''',
+]

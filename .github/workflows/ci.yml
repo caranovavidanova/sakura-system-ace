@@ -1,0 +1,104 @@
+name: CI
+
+# Roda, em toda alteração enviada ao GitHub, as MESMAS cinco checagens que até
+# hoje eram feitas à mão, sessão a sessão: tipos, lint, testes (nos dois
+# fusos), contraste de cores e o SQL único de instalação.
+#
+# Por que isto vale a pena: cada sessão nova que trabalha neste projeto começa
+# sem memória da conversa anterior. Um erro conhecido — cortar o dia em UTC,
+# esquecer de regerar o instalacao-completa.sql, deixar letra ilegível num card
+# — só não voltava porque alguém lembrava de rodar os comandos. Isto tira a
+# lembrança do caminho.
+#
+# NÃO builda o instalador do Windows de propósito: isso é lento e já tem lugar
+# próprio (release.yml, disparado por tag ou manualmente).
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+
+# Se chegar commit novo na mesma branch enquanto uma rodada está em andamento,
+# cancela a antiga — o resultado dela já não interessa mais.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checagens:
+    name: Tipos, lint, testes, contraste e SQL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # Guarda o cache do npm entre rodadas (a chave sai sozinha do
+          # package-lock.json), pra não baixar tudo de novo a cada vez.
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos (tsc)
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # Roda a suíte DUAS vezes, no fuso do Brasil e em UTC. A máquina do
+      # GitHub usa UTC, e é justamente em UTC que o pior bug de data deste
+      # projeto não aparece (PROJETO_STATUS.md, seção 6, itens 34 e 42).
+      - name: Testes nos dois fusos
+        run: npm run test:fusos
+
+      - name: Contraste de cores
+        run: npm run contraste
+
+      # O arquivo único de instalação é GERADO a partir das migrations. Se
+      # alguém criar uma migration e esquecer de regerar, uma empresa nova
+      # seria instalada sem ela — e o erro só apareceria depois, na tela.
+      - name: SQL de instalação está em dia
+        run: |
+          npm run gerar-instalacao
+          if ! git diff --exit-code; then
+            echo "::error::O supabase/instalacao/instalacao-completa.sql está desatualizado. Rode 'npm run gerar-instalacao' e faça commit do resultado."
+            exit 1
+          fi
+
+  segredos:
+    name: Varredura de segredo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Nenhum arquivo de certificado digital pode entrar no repositório: ele
+      # é a identidade fiscal da empresa, e este repositório é PÚBLICO (foi
+      # aberto pra o auto-update funcionar — seção 6, item 21).
+      - name: Nenhum certificado digital versionado
+        run: |
+          encontrados=$(git ls-files '*.pfx' '*.p12' '*.jks' '*.keystore' 'conexao.json')
+          if [ -n "$encontrados" ]; then
+            echo "::error::Arquivo que não pode ser versionado: $encontrados"
+            exit 1
+          fi
+          echo "Nenhum certificado ou arquivo de conexão versionado."
+
+      # Versão fixada de propósito: varredura de segredo que muda de regra
+      # sozinha vira vermelho misterioso num dia qualquer.
+      - name: Procura credencial no conteúdo dos arquivos
+        env:
+          VERSAO_GITLEAKS: 8.28.0
+        run: |
+          curl -sSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSAO_GITLEAKS}/gitleaks_${VERSAO_GITLEAKS}_linux_x64.tar.gz"
+          tar xzf gitleaks.tar.gz gitleaks
+          # --no-git varre os arquivos como eles estão AGORA, não o histórico.
+          # Isso é deliberado: o histórico deste repositório já carrega segredo
+          # de antes (a resposta certa pra isso é TROCAR a credencial, não
+          # reescrever o histórico — ver seção 6/8 do PROJETO_STATUS.md), e uma
+          # checagem que nunca pode ficar verde é uma checagem que todo mundo
+          # aprende a ignorar.
+          ./gitleaks detect --no-git --source . --redact --verbose

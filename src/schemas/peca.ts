@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { arredondarCentavo as arredondar } from "./dinheiro";
 import type { NovaPeca, Peca } from "@/types/peca";
 
 // Mesma ideia dos outros schemas: formulário trabalha só com strings (mesmo
@@ -117,10 +118,6 @@ export function paraQuantidadeInicial(valores: PecaFormValues): number | null {
 // Os três campos se atualizam entre si conforme qual deles a pessoa mexeu por
 // último (ver PrecosFields.tsx). Retornar `null` significa "não mexe no outro
 // campo" (dado insuficiente pra calcular ainda); retornar "" limpa o campo.
-
-function arredondar(valor: number): number {
-  return Math.round(valor * 100) / 100;
-}
 
 export function precoAPartirDaMargem(custo: string, margem: string): string | null {
   const custoNum = Number(custo);

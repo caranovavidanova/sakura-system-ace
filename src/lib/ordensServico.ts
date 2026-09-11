@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import { criarMovimentoCaixa } from "./caixa";
 import { criarContaReceber } from "./contasReceber";
 import { buscarDepositoPadraoId } from "./depositos";
+import { arredondarCentavo, somar } from "@/schemas/dinheiro";
 import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
 import type {
   ItemOS,
@@ -120,7 +121,7 @@ export async function adicionarItensOrdem(
 // evita uma diferença de centésimo de milésimo virar uma movimentação de
 // estoque fantasma (2.3 - 2.0 dá 0.2999999999999998 em ponto flutuante).
 function arredondarQuantidade(valor: number): number {
-  return Math.round(valor * 100) / 100;
+  return arredondarCentavo(valor);
 }
 
 // Editar um item já lançado pode mexer no estoque: a saída que o item
@@ -217,7 +218,10 @@ export async function faturarOrdem(
   parcelas: number,
   previsaoRecebimento: string | null,
 ): Promise<void> {
-  const valorTotal = pagamentos.reduce((soma, p) => soma + p.valor, 0);
+  // Fecha no centavo: cada pagamento já vem arredondado, mas somar em ponto
+  // flutuante ainda deixa cauda (0.1 + 0.2 dá 0.30000000000000004) — e esse
+  // valor vai pro banco, em Contas a Receber.
+  const valorTotal = somar(pagamentos.map((p) => p.valor));
   // Resumo legível pra exibir em qualquer lugar (garantia, lista de OS) —
   // uma forma só continua mostrando só ela; duas ou mais aparecem juntas
   // (ex: "Pix + Cartão de crédito").

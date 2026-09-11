@@ -49,3 +49,36 @@ export async function excluirMovimentoCaixa(id: string): Promise<void> {
   const { error } = await supabase.from("caixa_movimentos").delete().eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * Grava a categoria escolhida num lote de lançamentos de uma vez.
+ *
+ * Confere quantas linhas voltaram do `update` porque, neste projeto, RLS sem
+ * policy cobrindo o comando não dá erro nenhum — ela filtra a zero linhas, e
+ * um `.update()` que "roda sem erro" sem mudar nada é indistinguível de ter
+ * dado certo (PROJETO_STATUS.md, seção 6, item 15: foi exatamente assim que o
+ * botão de excluir loja passou a não fazer nada, em silêncio). Aqui a policy
+ * de `caixa_movimentos` é `for all`, então o update é coberto — a checagem
+ * existe pro dia em que alguém mexer nessa policy.
+ */
+export async function definirCategoriaDosMovimentos(
+  ids: string[],
+  categoriaId: string,
+): Promise<void> {
+  if (ids.length === 0) return;
+
+  const { data, error } = await supabase
+    .from("caixa_movimentos")
+    .update({ categoria_id: categoriaId })
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+
+  if ((data?.length ?? 0) !== ids.length) {
+    throw new Error(
+      `Só ${data?.length ?? 0} de ${ids.length} lançamentos foram atualizados. ` +
+        "Recarregue a tela e tente de novo.",
+    );
+  }
+}

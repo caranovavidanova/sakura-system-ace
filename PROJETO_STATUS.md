@@ -1811,6 +1811,31 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     promessa do item ("o destrutivo é o último"). Quando uma mudança tem uma promessa em uma
     frase, essa frase vira teste.
 
+53. **Três lições de uma mudança grande e chata (a escala tipográfica, 11/09/2026).** O item
+    `TR-01.1` trocou 756 classes de tamanho de fonte em 89 arquivos. O trabalho em si foi
+    mecânico; o que valeu aprender foi o resto:
+    - **A premissa do guia estava errada, e só o código sabia disso.** Ele pedia tabela em 13px
+      "porque estão em 11-12px". Conferido: **25 das 28 tabelas já usavam 14px** — obedecer teria
+      ENCOLHIDO justo o que o item veio consertar. O guia é um bom cardápio, mas ele foi escrito a
+      partir de PDF e documentação, não do código; quando ele der um número, conferir o número
+      antes de aplicar.
+    - **Uma mudança de tela quebrou uma FERRAMENTA do repositório, em silêncio.** O `TR-02.1`
+      moveu "Cancelar nota" pra dentro do menu de três pontinhos — e o gerador do catálogo de
+      telas (`site/ferramentas/gerar-catalogo-telas.mjs`), que clica nesse botão pelo texto,
+      passou a falhar naquela cena. Nada no app quebrou, então nada avisou. Só apareceu ao rodar
+      o gerador de novo, uma leva depois. **Lição**: ao mudar rótulo ou lugar de um botão,
+      `grep` pelo texto dele em `site/ferramentas/` — é onde mora o único teste de tela que
+      existe hoje.
+    - **O gerador precisa de um `.env` na raiz, mesmo de mentira.** Sem ele, o app abre na tela de
+      **conexão** em vez do login e **todas** as 54 cenas falham com timeout no botão de entrar —
+      um sintoma que não sugere a causa em nada. O `.env` não é commitado, então toda máquina
+      recém-clonada cai nisso. Já está escrito no topo do próprio gerador.
+    **E o que de fato protege a escala não é este parágrafo**: é
+    `src/schemas/tipografia.test.ts`, que reprova classe de tamanho crua em `src/` apontando
+    arquivo e linha. Ele foi conferido plantando um `text-xs` de propósito pra vê-lo reprovar —
+    teste de regra que nunca falhou na frente de alguém não prova nada (a primeira versão do teste
+    de arquitetura, item 49, passou batido justo na forma mais comum do bug).
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -1853,6 +1878,18 @@ São dois anéis sobrepostos (um escuro colado na borda, um claro 2px pra fora) 
 sobre o card escuro quanto sobre a faixa amarela de aviso da emissão de nota. Regra única em
 `@layer base` do `globals.css`, sem nada a fazer em tela nova. Ver item 51 da seção 6 pro motivo
 de os 78 `outline-none` do app terem saído junto.
+
+**Escala tipográfica** (11/09/2026, item `TR-01.1` do guia): o tamanho de fonte agora sai de uma
+escala única no `@theme` do `globals.css`, com nome por **papel** e não por tamanho — `text-metrica`
+(número grande de cartão), `text-titulo` (o `<h1>` da tela), `text-destaque` (valor que salta num
+card), `text-subtitulo`, `text-corpo` (texto normal, 14px), `text-tabela` (tabela densa, 13px),
+`text-rotulo` (rótulo/etiqueta, 13px) e `text-meta` (só metadado, 12px). Cada uma carrega a própria
+altura de linha. Em tela nova, **escolher pelo papel do texto** — não voltar a `text-xs`/`text-sm`,
+que `src/schemas/tipografia.test.ts` reprova apontando arquivo e linha.
+**Nada encolheu nessa troca**: o menor texto do app subiu de 12 pra 13px e o de 10/11px pra 12px.
+Duas coisas contra a intuição: a tabela **comum** usa `text-corpo` (14px), não `text-tabela` — o
+guia supunha tabela em 11-12px, mas 25 das 28 já eram 14px, e baixar seria piorar; e `tabela` e
+`rotulo` têm o mesmo tamanho de propósito, são o mesmo degrau com papéis diferentes.
 
 **Ações de linha das listas** (11/09/2026, item `TR-02.1` do guia): em toda lista, o trio
 `Editar Inativar Excluir` era três palavras coladas em texto de ~10px, com o destrutivo
@@ -3730,7 +3767,14 @@ que pegou o bug do item 52, que a leitura do código tinha deixado passar.
 nota de verdade, marcar o CI como obrigatório, trocar as três credenciais expostas e cadastrar a
 alíquota da competência todo mês.
 
-**Da Etapa 2, ainda não foram feitos**: `TR-01.1` (escala tipográfica), `TR-01.3` (auditoria de
-contraste WCAG), `TL-04` (cartões e calendário do Início), `TL-08` (cadastrar cliente sem sair da
-OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais), `TL-27` (categoria obrigatória no caixa) e
-`FN-03` (WhatsApp). Ela escolhe o próximo pelo código do item — não sair fazendo a lista inteira.
+**Também saiu, logo depois dos três**: `TR-01.1` — a **escala tipográfica** (PR #236). O tamanho
+de fonte deixou de ser escolhido tela a tela: 756 classes cruas em 89 arquivos viraram tokens com
+nome por papel, e o menor texto do app subiu de 12 pra 13px (nada encolheu). O que cada token
+significa está em "Estado atual por módulo"; as três lições, no item **53** da seção 6 — entre
+elas, que **a premissa do guia estava errada** sobre o tamanho das tabelas, e que o `TR-02.1`
+tinha quebrado em silêncio o gerador do catálogo de telas.
+
+**Da Etapa 2, ainda não foram feitos**: `TR-01.3` (auditoria de contraste WCAG), `TL-04` (cartões
+e calendário do Início), `TL-08` (cadastrar cliente sem sair da OS), `TL-11`/`TL-12` (estoque
+mínimo e campos fiscais), `TL-27` (categoria obrigatória no caixa) e `FN-03` (WhatsApp). Ela
+escolhe o próximo pelo código do item — não sair fazendo a lista inteira.

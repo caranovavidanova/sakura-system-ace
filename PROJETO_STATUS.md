@@ -703,7 +703,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   não existe".
 - `0050` (criada em 11/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0049` **com dado plantado**,
-  inclusive uma categoria "Outros" criada à mão — **ainda não rodada por ela**): semeia a categoria
+  inclusive uma categoria "Outros" criada à mão — **rodada e confirmada por ela no Supabase real em
+  11/09/2026**, antes da tag `v0.9.32`, como essa migration exigia): semeia a categoria
   **"Outros"** em `categorias_caixa`, uma para cada tipo (entrada e saída).
   **Por que isso não é detalhe**: `categorias_caixa` (migration `0020`) nunca foi semeada por
   migration nenhuma — diferente de `categorias` e `categorias_servicos`, que a `0030` semeia. Ou
@@ -713,9 +714,9 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   **Não torna `caixa_movimentos.categoria_id` NOT NULL**, de propósito: o faturamento de uma OS
   entra no caixa sem categoria e deve continuar assim, e o histórico já gravado não pode ser
   recusado pelo banco. A obrigatoriedade é do formulário, não da tabela.
-  **Ordem importa** (mesmo caso da `0049`): precisa estar rodada antes de a versão nova chegar no
-  computador da loja — a menos que ela já tenha pelo menos uma categoria de cada tipo cadastrada,
-  caso em que a ordem deixa de importar.
+  **A ordem foi cumprida**: ela rodou a migration primeiro e a `v0.9.32` só saiu depois. Numa loja
+  nova, a ordem continua valendo (a migration antes da versão) — a menos que já exista pelo menos
+  uma categoria de caixa de cada tipo, caso em que ela deixa de importar.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -2651,6 +2652,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     **cartões e o calendário do Início** (`TL-04`). Sem migration: o banco dela já estava em
     `0049`. Publicada via `workflow_dispatch`.
 
+  - `v0.9.32`: **categoria obrigatória no lançamento manual do caixa** (`TL-27`) — com a categoria
+    "Outros" semeada pela migration `0050` e o painel que categoriza em lote o histórico que ficou
+    sem categoria. Ver "Caixa Diário" nesta seção. **Publicada depois** de ela rodar a `0050`, que
+    era a ordem obrigatória — mesma disciplina da `v0.9.30` com a `0049`. Via `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3168,13 +3174,13 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0049` estão aplicadas no Supabase real dela; a `0050` é a única pendente** — a `0048`
+**Estado hoje: `0001` a `0050` estão TODAS aplicadas no Supabase real dela — nada pendente de SQL** — a `0048`
 (precisão das colunas de valor) e a `0049` (lembrete da alíquota da competência) foram coladas por
 ela no SQL Editor em 11/09/2026, as duas com "Success. No rows returned", e a `0049` **antes** da
 tag `v0.9.30`, que é a ordem que essa migration exigia (sem as colunas dela, "Salvar dados
 fiscais" daria erro de coluna inexistente no computador da loja).
-**A `0050`** (semeia a categoria "Outros" de caixa, pro item TL-27) **ainda não foi rodada** — é o
-único SQL pendente hoje, e precisa ir antes de a versão nova chegar na loja. Ver seção 5.
+**A `0050`** (semeia a categoria "Outros" de caixa, pro item TL-27) **foi rodada em 11/09/2026**,
+com "Success. No rows returned", **antes** da tag `v0.9.32` — que era a ordem obrigatória dela.
 **Sobre `0047` e anteriores:** `0046` (`focus_nfe_ref` em
 `notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
 `configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
@@ -3425,7 +3431,7 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.31"` — publicada em 11/09/2026, com a `main` em dia e
+- `package.json` em `"version": "0.9.32"` — publicada em 11/09/2026, com a `main` em dia e
   **nada esperando tag** (ver "Onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -3706,12 +3712,12 @@ compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
 ### ⏸ Onde parou em 11/09/2026 — LEIA ISTO PRIMEIRO
 
-**Estado: `v0.9.31` publicada e instalada. Depois dela entrou na `main` mais uma leva — o
-`TL-27` — que está SEM TAG e depende de uma migration nova (`0050`) ser rodada antes.** Foi um dia
-longo, com quatro levas de trabalho — o resumo de cada uma está logo abaixo, e o que sobrou pra
-ela está no fim desta seção.
+**Estado: tudo publicado. `v0.9.32` é a última tag, a `main` está em dia, o banco dela está na
+`0050` e não há nada esperando tag nem SQL.** Foi um dia longo, com quatro levas de trabalho — o
+resumo de cada uma está logo abaixo, e o que sobrou pra ela (nada que bloqueie o uso do sistema)
+está no fim desta seção.
 
-> As três levas deste dia foram escolhidas por ela **pelo código do item**, no guia de melhorias
+> As quatro levas deste dia foram escolhidas por ela **pelo código do item**, no guia de melhorias
 > (`MELHORIAS.md`, na raiz do repositório). Ele **não** carrega sozinho em sessão nova, de
 > propósito: são 227 KB. Abrir só quando ela citar um item ou pedir sugestão de próximo passo —
 > e, ao abrir, **conferir a premissa do item contra o código antes de aplicar** (ver item 53 da
@@ -3782,7 +3788,7 @@ abertas, contas a receber vencidas, peças abaixo do mínimo).
 **Uma pergunta que estava aberta e foi respondida**: "Editar" e "Inativar" viraram **ícone** nas
 listas — ela viu a tela de Clientes renderizada e escolheu manter assim. Não reabrir.
 
-#### Leva 4 — `TL-27`: categoria obrigatória no caixa (na `main`, SEM tag ainda)
+#### Leva 4 — `TL-27`: categoria obrigatória no caixa (`v0.9.32`)
 
 Item escolhido por ela. A prova do problema estava na própria tela de Saídas: "Por categoria —
 Sem categoria: R$ 31.000,00", o mês inteiro de despesa num balde só. Como a categoria era
@@ -3800,10 +3806,11 @@ seção 6**. Em uma linha cada:
    quanto somam, e um painel que categoriza em lote. Era a parte que o item insistia, e sem ela
    o relatório continuaria errado pra sempre.
 
-**Só falta a tag** — igual à `v0.9.29`, que ficou segurada um dia esperando o "sim" dela. **E,
-diferente daquela, esta tem uma ordem obrigatória**: a migration `0050` precisa estar rodada
-antes de a versão nova chegar na loja (a menos que ela já tenha pelo menos uma categoria de caixa
-de cada tipo — aí a ordem deixa de importar).
+**Publicada na `v0.9.32`**, e na ordem certa: ela rodou a migration `0050` no SQL Editor
+("Success. No rows returned") e **só então** a tag saiu — mesma disciplina usada na `v0.9.30` com
+a `0049`. O que ainda não foi visto é o recurso rodando na loja: se a faixa "N lançamentos antigos
+estão sem categoria" aparece com o número certo, e se a categorização em lote grava de verdade
+(o `update` fala com o Supabase, que este ambiente não alcança).
 
 #### O que apareceu no caminho e NÃO foi mexido
 
@@ -3817,16 +3824,17 @@ mexer.
 
 #### O que depende dela agora
 
-**Decidir e rodar, na ordem** — é o único item com ordem obrigatória:
-
-0. **Rodar a migration `0050`** (SQL Editor do Supabase, colar
-   `supabase/migrations/0050_categoria_caixa_outros.sql`) **e só depois publicar a tag** com o
-   `TL-27`. A migration semeia a categoria "Outros" do caixa; sem ela, quem não tiver nenhuma
-   categoria de caixa cadastrada não consegue lançar (a tela explica o motivo e onde criar uma,
-   mas o caminho vira trabalho manual). Se ela já tiver pelo menos uma categoria de cada tipo, a
-   ordem deixa de importar. **Não publicar a tag sozinho** — perguntar antes, como na `v0.9.29`.
+**Nada está bloqueado esperando decisão dela.** O que sobra é confirmação de uso real e tarefa
+fora do código.
 
 **Confirmar em uso real** (nada disso dá pra testar daqui):
+
+0. **A categoria obrigatória no caixa (`v0.9.32`)** — lançar uma saída e ver que o campo Categoria
+   agora é exigido, e que a faixa "N lançamentos antigos estão sem categoria, somando R$ X" aparece
+   com o número certo nas abas Entradas/Saídas. **O teste que mais importa é o botão "Categorizar
+   agora"**: escolher as categorias (ou usar "aplicar a todos que estão em branco") e salvar — é a
+   única parte que fala com o Supabase de verdade, e por isso a única que não deu pra provar daqui.
+   Depois de salvar, o bloco "Por categoria" deve parar de ter a linha "Sem categoria".
 
 1. **Que a `v0.9.31` chegou na loja** pelo auto-update, e que o sistema continua se comportando —
    é a leva que mais mexeu na aparência de todas as telas (tamanho de letra, ações das listas,
@@ -3869,9 +3877,9 @@ pelo código do item — não sair fazendo a lista inteira.**
 
 #### Estado do código
 
-`main` em dia, com a `v0.9.31` publicada **mais o `TL-27` já mesclado e sem tag**. `tsc`, lint e
-`npm run contraste` limpos; **341 testes** passando nos dois fusos (eram 149 no começo de
-setembro). As 54 telas do catálogo
+`main` em dia na **`v0.9.32`**, sem nada esperando tag e sem SQL pendente (o banco dela está na
+`0050`). `tsc`, lint e `npm run contraste` limpos; **341 testes** passando nos dois fusos (eram
+149 no começo de setembro). As 54 telas do catálogo
 (`site/ferramentas/gerar-catalogo-telas.mjs`) geradas de novo sem nenhuma falha — vale rodar esse
 gerador depois de qualquer mexida grande de tela, é o único teste de tela que existe hoje, e ele
 já quebrou em silêncio uma vez (item 53 da seção 6).

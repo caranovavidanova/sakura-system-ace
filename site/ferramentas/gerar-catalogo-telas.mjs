@@ -18,6 +18,16 @@ import { TABELAS } from "./dados-demo.mjs";
 // do login, e todas as cenas falham com timeout no botão de entrar. O .env não
 // é commitado, então numa máquina recém-clonada ele não existe.
 //
+// E a URL não pode ser QUALQUER invenção: o banco-falso.mjs intercepta
+// "**demo.supabase.co/**", então o endereço precisa ser exatamente
+// https://demo.supabase.co. Com outro hostname o login vaza pra rede de
+// verdade e 36 das 54 cenas falham por timeout — com um erro de console
+// ("ERR_TUNNEL_CONNECTION_FAILED") que não sugere em nada que a causa é o
+// nome do host no .env. Ou seja:
+//
+//   VITE_SUPABASE_URL=https://demo.supabase.co
+//   VITE_SUPABASE_ANON_KEY=chave-de-mentira
+//
 // Além dos .png, escreve um catalogo.json com o título e a explicação de
 // cada tela — é o que o documento em PDF usa pra montar as legendas.
 

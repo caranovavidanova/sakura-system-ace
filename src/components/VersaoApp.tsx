@@ -3,7 +3,7 @@ export function VersaoApp() {
   if (!versao) return null;
 
   return (
-    <span className="pointer-events-none fixed bottom-2 right-3 z-50 text-[10px] text-sakura-purple-dark/40">
+    <span className="pointer-events-none fixed bottom-2 right-3 z-50 text-meta text-sakura-purple-dark/40">
       v{versao}
     </span>
   );

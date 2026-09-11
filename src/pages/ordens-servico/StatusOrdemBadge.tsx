@@ -33,12 +33,12 @@ export function StatusOrdem({
   return (
     <div className="flex flex-col items-start gap-1">
       <span
-        className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${classe}`}
+        className={`whitespace-nowrap rounded-full px-2.5 py-1 text-rotulo font-medium ${classe}`}
       >
         {finalizada ? "Finalizada" : STATUS_LABEL[ordem.status]}
       </span>
       {ordem.status === "faturada" && situacao.pendentes.length > 0 && (
-        <span className="whitespace-nowrap text-[11px] font-medium text-amber-400">
+        <span className="whitespace-nowrap text-meta font-medium text-amber-400">
           falta {situacao.pendentes.join(" e ")}
         </span>
       )}

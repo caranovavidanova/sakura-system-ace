@@ -15,7 +15,7 @@ export function DadosClienteFields({
   return (
     <Secao titulo="Dados do cliente">
       <div className="mb-4 flex gap-4">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-corpo">
           <input
             type="radio"
             value="fisica"
@@ -24,7 +24,7 @@ export function DadosClienteFields({
           />
           <span className="text-sakura-purple-dark/80">Pessoa física</span>
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-corpo">
           <input
             type="radio"
             value="juridica"

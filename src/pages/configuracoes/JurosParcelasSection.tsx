@@ -52,17 +52,17 @@ export function JurosParcelasSection({
   return (
     <>
       {erro && (
-        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
       )}
       {salvo && (
-        <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+        <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-corpo text-emerald-700">
           Juros salvos.
         </p>
       )}
 
       <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6">
         {NUMEROS_PARCELA.map((n) => (
-          <label key={n} className="flex flex-col gap-1 text-xs">
+          <label key={n} className="flex flex-col gap-1 text-rotulo">
             <span className="text-sakura-purple-dark/90">{n}x</span>
             <div className="flex items-center gap-1">
               <input
@@ -73,7 +73,7 @@ export function JurosParcelasSection({
                 onChange={(e) =>
                   setValores((atual) => ({ ...atual, [n]: e.target.value }))
                 }
-                className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
+                className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
               />
               <span className="text-sakura-muted">%</span>
             </div>
@@ -86,7 +86,7 @@ export function JurosParcelasSection({
           type="button"
           onClick={handleSalvar}
           disabled={salvando}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {salvando ? "Salvando..." : "Salvar juros"}
         </button>

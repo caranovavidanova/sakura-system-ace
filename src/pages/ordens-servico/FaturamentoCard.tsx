@@ -138,18 +138,18 @@ export function FaturamentoCard({
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
         <div>
-          <h3 className="text-sm font-semibold text-sakura-purple-dark">
+          <h3 className="text-corpo font-semibold text-sakura-purple-dark">
             Faturar {nomeOrdem(ordem.numero)} de {ordem.cliente?.nome ?? "cliente"}
           </h3>
-          <p className="text-xs text-sakura-muted">Total dos itens: {formatarMoeda(total)}</p>
+          <p className="text-rotulo text-sakura-muted">Total dos itens: {formatarMoeda(total)}</p>
         </div>
       </div>
 
-      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
       <div className="rounded-xl border border-sakura-gray/30 p-4">
         <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-corpo">
             <input
               type="radio"
               name="recebimento"
@@ -159,7 +159,7 @@ export function FaturamentoCard({
             />
             <span className="text-sakura-purple-dark/80">Recebido agora</span>
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-corpo">
             <input
               type="radio"
               name="recebimento"
@@ -172,16 +172,16 @@ export function FaturamentoCard({
         </div>
 
         {recebidoAgora ? (
-          <p className="mt-2 text-xs text-sakura-muted">
+          <p className="mt-2 text-rotulo text-sakura-muted">
             Lança o valor como Entrada no Caixa agora mesmo.
           </p>
         ) : (
           <>
-            <p className="mt-2 text-xs text-sakura-muted">
+            <p className="mt-2 text-rotulo text-sakura-muted">
               Não lança nada no Caixa ainda — cria uma pendência em "Contas a Receber", que só vira
               Entrada quando você marcar como recebido de verdade.
             </p>
-            <label className="mt-2 flex items-center gap-2 text-sm">
+            <label className="mt-2 flex items-center gap-2 text-corpo">
               <span className="text-sakura-purple-dark/80">Previsão de recebimento</span>
               <input
                 type="date"
@@ -194,7 +194,7 @@ export function FaturamentoCard({
       </div>
 
       {recebidoAgora && (
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-corpo">
           <input
             type="checkbox"
             checked={dividirPagamento}
@@ -230,7 +230,7 @@ export function FaturamentoCard({
                         setValue(`linhasPagamento.${index}.parcelas`, "1");
                       }
                     }}
-                    className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+                    className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
                   >
                     {FORMAS_PAGAMENTO.map((forma) => (
                       <option key={forma.valor} value={forma.valor}>
@@ -246,7 +246,7 @@ export function FaturamentoCard({
                         ? "Em quantas vezes o cliente passou no cartão"
                         : "Só o cartão de crédito parcela"
                     }
-                    className="w-40 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple disabled:opacity-50"
+                    className="w-40 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple disabled:opacity-50"
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
                       const percentual = calcularJurosPercentual(jurosParcelas, n);
@@ -267,20 +267,20 @@ export function FaturamentoCard({
                     step="0.01"
                     min="0"
                     {...register(`linhasPagamento.${index}.valor`)}
-                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
                   />
                   {fields.length > 1 && (
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="text-xs font-medium text-red-600 hover:underline"
+                      className="text-rotulo font-medium text-red-600 hover:underline"
                     >
                       Remover
                     </button>
                   )}
                 </div>
                 {linha && linha.parcelas > 1 && linha.valorBase > 0 && (
-                  <p className="pr-2 text-right text-xs text-sakura-muted">
+                  <p className="pr-2 text-right text-rotulo text-sakura-muted">
                     {linha.jurosPercentual > 0
                       ? `${linha.parcelas}x de ${formatarMoeda(
                           linha.valorCobrado / linha.parcelas,
@@ -298,12 +298,12 @@ export function FaturamentoCard({
           <button
             type="button"
             onClick={() => append({ formaPagamento: "dinheiro", valor: "0", parcelas: "1" })}
-            className="text-xs font-medium text-sakura-purple hover:underline"
+            className="text-rotulo font-medium text-sakura-purple hover:underline"
           >
             + Adicionar forma de pagamento
           </button>
           <p
-            className={`text-right text-sm font-medium ${
+            className={`text-right text-corpo font-medium ${
               linhasBatem ? "text-sakura-purple-dark" : "text-red-600"
             }`}
           >
@@ -314,7 +314,7 @@ export function FaturamentoCard({
                 : `Passou ${formatarMoeda(-diferencaLinhasPagamento)} de ${formatarMoeda(total)}`}
           </p>
           {linhasBatem && jurosDividido > 0 && (
-            <p className="text-right text-sm font-semibold text-sakura-purple-dark">
+            <p className="text-right text-corpo font-semibold text-sakura-purple-dark">
               Com os juros do cartão: {formatarMoeda(totalCobradoDividido)} (
               {formatarMoeda(jurosDividido)} de juros)
             </p>
@@ -322,7 +322,7 @@ export function FaturamentoCard({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Forma de pagamento</span>
             <select
               {...formaPagamentoField}
@@ -340,7 +340,7 @@ export function FaturamentoCard({
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Parcelas</span>
             <select
               {...register("parcelas")}
@@ -362,12 +362,12 @@ export function FaturamentoCard({
 
       {!(recebidoAgora && dividirPagamento) &&
         (parcelas === 1 ? (
-          <p className="text-right text-lg font-semibold text-sakura-purple-dark">
+          <p className="text-right text-subtitulo font-semibold text-sakura-purple-dark">
             {formatarMoeda(valorCobrado)}
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-sakura-gray/30">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>
                   <th className="px-4 py-2 font-medium">Parcela</th>
@@ -387,7 +387,7 @@ export function FaturamentoCard({
                 ))}
               </tbody>
             </table>
-            <p className="border-t border-sakura-gray/20 px-4 py-2 text-right text-sm font-semibold text-sakura-purple-dark">
+            <p className="border-t border-sakura-gray/20 px-4 py-2 text-right text-corpo font-semibold text-sakura-purple-dark">
               Total {jurosPercentual > 0 ? "com juros" : ""}: {formatarMoeda(valorCobrado)}
             </p>
           </div>
@@ -397,14 +397,14 @@ export function FaturamentoCard({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting || (recebidoAgora && dividirPagamento && !linhasBatem)}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? "Faturando..." : "Confirmar faturamento"}
         </button>

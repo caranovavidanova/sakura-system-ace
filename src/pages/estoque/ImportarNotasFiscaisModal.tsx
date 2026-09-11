@@ -159,10 +159,10 @@ export function ImportarNotasFiscaisModal({
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-sakura-purple-dark">
+            <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">
               Importar produtos por foto ou PDF da nota fiscal
             </h2>
-            <p className="text-sm text-sakura-muted">
+            <p className="text-corpo text-sakura-muted">
               Escolha uma ou mais fotos e/ou PDFs (pode ser mais de uma nota junto) — a
               IA lê e preenche os campos fiscais de cada item. Revise antes de cadastrar.
             </p>
@@ -178,25 +178,25 @@ export function ImportarNotasFiscaisModal({
         </div>
 
         {erro && (
-          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">
             {erro}
           </p>
         )}
 
         {itens === null && (
           <div className="space-y-4">
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Fotos ou PDFs das notas</span>
               <input
                 type="file"
                 accept="image/*,.pdf,application/pdf"
                 multiple
                 onChange={(e) => setArquivos(Array.from(e.target.files ?? []))}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
               />
             </label>
             {arquivos.length > 0 && (
-              <p className="text-sm text-sakura-muted">
+              <p className="text-corpo text-sakura-muted">
                 {arquivos.length} arquivo(s) selecionado(s).
               </p>
             )}
@@ -204,7 +204,7 @@ export function ImportarNotasFiscaisModal({
               <button
                 type="button"
                 onClick={onFechar}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+                className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
               >
                 Cancelar
               </button>
@@ -212,7 +212,7 @@ export function ImportarNotasFiscaisModal({
                 type="button"
                 onClick={handleLer}
                 disabled={arquivos.length === 0 || lendo}
-                className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 {lendo ? "Lendo..." : "Ler arquivos"}
               </button>
@@ -226,7 +226,7 @@ export function ImportarNotasFiscaisModal({
                 depois em Estoque → Produtos. Só evita a surpresa de descobrir
                 isso lá na frente, na recusa da SEFAZ. */}
             {itensComCodigoIncompativel.length > 0 && (
-              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
                 {itensComCodigoIncompativel.length === 1
                   ? "Um produto está"
                   : `${itensComCodigoIncompativel.length} produtos estão`}{" "}
@@ -238,12 +238,12 @@ export function ImportarNotasFiscaisModal({
             )}
 
             {itens.length === 0 ? (
-              <p className="text-sm text-sakura-muted">
+              <p className="text-corpo text-sakura-muted">
                 Não consegui identificar nenhum produto nessas fotos.
               </p>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-sakura-gray/30">
-                <table className="w-full min-w-[1100px] text-left text-xs">
+                <table className="w-full min-w-[1100px] text-left text-tabela">
                   <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                     <tr>
                       <th className="px-2 py-2" />
@@ -375,14 +375,14 @@ export function ImportarNotasFiscaisModal({
               <button
                 type="button"
                 onClick={onFechar}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+                className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={quantidadeSelecionada === 0 || salvando}
-                className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 {salvando
                   ? "Cadastrando..."

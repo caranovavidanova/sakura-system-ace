@@ -12,6 +12,12 @@ import { TABELAS } from "./dados-demo.mjs";
 //   npx vite --config site/ferramentas/vite.telas.config.ts
 //   node site/ferramentas/gerar-catalogo-telas.mjs <pasta-de-saida>
 //
+// PRECISA de um arquivo .env na raiz, mesmo com valores inventados
+// (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY) — quem responde pelo Supabase
+// aqui é o banco-falso.mjs, mas sem .env o app abre na tela de CONEXÃO em vez
+// do login, e todas as cenas falham com timeout no botão de entrar. O .env não
+// é commitado, então numa máquina recém-clonada ele não existe.
+//
 // Além dos .png, escreve um catalogo.json com o título e a explicação de
 // cada tela — é o que o documento em PDF usa pra montar as legendas.
 
@@ -171,7 +177,10 @@ const CENAS = [
     rota: "/notas-fiscais", passos: [{ clicar: "+ Enviar XML" }],
     descricao: "Para notas emitidas fora do sistema (pela contabilidade, por exemplo), guardando tudo no mesmo lugar — a lei exige manter o XML por cinco anos." },
   { arquivo: "42-cancelar-nota", modulo: "Notas Fiscais", titulo: "Cancelar uma nota emitida",
-    rota: "/notas-fiscais", passos: [{ clicar: "Cancelar nota" }],
+    // "Cancelar nota" deixou de ser um link solto na linha e passou a viver
+    // dentro do menu de três pontinhos (item TR-02.1) — por isso os 2 passos.
+    rota: "/notas-fiscais",
+    passos: [{ seletor: 'button[aria-haspopup="menu"]' }, { clicar: "Cancelar nota" }],
     descricao: "Cancela na SEFAZ ou na prefeitura uma nota que o sistema emitiu. Exige uma justificativa de no mínimo 15 caracteres, que é o que o órgão pede." },
 
   // ------------------------------------------------------------ funcionários
@@ -284,6 +293,14 @@ async function executarPasso(passo) {
     const secao = pagina.locator("button").filter({ hasText: passo.secao }).first();
     await secao.waitFor({ state: "visible", timeout: 8000 });
     await secao.click();
+    return pagina.waitForTimeout(900);
+  }
+  if (passo.seletor) {
+    // Botão sem texto (ícone), como o "⋯" de ações da linha — não dá pra
+    // casar por rótulo, só por seletor.
+    const porSeletor = pagina.locator(passo.seletor).first();
+    await porSeletor.waitFor({ state: "visible", timeout: 8000 });
+    await porSeletor.click();
     return pagina.waitForTimeout(900);
   }
   const texto = passo.clicar ?? passo.aba;

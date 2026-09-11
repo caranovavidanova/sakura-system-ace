@@ -226,10 +226,10 @@ export function ImportarNotaFiscalXmlModal({
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-sakura-purple-dark">
+            <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">
               Importar XML de nota fiscal do fornecedor
             </h2>
-            <p className="text-sm text-sakura-muted">
+            <p className="text-corpo text-sakura-muted">
               O arquivo XML que o fornecedor te manda (ou que você baixa no site da Sefaz) —
               diferente da nota que você emite pro cliente. Cria um pedido de compra já recebido,
               com entrada no estoque e cotação registrados sozinhos.
@@ -246,25 +246,25 @@ export function ImportarNotaFiscalXmlModal({
         </div>
 
         {erro && (
-          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
         )}
 
         {itens === null && (
           <div className="space-y-4">
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Arquivo XML da nota</span>
               <input
                 type="file"
                 accept=".xml,text/xml,application/xml"
                 onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
               />
             </label>
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={onFechar}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+                className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
               >
                 Cancelar
               </button>
@@ -272,7 +272,7 @@ export function ImportarNotaFiscalXmlModal({
                 type="button"
                 onClick={handleLer}
                 disabled={!arquivo || lendo}
-                className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 {lendo ? "Lendo..." : "Ler arquivo"}
               </button>
@@ -283,7 +283,7 @@ export function ImportarNotaFiscalXmlModal({
         {itens !== null && nota && (
           <form onSubmit={handleImportar} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg border border-sakura-gray/30 p-3 text-sm">
+              <div className="rounded-lg border border-sakura-gray/30 p-3 text-corpo">
                 <span className="text-sakura-purple-dark/70">Fornecedor</span>
                 <p className="font-medium text-sakura-purple-dark">
                   {fornecedorEncontrado
@@ -291,14 +291,14 @@ export function ImportarNotaFiscalXmlModal({
                     : (nota.fornecedor_nome ?? "Sem nome no XML")}
                 </p>
                 {!fornecedorEncontrado && (
-                  <p className="mt-1 text-xs text-amber-700">
+                  <p className="mt-1 text-rotulo text-amber-700">
                     Não achei esse CNPJ cadastrado — um fornecedor novo será criado
                     automaticamente ao importar.
                   </p>
                 )}
               </div>
 
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-corpo">
                 <span className="text-sakura-purple-dark/80">
                   Depósito (onde a mercadoria entrou) <span className="text-red-500">*</span>
                 </span>
@@ -323,7 +323,7 @@ export function ImportarNotaFiscalXmlModal({
                 nome de peça nenhum. */}
             {pecasNovasComCodigoDeOutroRegime.length > 0 && (
               <div className="space-y-3">
-                <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
                   {pecasNovasComCodigoDeOutroRegime.length === 1
                     ? "Uma peça nova desta nota vem"
                     : `${pecasNovasComCodigoDeOutroRegime.length} peças novas desta nota vêm`}{" "}
@@ -332,7 +332,7 @@ export function ImportarNotaFiscalXmlModal({
                   que elas devem receber no seu cadastro — em branco, a peça fica sem código e
                   você preenche depois em Estoque → Produtos.
                 </p>
-                <label className="flex flex-col gap-1 text-sm">
+                <label className="flex flex-col gap-1 text-corpo">
                   <span className="text-sakura-purple-dark/80">
                     {regimeUsaCsosn(regime) ? "CSOSN" : "CST"} das peças novas
                   </span>
@@ -340,17 +340,17 @@ export function ImportarNotaFiscalXmlModal({
                     value={codigoIcmsNovas}
                     onChange={(e) => setCodigoIcmsNovas(e.target.value)}
                     placeholder={regimeUsaCsosn(regime) ? "Ex: 500" : "Ex: 00"}
-                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
                   />
                 </label>
               </div>
             )}
 
             {itens.length === 0 ? (
-              <p className="text-sm text-sakura-muted">Não encontrei nenhum item nessa nota.</p>
+              <p className="text-corpo text-sakura-muted">Não encontrei nenhum item nessa nota.</p>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-sakura-gray/30">
-                <table className="w-full min-w-[820px] text-left text-xs">
+                <table className="w-full min-w-[820px] text-left text-tabela">
                   <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                     <tr>
                       <th className="px-2 py-2" />
@@ -428,14 +428,14 @@ export function ImportarNotaFiscalXmlModal({
               <button
                 type="button"
                 onClick={onFechar}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+                className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={quantidadeSelecionada === 0 || !depositoId || salvando}
-                className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 {salvando ? "Importando..." : `Importar ${quantidadeSelecionada} item(ns)`}
               </button>

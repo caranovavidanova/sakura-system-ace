@@ -84,13 +84,13 @@ export function FuncionarioForm({
     >
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
-        <h2 className="text-lg font-semibold text-sakura-purple-dark">
+        <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">
           {editando ? "Editar funcionário" : "Novo funcionário"}
         </h2>
       </div>
 
       {erro && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+        <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
       )}
 
       {rascunho.rascunho && (
@@ -102,7 +102,7 @@ export function FuncionarioForm({
       )}
 
       {funcionarioExistente?.operador_id && (
-        <p className="rounded-lg bg-sakura-pink-soft/60 px-4 py-2 text-xs text-sakura-purple-dark/80">
+        <p className="rounded-lg bg-sakura-pink-soft/60 px-4 py-2 text-rotulo text-sakura-purple-dark/80">
           Também é operador do sistema (login @{funcionarioExistente.operador?.usuario}) — nome e
           status ativo/inativo desse cadastro seguem o que estiver em Configurações →
           Operadores.
@@ -132,14 +132,14 @@ export function FuncionarioForm({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? "Salvando..." : "Salvar funcionário"}
         </button>
@@ -161,7 +161,7 @@ function AbaBotao({
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+      className={`px-4 py-2.5 text-corpo font-medium transition-colors ${
         ativa
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
           : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"

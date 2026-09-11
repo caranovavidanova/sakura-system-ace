@@ -72,7 +72,7 @@ export function ItemOSRow({
         <select
           value={tipo}
           onChange={(e) => aoMudarTipo(e.target.value as TipoItemOS)}
-          className="w-28 shrink-0 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
+          className="w-28 shrink-0 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo"
         >
           <option value="peca">Peça</option>
           <option value="servico">Serviço</option>
@@ -101,7 +101,7 @@ export function ItemOSRow({
         <button
           type="button"
           onClick={onRemover}
-          className="shrink-0 text-xs font-medium text-red-600 hover:underline"
+          className="shrink-0 text-rotulo font-medium text-red-600 hover:underline"
         >
           Remover
         </button>
@@ -112,45 +112,45 @@ export function ItemOSRow({
           type="text"
           placeholder="Descrição do serviço"
           {...register(`itens.${index}.descricao`)}
-          className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm"
+          className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo"
         />
       )}
 
       <div className="flex gap-2">
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Quantidade
           <input
             type="number"
             min="0.01"
             step="0.01"
             {...register(`itens.${index}.quantidade`)}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
+            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Preço unitário
           <input
             type="number"
             min="0"
             step="0.01"
             {...register(`itens.${index}.preco_unitario`)}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
+            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Desconto
           <input
             type="number"
             min="0"
             step="0.01"
             {...register(`itens.${index}.desconto`)}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark"
+            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Técnico
           <Combobox
             opcoes={funcionarios.map((funcionario) => ({
@@ -165,7 +165,7 @@ export function ItemOSRow({
         </label>
       </div>
 
-      <p className="text-right text-xs text-sakura-purple-dark/90">
+      <p className="text-right text-rotulo text-sakura-purple-dark/90">
         Total deste item:{" "}
         <span className="font-semibold text-sakura-purple-dark">
           {totalItem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}

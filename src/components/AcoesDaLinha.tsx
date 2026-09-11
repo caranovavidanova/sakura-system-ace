@@ -47,7 +47,7 @@ const CLASSE_BOTAO_ICONE =
   "inline-flex h-8 w-8 items-center justify-center rounded-lg text-sakura-purple transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40";
 
 const CLASSE_BOTAO_TEXTO =
-  "inline-flex h-8 items-center justify-center rounded-lg px-3 text-xs font-medium text-sakura-purple transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex h-8 items-center justify-center rounded-lg px-3 text-rotulo font-medium text-sakura-purple transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40";
 
 function IconeLapis() {
   return (
@@ -235,7 +235,7 @@ function MenuDeAcoes({ acoes, descricao }: { acoes: AcaoDaLinha[]; descricao: st
                     escolher(acao);
                   }}
                   onClick={() => escolher(acao)}
-                  className={`block w-full px-4 py-2 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                  className={`block w-full px-4 py-2 text-left text-corpo transition disabled:cursor-not-allowed disabled:opacity-40 ${
                     acao.perigosa
                       ? "text-red-400 hover:bg-red-500/15"
                       : "text-sakura-purple-dark hover:bg-white/10"

@@ -49,8 +49,8 @@ function BotaoEmitir({
       onClick={onClick}
       className={
         emitida
-          ? "flex-1 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20"
-          : "flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
+          ? "flex-1 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-3 py-2.5 text-rotulo font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20"
+          : "flex-1 rounded-xl bg-sakura-purple px-3 py-2.5 text-rotulo font-semibold text-white shadow-[0_0_15px_rgba(182,36,255,0.35)] transition-all hover:bg-sakura-purple/90 hover:shadow-[0_0_22px_rgba(182,36,255,0.6)]"
       }
     >
       {emitida ? `${rotulo} emitida ✓` : `Emitir ${rotulo}`}
@@ -113,9 +113,9 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
 
   return (
     <div className="space-y-6">
-      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
-      <section className="grid grid-cols-2 gap-4 sakura-card p-4 text-sm">
+      <section className="grid grid-cols-2 gap-4 sakura-card p-4 text-corpo">
         <div>
           <p className="text-sakura-purple-dark/80">Cliente</p>
           <p className="font-medium text-sakura-purple-dark">{ordem.cliente?.nome ?? "—"}</p>
@@ -139,14 +139,14 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
       </section>
 
       <section className="sakura-card p-4">
-        <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+        <h3 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
           Peças e serviços
         </h3>
         <div className="space-y-1.5">
           {itens.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between text-sm text-sakura-purple-dark/80"
+              className="flex items-center justify-between text-corpo text-sakura-purple-dark/80"
             >
               <span>
                 {item.tipo === "peca" ? "Peça" : "Serviço"} — {item.descricao} (
@@ -156,15 +156,15 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-right text-sm font-semibold text-sakura-purple-dark">
+        <p className="mt-3 text-right text-corpo font-semibold text-sakura-purple-dark">
           Total geral: {formatarMoeda(totalOrdem(itens))}
         </p>
       </section>
 
       <section className="space-y-4 sakura-card p-4">
         <div className="space-y-2">
-          <p className="text-xs font-medium text-sakura-purple-dark/85">Nota fiscal</p>
-          <p className="text-xs text-sakura-muted">
+          <p className="text-rotulo font-medium text-sakura-purple-dark/85">Nota fiscal</p>
+          <p className="text-rotulo text-sakura-muted">
             {situacao.pendentes.length === 0
               ? situacao.completa
                 ? "Todas as notas desta OS já foram emitidas."
@@ -195,7 +195,7 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
                   key={nota.id}
                   type="button"
                   onClick={() => setNotaParaVerDanfe(nota)}
-                  className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark transition-colors hover:bg-sakura-gray/10"
+                  className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-rotulo font-medium text-sakura-purple-dark transition-colors hover:bg-sakura-gray/10"
                 >
                   {nota.tipo === "nfe" ? "Ver DANFE" : "Ver PDF da NFS-e"}
                 </button>
@@ -205,11 +205,11 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium text-sakura-purple-dark/85">Garantia</p>
+          <p className="text-rotulo font-medium text-sakura-purple-dark/85">Garantia</p>
           <button
             type="button"
             onClick={() => setPreviewGarantiaAberta(true)}
-            className="w-full rounded-xl bg-sakura-pink px-3 py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(255,77,206,0.35)] transition-all hover:bg-sakura-pink/90 hover:shadow-[0_0_22px_rgba(255,77,206,0.6)]"
+            className="w-full rounded-xl bg-sakura-pink px-3 py-2.5 text-rotulo font-semibold text-white shadow-[0_0_15px_rgba(255,77,206,0.35)] transition-all hover:bg-sakura-pink/90 hover:shadow-[0_0_22px_rgba(255,77,206,0.6)]"
           >
             Ver garantia
           </button>

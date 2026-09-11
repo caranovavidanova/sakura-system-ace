@@ -71,10 +71,10 @@ export function ClientesPage() {
         <div className="flex items-center gap-3">
           <BotaoVoltar />
           <div>
-            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+            <h1 className="text-titulo font-semibold text-sakura-purple-dark">
               Clientes
             </h1>
-            <p className="text-sm text-sakura-muted">
+            <p className="text-corpo text-sakura-muted">
               Cadastro de clientes e veículos
             </p>
           </div>
@@ -82,7 +82,7 @@ export function ClientesPage() {
         {!formulario && (
           <button
             onClick={() => setFormulario("novo")}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Novo cliente
           </button>
@@ -90,7 +90,7 @@ export function ClientesPage() {
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para começar a salvar clientes de verdade.
@@ -106,20 +106,20 @@ export function ClientesPage() {
       )}
 
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">
           {erro}
         </p>
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : clientes.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Nenhum cliente cadastrado ainda.
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Nome</th>

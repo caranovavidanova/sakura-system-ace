@@ -70,26 +70,26 @@ export function DepositosSection({ depositos, lojaId, onSalvo }: DepositosSectio
 
   return (
     <>
-      {erro && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
       <form onSubmit={handleSubmit(aoAdicionar)} className="mt-4 flex gap-2">
         <input
           type="text"
           placeholder="Nome do depósito (ex: Depósito Principal, Fundos)"
           {...register("nome")}
-          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
         />
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? "Salvando..." : "+ Novo depósito"}
         </button>
       </form>
 
       {depositos.length === 0 ? (
-        <p className="mt-4 text-sm text-sakura-muted">Nenhum depósito cadastrado ainda.</p>
+        <p className="mt-4 text-corpo text-sakura-muted">Nenhum depósito cadastrado ainda.</p>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
           {depositos.map((deposito) =>
@@ -107,7 +107,7 @@ export function DepositosSection({ depositos, lojaId, onSalvo }: DepositosSectio
             ) : (
               <span
                 key={deposito.id}
-                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-rotulo font-medium ${
                   deposito.ativo
                     ? "bg-sakura-pink-soft text-sakura-purple-dark"
                     : "bg-sakura-gray/20 text-sakura-muted"
@@ -182,19 +182,19 @@ function LinhaEdicaoDeposito({
         type="text"
         autoFocus
         {...register("nome")}
-        className="w-40 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
+        className="w-40 rounded-lg border border-sakura-gray/40 px-2 py-1 text-rotulo focus:border-sakura-purple"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50"
+        className="text-rotulo font-medium text-sakura-purple hover:underline disabled:opacity-50"
       >
         Salvar
       </button>
       <button
         type="button"
         onClick={onCancelar}
-        className="text-xs font-medium text-sakura-muted hover:underline"
+        className="text-rotulo font-medium text-sakura-muted hover:underline"
       >
         Cancelar
       </button>

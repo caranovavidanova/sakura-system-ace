@@ -77,11 +77,11 @@ export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
 
   return (
     <Modal titulo="Nota fiscal" onFechar={onFechar}>
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-corpo">
         <p className="text-sakura-purple-dark/90">
           {arquivo.numero ? `Número ${arquivo.numero}` : arquivo.nome_arquivo}
           {arquivo.status === "cancelado" && (
-            <span className="ml-2 rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">
+            <span className="ml-2 rounded-full bg-red-500/15 px-2 py-0.5 text-rotulo font-semibold text-red-400">
               cancelada
             </span>
           )}
@@ -90,7 +90,7 @@ export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
         {carregando && <p className="text-sakura-muted">Buscando o PDF da nota...</p>}
 
         {!carregando && erro && (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{erro}</p>
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">{erro}</p>
         )}
 
         {pdfUrl && (
@@ -106,7 +106,7 @@ export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
           <button
             type="button"
             onClick={onFechar}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+            className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
           >
             Fechar
           </button>
@@ -115,14 +115,14 @@ export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
               <button
                 type="button"
                 onClick={handleBaixarPdf}
-                className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+                className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
               >
                 Baixar PDF
               </button>
               <button
                 type="button"
                 onClick={handleImprimir}
-                className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90"
               >
                 Imprimir
               </button>

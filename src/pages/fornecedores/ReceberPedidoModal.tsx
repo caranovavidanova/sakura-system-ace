@@ -56,7 +56,7 @@ export function ReceberPedidoModal({ pedido, onConfirmar, onFechar }: ReceberPed
 
   return (
     <Modal titulo={`Receber ${nomePedido(pedido.numero)}`} onFechar={onFechar}>
-      <form onSubmit={handleSubmit(aoConfirmar)} className="space-y-3 text-sm">
+      <form onSubmit={handleSubmit(aoConfirmar)} className="space-y-3 text-corpo">
         <p className="text-sakura-purple-dark/80">
           Confira as quantidades que chegaram de verdade. O que você confirmar aqui já dá entrada
           no estoque automaticamente.
@@ -65,7 +65,7 @@ export function ReceberPedidoModal({ pedido, onConfirmar, onFechar }: ReceberPed
         {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{erro}</p>}
 
         <div className="overflow-hidden rounded-xl border border-sakura-gray/30">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-3 py-2 font-medium">Peça</th>
@@ -101,14 +101,14 @@ export function ReceberPedidoModal({ pedido, onConfirmar, onFechar }: ReceberPed
           <button
             type="button"
             onClick={onFechar}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+            className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting ? "Confirmando..." : "Confirmar recebimento"}
           </button>

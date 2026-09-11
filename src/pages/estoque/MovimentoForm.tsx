@@ -58,13 +58,13 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
     <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
-        <h2 className="text-lg font-semibold text-sakura-purple-dark">Nova movimentação</h2>
+        <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">Nova movimentação</h2>
       </div>
 
-      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Peça</span>
           <Combobox
             opcoes={pecas.map((peca) => ({ valor: peca.id, rotulo: peca.descricao }))}
@@ -74,7 +74,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Depósito</span>
           <select
             {...register("deposito_id")}
@@ -88,7 +88,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Tipo</span>
           <select
             {...register("tipo")}
@@ -99,7 +99,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Quantidade</span>
           <input
             type="number"
@@ -109,11 +109,11 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.quantidade && (
-            <span className="text-xs text-red-600">{errors.quantidade.message}</span>
+            <span className="text-rotulo text-red-600">{errors.quantidade.message}</span>
           )}
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Motivo</span>
           <select
             {...register("motivo")}
@@ -127,7 +127,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           </select>
         </label>
 
-        <label className="col-span-2 flex flex-col gap-1 text-sm">
+        <label className="col-span-2 flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">
             Referência (opcional — ex: nº da nota, nº da OS)
           </span>
@@ -143,14 +143,14 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting || pecas.length === 0}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? "Salvando..." : "Registrar movimentação"}
         </button>

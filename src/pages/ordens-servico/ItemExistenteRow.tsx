@@ -30,7 +30,7 @@ function formatarMoeda(valor: number): string {
 }
 
 const inputClasse =
-  "rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-sm text-sakura-purple-dark";
+  "rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark";
 
 // Uma linha da lista "Já lançados nesta OS". Em repouso é o mesmo texto de
 // sempre; clicando em "Editar" ela vira um formulário só dela, salvo na hora
@@ -113,7 +113,7 @@ export function ItemExistenteRow({
 
   if (!editando) {
     return (
-      <div className="flex items-center justify-between gap-3 text-sm text-sakura-purple-dark/80">
+      <div className="flex items-center justify-between gap-3 text-corpo text-sakura-purple-dark/80">
         <span>
           {item.tipo === "peca" ? "Peça" : "Serviço"} — {item.descricao} ({item.quantidade}x)
           {item.tecnico?.nome ? ` · técnico: ${item.tecnico.nome}` : ""}
@@ -124,7 +124,7 @@ export function ItemExistenteRow({
             <button
               type="button"
               onClick={abrirEdicao}
-              className="text-xs font-medium text-sakura-pink hover:underline"
+              className="text-rotulo font-medium text-sakura-pink hover:underline"
             >
               Editar
             </button>
@@ -177,22 +177,22 @@ export function ItemExistenteRow({
       )}
 
       <div className="flex gap-2">
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Quantidade
           <input type="number" min="0.01" step="0.01" {...register("quantidade")} className={inputClasse} />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Preço unitário
           <input type="number" min="0" step="0.01" {...register("preco_unitario")} className={inputClasse} />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Desconto
           <input type="number" min="0" step="0.01" {...register("desconto")} className={inputClasse} />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-xs text-sakura-purple-dark/90">
+        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Técnico
           <Combobox
             opcoes={funcionarios.map((funcionario) => ({
@@ -208,19 +208,19 @@ export function ItemExistenteRow({
       </div>
 
       {(errors.descricao || errors.quantidade) && (
-        <p className="text-xs text-red-400">
+        <p className="text-rotulo text-red-400">
           {errors.descricao?.message ?? errors.quantidade?.message}
         </p>
       )}
-      {erro && <p className="text-xs text-red-400">{erro}</p>}
+      {erro && <p className="text-rotulo text-red-400">{erro}</p>}
 
-      <p className="text-xs text-sakura-muted">
+      <p className="text-rotulo text-sakura-muted">
         Trocar a peça ou a quantidade ajusta o estoque sozinho — a diferença aparece em Estoque →
         Movimentações.
       </p>
 
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-sakura-purple-dark/90">
+        <p className="text-rotulo text-sakura-purple-dark/90">
           Total deste item:{" "}
           <span className="font-semibold text-sakura-purple-dark">{formatarMoeda(totalItem)}</span>
         </p>
@@ -228,7 +228,7 @@ export function ItemExistenteRow({
           <button
             type="button"
             onClick={() => setEditando(false)}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+            className="rounded-lg px-3 py-1.5 text-rotulo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
           >
             Cancelar
           </button>
@@ -236,7 +236,7 @@ export function ItemExistenteRow({
             type="button"
             onClick={handleSubmit(aoSubmeter)}
             disabled={isSubmitting}
-            className="rounded-lg bg-sakura-pink px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-lg bg-sakura-pink px-3 py-1.5 text-rotulo font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting ? "Salvando..." : "Salvar item"}
           </button>

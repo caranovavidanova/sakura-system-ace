@@ -250,12 +250,12 @@ export function PainelPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-sakura-purple-dark">Início</h1>
-        <p className="text-sm text-sakura-muted">Visão geral da loja, em tempo real</p>
+        <h1 className="text-titulo font-semibold text-sakura-purple-dark">Início</h1>
+        <p className="text-corpo text-sakura-muted">Visão geral da loja, em tempo real</p>
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para ver o painel de verdade.
@@ -263,7 +263,7 @@ export function PainelPage() {
       )}
 
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>
       )}
 
       {!carregando && (
@@ -275,7 +275,7 @@ export function PainelPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-4">
@@ -292,7 +292,7 @@ export function PainelPage() {
           <div className="flex justify-center">
             <Link
               to="/relatorios"
-              className="rounded-full bg-white/10 px-5 py-2 text-xs font-medium text-sakura-pink hover:bg-white/20"
+              className="rounded-full bg-white/10 px-5 py-2 text-rotulo font-medium text-sakura-pink hover:bg-white/20"
             >
               Ver relações completas →
             </Link>
@@ -300,16 +300,16 @@ export function PainelPage() {
 
           <div className="grid grid-cols-[2fr_1fr] gap-4">
             <section className="sakura-card p-4">
-              <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+              <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
                 OS abertas
               </h2>
               {filaDeAtendimento.length === 0 ? (
-                <p className="text-sm text-sakura-purple-dark/85">
+                <p className="text-corpo text-sakura-purple-dark/85">
                   Nenhuma ordem de serviço em aberto no momento.
                 </p>
               ) : (
                 <div className="overflow-hidden rounded-xl border border-white/50">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-corpo">
                     <thead className="bg-white/10 text-sakura-pink">
                       <tr>
                         <th className="px-4 py-3 font-medium">Nº</th>
@@ -347,11 +347,11 @@ export function PainelPage() {
           </div>
 
           <section className="sakura-card p-4">
-            <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+            <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
               Veículos no pátio
             </h2>
             {veiculosNoPatio.length === 0 ? (
-              <p className="text-sm text-sakura-purple-dark/85">
+              <p className="text-corpo text-sakura-purple-dark/85">
                 Nenhum veículo no pátio no momento.
               </p>
             ) : (
@@ -367,10 +367,10 @@ export function PainelPage() {
                       className="h-14 w-24 shrink-0"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-sakura-purple-dark">
+                      <p className="truncate text-corpo font-medium text-sakura-purple-dark">
                         {ordem.cliente?.nome ?? "—"}
                       </p>
-                      <p className="truncate text-xs text-sakura-muted">
+                      <p className="truncate text-rotulo text-sakura-muted">
                         {ordem.veiculo?.placa ?? "—"}
                         {(ordem.veiculo?.marca || ordem.veiculo?.modelo) &&
                           ` · ${[ordem.veiculo?.marca, ordem.veiculo?.modelo]
@@ -410,10 +410,10 @@ function CartaoValor({
       }}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-xs text-sakura-muted">{titulo}</p>
+        <p className="text-rotulo text-sakura-muted">{titulo}</p>
         <span className="text-sakura-purple-dark/70">›</span>
       </div>
-      <p className="mt-2 text-2xl font-semibold text-sakura-purple-dark">{valor}</p>
+      <p className="mt-2 text-titulo font-semibold text-sakura-purple-dark">{valor}</p>
     </div>
   );
 }

@@ -54,19 +54,19 @@ export function TrocarSenhaPage() {
           <Logo className="drop-shadow-sm" />
         </div>
 
-        <h1 className="text-center text-xl font-semibold text-sakura-purple-dark">
+        <h1 className="text-center text-destaque font-semibold text-sakura-purple-dark">
           Crie uma senha nova
         </h1>
-        <p className="mb-6 text-center text-sm text-sakura-purple-dark/90">
+        <p className="mb-6 text-center text-corpo text-sakura-purple-dark/90">
           Sua senha foi redefinida por um administrador. Escolha uma senha nova pra continuar.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {erro && (
-            <p className="rounded-lg bg-red-50/90 px-4 py-2 text-sm text-red-700">{erro}</p>
+            <p className="rounded-lg bg-red-50/90 px-4 py-2 text-corpo text-red-700">{erro}</p>
           )}
 
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Nova senha</span>
             <input
               type="password"
@@ -77,7 +77,7 @@ export function TrocarSenhaPage() {
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Confirmar nova senha</span>
             <input
               type="password"
@@ -90,7 +90,7 @@ export function TrocarSenhaPage() {
           <button
             type="submit"
             disabled={salvando}
-            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white shadow-[0_0_15px_rgba(182,36,255,0.4)] hover:shadow-[0_0_25px_rgba(182,36,255,0.7)] hover:bg-sakura-purple/90 transition-all disabled:opacity-50"
+            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white shadow-[0_0_15px_rgba(182,36,255,0.4)] hover:shadow-[0_0_25px_rgba(182,36,255,0.7)] hover:bg-sakura-purple/90 transition-all disabled:opacity-50"
           >
             {salvando ? "Salvando..." : "Salvar nova senha e entrar"}
           </button>
@@ -98,7 +98,7 @@ export function TrocarSenhaPage() {
           <button
             type="button"
             onClick={() => logout()}
-            className="w-full text-center text-xs font-medium text-sakura-purple-dark/70 hover:text-sakura-purple-dark"
+            className="w-full text-center text-rotulo font-medium text-sakura-purple-dark/70 hover:text-sakura-purple-dark"
           >
             Sair
           </button>

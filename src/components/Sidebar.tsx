@@ -52,12 +52,12 @@ export function Sidebar() {
         <AreaRolavel className="flex flex-col">
           <div className="px-6 pb-6 pt-8">
             <Logo />
-            <p className="mt-4 text-[10px] font-semibold tracking-widest text-sakura-pink drop-shadow-[0_0_5px_rgba(255,77,206,0.5)]">AUTOCENTER EDITION</p>
+            <p className="mt-4 text-meta font-semibold tracking-widest text-sakura-pink drop-shadow-[0_0_5px_rgba(255,77,206,0.5)]">AUTOCENTER EDITION</p>
           </div>
 
           <nav className="flex flex-1 flex-col gap-1 px-3 pb-3">
             {modulosLiberados.length === 0 && (
-              <p className="px-4 py-2.5 text-xs text-sakura-purple-dark/85">
+              <p className="px-4 py-2.5 text-rotulo text-sakura-purple-dark/85">
                 Nenhum módulo liberado. Fale com o administrador.
               </p>
             )}
@@ -67,7 +67,7 @@ export function Sidebar() {
                 to={modulo.rota}
                 end={modulo.chave === "painel"}
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+                  `rounded-xl px-4 py-2.5 text-corpo font-medium transition-all ${
                     isActive
                       ? "bg-gradient-to-r from-sakura-pink/20 to-sakura-purple/10 text-white shadow-[0_0_15px_rgba(255,77,206,0.2)] border border-sakura-pink/30"
                       : "text-sakura-purple-dark/90 hover:bg-white/5 hover:text-white"
@@ -85,10 +85,10 @@ export function Sidebar() {
         <div className="sakura-card shrink-0 px-6 py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-sakura-purple-dark">
+              <p className="truncate text-corpo font-medium text-sakura-purple-dark">
                 {operador.nome}
               </p>
-              <p className="truncate text-xs text-sakura-purple-dark/85">@{operador.usuario}</p>
+              <p className="truncate text-rotulo text-sakura-purple-dark/85">@{operador.usuario}</p>
             </div>
             {operador.admin && (
               <div className="flex shrink-0 gap-1">
@@ -124,7 +124,7 @@ export function Sidebar() {
           <LojaSwitcher />
           <button
             onClick={() => logout()}
-            className="mt-2 text-xs font-medium text-sakura-purple hover:underline"
+            className="mt-2 text-rotulo font-medium text-sakura-purple hover:underline"
           >
             Sair
           </button>

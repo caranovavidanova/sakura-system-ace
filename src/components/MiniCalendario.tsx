@@ -40,10 +40,10 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
 
   return (
     <div className="sakura-card p-4">
-      <p className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+      <p className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
         {NOMES_MES[mes]}
       </p>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs">
+      <div className="grid grid-cols-7 gap-1 text-center text-rotulo">
         {DIAS_SEMANA.map((dia, i) => (
           <div key={i} className="py-1 font-medium text-sakura-purple-dark/75">
             {dia}
@@ -104,7 +104,7 @@ export function MiniCalendario({ ano, mes, eventos }: MiniCalendarioProps) {
               const [, mesEvento, diaEvento] = evento.data.split("-");
               const deOutroMes = Number(mesEvento) - 1 !== mes;
               return (
-                <p key={i} className="text-xs text-sakura-muted">
+                <p key={i} className="text-rotulo text-sakura-muted">
                   <span className="font-medium text-sakura-purple-dark">
                     {deOutroMes ? `${diaEvento}/${mesEvento}` : diaEvento}
                   </span>{" "}

@@ -74,7 +74,7 @@ export function PedidoCompraItemRow({
             onMudar={(v) => setValue(`itens.${index}.peca_id`, v)}
             placeholder="Selecione a peça"
           />
-          {erroPecaId && <span className="text-xs text-red-600">{erroPecaId}</span>}
+          {erroPecaId && <span className="text-rotulo text-red-600">{erroPecaId}</span>}
         </div>
         <div className="w-28">
           <input
@@ -100,17 +100,17 @@ export function PedidoCompraItemRow({
           <button
             type="button"
             onClick={onRemover}
-            className="shrink-0 text-xs font-medium text-red-600 hover:underline"
+            className="shrink-0 text-rotulo font-medium text-red-600 hover:underline"
           >
             Remover
           </button>
         )}
       </div>
 
-      {erroCotacoes && <p className="text-xs text-red-600">{erroCotacoes}</p>}
+      {erroCotacoes && <p className="text-rotulo text-red-600">{erroCotacoes}</p>}
 
       {melhores.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 text-xs text-sakura-purple-dark/85">
+        <div className="flex flex-wrap items-center gap-2 text-rotulo text-sakura-purple-dark/85">
           <span className="text-sakura-muted">Cotações anteriores:</span>
           {melhores.map((cotacao) => (
             <button

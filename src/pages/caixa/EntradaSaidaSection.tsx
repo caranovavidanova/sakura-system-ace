@@ -47,14 +47,14 @@ export function EntradaSaidaSection({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Lançamentos manuais de {rotulo} — não inclui faturamento de OS, que já aparece na
           aba Diário
         </p>
         {!mostrarFormulario && (
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Nova {rotulo}
           </button>
@@ -72,18 +72,18 @@ export function EntradaSaidaSection({
       )}
 
       <div className="sakura-card p-4">
-        <p className="text-xs text-sakura-muted">Total de {rotulo}s (todo o período)</p>
-        <p className="text-xl font-semibold text-sakura-purple-dark">{formatarMoeda(total)}</p>
+        <p className="text-rotulo text-sakura-muted">Total de {rotulo}s (todo o período)</p>
+        <p className="text-destaque font-semibold text-sakura-purple-dark">{formatarMoeda(total)}</p>
       </div>
 
       {porCategoria.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Por categoria</h2>
+          <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">Por categoria</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {porCategoria.map(([nome, valor]) => (
               <div key={nome} className="sakura-card px-4 py-3">
-                <p className="text-xs text-sakura-muted">{nome}</p>
-                <p className="text-base font-semibold text-sakura-purple-dark">
+                <p className="text-rotulo text-sakura-muted">{nome}</p>
+                <p className="text-destaque font-semibold text-sakura-purple-dark">
                   {formatarMoeda(valor)}
                 </p>
               </div>
@@ -93,10 +93,10 @@ export function EntradaSaidaSection({
       )}
 
       {movimentosManuais.length === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhum lançamento manual de {rotulo} ainda.</p>
+        <p className="text-corpo text-sakura-muted">Nenhum lançamento manual de {rotulo} ainda.</p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Data</th>

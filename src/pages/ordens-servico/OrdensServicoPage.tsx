@@ -265,10 +265,10 @@ export function OrdensServicoPage() {
         <div className="flex items-center gap-3">
           <BotaoVoltar />
           <div>
-            <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+            <h1 className="text-titulo font-semibold text-sakura-purple-dark">
               Ordens de Serviço
             </h1>
-            <p className="text-sm text-sakura-muted">
+            <p className="text-corpo text-sakura-muted">
               Cliente + veículo + peças usadas + serviço realizado
             </p>
           </div>
@@ -276,7 +276,7 @@ export function OrdensServicoPage() {
         {clientes.length > 0 && !mostrarFormulario && !ordemEmEdicao && operador && (
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Nova ordem de serviço
           </button>
@@ -284,7 +284,7 @@ export function OrdensServicoPage() {
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para começar a abrir ordens de serviço de verdade.
@@ -292,13 +292,13 @@ export function OrdensServicoPage() {
       )}
 
       {isSupabaseConfigured && !carregando && !lojaAtual && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           Seu usuário não tem loja atribuída. Fale com o administrador.
         </p>
       )}
 
       {isSupabaseConfigured && !carregando && lojaAtual && clientes.length === 0 && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           Cadastre ao menos um cliente antes de abrir uma ordem de serviço.
         </p>
       )}
@@ -346,24 +346,24 @@ export function OrdensServicoPage() {
       )}
 
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">
           {erro}
         </p>
       )}
 
       {!carregando && ordens.length > 0 && (
         <div className="flex flex-wrap items-end gap-4">
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Buscar por cliente ou placa</span>
             <input
               type="text"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Ex: João ou ABC1D23"
-              className="w-56 rounded-lg border border-sakura-gray/40 px-3 py-1.5 text-sm focus:border-sakura-purple"
+              className="w-56 rounded-lg border border-sakura-gray/40 px-3 py-1.5 text-corpo focus:border-sakura-purple"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+          <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
             De:
             <input
               type="date"
@@ -373,7 +373,7 @@ export function OrdensServicoPage() {
               className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 disabled:opacity-40"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+          <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
             Até:
             <input
               type="date"
@@ -383,7 +383,7 @@ export function OrdensServicoPage() {
               className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 disabled:opacity-40"
             />
           </label>
-          <p className="text-xs text-sakura-muted">
+          <p className="text-rotulo text-sakura-muted">
             {busca.trim()
               ? "Buscando em todo o histórico, sem limite de data."
               : "OS em aberto sempre aparecem, não importa a data — o período filtra só o histórico já faturado."}
@@ -392,18 +392,18 @@ export function OrdensServicoPage() {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : ordens.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Nenhuma ordem de serviço aberta ainda.
         </p>
       ) : ordensFiltradas.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Nenhuma ordem de serviço encontrada com esse filtro.
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Nº</th>
@@ -454,7 +454,7 @@ export function OrdensServicoPage() {
                             setAbaInicialEdicao("fechamento");
                             setOrdemEmEdicao(ordem);
                           }}
-                          className="rounded-full border border-sakura-purple px-3 py-1.5 text-xs font-medium text-sakura-purple-dark hover:bg-sakura-pink-soft/40"
+                          className="rounded-full border border-sakura-purple px-3 py-1.5 text-rotulo font-medium text-sakura-purple-dark hover:bg-sakura-pink-soft/40"
                         >
                           Fechamento
                         </button>
@@ -465,7 +465,7 @@ export function OrdensServicoPage() {
                             e.stopPropagation();
                             setOrdemFaturando(ordem);
                           }}
-                          className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+                          className="rounded-full bg-sakura-purple px-3 py-1.5 text-rotulo font-medium text-white hover:opacity-90"
                         >
                           Faturar
                         </button>

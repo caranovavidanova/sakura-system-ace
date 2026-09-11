@@ -45,7 +45,7 @@ export function CategoriasServicoSection({ categorias, onSalvo }: CategoriasServ
   return (
     <>
       {erro && (
-        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
       )}
 
       <form onSubmit={handleAdicionar} className="mt-4 flex gap-2">
@@ -54,25 +54,25 @@ export function CategoriasServicoSection({ categorias, onSalvo }: CategoriasServ
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Nome da categoria (ex: Pneus, Freios)"
-          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
         />
         <button
           type="submit"
           disabled={salvando || !nome.trim()}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {salvando ? "Salvando..." : "+ Adicionar"}
         </button>
       </form>
 
       {categorias.length === 0 ? (
-        <p className="mt-4 text-sm text-sakura-muted">Nenhuma categoria cadastrada ainda.</p>
+        <p className="mt-4 text-corpo text-sakura-muted">Nenhuma categoria cadastrada ainda.</p>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
           {categorias.map((categoria) => (
             <span
               key={categoria.id}
-              className="flex items-center gap-2 rounded-full bg-sakura-pink-soft px-3 py-1.5 text-xs font-medium text-sakura-purple-dark"
+              className="flex items-center gap-2 rounded-full bg-sakura-pink-soft px-3 py-1.5 text-rotulo font-medium text-sakura-purple-dark"
             >
               {categoria.nome}
               <button

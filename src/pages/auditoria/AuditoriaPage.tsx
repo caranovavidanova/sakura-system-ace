@@ -74,25 +74,25 @@ export function AuditoriaPage() {
       <header className="flex items-center gap-3">
         <BotaoVoltar />
         <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Auditoria</h1>
-          <p className="text-sm text-sakura-muted">
+          <h1 className="text-titulo font-semibold text-sakura-purple-dark">Auditoria</h1>
+          <p className="text-corpo text-sakura-muted">
             Quem editou ou excluiu o quê, e quando — só admin vê essa tela
           </p>
         </div>
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para ver a auditoria de verdade.
         </p>
       )}
 
-      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
       <div className="flex flex-wrap gap-4">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-corpo">
           <span className="text-sakura-purple-dark/80">Tabela</span>
           <Combobox
             className="w-56"
@@ -106,7 +106,7 @@ export function AuditoriaPage() {
             placeholder="Todas"
           />
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-corpo">
           <span className="text-sakura-purple-dark/80">Operador</span>
           <Combobox
             className="w-56"
@@ -120,15 +120,15 @@ export function AuditoriaPage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : registros.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Nenhum registro de auditoria ainda (só aparece depois que algo for editado ou excluído
           nas telas cobertas).
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Quando</th>
@@ -152,7 +152,7 @@ export function AuditoriaPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                         registro.acao === "excluir"
                           ? "bg-red-50 text-red-700"
                           : "bg-amber-50 text-amber-800"
@@ -164,7 +164,7 @@ export function AuditoriaPage() {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => setDetalhe(registro)}
-                      className="text-xs font-medium text-sakura-purple hover:underline"
+                      className="text-rotulo font-medium text-sakura-purple hover:underline"
                     >
                       Ver detalhes
                     </button>
@@ -183,31 +183,31 @@ export function AuditoriaPage() {
           }`}
           onFechar={() => setDetalhe(null)}
         >
-          <div className="space-y-4 text-sm">
+          <div className="space-y-4 text-corpo">
             <p className="text-sakura-purple-dark/80">
               {detalhe.operador?.nome ?? "Alguém"} em {formatarDataHora(detalhe.criado_em)}
             </p>
 
             {detalhe.acao === "excluir" ? (
               <div>
-                <h4 className="mb-1 text-xs font-semibold text-sakura-purple-dark">
+                <h4 className="mb-1 text-rotulo font-semibold text-sakura-purple-dark">
                   Dados do registro excluído
                 </h4>
-                <pre className="max-h-80 overflow-auto rounded-lg bg-black/30 p-3 text-xs text-sakura-purple-dark/90">
+                <pre className="max-h-80 overflow-auto rounded-lg bg-black/30 p-3 text-rotulo text-sakura-purple-dark/90">
                   {JSON.stringify(detalhe.dados_antes, null, 2)}
                 </pre>
               </div>
             ) : (
               <>
                 <div>
-                  <h4 className="mb-1 text-xs font-semibold text-sakura-purple-dark">Antes</h4>
-                  <pre className="max-h-60 overflow-auto rounded-lg bg-black/30 p-3 text-xs text-sakura-purple-dark/90">
+                  <h4 className="mb-1 text-rotulo font-semibold text-sakura-purple-dark">Antes</h4>
+                  <pre className="max-h-60 overflow-auto rounded-lg bg-black/30 p-3 text-rotulo text-sakura-purple-dark/90">
                     {JSON.stringify(detalhe.dados_antes, null, 2)}
                   </pre>
                 </div>
                 <div>
-                  <h4 className="mb-1 text-xs font-semibold text-sakura-purple-dark">Depois</h4>
-                  <pre className="max-h-60 overflow-auto rounded-lg bg-black/30 p-3 text-xs text-sakura-purple-dark/90">
+                  <h4 className="mb-1 text-rotulo font-semibold text-sakura-purple-dark">Depois</h4>
+                  <pre className="max-h-60 overflow-auto rounded-lg bg-black/30 p-3 text-rotulo text-sakura-purple-dark/90">
                     {JSON.stringify(detalhe.dados_depois, null, 2)}
                   </pre>
                 </div>

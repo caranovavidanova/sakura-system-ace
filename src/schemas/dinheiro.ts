@@ -60,3 +60,15 @@ export function arredondarCentavo(valor: number): number {
 export function somar(valores: readonly number[]): number {
   return arredondarCentavo(valores.reduce((soma, valor) => soma + valor, 0));
 }
+
+/**
+ * Valor em reais como a tela mostra: "R$ 1.234,56".
+ *
+ * Estava copiado, idêntico, em mais de dez arquivos de tela — a mesma
+ * duplicação que motivou este arquivo, só que de formatação e não de conta.
+ * Quem precisa de um valor formatado importa daqui; as telas que ainda têm a
+ * cópia antiga vão trocando conforme forem mexidas.
+ */
+export function formatarMoeda(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}

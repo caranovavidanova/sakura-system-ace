@@ -15,6 +15,7 @@ import type { OrdemServico } from "@/types/os";
 import { CancelarNotaModal } from "./CancelarNotaModal";
 import { NotaFiscalVisualModal } from "./NotaFiscalVisualModal";
 import { VerDanfeModal } from "./VerDanfeModal";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 interface ArquivosSectionProps {
   tipo: TipoNotaFiscal;
@@ -279,42 +280,46 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                     </td>
                     <td className="px-4 py-3">{arquivo.operador?.nome ?? "—"}</td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-3">
-                        {arquivo.origem === "automatica" && (
-                          <button
-                            onClick={() => setArquivoDanfe(arquivo)}
-                            className="text-xs font-medium text-sakura-purple hover:underline"
-                          >
-                            {tipo === "nfe" ? "Ver DANFE" : "Ver PDF"}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setArquivoVisualizando(arquivo)}
-                          className="text-xs font-medium text-sakura-purple hover:underline"
-                        >
-                          Versão para o cliente
-                        </button>
-                        <button
-                          onClick={() => handleBaixar(arquivo)}
-                          className="text-xs font-medium text-sakura-purple hover:underline"
-                        >
-                          Baixar XML
-                        </button>
-                        {arquivo.origem === "automatica" && arquivo.status === "autorizado" && (
-                          <button
-                            onClick={() => setArquivoCancelando(arquivo)}
-                            className="text-xs font-medium text-red-600 hover:underline"
-                          >
-                            Cancelar nota
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleExcluir(arquivo)}
-                          className="text-xs font-medium text-red-600 hover:underline"
-                        >
-                          Excluir
-                        </button>
-                      </div>
+                      <AcoesDaLinha
+                        descricao={`a nota ${arquivo.nome_arquivo}`}
+                        acoes={[
+                          ...(arquivo.origem === "automatica"
+                            ? [
+                                {
+                                  tipo: "texto" as const,
+                                  rotulo: tipo === "nfe" ? "Ver DANFE" : "Ver PDF",
+                                  aoClicar: () => setArquivoDanfe(arquivo),
+                                },
+                              ]
+                            : []),
+                          {
+                            tipo: "menu",
+                            rotulo: "Versão para o cliente",
+                            aoClicar: () => setArquivoVisualizando(arquivo),
+                          },
+                          {
+                            tipo: "menu",
+                            rotulo: "Baixar XML",
+                            aoClicar: () => handleBaixar(arquivo),
+                          },
+                          ...(arquivo.origem === "automatica" && arquivo.status === "autorizado"
+                            ? [
+                                {
+                                  tipo: "menu" as const,
+                                  rotulo: "Cancelar nota",
+                                  perigosa: true,
+                                  aoClicar: () => setArquivoCancelando(arquivo),
+                                },
+                              ]
+                            : []),
+                          {
+                            tipo: "menu",
+                            rotulo: "Excluir nota",
+                            perigosa: true,
+                            aoClicar: () => handleExcluir(arquivo),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

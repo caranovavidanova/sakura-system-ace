@@ -63,7 +63,7 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
                 <button
                   onClick={() => handleExcluir(categoria.id)}
                   title="Excluir categoria"
-                  className="text-sakura-purple-dark/75 hover:text-red-600"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sakura-purple-dark/75 hover:bg-red-500/15 hover:text-red-400"
                 >
                   ×
                 </button>

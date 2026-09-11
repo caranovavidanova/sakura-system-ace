@@ -10,6 +10,7 @@ import { mensagemDeErro } from "@/lib/errors";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
 import { ClienteForm } from "./ClienteForm";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 export function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -140,20 +141,18 @@ export function ClientesPage() {
                     {cliente.cidade ? `${cliente.cidade}/${cliente.uf ?? ""}` : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setFormulario(cliente)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(cliente.id)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        Excluir
-                      </button>
-                    </div>
+                    <AcoesDaLinha
+                      descricao={`o cliente ${cliente.nome}`}
+                      acoes={[
+                        { tipo: "editar", aoClicar: () => setFormulario(cliente) },
+                        {
+                          tipo: "menu",
+                          rotulo: "Excluir cliente",
+                          perigosa: true,
+                          aoClicar: () => handleExcluir(cliente.id),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

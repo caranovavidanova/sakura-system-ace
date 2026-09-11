@@ -13,6 +13,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import type { CategoriaServico } from "@/types/categoriaServico";
 import type { NovoServico, Servico } from "@/types/servico";
 import { ServicoForm } from "./ServicoForm";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 function formatarPreco(valor: number | null): string {
   if (valor === null) return "—";
@@ -184,26 +185,22 @@ export function ServicosPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setServicoEditando(servico)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleAlternarStatus(servico)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        {servico.ativo ? "Inativar" : "Reativar"}
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(servico.id)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        Excluir
-                      </button>
-                    </div>
+                    <AcoesDaLinha
+                      descricao={`o serviço ${servico.descricao}`}
+                      acoes={[
+                        { tipo: "editar", aoClicar: () => setServicoEditando(servico) },
+                        {
+                          tipo: servico.ativo ? "inativar" : "reativar",
+                          aoClicar: () => handleAlternarStatus(servico),
+                        },
+                        {
+                          tipo: "menu",
+                          rotulo: "Excluir serviço",
+                          perigosa: true,
+                          aoClicar: () => handleExcluir(servico.id),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

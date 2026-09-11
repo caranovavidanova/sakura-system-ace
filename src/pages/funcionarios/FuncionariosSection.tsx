@@ -3,6 +3,7 @@ import { mensagemDeErro } from "@/lib/errors";
 import { atualizarFuncionario, criarFuncionario } from "@/lib/funcionarios";
 import type { Funcionario, NovoFuncionario, NovoFuncionarioFilho } from "@/types/funcionario";
 import { FuncionarioForm } from "./FuncionarioForm";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 interface FuncionariosSectionProps {
   funcionarios: Funcionario[];
@@ -95,20 +96,16 @@ export function FuncionariosSection({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setFormulario(funcionario)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleAlternarStatus(funcionario)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        {funcionario.ativo ? "Inativar" : "Reativar"}
-                      </button>
-                    </div>
+                    <AcoesDaLinha
+                      descricao={`o funcionário ${funcionario.nome}`}
+                      acoes={[
+                        { tipo: "editar", aoClicar: () => setFormulario(funcionario) },
+                        {
+                          tipo: funcionario.ativo ? "inativar" : "reativar",
+                          aoClicar: () => handleAlternarStatus(funcionario),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

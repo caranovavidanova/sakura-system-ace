@@ -6,6 +6,7 @@ import type { Categoria } from "@/types/categoria";
 import type { NovaPeca, Peca } from "@/types/peca";
 import { ImportarNotasFiscaisModal } from "./ImportarNotasFiscaisModal";
 import { PecaForm } from "./PecaForm";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 function IconeCamera({ className = "" }: { className?: string }) {
   return (
@@ -192,26 +193,22 @@ export function ProdutosSection({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => handleEditar(peca)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleAlternarStatus(peca)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        {peca.ativo ? "Inativar" : "Reativar"}
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(peca.id)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        Excluir
-                      </button>
-                    </div>
+                    <AcoesDaLinha
+                      descricao={`o produto ${peca.descricao}`}
+                      acoes={[
+                        { tipo: "editar", aoClicar: () => handleEditar(peca) },
+                        {
+                          tipo: peca.ativo ? "inativar" : "reativar",
+                          aoClicar: () => handleAlternarStatus(peca),
+                        },
+                        {
+                          tipo: "menu",
+                          rotulo: "Excluir produto",
+                          perigosa: true,
+                          aoClicar: () => handleExcluir(peca.id),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

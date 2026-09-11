@@ -40,6 +40,7 @@ import { JurosParcelasSection } from "./JurosParcelasSection";
 import { LojasSection } from "./LojasSection";
 import { OperadorForm } from "./OperadorForm";
 import { TextoGarantiaSection } from "./TextoGarantiaSection";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 export function ConfiguracoesPage() {
   const { operador: operadorLogado, lojaAtual } = useAuth();
@@ -280,28 +281,27 @@ export function ConfiguracoesPage() {
                   )}
                 </div>
 
-                <div className="mt-4 flex flex-wrap justify-end gap-3">
-                  <button
-                    onClick={() => abrirFormulario(op)}
-                    className="text-xs font-medium text-sakura-purple hover:underline"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleRedefinirSenha(op)}
-                    disabled={redefinindoId === op.id}
-                    className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50"
-                  >
-                    {redefinindoId === op.id ? "Redefinindo..." : "Redefinir senha"}
-                  </button>
-                  {op.id !== operadorLogado?.id && (
-                    <button
-                      onClick={() => handleAlternarStatus(op)}
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      {op.ativo ? "Inativar" : "Reativar"}
-                    </button>
-                  )}
+                <div className="mt-4">
+                  <AcoesDaLinha
+                    descricao={`o operador ${op.nome}`}
+                    acoes={[
+                      { tipo: "editar", aoClicar: () => abrirFormulario(op) },
+                      ...(op.id !== operadorLogado?.id
+                        ? [
+                            {
+                              tipo: (op.ativo ? "inativar" : "reativar") as "inativar" | "reativar",
+                              aoClicar: () => handleAlternarStatus(op),
+                            },
+                          ]
+                        : []),
+                      {
+                        tipo: "menu",
+                        rotulo: redefinindoId === op.id ? "Redefinindo..." : "Redefinir senha",
+                        desabilitada: redefinindoId === op.id,
+                        aoClicar: () => handleRedefinirSenha(op),
+                      },
+                    ]}
+                  />
                 </div>
               </div>
             ))}

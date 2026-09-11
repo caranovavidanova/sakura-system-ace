@@ -669,7 +669,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   Sakura System não pedia nem mandava. Ver item 1 da seção 8.
 - `0048` (criada em 11/09/2026, validada num Postgres local — a sequência inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado 0047 **com dado plantado**
-  — **ainda NÃO rodada por ela**): declara a precisão de 5 colunas de valor que eram `numeric`
+  — **rodada e confirmada por ela no Supabase real em 11/09/2026**): declara a precisão de 5 colunas de valor que eram `numeric`
   "solto", sem casas decimais — `contas_pagar.valor`, `contas_receber.valor`,
   `funcionarios.salario`, `servicos.custo` (todas pra `numeric(12,2)`) e
   `configuracoes_fiscais_loja.aliquota_iss` (pra `numeric(5,2)`). **Não é mudança cosmética**:
@@ -680,7 +680,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   corrigido junto.
 - `0049` (criada em 11/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado 0048 **com dado plantado**
-  — **ainda NÃO rodada por ela**): duas colunas em `configuracoes_fiscais_loja` pro lembrete da
+  — **rodada e confirmada por ela no Supabase real em 11/09/2026**, antes da tag, como manda a
+  ordem descrita abaixo): duas colunas em `configuracoes_fiscais_loja` pro lembrete da
   alíquota da competência (NFS-e) — `competencia_aliquota_confirmada` (date: o mês, sempre no dia
   1º, cuja alíquota já foi cadastrada no portal da prefeitura) e `aliquota_passo_a_passo` (text: o
   caminho dentro do portal, editável porque muda de município; em branco vale o padrão de
@@ -2422,13 +2423,13 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     `workflow_dispatch`, depois de ela confirmar — instalador e `latest.yml` confirmados na
     release. **Ainda não confirmada por ela rodando na loja.**
 
-  **⏸ A PRÓXIMA TAG SERÁ A `v0.9.30`, E ELA AINDA NÃO FOI PUBLICADA — e aqui a ORDEM IMPORTA.** A
-  `main` carrega o "Ver DANFE" e o aviso da alíquota do mês (11/09/2026), e o aviso depende da
-  migration `0049`. Publicar a tag **antes** de ela rodar a `0049` faria "Salvar dados fiscais"
-  passar a dar erro de coluna inexistente. Então: ela roda a `0048` e a `0049` no SQL Editor
-  (seção 9), avisa, e só aí o passo 1 de "Gerar o instalador Windows e publicar uma versão nova"
-  (subir o `package.json` pra `0.9.30`, mesclar, disparar o `workflow_dispatch`). Conferir a lista
-  real de releases antes, como sempre.
+  - `v0.9.30`: leva o botão **"Ver DANFE"** (reabrir o PDF de uma nota já emitida, em Notas
+    Fiscais e na aba Fechamento da OS) e o **aviso da alíquota da competência** no Início — os
+    itens `TR-11.1` e `TR-11.2` do guia de melhorias. Publicada via `workflow_dispatch` **depois**
+    de ela rodar as migrations `0048` e `0049`, que era a ordem obrigatória (sem as colunas da
+    `0049`, "Salvar dados fiscais" daria erro de coluna inexistente). **Ainda não confirmada por
+    ela rodando na loja** — e a busca do PDF na Focus NFe é justamente o que não dá pra testar
+    daqui.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -2947,17 +2948,11 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0047` estão aplicadas; a `0048` e a `0049` estão prontas e NÃO foram
-rodadas ainda.** As duas são coladas do mesmo jeito de sempre: painel do projeto → SQL Editor →
-New query → cola o conteúdo do arquivo → Run. As duas são idempotentes (seguro rodar de novo) e
-foram testadas num Postgres local com dado plantado.
-- `supabase/migrations/0048_precisao_das_colunas_de_dinheiro.sql` — sem pressa e sem risco de
-  quebrar tela nenhuma: sem ela o sistema funciona igual, só continua sem a segunda linha de
-  defesa contra centavo com cauda.
-- `supabase/migrations/0049_lembrete_aliquota_competencia.sql` — **esta tem ordem**: precisa estar
-  rodada **antes** de a próxima versão do app chegar na loja. Sem as duas colunas dela, salvar em
-  Configurações → Dados fiscais passa a dar erro de "coluna não existe" (o resto do app continua
-  normal). Rodar a migration primeiro, publicar a tag depois.
+**Estado hoje: `0001` a `0049` estão TODAS aplicadas no Supabase real dela** — a `0048`
+(precisão das colunas de valor) e a `0049` (lembrete da alíquota da competência) foram coladas por
+ela no SQL Editor em 11/09/2026, as duas com "Success. No rows returned", e a `0049` **antes** da
+tag `v0.9.30`, que é a ordem que essa migration exigia (sem as colunas dela, "Salvar dados
+fiscais" daria erro de coluna inexistente no computador da loja). Nada pendente de SQL.
 **Sobre `0047` e anteriores:** `0046` (`focus_nfe_ref` em
 `notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
 `configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
@@ -3208,10 +3203,8 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.29"` (publicada em 11/09/2026) — com trabalho mesclado na
-  `main` **esperando a próxima tag (`v0.9.30`)**: o "Ver DANFE" e o aviso da alíquota do mês, que
-  só devem ser publicados **depois** de ela rodar a migration `0049` (ver "Onde tudo parou", no
-  fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.30"` — publicada em 11/09/2026, com a `main` em dia e
+  **nada esperando tag** (ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3565,18 +3558,21 @@ curto.
 
 ### ⏸ O ponto exato onde parou (11/09/2026, mais tarde) — LEIA ISTO PRIMEIRO
 
-**Uma coisa publicada, duas esperando ela — e uma delas tem ORDEM.**
+**Nada pendente do meu lado nem do banco. Duas tags publicadas, esperando só o teste dela na
+loja.**
 
-1. ✅ **A `v0.9.29` foi publicada** (ela autorizou nesta sessão, depois de ter segurado em 10/09).
-   Leva o aviso de código fiscal pelo nome da peça e a correção da importação de XML do
-   fornecedor. Instalador e `latest.yml` confirmados na release; o auto-update leva pro PC da
-   loja sozinho. **Ainda não confirmada por ela rodando lá.**
-2. ⚠️ **As migrations `0048` e `0049` precisam ser coladas por ela no SQL Editor** (seção 9).
-   A `0049` é a que tem ordem: **rodar antes de publicar a próxima tag**. Sem as colunas dela,
-   "Salvar dados fiscais" passaria a dar erro de coluna inexistente no computador da loja.
-3. ⏸ **A `v0.9.30` está pronta na `main` e NÃO foi publicada** — de propósito, esperando o item 2.
-   Quando ela avisar que rodou as migrations: subir o `package.json` pra `0.9.30`, mesclar,
-   disparar o `workflow_dispatch` (seção 9).
+1. ✅ **`v0.9.29` publicada** — aviso de código fiscal pelo nome da peça + correção da importação
+   de XML do fornecedor.
+2. ✅ **Migrations `0048` e `0049` rodadas por ela** no SQL Editor, as duas com "Success. No rows
+   returned" — e a `0049` **antes** da tag, que era a ordem obrigatória. Nada pendente de SQL:
+   `0001` a `0049` estão todas aplicadas.
+3. ✅ **`v0.9.30` publicada** — "Ver DANFE" e aviso da alíquota do mês. Instalador e `latest.yml`
+   confirmados na release; o auto-update leva pro PC da loja sozinho.
+
+**O que falta é confirmação de uso real**, não código: abrir o "Ver DANFE" numa nota de verdade
+(a busca do PDF na Focus NFe é o que não dá pra testar daqui) e ver o aviso da alíquota aparecer
+no Início. Se o "Ver DANFE" falhar, a mensagem na tela já diz o motivo — e o primeiro lugar pra
+olhar é se o token da Focus NFe está preenchido em Configurações → Dados fiscais.
 
 #### O que esta sessão fez
 
@@ -3620,9 +3616,8 @@ Postgres local e a `0049` sozinha duas vezes num banco com dado plantado.
 
 #### O que depende dela agora
 
-1. **Rodar a `0048` e a `0049`** no SQL Editor (seção 9) — e avisar, pra sair a `v0.9.30`.
-2. **Confirmar na loja**: a `v0.9.29` chegando pelo auto-update; e, depois da `v0.9.30`, o "Ver
-   DANFE" de uma nota de verdade.
+1. **Confirmar na loja**: as duas versões chegando pelo auto-update, o "Ver DANFE" numa nota de
+   verdade e o aviso da alíquota aparecendo no Início.
 3. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), só depois de vê-lo verde
    algumas vezes — item 48 da seção 6.
 4. **As três credenciais expostas continuam para trocar** (CSC da SEFAZ, token do portal Giap,

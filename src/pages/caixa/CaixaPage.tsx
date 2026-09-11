@@ -114,6 +114,7 @@ export function CaixaPage() {
           movimentos={movimentos}
           categorias={categorias}
           onSalvar={handleSalvar}
+          onAtualizado={carregar}
         />
       ) : (
         <EntradaSaidaSection
@@ -121,6 +122,7 @@ export function CaixaPage() {
           movimentos={movimentos}
           categorias={categorias}
           onSalvar={handleSalvar}
+          onAtualizado={carregar}
         />
       )}
     </div>

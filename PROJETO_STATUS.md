@@ -430,8 +430,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0049), todas idempotentes
-├── supabase/instalacao/          # instalacao-completa.sql (as 49 migrations concatenadas num
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0050), todas idempotentes
+├── supabase/instalacao/          # instalacao-completa.sql (as 50 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
 │                                  # INSTALAR-LOJA-NOVA.md (o checklist que ela segue de verdade ao
@@ -701,6 +701,21 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   seção 7. **Ordem importa**: essa migration precisa estar rodada ANTES de a versão nova chegar no
   computador da loja — sem as colunas, salvar em Configurações → Dados fiscais dá erro de "coluna
   não existe".
+- `0050` (criada em 11/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0049` **com dado plantado**,
+  inclusive uma categoria "Outros" criada à mão — **ainda não rodada por ela**): semeia a categoria
+  **"Outros"** em `categorias_caixa`, uma para cada tipo (entrada e saída).
+  **Por que isso não é detalhe**: `categorias_caixa` (migration `0020`) nunca foi semeada por
+  migration nenhuma — diferente de `categorias` e `categorias_servicos`, que a `0030` semeia. Ou
+  seja, banco recém-instalado tem **zero** categorias de caixa. Como a categoria do lançamento
+  manual passou a ser obrigatória (item TL-27, ver "Caixa Diário" na seção 7), sem essa semente o
+  operador ficaria sem conseguir lançar nada, sem saída pela tela.
+  **Não torna `caixa_movimentos.categoria_id` NOT NULL**, de propósito: o faturamento de uma OS
+  entra no caixa sem categoria e deve continuar assim, e o histórico já gravado não pode ser
+  recusado pelo banco. A obrigatoriedade é do formulário, não da tabela.
+  **Ordem importa** (mesmo caso da `0049`): precisa estar rodada antes de a versão nova chegar no
+  computador da loja — a menos que ela já tenha pelo menos uma categoria de cada tipo cadastrada,
+  caso em que a ordem deixa de importar.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1861,6 +1876,35 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     sair mais de uma cor de texto no elemento. Foi conferido reintroduzindo o bug de propósito e
     vendo o teste ficar vermelho.
 
+55. **Tornar um campo obrigatório tem duas metades, e a segunda é a que costuma ficar de fora
+    (11/09/2026).** A categoria do lançamento manual de caixa passou a ser exigida (item `TL-27`).
+    A metade fácil é a validação; as duas que quase passaram batido:
+    - **Garantir que exista o que escolher.** `categorias_caixa` nunca foi semeada por migration
+      nenhuma — diferente de `categorias` e `categorias_servicos`, que a `0030` semeia. Um banco
+      recém-instalado tem **zero** categorias de caixa, então exigir a categoria, sozinho,
+      deixaria o operador sem conseguir lançar nada e sem nada na tela explicando por quê. É o
+      item 33 desta seção outra vez (validação incerta vira tranca), só que por falta de dado em
+      vez de por engano de código. A regra prática: **ao tornar um campo obrigatório, conferir se
+      o cadastro que alimenta ele nasce com alguma linha** — e, se não nascer, semear.
+    - **Consertar o passado.** A regra nova só vale pro que vier depois; os R$ 31.000,00 já
+      lançados sem categoria continuariam num balde só pra sempre, e o relatório por categoria
+      continuaria sem existir na prática — que era exatamente o problema que o item veio resolver.
+      Mudar a regra **e** oferecer o conserto do histórico são a mesma tarefa, não duas.
+
+56. **O gerador de catálogo de telas exige um hostname específico no `.env`, não qualquer
+    invenção (11/09/2026).** O item 53 já registrava que sem `.env` na raiz as 54 cenas falham.
+    Falta a outra metade: o `banco-falso.mjs` intercepta `**demo.supabase.co/**`, então a URL
+    precisa ser **exatamente** `https://demo.supabase.co`. Com um hostname inventado qualquer o
+    login vaza pra rede de verdade e **36 das 54 cenas falham por timeout**, com um erro de
+    console (`ERR_TUNNEL_CONNECTION_FAILED`) que não sugere em nada que a causa é o nome do host.
+    Já está escrito no topo do próprio gerador.
+    **A lição de método é maior que o detalhe**: a lista de 36 falhas parecia, à primeira vista,
+    uma tela quebrada pela mudança em andamento. O que separou uma coisa da outra foi rodar o
+    gerador **na árvore limpa** (`git stash`) e ver a falha idêntica — e, depois, rodá-lo **duas
+    vezes no mesmo código**, o que revelou que 9 telas diferem entre rodadas só por ruído de
+    renderização. Sem essas duas comparações, tanto o falso alarme quanto o ruído seriam lidos
+    como regressão.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -2227,7 +2271,25 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   campos organizados em `campos/*Fields.tsx` por grupo. Comportamento pro usuário final não mudou
   em nada (mesmos campos, mesma validação de "Nome obrigatório").
 - **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
-  lançamentos manuais, com categoria opcional via `categorias_caixa`). Card de "Lucro do dia" +
+  lançamentos manuais, com categoria via `categorias_caixa`).
+  **A categoria virou obrigatória em 11/09/2026** (item `TL-27` do guia): era opcional, então
+  ninguém preenchia, e o bloco "Por categoria" da tela de Saídas virava um balde só — "Sem
+  categoria: R$ 31.000,00", o mês inteiro de despesa junto. Três coisas que valem saber:
+  - **A obrigatoriedade é do formulário manual, não da tabela.** O faturamento de uma OS continua
+    entrando no caixa sem categoria (é venda, aparece no Diário), e o histórico já gravado não é
+    recusado pelo banco — `caixa_movimentos.categoria_id` **não** virou NOT NULL.
+  - **Existe sempre uma saída**: a migration `0050` semeia a categoria "Outros" pros dois tipos,
+    porque `categorias_caixa` nunca foi semeada e um banco novo tem zero categorias. Se ainda
+    assim não houver nenhuma categoria do tipo (ela atualizar o app antes de rodar a migration),
+    o campo **explica onde criar uma** em vez de virar beco sem saída — a regra do item 33 da
+    seção 6, de que validação incerta é aviso e não tranca.
+  - **O passado também foi consertado.** Tornar obrigatório arruma só o futuro; os R$ 31.000,00
+    já lançados não se movem sozinhos. As abas Entradas e Saídas mostram uma faixa dizendo
+    quantos lançamentos estão sem categoria e quanto somam, com um painel que categoriza **em
+    lote** (`CategorizarSemCategoria.tsx`), incluindo "aplicar a todos os que estão em branco" —
+    que só preenche o que ainda está vazio, pra não desfazer o que já foi escolhido à mão. Linha
+    deixada em branco não é gravada. As contas ficam em `schemas/caixa.ts`, como função pura
+    testada. Card de "Lucro do dia" +
   resumo por forma de recebimento. **Desde 28/08/2026 o "Lucro do dia" é confiável** (ver item 40
   da seção 6): conta o custo de cada OS uma vez só mesmo com pagamento dividido, inclui o custo do
   serviço (não só o da peça) e desconta as saídas lançadas à mão. A coluna "Lucro" da tabela
@@ -3106,11 +3168,13 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0049` estão TODAS aplicadas no Supabase real dela** — a `0048`
+**Estado hoje: `0001` a `0049` estão aplicadas no Supabase real dela; a `0050` é a única pendente** — a `0048`
 (precisão das colunas de valor) e a `0049` (lembrete da alíquota da competência) foram coladas por
 ela no SQL Editor em 11/09/2026, as duas com "Success. No rows returned", e a `0049` **antes** da
 tag `v0.9.30`, que é a ordem que essa migration exigia (sem as colunas dela, "Salvar dados
-fiscais" daria erro de coluna inexistente no computador da loja). Nada pendente de SQL.
+fiscais" daria erro de coluna inexistente no computador da loja).
+**A `0050`** (semeia a categoria "Outros" de caixa, pro item TL-27) **ainda não foi rodada** — é o
+único SQL pendente hoje, e precisa ir antes de a versão nova chegar na loja. Ver seção 5.
 **Sobre `0047` e anteriores:** `0046` (`focus_nfe_ref` em
 `notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
 `configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
@@ -3642,9 +3706,10 @@ compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
 ### ⏸ Onde parou em 11/09/2026 — LEIA ISTO PRIMEIRO
 
-**Estado: `v0.9.31` publicada, `main` em dia, banco em `0049`, nada pendente do meu lado nem de
-SQL.** Foi um dia longo, com três levas de trabalho — o resumo de cada uma está logo abaixo, e o
-que sobrou pra ela está no fim desta seção.
+**Estado: `v0.9.31` publicada e instalada. Depois dela entrou na `main` mais uma leva — o
+`TL-27` — que está SEM TAG e depende de uma migration nova (`0050`) ser rodada antes.** Foi um dia
+longo, com quatro levas de trabalho — o resumo de cada uma está logo abaixo, e o que sobrou pra
+ela está no fim desta seção.
 
 > As três levas deste dia foram escolhidas por ela **pelo código do item**, no guia de melhorias
 > (`MELHORIAS.md`, na raiz do repositório). Ele **não** carrega sozinho em sessão nova, de
@@ -3717,6 +3782,29 @@ abertas, contas a receber vencidas, peças abaixo do mínimo).
 **Uma pergunta que estava aberta e foi respondida**: "Editar" e "Inativar" viraram **ícone** nas
 listas — ela viu a tela de Clientes renderizada e escolheu manter assim. Não reabrir.
 
+#### Leva 4 — `TL-27`: categoria obrigatória no caixa (na `main`, SEM tag ainda)
+
+Item escolhido por ela. A prova do problema estava na própria tela de Saídas: "Por categoria —
+Sem categoria: R$ 31.000,00", o mês inteiro de despesa num balde só. Como a categoria era
+opcional, ninguém preenchia, e o relatório por categoria não existia na prática.
+
+O que cada parte faz está em "Caixa Diário" (seção 7); o que se aprendeu, nos **itens 55 e 56 da
+seção 6**. Em uma linha cada:
+
+1. A categoria passou a ser **obrigatória no formulário manual** — só no formulário, não na
+   coluna: o faturamento de OS continua entrando sem categoria, e o histórico não é recusado
+   pelo banco.
+2. **Migration `0050`** semeia a categoria "Outros" pros dois tipos, porque `categorias_caixa`
+   nunca foi semeada e um banco novo tem zero categorias — sem isso a regra nova viraria tranca.
+3. **O passado foi consertado junto**: faixa dizendo quantos lançamentos estão sem categoria e
+   quanto somam, e um painel que categoriza em lote. Era a parte que o item insistia, e sem ela
+   o relatório continuaria errado pra sempre.
+
+**Só falta a tag** — igual à `v0.9.29`, que ficou segurada um dia esperando o "sim" dela. **E,
+diferente daquela, esta tem uma ordem obrigatória**: a migration `0050` precisa estar rodada
+antes de a versão nova chegar na loja (a menos que ela já tenha pelo menos uma categoria de caixa
+de cada tipo — aí a ordem deixa de importar).
+
 #### O que apareceu no caminho e NÃO foi mexido
 
 Há vermelho escuro (`text-red-600`/`text-red-700`) usado **sobre card escuro** em vários lugares —
@@ -3728,6 +3816,15 @@ legítimas das ilegíveis é exatamente o trabalho do `TR-01.3`, e meio-arrumar 
 mexer.
 
 #### O que depende dela agora
+
+**Decidir e rodar, na ordem** — é o único item com ordem obrigatória:
+
+0. **Rodar a migration `0050`** (SQL Editor do Supabase, colar
+   `supabase/migrations/0050_categoria_caixa_outros.sql`) **e só depois publicar a tag** com o
+   `TL-27`. A migration semeia a categoria "Outros" do caixa; sem ela, quem não tiver nenhuma
+   categoria de caixa cadastrada não consegue lançar (a tela explica o motivo e onde criar uma,
+   mas o caminho vira trabalho manual). Se ela já tiver pelo menos uma categoria de cada tipo, a
+   ordem deixa de importar. **Não publicar a tag sozinho** — perguntar antes, como na `v0.9.29`.
 
 **Confirmar em uso real** (nada disso dá pra testar daqui):
 
@@ -3766,14 +3863,15 @@ suporte; e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 #### Da Etapa 2, ainda não foram feitos
 
 `TR-01.3` (auditoria de contraste WCAG — o item que o achado acima alimenta), `TL-08` (cadastrar
-cliente sem sair da OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais), `TL-27` (categoria
-obrigatória no caixa) e `FN-03` (WhatsApp). **Ela escolhe o próximo pelo código do item — não sair
-fazendo a lista inteira.**
+cliente sem sair da OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais) e `FN-03` (WhatsApp).
+O `TL-27` saiu desta lista em 11/09/2026 — está feito, ver a leva 4 acima. **Ela escolhe o próximo
+pelo código do item — não sair fazendo a lista inteira.**
 
 #### Estado do código
 
-`main` em dia na `v0.9.31`. `tsc`, lint e `npm run contraste` limpos; **327 testes** passando nos
-dois fusos (eram 149 no começo de setembro). As 54 telas do catálogo
+`main` em dia, com a `v0.9.31` publicada **mais o `TL-27` já mesclado e sem tag**. `tsc`, lint e
+`npm run contraste` limpos; **341 testes** passando nos dois fusos (eram 149 no começo de
+setembro). As 54 telas do catálogo
 (`site/ferramentas/gerar-catalogo-telas.mjs`) geradas de novo sem nenhuma falha — vale rodar esse
 gerador depois de qualquer mexida grande de tela, é o único teste de tela que existe hoje, e ele
 já quebrou em silêncio uma vez (item 53 da seção 6).

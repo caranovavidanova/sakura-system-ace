@@ -93,21 +93,31 @@ export function CaixaForm({
             {...register("valor")}
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
-          {errors.valor && <span className="text-rotulo text-red-600">{errors.valor.message}</span>}
+          {errors.valor && <span className="text-rotulo text-red-400">{errors.valor.message}</span>}
         </label>
 
         <label className="flex flex-col gap-1 text-corpo">
-          <span className="text-sakura-purple-dark/80">Categoria (opcional)</span>
+          <span className="text-sakura-purple-dark/80">Categoria</span>
           <Combobox
             opcoes={categoriasDoTipo.map((categoria) => ({
               valor: categoria.id,
               rotulo: categoria.nome,
             }))}
             valor={watch("categoria_id")}
-            onMudar={(v) => setValue("categoria_id", v)}
-            opcaoVazia="Sem categoria"
-            placeholder="Sem categoria"
+            onMudar={(v) => setValue("categoria_id", v, { shouldValidate: true })}
+            placeholder="Escolha uma categoria"
+            desabilitado={categoriasDoTipo.length === 0}
           />
+          {categoriasDoTipo.length === 0 ? (
+            <span className="text-rotulo text-amber-300">
+              Nenhuma categoria de {tipo === "saida" ? "saída" : "entrada"} cadastrada ainda —
+              um administrador cria em Configurações → Categorias de caixa.
+            </span>
+          ) : (
+            errors.categoria_id && (
+              <span className="text-rotulo text-red-400">{errors.categoria_id.message}</span>
+            )
+          )}
         </label>
 
         <label className="flex flex-col gap-1 text-corpo">

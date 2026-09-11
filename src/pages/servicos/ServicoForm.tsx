@@ -75,7 +75,7 @@ export function ServicoForm({
           <input
             type="text"
             {...register("descricao")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.descricao && (
             <span className="text-xs text-red-600">{errors.descricao.message}</span>
@@ -87,7 +87,7 @@ export function ServicoForm({
           <input
             type="text"
             {...register("codigo_interno")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
         </label>
 
@@ -98,7 +98,7 @@ export function ServicoForm({
             step="0.01"
             min="0"
             {...register("preco_padrao")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
         </label>
 
@@ -109,7 +109,7 @@ export function ServicoForm({
             step="0.01"
             min="0"
             {...register("custo")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
         </label>
 

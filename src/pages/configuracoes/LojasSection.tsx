@@ -20,7 +20,7 @@ interface LojasSectionProps {
 }
 
 const inputClasse =
-  "rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple";
+  "rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple";
 
 export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSectionProps) {
   const [erro, setErro] = useState<string | null>(null);
@@ -218,13 +218,13 @@ function LinhaEdicaoLoja({
         placeholder="Nome da loja"
         autoFocus
         {...register("nome")}
-        className="w-28 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+        className="w-28 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
       />
       <input
         type="text"
         placeholder="Cidade"
         {...register("cidade")}
-        className="w-20 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+        className="w-20 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
       />
       <input
         type="text"
@@ -235,7 +235,7 @@ function LinhaEdicaoLoja({
           e.target.value = e.target.value.toUpperCase();
           ufField.onChange(e);
         }}
-        className="w-12 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+        className="w-12 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
       />
       <button
         type="submit"

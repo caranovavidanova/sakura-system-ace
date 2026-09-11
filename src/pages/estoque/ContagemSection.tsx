@@ -142,7 +142,7 @@ export function ContagemSection({
               <select
                 value={depositoId}
                 onChange={(e) => setDepositoId(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
               >
                 {depositos.map((deposito) => (
                   <option key={deposito.id} value={deposito.id}>
@@ -167,7 +167,7 @@ export function ContagemSection({
                 min="0"
                 value={quantidadeContada}
                 onChange={(e) => setQuantidadeContada(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
               />
             </label>
 
@@ -194,7 +194,7 @@ export function ContagemSection({
                 type="text"
                 value={observacao}
                 onChange={(e) => setObservacao(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
               />
             </label>
           </div>

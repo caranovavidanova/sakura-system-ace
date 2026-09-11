@@ -310,7 +310,7 @@ export function EmitirNotaFiscalModal({
                 value={codigoMunicipioCliente}
                 onChange={(e) => setCodigoMunicipioCliente(e.target.value)}
                 placeholder={cliente ? `${cliente.cidade ?? ""}/${cliente.uf ?? ""}` : ""}
-                className="w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm text-sakura-purple-dark outline-none focus:border-sakura-purple"
+                className="w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm text-sakura-purple-dark focus:border-sakura-purple"
               />
             </label>
           )}

@@ -27,7 +27,7 @@ interface PedidoCompraFormProps {
 }
 
 const inputClasse =
-  "rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple";
+  "rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple";
 
 export function PedidoCompraForm({
   fornecedores,

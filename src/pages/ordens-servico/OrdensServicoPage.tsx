@@ -360,7 +360,7 @@ export function OrdensServicoPage() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Ex: João ou ABC1D23"
-              className="w-56 rounded-lg border border-sakura-gray/40 px-3 py-1.5 text-sm outline-none focus:border-sakura-purple"
+              className="w-56 rounded-lg border border-sakura-gray/40 px-3 py-1.5 text-sm focus:border-sakura-purple"
             />
           </label>
           <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">

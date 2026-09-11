@@ -79,7 +79,7 @@ export function ContaReceberForm({ clientes, onSalvar, onCancelar }: ContaRecebe
             type="text"
             placeholder="Ex: Acerto de serviço fora de OS"
             {...register("descricao")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.descricao && (
             <span className="text-xs text-red-600">{errors.descricao.message}</span>
@@ -95,7 +95,7 @@ export function ContaReceberForm({ clientes, onSalvar, onCancelar }: ContaRecebe
             min="0.01"
             step="0.01"
             {...register("valor")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.valor && <span className="text-xs text-red-600">{errors.valor.message}</span>}
         </label>
@@ -107,7 +107,7 @@ export function ContaReceberForm({ clientes, onSalvar, onCancelar }: ContaRecebe
           <input
             type="date"
             {...register("vencimento")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.vencimento && (
             <span className="text-xs text-red-600">{errors.vencimento.message}</span>

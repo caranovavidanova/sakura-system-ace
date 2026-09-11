@@ -88,7 +88,7 @@ export function ReceberPedidoModal({ pedido, onConfirmar, onFechar }: ReceberPed
                       step="1"
                       min="0"
                       {...register(`quantidades.${index}.valor`)}
-                      className="w-24 rounded-lg border border-sakura-gray/40 px-2 py-1 outline-none focus:border-sakura-purple"
+                      className="w-24 rounded-lg border border-sakura-gray/40 px-2 py-1 focus:border-sakura-purple"
                     />
                   </td>
                 </tr>

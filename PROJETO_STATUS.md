@@ -421,8 +421,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0047), todas idempotentes
-├── supabase/instalacao/          # instalacao-completa.sql (as 47 migrations concatenadas num
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0049), todas idempotentes
+├── supabase/instalacao/          # instalacao-completa.sql (as 49 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
 │                                  # INSTALAR-LOJA-NOVA.md (o checklist que ela segue de verdade ao
@@ -988,7 +988,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
    de Compra, saldo de estoque, cotação por fornecedor) — **não** testa componente React, tela,
    nem nada que dependa do Supabase (esse tipo de teste, de UI/integração, é bem mais trabalhoso de
-   montar e não foi feito ainda). **275 testes**, todos passando — e, desde 11/09/2026, rodando
+   montar e não foi feito ainda). **298 testes**, todos passando — e, desde 11/09/2026, rodando
    nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
    UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
    conta nenhuma: `schemas/arquitetura.test.ts` varre `src/pages/` e reprova conta de dinheiro
@@ -3655,10 +3655,14 @@ as colunas também. A recomendação registrada é só fazer isso se aparecer um
 o caso concreto na mão. Se ela quiser fazer de qualquer forma, é uma sessão inteira, não um item
 curto.
 
-### ⏸ O ponto exato onde parou (11/09/2026, mais tarde) — LEIA ISTO PRIMEIRO
+### Onde parou em 11/09/2026, à tarde (histórico — o marco mais recente está no FIM do arquivo)
 
-**Nada pendente do meu lado nem do banco. Duas tags publicadas, esperando só o teste dela na
-loja.**
+> Esta seção era o "leia primeiro" até o fim daquele dia. A frase "nada pendente do meu lado"
+> valia só naquele momento — depois dela saíram quatro itens da Etapa 2 que **não foram
+> publicados em tag**. O estado de verdade está no último marco, no fim do arquivo.
+
+**Naquele momento: nada pendente do meu lado nem do banco. Duas tags publicadas, esperando só o
+teste dela na loja.**
 
 1. ✅ **`v0.9.29` publicada** — aviso de código fiscal pelo nome da peça + correção da importação
    de XML do fornecedor.

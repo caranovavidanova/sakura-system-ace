@@ -14,6 +14,7 @@ import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { ContaPagar, NovaContaPagar } from "@/types/contaPagar";
 import { ContaPagarForm } from "./ContaPagarForm";
 import { PagarContaModal } from "./PagarContaModal";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -210,20 +211,22 @@ export function ContasPagarPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <div className="flex justify-end gap-3">
-                              <button
-                                onClick={() => setContaPagando(conta)}
-                                className="text-xs font-medium text-sakura-purple hover:underline"
-                              >
-                                Marcar como paga
-                              </button>
-                              <button
-                                onClick={() => handleExcluir(conta)}
-                                className="text-xs font-medium text-red-600 hover:underline"
-                              >
-                                Excluir
-                              </button>
-                            </div>
+                            <AcoesDaLinha
+                              descricao={`a conta ${conta.descricao}`}
+                              acoes={[
+                                {
+                                  tipo: "texto",
+                                  rotulo: "Marcar como paga",
+                                  aoClicar: () => setContaPagando(conta),
+                                },
+                                {
+                                  tipo: "menu",
+                                  rotulo: "Excluir conta",
+                                  perigosa: true,
+                                  aoClicar: () => handleExcluir(conta),
+                                },
+                              ]}
+                            />
                           </td>
                         </tr>
                       );

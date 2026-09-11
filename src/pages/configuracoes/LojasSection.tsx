@@ -145,21 +145,21 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
                     setEditandoId(loja.id);
                   }}
                   title="Editar loja"
-                  className="text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sakura-purple-dark/75 hover:bg-white/10 hover:text-sakura-purple-dark"
                 >
                   ✎
                 </button>
                 <button
                   onClick={() => handleAlternarStatus(loja)}
                   title={loja.ativo ? "Inativar loja" : "Reativar loja"}
-                  className="text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sakura-purple-dark/75 hover:bg-white/10 hover:text-sakura-purple-dark"
                 >
                   {loja.ativo ? "×" : "↺"}
                 </button>
                 <button
                   onClick={() => handleExcluir(loja)}
                   title="Excluir loja"
-                  className="text-sakura-purple-dark/75 hover:text-red-600"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sakura-purple-dark/75 hover:bg-red-500/15 hover:text-red-400"
                 >
                   🗑
                 </button>

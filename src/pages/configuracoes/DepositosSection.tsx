@@ -120,14 +120,14 @@ export function DepositosSection({ depositos, lojaId, onSalvo }: DepositosSectio
                     setEditandoId(deposito.id);
                   }}
                   title="Editar depósito"
-                  className="text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sakura-purple-dark/75 hover:bg-white/10 hover:text-sakura-purple-dark"
                 >
                   ✎
                 </button>
                 <button
                   onClick={() => handleAlternarStatus(deposito)}
                   title={deposito.ativo ? "Inativar depósito" : "Reativar depósito"}
-                  className="text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sakura-purple-dark/75 hover:bg-white/10 hover:text-sakura-purple-dark"
                 >
                   {deposito.ativo ? "×" : "↺"}
                 </button>

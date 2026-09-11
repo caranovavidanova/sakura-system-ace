@@ -10,6 +10,7 @@ import type { Peca } from "@/types/peca";
 import { ImportarNotaFiscalXmlModal } from "./ImportarNotaFiscalXmlModal";
 import { PedidoCompraForm } from "./PedidoCompraForm";
 import { ReceberPedidoModal } from "./ReceberPedidoModal";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 interface PedidosCompraSectionProps {
   pedidos: PedidoCompra[];
@@ -173,24 +174,26 @@ export function PedidosCompraSection({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      {(pedido.status === "pendente" || pedido.status === "parcial") && (
-                        <>
-                          <button
-                            onClick={() => setPedidoRecebendo(pedido)}
-                            className="text-xs font-medium text-sakura-purple hover:underline"
-                          >
-                            Receber
-                          </button>
-                          <button
-                            onClick={() => handleCancelar(pedido)}
-                            className="text-xs font-medium text-red-600 hover:underline"
-                          >
-                            Cancelar
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    <AcoesDaLinha
+                      descricao={nomePedido(pedido.numero)}
+                      acoes={
+                        pedido.status === "pendente" || pedido.status === "parcial"
+                          ? [
+                              {
+                                tipo: "texto",
+                                rotulo: "Receber",
+                                aoClicar: () => setPedidoRecebendo(pedido),
+                              },
+                              {
+                                tipo: "menu",
+                                rotulo: "Cancelar pedido",
+                                perigosa: true,
+                                aoClicar: () => handleCancelar(pedido),
+                              },
+                            ]
+                          : []
+                      }
+                    />
                   </td>
                 </tr>
               ))}

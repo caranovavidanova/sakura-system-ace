@@ -8,6 +8,7 @@ import {
 } from "@/lib/fornecedores";
 import type { Fornecedor, NovoFornecedor } from "@/types/fornecedor";
 import { FornecedorForm } from "./FornecedorForm";
+import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 interface FornecedoresSectionProps {
   fornecedores: Fornecedor[];
@@ -113,26 +114,22 @@ export function FornecedoresSection({ fornecedores, onRecarregar }: Fornecedores
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setFormulario(fornecedor)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleAlternarStatus(fornecedor)}
-                        className="text-xs font-medium text-sakura-purple hover:underline"
-                      >
-                        {fornecedor.ativo ? "Inativar" : "Reativar"}
-                      </button>
-                      <button
-                        onClick={() => handleExcluir(fornecedor.id)}
-                        className="text-xs font-medium text-red-600 hover:underline"
-                      >
-                        Excluir
-                      </button>
-                    </div>
+                    <AcoesDaLinha
+                      descricao={`o fornecedor ${fornecedor.nome}`}
+                      acoes={[
+                        { tipo: "editar", aoClicar: () => setFormulario(fornecedor) },
+                        {
+                          tipo: fornecedor.ativo ? "inativar" : "reativar",
+                          aoClicar: () => handleAlternarStatus(fornecedor),
+                        },
+                        {
+                          tipo: "menu",
+                          rotulo: "Excluir fornecedor",
+                          perigosa: true,
+                          aoClicar: () => handleExcluir(fornecedor.id),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

@@ -42,6 +42,14 @@ export interface ConfiguracaoFiscalLoja {
   aliquota_iss: number | null;
   codigo_tributario_municipio: string | null;
   codigo_cnae: string | null;
+  // Lembrete da alíquota da competência (migration 0049, só NFS-e):
+  // competencia_aliquota_confirmada é o mês (dia 1º) cuja alíquota já foi
+  // cadastrada no portal da prefeitura — enquanto for diferente do mês
+  // corrente, o Início avisa. aliquota_passo_a_passo é o caminho dentro do
+  // portal, editável porque muda de município pra município (em branco, vale
+  // o padrão de Araraquara em schemas/aliquotaCompetencia.ts).
+  competencia_aliquota_confirmada: string | null;
+  aliquota_passo_a_passo: string | null;
   atualizado_em: string;
 }
 

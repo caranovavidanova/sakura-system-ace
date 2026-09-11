@@ -16,11 +16,17 @@ import {
 } from "@/schemas/metricasCaixa";
 import { chaveData, diasDoCalendario } from "@/lib/calendario";
 import { listarContasPagar } from "@/lib/contasPagar";
-import { buscarConfiguracaoPainelInicio } from "@/lib/configuracoes";
+import {
+  buscarConfiguracaoFiscal,
+  buscarConfiguracaoPainelInicio,
+  confirmarAliquotaCompetencia,
+} from "@/lib/configuracoes";
+import { AvisoAliquotaCompetencia } from "@/components/AvisoAliquotaCompetencia";
+import { avisoAliquotaCompetencia } from "@/schemas/aliquotaCompetencia";
 import { listarOrdens } from "@/lib/ordensServico";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { CARTOES_INICIO_PADRAO } from "@/types/configuracao";
-import type { CartaoMetrica } from "@/types/configuracao";
+import type { CartaoMetrica, ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
@@ -59,6 +65,8 @@ export function PainelPage() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [contas, setContas] = useState<ContaPagar[]>([]);
   const [cartoesConfig, setCartoesConfig] = useState<CartaoMetrica[]>(CARTOES_INICIO_PADRAO);
+  const [configFiscal, setConfigFiscal] = useState<ConfiguracaoFiscalLoja | null>(null);
+  const [confirmandoAliquota, setConfirmandoAliquota] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -77,6 +85,7 @@ export function PainelPage() {
           cartoesCarregados,
           pecasCarregadas,
           servicosCarregados,
+          fiscalCarregada,
         ] = await Promise.all([
           listarMovimentosCaixa(lojaAtual.id),
           listarOrdens(lojaAtual.id),
@@ -85,6 +94,7 @@ export function PainelPage() {
           buscarConfiguracaoPainelInicio(lojaAtual.id),
           listarPecas(),
           listarServicos(),
+          buscarConfiguracaoFiscal(lojaAtual.id),
         ]);
         setMovimentos(movimentosCarregados);
         setOrdens(ordensCarregadas);
@@ -93,6 +103,7 @@ export function PainelPage() {
         setCartoesConfig(cartoesCarregados);
         setPecas(pecasCarregadas);
         setServicos(servicosCarregados);
+        setConfigFiscal(fiscalCarregada);
       } catch (err) {
         console.error("Erro ao carregar painel:", err);
         setErro(mensagemDeErro(err));
@@ -104,6 +115,22 @@ export function PainelPage() {
   }, [lojaAtual]);
 
   const hoje = new Date();
+  const avisoAliquota = avisoAliquotaCompetencia(configFiscal, hoje);
+
+  async function handleConfirmarAliquota() {
+    if (!lojaAtual) return;
+    setConfirmandoAliquota(true);
+    try {
+      await confirmarAliquotaCompetencia(lojaAtual.id, avisoAliquota.competencia);
+      setConfigFiscal(await buscarConfiguracaoFiscal(lojaAtual.id));
+    } catch (err) {
+      console.error("Erro ao confirmar a alíquota da competência:", err);
+      setErro(mensagemDeErro(err));
+    } finally {
+      setConfirmandoAliquota(false);
+    }
+  }
+
   const ano = hoje.getFullYear();
   const mes = hoje.getMonth();
   const diaDeHoje = hoje.getDate();
@@ -237,6 +264,14 @@ export function PainelPage() {
 
       {erro && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+      )}
+
+      {!carregando && (
+        <AvisoAliquotaCompetencia
+          aviso={avisoAliquota}
+          confirmando={confirmandoAliquota}
+          onConfirmar={handleConfirmarAliquota}
+        />
       )}
 
       {carregando ? (

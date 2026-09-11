@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { buscarClientePorId } from "@/lib/clientes";
-import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
+import { buscarConfiguracaoFiscal, confirmarAliquotaCompetencia } from "@/lib/configuracoes";
+import { AvisoAliquotaCompetencia } from "@/components/AvisoAliquotaCompetencia";
+import { avisoAliquotaCompetencia } from "@/schemas/aliquotaCompetencia";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   baixarArquivoFocusNfe,
@@ -212,6 +214,17 @@ export function EmitirNotaFiscalModal({
       setResultado(resposta);
       onEmitido();
 
+      if (tipoNota === "NFS-e") {
+        try {
+          await confirmarAliquotaCompetencia(lojaAtual.id, avisoAliquota.competencia);
+        } catch (erroAliquota) {
+          // Falhar aqui não estraga nada: a nota já saiu. No pior caso o
+          // aviso do Início continua aparecendo até ela clicar em "Já
+          // cadastrei" — nunca o contrário.
+          console.error("Erro ao marcar a alíquota da competência como cadastrada:", erroAliquota);
+        }
+      }
+
       if (resposta.caminho_danfe && configuracaoFiscal.focus_nfe_token) {
         setCarregandoPreview(true);
         try {
@@ -253,6 +266,7 @@ export function EmitirNotaFiscalModal({
   }
 
   const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_token);
+  const avisoAliquota = avisoAliquotaCompetencia(configuracaoFiscal);
 
   return (
     <Modal titulo={`Emitir ${tipoNota}`} onFechar={onFechar}>
@@ -342,6 +356,12 @@ export function EmitirNotaFiscalModal({
               </ul>
             </div>
           )}
+
+          {/* A prefeitura recusa a primeira NFS-e do mês enquanto a alíquota
+              daquela competência não estiver cadastrada no portal dela. Aqui
+              é só o lembrete — quem resolve é o portal, e o botão "Já
+              cadastrei" fica no Início, onde ela vê antes de precisar. */}
+          {tipoNota === "NFS-e" && <AvisoAliquotaCompetencia aviso={avisoAliquota} />}
 
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
             {configuracaoFiscal?.focus_nfe_ambiente === "homologacao"

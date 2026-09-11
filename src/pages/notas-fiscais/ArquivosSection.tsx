@@ -14,6 +14,7 @@ import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
 import { CancelarNotaModal } from "./CancelarNotaModal";
 import { NotaFiscalVisualModal } from "./NotaFiscalVisualModal";
+import { VerDanfeModal } from "./VerDanfeModal";
 
 interface ArquivosSectionProps {
   tipo: TipoNotaFiscal;
@@ -44,6 +45,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
   const [arquivoVisualizando, setArquivoVisualizando] = useState<NotaFiscalArquivo | null>(null);
   const [arquivoCancelando, setArquivoCancelando] = useState<NotaFiscalArquivo | null>(null);
+  const [arquivoDanfe, setArquivoDanfe] = useState<NotaFiscalArquivo | null>(null);
   const [mesBaixando, setMesBaixando] = useState<string | null>(null);
 
   async function carregar() {
@@ -278,6 +280,14 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                     <td className="px-4 py-3">{arquivo.operador?.nome ?? "—"}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-3">
+                        {arquivo.origem === "automatica" && (
+                          <button
+                            onClick={() => setArquivoDanfe(arquivo)}
+                            className="text-xs font-medium text-sakura-purple hover:underline"
+                          >
+                            {tipo === "nfe" ? "Ver DANFE" : "Ver PDF"}
+                          </button>
+                        )}
                         <button
                           onClick={() => setArquivoVisualizando(arquivo)}
                           className="text-xs font-medium text-sakura-purple hover:underline"
@@ -319,6 +329,10 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
           arquivo={arquivoVisualizando}
           onFechar={() => setArquivoVisualizando(null)}
         />
+      )}
+
+      {arquivoDanfe && (
+        <VerDanfeModal arquivo={arquivoDanfe} onFechar={() => setArquivoDanfe(null)} />
       )}
 
       {arquivoCancelando && (

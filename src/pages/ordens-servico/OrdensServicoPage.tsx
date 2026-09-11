@@ -9,7 +9,8 @@ import {
   mapaCustoPecas,
   mapaCustoServicos,
 } from "@/schemas/metricasCaixa";
-import { listarClientes } from "@/lib/clientes";
+import { criarCliente, criarVeiculo, listarClientes } from "@/lib/clientes";
+import { calcularSaldoPorPeca, listarMovimentos } from "@/lib/estoque";
 import { listarFuncionarios } from "@/lib/funcionarios";
 import {
   adicionarItensOrdem,
@@ -25,8 +26,9 @@ import { listarArquivosDasOrdens } from "@/lib/notasFiscais";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import type { Cliente } from "@/types/cliente";
+import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
 import type { JurosParcela } from "@/types/configuracao";
+import type { MovimentoEstoque } from "@/types/estoque";
 import type { Funcionario } from "@/types/funcionario";
 import type {
   ItemOS,
@@ -87,6 +89,12 @@ export function OrdensServicoPage() {
   const [notasPorOrdem, setNotasPorOrdem] = useState<Map<string, NotaFiscalArquivo[]>>(
     () => new Map(),
   );
+  // Saldo de estoque: só é buscado quando o formulário da OS abre, e não
+  // junto com a lista. É a mesma ideia já usada na aba Comissões — quem veio
+  // só olhar a lista de OS não paga por uma consulta que ela não usa. `null`
+  // significa "ainda não veio", e nesse estado os avisos de estoque ficam
+  // calados em vez de anunciar "saldo zero" pra tudo.
+  const [movimentos, setMovimentos] = useState<MovimentoEstoque[] | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -98,6 +106,8 @@ export function OrdensServicoPage() {
   const [busca, setBusca] = useState("");
   const funcionarioAtualId =
     funcionarios.find((f) => f.operador_id === operador?.id)?.id ?? "";
+
+  const saldoPorPeca = useMemo(() => calcularSaldoPorPeca(movimentos ?? []), [movimentos]);
 
   const custoPorPeca = useMemo(() => mapaCustoPecas(pecas), [pecas]);
   const custoPorServico = useMemo(() => mapaCustoServicos(servicos), [servicos]);
@@ -196,6 +206,32 @@ export function OrdensServicoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lojaAtual?.id]);
 
+  // Recarrega a cada abertura do formulário (em vez de guardar pra sempre):
+  // lançar peça numa OS mexe no estoque, então um saldo guardado da vez
+  // anterior mostraria número velho na próxima abertura.
+  const formularioAberto = mostrarFormulario || !!ordemEmEdicao;
+  useEffect(() => {
+    if (!formularioAberto || !isSupabaseConfigured || !lojaAtual) {
+      setMovimentos(null);
+      return;
+    }
+    let cancelado = false;
+    listarMovimentos(lojaAtual.id)
+      .then((lista) => {
+        if (!cancelado) setMovimentos(lista);
+      })
+      .catch((err) => {
+        // Falhar aqui não pode derrubar o formulário: sem o saldo, a OS
+        // continua funcionando exatamente como funcionava antes deste aviso
+        // existir.
+        console.error("Erro ao carregar o saldo de estoque:", err);
+      });
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formularioAberto, lojaAtual?.id]);
+
   async function handleSalvarNova(ordem: NovaOrdemServico, itens: NovoItemOS[]) {
     if (!operador || !lojaAtual) return;
     await criarOrdem(ordem, itens, operador.id, lojaAtual.id);
@@ -238,6 +274,23 @@ export function OrdensServicoPage() {
     const ordensAtualizadas = await carregar();
     const ordemAtualizada = ordensAtualizadas?.find((o) => o.id === ordemEmEdicao.id);
     if (ordemAtualizada) setOrdemEmEdicao(ordemAtualizada);
+  }
+
+  // Cadastro rápido de dentro da OS (item TL-08). Os dois recarregam a lista
+  // de clientes antes de devolver o id: é o que faz o registro novo já
+  // aparecer escolhido no campo, em vez de o operador ter que procurá-lo.
+  async function handleCadastrarCliente(cliente: NovoCliente, veiculos: VeiculoFormulario[]) {
+    const criado = await criarCliente(cliente, veiculos);
+    const lista = await listarClientes();
+    setClientes(lista);
+    const veiculoId = lista.find((c) => c.id === criado.id)?.veiculos?.[0]?.id ?? null;
+    return { clienteId: criado.id, veiculoId };
+  }
+
+  async function handleCadastrarVeiculo(clienteId: string, veiculo: VeiculoFormulario) {
+    const criado = await criarVeiculo(clienteId, veiculo);
+    setClientes(await listarClientes());
+    return criado.id;
   }
 
   async function handleEncerrar(ordem: OrdemServico) {
@@ -310,10 +363,15 @@ export function OrdensServicoPage() {
           servicos={servicos}
           funcionarios={funcionarios}
           funcionarioAtualId={funcionarioAtualId}
+          ordens={ordens}
+          saldoPorPeca={saldoPorPeca}
+          saldoCarregado={movimentos !== null}
           onSalvarNova={handleSalvarNova}
           onSalvarEdicao={handleSalvarEdicao}
           onEditarItem={handleEditarItem}
           onEncerrar={handleEncerrar}
+          onCadastrarCliente={handleCadastrarCliente}
+          onCadastrarVeiculo={handleCadastrarVeiculo}
           onCancelar={() => setMostrarFormulario(false)}
         />
       )}
@@ -325,6 +383,9 @@ export function OrdensServicoPage() {
           servicos={servicos}
           funcionarios={funcionarios}
           funcionarioAtualId={funcionarioAtualId}
+          ordens={ordens}
+          saldoPorPeca={saldoPorPeca}
+          saldoCarregado={movimentos !== null}
           ordemExistente={ordemEmEdicao}
           temNotaEmitida={temAlgumaNotaValida(notasPorOrdem.get(ordemEmEdicao.id) ?? [])}
           abaInicial={abaInicialEdicao}
@@ -332,6 +393,8 @@ export function OrdensServicoPage() {
           onSalvarEdicao={handleSalvarEdicao}
           onEditarItem={handleEditarItem}
           onEncerrar={handleEncerrar}
+          onCadastrarCliente={handleCadastrarCliente}
+          onCadastrarVeiculo={handleCadastrarVeiculo}
           onCancelar={() => setOrdemEmEdicao(null)}
         />
       )}

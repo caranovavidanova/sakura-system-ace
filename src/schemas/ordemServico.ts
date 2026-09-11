@@ -7,6 +7,7 @@ import type {
   PatchItemOS,
   PatchOrdemServico,
 } from "@/types/os";
+import { totalPorTipo } from "@/types/os";
 
 // Mesma ideia dos outros schemas: formulário trabalha só com strings (mesmo
 // pros campos number | null no banco) — a conversão pra NovaOrdemServico/
@@ -141,6 +142,43 @@ export function totalItensFormulario(itens: ItemFormValues[]): number {
       total + paraNumero(item.quantidade) * paraNumero(item.preco_unitario) - paraNumero(item.desconto),
     0,
   );
+}
+
+export interface TotaisOrdem {
+  pecas: number;
+  servicos: number;
+  total: number;
+}
+
+/**
+ * O que a barra de total do rodapé mostra: peças, serviços e o total geral,
+ * juntando o que já está lançado na OS com o que está sendo digitado agora.
+ *
+ * Mora aqui, e não na tela, pelo motivo de sempre (PROJETO_STATUS.md, seção
+ * 6, item 40): a mesma conta refeita em cada tela sempre acabou divergindo.
+ * Repare que ela reaproveita `totalPorTipo` (itens já gravados)
+ * e `totalItensFormulario` (itens em digitação) em vez de somar de novo por
+ * conta própria — assim o rodapé nunca discorda do total que a lista de OS
+ * mostra.
+ */
+export function totaisDaOrdem(
+  itensExistentes: ItemOS[],
+  itensFormulario: ItemFormValues[],
+): TotaisOrdem {
+  const doFormulario = (tipo: ItemFormValues["tipo"]) =>
+    totalItensFormulario(itensFormulario.filter((item) => item.tipo === tipo));
+
+  const pecas = totalPorTipo(itensExistentes, "peca") + doFormulario("peca");
+  const servicos = totalPorTipo(itensExistentes, "servico") + doFormulario("servico");
+
+  return {
+    pecas,
+    servicos,
+    // Soma dos dois, e não uma terceira varredura dos itens: qualquer item
+    // é peça ou serviço, então um total calculado à parte só criaria mais um
+    // lugar pra divergir.
+    total: pecas + servicos,
+  };
 }
 
 // Mesmo truque visual de antes: 0 mostra campo vazio (não "0" travado no

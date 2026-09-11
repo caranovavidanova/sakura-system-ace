@@ -1906,6 +1906,24 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     renderização. Sem essas duas comparações, tanto o falso alarme quanto o ruído seriam lidos
     como regressão.
 
+57. **Devolver o foco pro campo que abriu um modal pode reabrir a lista dele — e o campo
+    volta a PARECER vazio (11/09/2026).** O `Modal` devolve o foco pro elemento que o abriu
+    (decisão do `TR-02.3`, é o que faz quem usa só teclado continuar de onde parou). No cadastro
+    rápido de cliente dentro da OS (item `TL-08`), esse elemento é o campo Cliente — que é um
+    `Combobox`, e `Combobox` abre a lista ao receber foco. Resultado: logo depois de cadastrar,
+    a lista reabria e o campo mostrava o filtro **vazio**, ou seja, o campo Cliente parecia em
+    branco bem no instante em que o recurso precisava parecer que funcionou. Corrigido tirando o
+    foco do campo (`blur`) antes de abrir o modal.
+    **A lição de método vale mais que o bug**: a primeira correção foi uma "marca pra ignorar o
+    próximo foco", que parecia certa e **não funcionou** — o clique que sobra do próprio
+    `mousedown` (o botão já saiu do DOM, ver item 16) consumia a marca antes da hora. Só ficou
+    claro **medindo** `aria-expanded` a cada etapa no app de verdade, em vez de raciocinar sobre
+    a ordem dos eventos. É o item 33 outra vez: chutar duas vezes numa correção não testada é o
+    padrão a evitar, e o antídoto é medir cedo.
+    **E nada disso apareceria em teste de função pura nem lendo o código** — só rodando o fluxo
+    inteiro no app (Playwright + o banco de mentira de `site/ferramentas/banco-falso.mjs`, que
+    responde qualquer método HTTP e por isso deixa exercitar até o caminho de gravar).
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -2131,6 +2149,35 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   seção 6) — depois de faturada, o "+ adicionar item" some e a peça/serviço esquecido vira uma OS
   nova; faturar (o botão "Confirmar faturamento") agora pede confirmação explícita antes, avisando
   que essa trava passa a valer.
+  **Abrir a OS sem sair dela pra cadastrar (11/09/2026, item `TL-08` do guia)** — o gesto mais
+  comum do balcão é chegar um carro de cliente novo, e isso exigia abandonar a OS pela metade,
+  ir em Clientes, cadastrar e recomeçar do zero. Cinco coisas mudaram de uma vez:
+  - **"+ Cadastrar cliente novo" / "+ Cadastrar veículo novo"** no fim da própria lista do campo
+    (`Combobox` ganhou a opção `acaoExtra`), abrindo um modal enxuto — nome, telefone, placa,
+    marca, modelo — que devolve o registro **já escolhido** na OS
+    (`CadastroRapidoModais.tsx`). **Não duplicam schema**: usam o `clienteFormSchema`/
+    `veiculoFormSchema` e as funções de conversão do cadastro completo; muda só quantos campos
+    aparecem. O resto (CPF, endereço, aniversário) continua sendo preenchido em Clientes.
+  - **Cliente com um veículo só preenche o veículo sozinho** (item `TR-02.5`).
+  - **O KM da última passagem do carro aparece como referência**, com um "usar" ao lado, e um
+    **aviso quando o KM digitado é menor** que o anterior (quase sempre é dígito faltando).
+    **Não preenche sozinho de propósito**: o KM de entrada é o do painel do carro *hoje*, e
+    aceitar o valor antigo no automático estragaria justamente o histórico que esse campo existe
+    pra formar. O guia pedia "preencher como sugestão" — aqui a premissa dele foi ajustada.
+  - **O total virou barra fixa no rodapé** (peças, serviços e total, junto com Cancelar/Salvar):
+    ele ficava logo abaixo da lista de itens e, com a OS cheia de peça, saía de vista. É
+    `sticky`, nunca `fixed` — elemento `fixed` dentro de `sakura-card` se prende ao card por
+    causa do `backdrop-filter` (item 51 da seção 6).
+  - **Saldo em estoque ao escolher a peça**, com aviso quando a quantidade passa do saldo, e
+    aviso quando a peça está **sem preço de custo** (ela infla o lucro da OS e a comissão — a
+    tela de Comissões já avisava disso depois; avisar na hora é o que dá chance de consertar).
+  **Nenhuma dessas checagens impede de salvar** — são todas aviso (item 33 da seção 6). Sem
+  migration. As regras e a conta do rodapé são funções puras testadas
+  (`schemas/avisosOrdemServico.ts`, `totaisDaOrdem` em `schemas/ordemServico.ts`). O saldo só é
+  consultado quando o formulário abre, e recarregado a cada abertura — mesma ideia da aba
+  Comissões. Ver item 57 da seção 6 pro bug de foco que só apareceu rodando o app de verdade.
+  **Ainda não publicado em tag nem visto por ela na loja.**
+
   **Corrigir um item já lançado (08/09/2026, pedido dela usando o sistema: digitou R$120 num
   alinhamento que era R$60 e não tinha como consertar pela tela)**: cada linha de "Já lançados
   nesta OS" ganhou um "Editar" que abre ali mesmo os campos do item (tipo, peça/serviço,
@@ -3712,12 +3759,13 @@ compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
 ### ⏸ Onde parou em 11/09/2026 — LEIA ISTO PRIMEIRO
 
-**Estado: tudo publicado. `v0.9.32` é a última tag, a `main` está em dia, o banco dela está na
-`0050` e não há nada esperando tag nem SQL.** Foi um dia longo, com quatro levas de trabalho — o
-resumo de cada uma está logo abaixo, e o que sobrou pra ela (nada que bloqueie o uso do sistema)
-está no fim desta seção.
+**Estado: `v0.9.32` é a última tag publicada, o banco dela está na `0050` (nada de SQL pendente),
+e a `main` está UMA leva à frente — o `TL-08`, mesclado e esperando ela decidir se publica (ver
+"Leva 5", no fim desta seção).** Foi um dia longo, com cinco levas de trabalho — o resumo de cada
+uma está logo abaixo, e o que sobrou pra ela (nada que bloqueie o uso do sistema) está no fim
+desta seção.
 
-> As quatro levas deste dia foram escolhidas por ela **pelo código do item**, no guia de melhorias
+> As cinco levas deste dia foram escolhidas por ela **pelo código do item**, no guia de melhorias
 > (`MELHORIAS.md`, na raiz do repositório). Ele **não** carrega sozinho em sessão nova, de
 > propósito: são 227 KB. Abrir só quando ela citar um item ou pedir sugestão de próximo passo —
 > e, ao abrir, **conferir a premissa do item contra o código antes de aplicar** (ver item 53 da
@@ -3868,18 +3916,36 @@ Anthropic zerado travando o "Importar por foto"; se cancelar nota deveria estorn
 (pergunta de design nunca respondida); token da Focus NFe compartilhado; botão de diagnóstico pra
 suporte; e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
+#### Leva 5 — `TL-08`: cadastrar cliente e veículo sem sair da OS
+
+Item escolhido por ela, depois das quatro levas acima. O que ele resolve e como está desenhado
+ficam em "Ordens de Serviço" (seção 7); a lição, no item 57 da seção 6. Em uma linha cada:
+
+1. **"+ Cadastrar cliente novo" / "+ Cadastrar veículo novo"** dentro do próprio campo, com um
+   modal enxuto que devolve o registro já escolhido — o gesto mais comum do balcão deixou de
+   exigir abandonar a OS pela metade.
+2. Veículo preenchido sozinho quando o cliente só tem um; **KM da última passagem** como
+   referência (com "usar") e aviso quando o digitado é menor; **total fixo no rodapé**; **saldo
+   em estoque** e **peça sem preço de custo** avisados na hora do lançamento.
+3. **Nada disso tranca o salvar** — são todos aviso. Sem migration.
+
+**Não publicada em tag.** Está mesclada na `main` e é a única coisa à frente da `v0.9.32`.
+**Quando ela retomar, o primeiro passo é perguntar se é pra publicar** — e, se sim, seguir
+"Gerar o instalador Windows e publicar uma versão nova" (seção 9): subir o `package.json` pra
+`0.9.33`, PR, merge, `workflow_dispatch` com `ref: "main"`. Não publicar sozinho.
+
 #### Da Etapa 2, ainda não foram feitos
 
-`TR-01.3` (auditoria de contraste WCAG — o item que o achado acima alimenta), `TL-08` (cadastrar
-cliente sem sair da OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais) e `FN-03` (WhatsApp).
-O `TL-27` saiu desta lista em 11/09/2026 — está feito, ver a leva 4 acima. **Ela escolhe o próximo
-pelo código do item — não sair fazendo a lista inteira.**
+`TR-01.3` (auditoria de contraste WCAG — o item que o achado acima alimenta), `TL-11`/`TL-12`
+(estoque mínimo e campos fiscais) e `FN-03` (WhatsApp). O `TL-27` e o `TL-08` saíram desta lista
+em 11/09/2026 — estão feitos, ver as levas 4 e 5 acima. **Ela escolhe o próximo pelo código do
+item — não sair fazendo a lista inteira.**
 
 #### Estado do código
 
-`main` em dia na **`v0.9.32`**, sem nada esperando tag e sem SQL pendente (o banco dela está na
-`0050`). `tsc`, lint e `npm run contraste` limpos; **341 testes** passando nos dois fusos (eram
-149 no começo de setembro). As 54 telas do catálogo
+`main` **uma leva à frente da `v0.9.32`** (o `TL-08`, esperando ela decidir se publica) e sem SQL
+pendente — o banco dela está na `0050`. `tsc`, lint e `npm run contraste` limpos; **369 testes**
+passando nos dois fusos (eram 149 no começo de setembro). As 54 telas do catálogo
 (`site/ferramentas/gerar-catalogo-telas.mjs`) geradas de novo sem nenhuma falha — vale rodar esse
 gerador depois de qualquer mexida grande de tela, é o único teste de tela que existe hoje, e ele
 já quebrou em silêncio uma vez (item 53 da seção 6).

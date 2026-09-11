@@ -89,12 +89,47 @@ export async function salvarConfiguracaoPainelInicio(
   if (error) throw error;
 }
 
+// A competência confirmada fica DE FORA do que a tela de Configurações
+// grava, de propósito: quem escreve nela é o botão "Já cadastrei" (e a
+// emissão de NFS-e autorizada), não o formulário de dados fiscais — senão
+// salvar um telefone novo poderia apagar, sem querer, a confirmação feita no
+// computador do lado.
+export type DadosFiscaisEditaveis = Omit<
+  ConfiguracaoFiscalLoja,
+  "loja_id" | "atualizado_em" | "competencia_aliquota_confirmada"
+>;
+
 export async function salvarConfiguracaoFiscal(
   lojaId: string,
-  config: Omit<ConfiguracaoFiscalLoja, "loja_id" | "atualizado_em">,
+  config: DadosFiscaisEditaveis,
 ): Promise<void> {
   const { error } = await supabase.from("configuracoes_fiscais_loja").upsert(
     { loja_id: lojaId, ...config, atualizado_em: new Date().toISOString() },
+    { onConflict: "loja_id" },
+  );
+
+  if (error) throw error;
+}
+
+// Marca a alíquota daquele mês como já cadastrada no portal da prefeitura.
+// Vem de dois lugares: do botão "Já cadastrei" no aviso do Início e, sozinho,
+// de toda NFS-e que a prefeitura autoriza no mês — se ela autorizou, a
+// alíquota está lá, e continuar avisando seria só barulho.
+//
+// É `upsert` e não `update` porque uma loja pode ainda não ter linha de
+// configuração fiscal nenhuma: um `update` que não encontra linha não dá
+// erro, só não faz nada (PROJETO_STATUS.md, seção 6, item 15), e o aviso
+// voltaria na próxima abertura como se o clique não tivesse acontecido.
+export async function confirmarAliquotaCompetencia(
+  lojaId: string,
+  competencia: string,
+): Promise<void> {
+  const { error } = await supabase.from("configuracoes_fiscais_loja").upsert(
+    {
+      loja_id: lojaId,
+      competencia_aliquota_confirmada: competencia,
+      atualizado_em: new Date().toISOString(),
+    },
     { onConflict: "loja_id" },
   );
 

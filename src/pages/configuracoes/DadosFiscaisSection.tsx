@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { salvarConfiguracaoFiscal } from "@/lib/configuracoes";
+import { salvarConfiguracaoFiscal, type DadosFiscaisEditaveis } from "@/lib/configuracoes";
+import { PASSO_A_PASSO_ALIQUOTA_PADRAO } from "@/schemas/aliquotaCompetencia";
 import { mensagemDeErro } from "@/lib/errors";
 import { buscarEnderecoPorCep } from "@/lib/viaCep";
 import { REGIME_TRIBUTARIO_LABEL } from "@/types/configuracao";
@@ -15,7 +16,7 @@ interface DadosFiscaisSectionProps {
   onSalvo: () => Promise<void>;
 }
 
-type FormularioFiscal = Omit<ConfiguracaoFiscalLoja, "loja_id" | "atualizado_em">;
+type FormularioFiscal = DadosFiscaisEditaveis;
 
 function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFiscal {
   return {
@@ -43,6 +44,7 @@ function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFi
         : null,
     codigo_tributario_municipio: configuracao?.codigo_tributario_municipio ?? "",
     codigo_cnae: configuracao?.codigo_cnae ?? "",
+    aliquota_passo_a_passo: configuracao?.aliquota_passo_a_passo ?? "",
   };
 }
 
@@ -101,6 +103,7 @@ export function DadosFiscaisSection({
         item_lista_servico: valores.item_lista_servico || null,
         codigo_tributario_municipio: valores.codigo_tributario_municipio || null,
         codigo_cnae: valores.codigo_cnae || null,
+        aliquota_passo_a_passo: valores.aliquota_passo_a_passo || null,
       });
       await onSalvo();
       setSalvo(true);
@@ -339,6 +342,23 @@ export function DadosFiscaisSection({
         <p className="mt-2 text-xs text-sakura-muted">
           O código CNAE está no Cartão CNPJ da empresa, em "Atividade econômica principal" —
           algumas prefeituras (Araraquara incluída) exigem esse campo pra autorizar a NFS-e.
+        </p>
+
+        <label className="mt-4 flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+          Como cadastrar a alíquota no portal da prefeitura
+          <textarea
+            value={valores.aliquota_passo_a_passo ?? ""}
+            onChange={(e) => set("aliquota_passo_a_passo", e.target.value)}
+            rows={5}
+            placeholder={PASSO_A_PASSO_ALIQUOTA_PADRAO}
+            className={campoClasse}
+          />
+        </label>
+        <p className="mt-2 text-xs text-sakura-muted">
+          Todo mês, a prefeitura só autoriza a primeira NFS-e depois que a alíquota daquele mês
+          for cadastrada no portal dela. O Início avisa quando chega a hora, e mostra este texto
+          junto — deixe em branco pra usar o caminho do portal de Araraquara, ou escreva o da sua
+          cidade.
         </p>
       </div>
 

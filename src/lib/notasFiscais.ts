@@ -1,7 +1,15 @@
 import { primeiroDiaDoMesLocal } from "./datas";
-import { baixarArquivoFocusNfe, cancelarNFCe, cancelarNFSe, FocusNfeError } from "./focusNfe";
+import {
+  baixarArquivoFocusNfe,
+  cancelarNFCe,
+  cancelarNFSe,
+  consultarNFCe,
+  consultarNFSe,
+  FocusNfeError,
+} from "./focusNfe";
 import { supabase } from "./supabase";
 import { criarZip, type ArquivoParaZip } from "./zip";
+import { motivoDanfeIndisponivel } from "@/schemas/danfe";
 import type { AmbienteFocusNfe } from "@/types/configuracao";
 import type { RespostaFocusNfe } from "@/types/focusNfe";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
@@ -262,4 +270,37 @@ export async function excluirArquivo(arquivo: NotaFiscalArquivo): Promise<void> 
     .delete()
     .eq("id", arquivo.id);
   if (erroMetadados) throw erroMetadados;
+}
+
+// Busca de novo o PDF de uma nota já emitida pelo sistema. O PDF não fica
+// guardado aqui (o que é salvo é o XML, que é o documento que a lei manda
+// guardar por 5 anos) — ele é pedido de volta pra Focus NFe pela
+// `focus_nfe_ref` gravada na emissão. É o que permite reimprimir a nota
+// quando o cliente volta e pede de novo, sem entrar no painel da Focus NFe.
+export async function buscarDanfeEmitida(
+  arquivo: NotaFiscalArquivo,
+  token: string,
+  ambiente: AmbienteFocusNfe,
+): Promise<Blob> {
+  const motivo = motivoDanfeIndisponivel(arquivo);
+  if (motivo) throw new FocusNfeError(motivo);
+
+  const ref = arquivo.focus_nfe_ref as string;
+  const resposta =
+    arquivo.tipo === "nfe"
+      ? await consultarNFCe(ref, token, ambiente)
+      : await consultarNFSe(ref, token, ambiente);
+
+  // NFS-e de algumas prefeituras não tem PDF pra baixar (o documento oficial
+  // fica no portal do município) — não é erro, é como aquele município
+  // funciona, então a mensagem aponta pro caminho que existe.
+  if (!resposta.caminho_danfe) {
+    throw new FocusNfeError(
+      "A Focus NFe não devolveu um PDF pra essa nota. Isso é comum em NFS-e de prefeitura que " +
+        'só mantém o documento no portal dela — nesse caso, use "Versão para o cliente" ou o ' +
+        "XML original.",
+    );
+  }
+
+  return baixarArquivoFocusNfe(resposta.caminho_danfe, token, ambiente);
 }

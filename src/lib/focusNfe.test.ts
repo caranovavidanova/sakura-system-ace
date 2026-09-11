@@ -28,6 +28,8 @@ function configuracaoFiscal(sobrescrever: Partial<ConfiguracaoFiscalLoja> = {}):
     aliquota_iss: 5,
     codigo_tributario_municipio: null,
     codigo_cnae: "4520-0/01",
+    competencia_aliquota_confirmada: null,
+    aliquota_passo_a_passo: null,
     atualizado_em: new Date().toISOString(),
     ...sobrescrever,
   };

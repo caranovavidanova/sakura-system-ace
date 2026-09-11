@@ -4,6 +4,7 @@ import { mensagemDeErro } from "@/lib/errors";
 import { montarTextoGarantia } from "@/lib/garantiaTexto";
 import { listarArquivosDasOrdens } from "@/lib/notasFiscais";
 import { situacaoFiscalOrdem } from "@/schemas/situacaoFiscal";
+import { VerDanfeModal } from "@/pages/notas-fiscais/VerDanfeModal";
 import type { NotaFiscalArquivo } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
 import { totalOrdem } from "@/types/os";
@@ -62,12 +63,16 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const [templateGarantia, setTemplateGarantia] = useState("");
   const [notaParaEmitir, setNotaParaEmitir] = useState<"NFC-e" | "NFS-e" | null>(null);
   const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
+  const [notaParaVerDanfe, setNotaParaVerDanfe] = useState<NotaFiscalArquivo | null>(null);
   const [notas, setNotas] = useState<NotaFiscalArquivo[]>([]);
   const [erro, setErro] = useState("");
 
   // Quais notas essa OS precisa sai do que ela tem dentro (peça → NFC-e,
   // serviço → NFS-e); o que já saiu vem das notas ligadas a ela.
   const situacao = situacaoFiscalOrdem(itens, notas);
+  const notasComPdf = notas.filter(
+    (nota) => nota.origem === "automatica" && nota.status !== "cancelado",
+  );
 
   async function recarregarNotas() {
     try {
@@ -182,6 +187,21 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
               />
             )}
           </div>
+
+          {notasComPdf.length > 0 && (
+            <div className="flex gap-2">
+              {notasComPdf.map((nota) => (
+                <button
+                  key={nota.id}
+                  type="button"
+                  onClick={() => setNotaParaVerDanfe(nota)}
+                  className="flex-1 rounded-xl border border-sakura-gray/40 px-3 py-2 text-xs font-medium text-sakura-purple-dark transition-colors hover:bg-sakura-gray/10"
+                >
+                  {nota.tipo === "nfe" ? "Ver DANFE" : "Ver PDF da NFS-e"}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -204,6 +224,13 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           onEmitido={() => {
             void recarregarNotas();
           }}
+        />
+      )}
+
+      {notaParaVerDanfe && (
+        <VerDanfeModal
+          arquivo={notaParaVerDanfe}
+          onFechar={() => setNotaParaVerDanfe(null)}
         />
       )}
 

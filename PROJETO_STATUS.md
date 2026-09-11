@@ -678,6 +678,16 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   o efeito no teste que foi feito: um `1234.5600000000002` foi gravado inteiro, com as 13 casas.
   Depois da migration ele vira `1234.56`. Ver item 49 da seção 6 pro lado do aplicativo, que foi
   corrigido junto.
+- `0049` (criada em 11/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado 0048 **com dado plantado**
+  — **ainda NÃO rodada por ela**): duas colunas em `configuracoes_fiscais_loja` pro lembrete da
+  alíquota da competência (NFS-e) — `competencia_aliquota_confirmada` (date: o mês, sempre no dia
+  1º, cuja alíquota já foi cadastrada no portal da prefeitura) e `aliquota_passo_a_passo` (text: o
+  caminho dentro do portal, editável porque muda de município; em branco vale o padrão de
+  Araraquara, que está em `src/schemas/aliquotaCompetencia.ts`). Ver "Aviso da alíquota do mês" na
+  seção 7. **Ordem importa**: essa migration precisa estar rodada ANTES de a versão nova chegar no
+  computador da loja — sem as colunas, salvar em Configurações → Dados fiscais dá erro de "coluna
+  não existe".
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -884,7 +894,10 @@ outro projeto Supabase do zero (ver seção 9).
 - **`configuracoes_fiscais_loja`**: 1 linha **por loja** (`loja_id` é a PK) com cnpj, razao_social,
   nome_fantasia, inscricao_estadual, inscricao_municipal, regime_tributario, endereço da loja,
   telefone, email, focus_nfe_token, focus_nfe_ambiente (`homologacao`/`producao`). Reaproveitada
-  pelo cabeçalho do documento de garantia.
+  pelo cabeçalho do documento de garantia. Desde a migration `0049` guarda também
+  `competencia_aliquota_confirmada` e `aliquota_passo_a_passo`, do lembrete mensal da alíquota
+  (ver "Aviso da alíquota do mês" na seção 7) — a primeira **não** é escrita pela tela de
+  Configurações, só pelo botão "Já cadastrei" e pela NFS-e autorizada.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único **globalmente**, não por
   loja), nome, admin (bool), permissoes (`text[]` com as chaves de `MODULOS` em
   `src/types/operador.ts`), ativo, deve_trocar_senha (bool, default `false` — migration `0038`;
@@ -2137,6 +2150,18 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   59 testes passando; a migration foi testada num Postgres local, aplicada duas vezes seguidas pra
   confirmar idempotência. **Não dá pra testar a chamada de verdade à Focus NFe no sandbox** (sem
   acesso à rede) — só quando ela rodar a migration e testar na loja.
+  **Botão "Ver DANFE" (11/09/2026, item `TR-11.1` do guia de melhorias)**: reabre o PDF de uma
+  nota que o sistema emitiu — o pedido de balcão mais comum que existe (o cliente volta e pede a
+  nota de novo). Antes, o PDF só existia dentro da janela de emissão: fechou, acabou, e a única
+  saída era entrar no painel da Focus NFe. O PDF **não** fica guardado aqui (o que é salvo é o
+  XML, que é o documento que a lei manda guardar 5 anos) — ele é pedido de volta pra Focus NFe
+  pela `focus_nfe_ref` da migration `0046`, mostrado no mesmo `iframe` de sempre, com "Baixar PDF"
+  e "Imprimir" (`VerDanfeModal.tsx`). O mesmo botão aparece na aba Fechamento da OS. Os dois casos
+  em que não dá (nota enviada à mão pelo XML; nota emitida antes da `0046`, sem referência) viram
+  **texto explicando o que fazer**, não erro cru — a regra é função pura testada
+  (`schemas/danfe.ts`). Na lista, o rótulo é "Ver DANFE" na aba NFe e "Ver PDF" na de NFS-e
+  (DANFE é nome de documento da NFe). **Não dá pra testar a chamada real à Focus NFe no sandbox**
+  — só na loja.
 - **Relações** (ex-"Relatórios", label mudou antes; agora também absorveu o módulo antigo
   "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
   Lucro, **Diário/Semanal/Mensal/Anual**) + radar comparando o período atual com o anterior, sem
@@ -2165,6 +2190,19 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   calendário do mês com feriados
   nacionais + aniversário de cliente + contas a pagar vencendo/vencidas, seção "OS abertas" e
   "Veículos no pátio" (com ícone por tipo/cor).
+  **Aviso da alíquota do mês (11/09/2026, item `TR-11.2` do guia de melhorias)**: no topo do
+  Início, uma faixa avisa que a alíquota daquela competência precisa ser cadastrada no portal da
+  prefeitura antes da primeira NFS-e do mês — com o passo a passo curto e um botão "Já cadastrei"
+  que some com o aviso até o mês seguinte. Existe porque essa recusa é mensal, conhecida, com data
+  e consequência certas (ver item 1 da seção 8), e já custou uma manhã. Três cuidados que valem
+  saber: (a) o aviso **só aparece pra quem emite NFS-e** (loja com token da Focus NFe e inscrição
+  municipal preenchidos) — quem não emite nunca vê; (b) **toda NFS-e autorizada no mês marca a
+  competência sozinha** (se a prefeitura autorizou, a alíquota está cadastrada), então na prática
+  ele só aparece antes da primeira nota; (c) o mesmo aviso aparece dentro da janela de emitir
+  NFS-e, sem o botão — ali o que resolve é ir no portal. A regra é função pura testada
+  (`schemas/aliquotaCompetencia.ts`), o texto do passo a passo é editável em Configurações →
+  Dados fiscais (padrão: Araraquara/Giap), e a competência confirmada fica em
+  `configuracoes_fiscais_loja` (migration `0049`).
 - **Configurações** (admin): Operadores (sempre visível, com "+ Novo operador", e agora um
   multi-select de lojas dentro do form, só aparece com 2+ lojas cadastradas), Lojas (novo card,
   sempre visível — criar/editar nome-cidade-UF/inativar lojas; **excluir de verdade** também é
@@ -2172,7 +2210,9 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   dado de negócio, o app explica e sugere inativar em vez de excluir), e seções recolhíveis — Juros
   de parcelamento, Categorias de produto, Categorias de serviço, Categorias de caixa, Texto de
   garantia, Dados fiscais da loja, Cartões do Início (essas últimas 4, junto com Juros, agora são
-  **por loja** — ver seção 5).
+  **por loja** — ver seção 5). Em "Dados fiscais da loja" há também, desde 11/09/2026, o campo
+  "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
+  Início; em branco, vale o passo a passo de Araraquara que está no código.
 - **Auditoria** (módulo novo nesta sessão, migration `0040` já rodada e testada por ela de
   verdade): admin-only, acesso via ícone novo no rodapé da Sidebar (ao lado da engrenagem de
   Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem editou ou
@@ -2375,13 +2415,20 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     Publicada via `workflow_dispatch` e **confirmada por ela usando na loja** (editou os dois itens
     e a OS fechou nos R$ 1.113,00 certos).
 
-  **⏸ A PRÓXIMA TAG SERÁ A `v0.9.29`, E ELA AINDA NÃO FOI PUBLICADA — de propósito.** A `main` já
-  carrega a correção do código de ICMS na importação (item 47 da seção 6), pronta e validada, mas
-  em 10/09/2026 ela pediu pra **deixar pendente** e voltar noutra sessão: *"ainda nao, deixa
-  pendente... volto em outra sessao"*. **Não publicar por conta própria** — quando ela retomar,
-  é o passo 1 de "Gerar o instalador Windows e publicar uma versão nova" (seção 9): subir o
-  `package.json` pra `0.9.29`, mesclar, e disparar o `workflow_dispatch`. Conferir a lista real de
-  releases antes, como sempre.
+  - `v0.9.29`: leva o aviso que lista **pelo nome** a peça com CST/CSOSN incompatível com o
+    regime da loja antes de emitir (no lugar do `[nItem:1]` da SEFAZ) e a correção que impede a
+    importação de XML do fornecedor de copiar o código de ICMS dele pro cadastro da peça (item 47
+    da seção 6). Ficou segurada a pedido dela de 10/09 a 11/09/2026 e foi publicada em 11/09 via
+    `workflow_dispatch`, depois de ela confirmar — instalador e `latest.yml` confirmados na
+    release. **Ainda não confirmada por ela rodando na loja.**
+
+  **⏸ A PRÓXIMA TAG SERÁ A `v0.9.30`, E ELA AINDA NÃO FOI PUBLICADA — e aqui a ORDEM IMPORTA.** A
+  `main` carrega o "Ver DANFE" e o aviso da alíquota do mês (11/09/2026), e o aviso depende da
+  migration `0049`. Publicar a tag **antes** de ela rodar a `0049` faria "Salvar dados fiscais"
+  passar a dar erro de coluna inexistente. Então: ela roda a `0048` e a `0049` no SQL Editor
+  (seção 9), avisa, e só aí o passo 1 de "Gerar o instalador Windows e publicar uma versão nova"
+  (subir o `package.json` pra `0.9.30`, mesclar, disparar o `workflow_dispatch`). Conferir a lista
+  real de releases antes, como sempre.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -2453,6 +2500,11 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
      referentes à competência vigente"* (chega com os acentos quebrados, mojibake do lado deles).
      **Não é código nosso** — a alíquota que o app manda (`configuracoes_fiscais_loja.aliquota_iss`,
      3%) está certa e sai no XML como `pAliqAplic 3.00`; o que falta é um cadastro no portal.
+     **Desde 11/09/2026 o sistema avisa antes de falhar** (item `TR-11.2` do guia): o Início
+     mostra a faixa com o passo a passo e o botão "Já cadastrei" enquanto a competência do mês não
+     estiver confirmada, e a mesma faixa aparece dentro da janela de emitir NFS-e. Continua sendo
+     tarefa dela no portal — o sistema só deixou de ficar calado sobre uma armadilha com data
+     certa. Ver "Aviso da alíquota do mês" na seção 7.
      **Onde**: portal do Giap (site da prefeitura → Serviços Empresa → Nota Fiscal Eletrônica →
      Contribuintes, login `30016580`) → menu **Emissor/Consulta NFS-e** → tela **Cadastro de
      Alíquota**. Preencher Mês/Ano (ex: `09/2026`), Alíquota (`3`) e Atividade, e clicar
@@ -2895,13 +2947,17 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0047` estão aplicadas; a `0048` está pronta e NÃO foi rodada ainda.**
-A `0048` (precisão das colunas de valor — ver seção 5) precisa ser colada por ela no SQL Editor do
-Supabase, igual às outras: painel do projeto → SQL Editor → New query → cola o conteúdo de
-`supabase/migrations/0048_precisao_das_colunas_de_dinheiro.sql` → Run. Não tem pressa nem risco de
-quebrar tela nenhuma: sem ela o sistema funciona igual, só continua sem a segunda linha de defesa
-contra centavo com cauda. É idempotente (seguro rodar de novo) e foi testada num Postgres local
-com dado plantado.
+**Estado hoje: `0001` a `0047` estão aplicadas; a `0048` e a `0049` estão prontas e NÃO foram
+rodadas ainda.** As duas são coladas do mesmo jeito de sempre: painel do projeto → SQL Editor →
+New query → cola o conteúdo do arquivo → Run. As duas são idempotentes (seguro rodar de novo) e
+foram testadas num Postgres local com dado plantado.
+- `supabase/migrations/0048_precisao_das_colunas_de_dinheiro.sql` — sem pressa e sem risco de
+  quebrar tela nenhuma: sem ela o sistema funciona igual, só continua sem a segunda linha de
+  defesa contra centavo com cauda.
+- `supabase/migrations/0049_lembrete_aliquota_competencia.sql` — **esta tem ordem**: precisa estar
+  rodada **antes** de a próxima versão do app chegar na loja. Sem as duas colunas dela, salvar em
+  Configurações → Dados fiscais passa a dar erro de "coluna não existe" (o resto do app continua
+  normal). Rodar a migration primeiro, publicar a tag depois.
 **Sobre `0047` e anteriores:** `0046` (`focus_nfe_ref` em
 `notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
 `configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
@@ -3152,9 +3208,10 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.28"` — com trabalho mesclado na `main` **esperando a próxima
-  tag (`v0.9.29`), segurada a pedido dela** em 10/09/2026 (a correção do código de ICMS na
-  importação; ver "Onde tudo parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.29"` (publicada em 11/09/2026) — com trabalho mesclado na
+  `main` **esperando a próxima tag (`v0.9.30`)**: o "Ver DANFE" e o aviso da alíquota do mês, que
+  só devem ser publicados **depois** de ela rodar a migration `0049` (ver "Onde tudo parou", no
+  fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3266,10 +3323,9 @@ primeira NFS-e do mês (item 1 da seção 8) — sem isso a nota é recusada.
 
 1. **Crédito da Anthropic zerado** — o "Importar por foto/PDF" pode estar sem funcionar desde
    agosto (ver item 25 da seção 6). É a pendência mais provável de estar atrapalhando no dia a dia.
-2. **Não dá pra reabrir o PDF (DANFE) de uma nota já emitida.** O PDF só existe dentro do modal de
-   emissão; fechou, acabou. **Já investigado**: não é bug de renderização (testado no Electron
-   real), é falta de botão mesmo — e a migration `0046` já guarda o `focus_nfe_ref`, então um "Ver
-   DANFE" em Notas Fiscais consegue buscar o PDF de novo na Focus NFe.
+2. ✅ **Reabrir o PDF (DANFE) de uma nota já emitida — FEITO em 11/09/2026.** O botão "Ver
+   DANFE" existe em Notas Fiscais e na aba Fechamento da OS (ver "Notas Fiscais" na seção 7).
+   Falta só ela confirmar com uma nota de verdade — a chamada à Focus NFe não dá pra testar aqui.
 3. **Cancelar nota deveria estornar estoque/Caixa?** — pergunta de design nunca respondida.
 4. **Token Focus NFe compartilhado**, **botão de diagnóstico pra suporte** e o **risco de uma tag
    ruim atualizar todas as lojas de uma vez** — a fila já combinada.
@@ -3431,19 +3487,13 @@ era a única, e já foi corrigida à mão. **Não reabrir esse assunto**; a cons
 receita, caso um dia entre peça de fornecedor novo por uma versão antiga do app (`pecas` é
 compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
-### ⏸ O ponto exato onde parou (11/09/2026) — LEIA ISTO PRIMEIRO
+### Onde parou em 11/09/2026, de manhã (histórico — o marco mais recente está no fim do arquivo)
 
-**Duas coisas pendentes, as duas dependendo de uma decisão dela. Nada quebrado.**
+> A `v0.9.29` que esta seção dá como pendente **foi publicada** mais tarde no mesmo dia, com o
+> "sim" dela. A migration `0048` continua pendente. O resto desta seção segue valendo como
+> registro do que foi feito na Etapa 1 do guia.
 
-1. **A `v0.9.29` continua sem sair, por decisão dela (agora carregando mais coisa).** Ela pediu
-   pra segurar em 10/09 (*"ainda nao, deixa pendente... volto em outra sessao"*) e isso **foi
-   respeitado nesta sessão** — nada foi publicado. Mas a `main` acumulou mais uma leva desde
-   então (tudo desta sessão, abaixo), então a próxima tag leva os dois pacotes de uma vez.
-   **Perguntar antes de publicar.** O computador da loja segue na `v0.9.28`.
-2. **A migration `0048` precisa ser colada por ela no SQL Editor** — passo a passo na seção 9.
-   Sem ela o sistema funciona igual; ela é a segunda linha de defesa contra centavo com cauda.
-
-#### O que esta sessão fez
+#### O que aquela sessão fez
 
 Ela trouxe um **guia de melhorias** — que a partir de 11/09/2026 está **commitado na raiz do
 repositório, em `MELHORIAS.md`**, pra a próxima sessão não depender de ela anexar de novo. Ele
@@ -3490,9 +3540,9 @@ de arredondamento altera valor de nota fiscal, e isso é decisão dela.
 fusos** (eram 176 num fuso só). A sequência inteira de migrations foi rodada três vezes num
 Postgres local, do zero, sem erro.
 
-#### O que depende dela agora
+#### O que dependia dela naquele momento (a lista atualizada está no fim do arquivo)
 
-1. **Dizer se publica a `v0.9.29`** (ver item 1 acima).
+1. ✅ **Dizer se publica a `v0.9.29`** — disse que sim mais tarde no mesmo dia; publicada.
 2. **Rodar a migration `0048`** no SQL Editor (seção 9).
 3. **Marcar o CI como obrigatório pra mesclar**, em Settings → Branches — mas só **depois** de ver
    ele verde algumas vezes, pra não travar o fluxo de mesclar direto na `main`. Item 48.
@@ -3512,3 +3562,70 @@ para um ganho que hoje é teórico — essas funções já arredondam em cada bo
 as colunas também. A recomendação registrada é só fazer isso se aparecer uma divergência real, com
 o caso concreto na mão. Se ela quiser fazer de qualquer forma, é uma sessão inteira, não um item
 curto.
+
+### ⏸ O ponto exato onde parou (11/09/2026, mais tarde) — LEIA ISTO PRIMEIRO
+
+**Uma coisa publicada, duas esperando ela — e uma delas tem ORDEM.**
+
+1. ✅ **A `v0.9.29` foi publicada** (ela autorizou nesta sessão, depois de ter segurado em 10/09).
+   Leva o aviso de código fiscal pelo nome da peça e a correção da importação de XML do
+   fornecedor. Instalador e `latest.yml` confirmados na release; o auto-update leva pro PC da
+   loja sozinho. **Ainda não confirmada por ela rodando lá.**
+2. ⚠️ **As migrations `0048` e `0049` precisam ser coladas por ela no SQL Editor** (seção 9).
+   A `0049` é a que tem ordem: **rodar antes de publicar a próxima tag**. Sem as colunas dela,
+   "Salvar dados fiscais" passaria a dar erro de coluna inexistente no computador da loja.
+3. ⏸ **A `v0.9.30` está pronta na `main` e NÃO foi publicada** — de propósito, esperando o item 2.
+   Quando ela avisar que rodou as migrations: subir o `package.json` pra `0.9.30`, mesclar,
+   disparar o `workflow_dispatch` (seção 9).
+
+#### O que esta sessão fez
+
+Dois itens da **Etapa 2** do guia de melhorias (`MELHORIAS.md`), escolhidos por ela — os dois da
+área fiscal, que é onde o balcão mais sente:
+
+- **`TR-11.1` — "Ver DANFE" de uma nota já emitida.** Era o item nº 2 da lista dela de "guardar
+  pra em breve", desde 03/09. O PDF da nota só existia dentro da janela de emissão: fechou,
+  acabou, e reabrir só entrando no painel da Focus NFe — sendo que o cliente voltar e pedir a nota
+  de novo é o pedido mais comum que existe num balcão. Agora tem botão em Notas Fiscais e na aba
+  Fechamento da OS. Detalhe em "Notas Fiscais", seção 7.
+- **`TR-11.2` — aviso da alíquota da competência.** Toda primeira NFS-e do mês é recusada até a
+  alíquota daquele mês ser cadastrada no portal da prefeitura — armadilha mensal, conhecida, com
+  data e consequência certas, que já custou uma manhã. O Início passou a avisar antes, com o passo
+  a passo e um botão "Já cadastrei". Detalhe em "Início", seção 7. Precisou da migration `0049`.
+
+#### Duas decisões que valem mais que o código
+
+1. **O PDF da nota continua NÃO sendo guardado aqui.** O que o sistema guarda é o XML — que é o
+   documento que a lei manda guardar por 5 anos. O "Ver DANFE" pede o PDF de volta pra Focus NFe
+   pela referência da migration `0046`. Guardar o PDF também seria duplicar arquivo, gastar
+   Storage e criar uma segunda fonte de verdade pra mesma nota.
+2. **O aviso da alíquota se cala sozinho quando a prefeitura autoriza uma NFS-e no mês.** Se ela
+   autorizou, a alíquota está cadastrada — continuar avisando seria barulho, e aviso que vira
+   barulho é aviso que a pessoa aprende a ignorar. O botão "Já cadastrei" existe pro caso de ela
+   cadastrar antes de emitir a primeira nota, que é justamente o caminho certo.
+
+#### O que NÃO dá pra confirmar daqui
+
+As duas funcionalidades conversam com a Focus NFe/prefeitura, e o ambiente onde eu rodo não
+alcança rede externa (item 6 da seção 6). Então: a regra de quando dá/não dá reabrir o PDF está
+testada, as duas telas foram conferidas **renderizadas de verdade** (inclusive o caminho de
+falha), mas **a busca do PDF em si e o comportamento com a prefeitura só ela confirma na loja** —
+depois de rodar as migrations e receber a `v0.9.30`.
+
+#### Estado do código
+
+`main` em dia, `v0.9.29` publicada. `tsc`, lint e `npm run contraste` limpos; **296 testes**
+passando **nos dois fusos** (eram 275). A instalação completa foi rodada três vezes do zero num
+Postgres local e a `0049` sozinha duas vezes num banco com dado plantado.
+
+#### O que depende dela agora
+
+1. **Rodar a `0048` e a `0049`** no SQL Editor (seção 9) — e avisar, pra sair a `v0.9.30`.
+2. **Confirmar na loja**: a `v0.9.29` chegando pelo auto-update; e, depois da `v0.9.30`, o "Ver
+   DANFE" de uma nota de verdade.
+3. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), só depois de vê-lo verde
+   algumas vezes — item 48 da seção 6.
+4. **As três credenciais expostas continuam para trocar** (CSC da SEFAZ, token do portal Giap,
+   senha do portal da prefeitura) — item 50 da seção 6.
+5. E, todo mês, o de sempre: **cadastrar a alíquota da competência no portal da prefeitura** antes
+   da primeira NFS-e do mês — que agora, pelo menos, o sistema lembra.

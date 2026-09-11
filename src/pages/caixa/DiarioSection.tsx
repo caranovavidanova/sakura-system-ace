@@ -81,7 +81,7 @@ export function DiarioSection({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+        <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
           Dia:
           <input
             type="date"
@@ -93,7 +93,7 @@ export function DiarioSection({
         {!mostrarFormulario && (
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Lançamento manual
           </button>
@@ -110,26 +110,26 @@ export function DiarioSection({
 
       <div className="grid grid-cols-4 gap-4">
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Entradas do dia</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Entradas do dia</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(entradas)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Saídas do dia</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Saídas do dia</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(saidas)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Saldo do dia</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Saldo do dia</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(entradas - saidas)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Lucro do dia</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Lucro do dia</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalLucro)}
           </p>
         </div>
@@ -137,14 +137,14 @@ export function DiarioSection({
 
       {porFormaPagamento.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+          <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
             Formas de recebimento
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {porFormaPagamento.map(([forma, valor]) => (
               <div key={forma} className="sakura-card px-4 py-3">
-                <p className="text-xs text-sakura-muted">{forma}</p>
-                <p className="text-base font-semibold text-sakura-purple-dark">
+                <p className="text-rotulo text-sakura-muted">{forma}</p>
+                <p className="text-destaque font-semibold text-sakura-purple-dark">
                   {formatarMoeda(valor)}
                 </p>
               </div>
@@ -154,10 +154,10 @@ export function DiarioSection({
       )}
 
       {movimentosDoDia.length === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhuma movimentação neste dia.</p>
+        <p className="text-corpo text-sakura-muted">Nenhuma movimentação neste dia.</p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Horário</th>

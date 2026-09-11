@@ -44,7 +44,7 @@ export function GraficoRadar({
 
   if (eixos.length < 3) {
     return (
-      <p className="text-sm text-sakura-muted">
+      <p className="text-corpo text-sakura-muted">
         Precisa de pelo menos 3 métricas pra montar o gráfico de radar.
       </p>
     );
@@ -69,7 +69,7 @@ export function GraficoRadar({
 
   return (
     <div className="relative">
-      <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-sakura-purple-dark/90">
+      <div className="mb-3 flex flex-wrap items-center gap-4 text-rotulo text-sakura-purple-dark/90">
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-4 rounded-full bg-sakura-purple-dark" />
           {rotuloAtual}
@@ -186,7 +186,7 @@ export function GraficoRadar({
 
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-sakura-gray/30 bg-sakura-pink-soft px-2.5 py-1.5 text-xs text-white shadow-lg"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-sakura-gray/30 bg-sakura-pink-soft px-2.5 py-1.5 text-rotulo text-white shadow-lg"
           style={{ left: tooltip.x, top: tooltip.y - 6 }}
         >
           <p className="font-medium">{tooltip.eixo}</p>

@@ -92,8 +92,8 @@ export function ContasReceberPage() {
         <div className="flex items-center gap-3">
           <BotaoVoltar />
           <div>
-            <h1 className="text-2xl font-semibold text-sakura-purple-dark">Contas a Receber</h1>
-            <p className="text-sm text-sakura-muted">
+            <h1 className="text-titulo font-semibold text-sakura-purple-dark">Contas a Receber</h1>
+            <p className="text-corpo text-sakura-muted">
               Criadas sozinhas ao faturar uma OS escolhendo "a receber" — ou lançadas à mão,
               pra cobrança que não passou por OS
             </p>
@@ -102,14 +102,14 @@ export function ContasReceberPage() {
         {!mostrarFormulario && (
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Nova conta
           </button>
         )}
       </header>
 
-      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
       {mostrarFormulario && (
         <ContaReceberForm
@@ -121,24 +121,24 @@ export function ContasReceberPage() {
 
       {!carregando && (
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Total pendente</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Total pendente</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalPendente)}
           </p>
         </div>
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : (
         <>
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Pendentes</h2>
+            <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">Pendentes</h2>
             {pendentes.length === 0 ? (
-              <p className="text-sm text-sakura-muted">Nenhuma conta a receber pendente.</p>
+              <p className="text-corpo text-sakura-muted">Nenhuma conta a receber pendente.</p>
             ) : (
               <div className="overflow-hidden sakura-card">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-corpo">
                   <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                     <tr>
                       <th className="px-4 py-3 font-medium">Previsão</th>
@@ -175,7 +175,7 @@ export function ContasReceberPage() {
                           <td className="px-4 py-3 font-medium">{formatarMoeda(conta.valor)}</td>
                           <td className="px-4 py-3">
                             <span
-                              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                              className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                                 vencida
                                   ? "bg-red-50 text-red-700"
                                   : "bg-amber-50 text-amber-700"
@@ -190,7 +190,7 @@ export function ContasReceberPage() {
                                 e.stopPropagation();
                                 setContaRecebendo(conta);
                               }}
-                              className="rounded-full bg-sakura-purple px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+                              className="rounded-full bg-sakura-purple px-3 py-1.5 text-rotulo font-medium text-white hover:opacity-90"
                             >
                               Marcar como recebido
                             </button>
@@ -206,11 +206,11 @@ export function ContasReceberPage() {
 
           {recebidas.length > 0 && (
             <section>
-              <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+              <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
                 Recebidas recentemente
               </h2>
               <div className="overflow-hidden sakura-card">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-corpo">
                   <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                     <tr>
                       <th className="px-4 py-3 font-medium">Previsão</th>

@@ -37,10 +37,10 @@ export function TextoGarantiaSection({
   return (
     <>
       {erro && (
-        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
       )}
       {salvo && (
-        <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+        <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-corpo text-emerald-700">
           Texto de garantia salvo.
         </p>
       )}
@@ -49,7 +49,7 @@ export function TextoGarantiaSection({
         value={valor}
         onChange={(e) => setValor(e.target.value)}
         rows={8}
-        className="mt-4 w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm text-sakura-purple-dark focus:border-sakura-purple"
+        className="mt-4 w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple"
       />
 
       <div className="mt-4 flex justify-end">
@@ -57,7 +57,7 @@ export function TextoGarantiaSection({
           type="button"
           onClick={handleSalvar}
           disabled={salvando}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {salvando ? "Salvando..." : "Salvar texto"}
         </button>

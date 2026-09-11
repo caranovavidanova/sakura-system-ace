@@ -60,15 +60,15 @@ export function GarantiasPage() {
       <header className="flex items-center gap-3">
         <BotaoVoltar />
         <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Garantias</h1>
-          <p className="text-sm text-sakura-muted">
+          <h1 className="text-titulo font-semibold text-sakura-purple-dark">Garantias</h1>
+          <p className="text-corpo text-sakura-muted">
             Peças vendidas com prazo de garantia definido no cadastro
           </p>
         </div>
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para ver as garantias de verdade.
@@ -76,7 +76,7 @@ export function GarantiasPage() {
       )}
 
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>
       )}
 
       <div className="flex gap-1 border-b border-sakura-gray/30">
@@ -98,16 +98,16 @@ export function GarantiasPage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : linhasFiltradas.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           {linhas.length === 0
             ? "Nenhuma peça vendida com garantia cadastrada ainda. Defina o prazo de garantia no cadastro do produto (aba Estoque → Produtos)."
             : "Nenhum item nessa situação."}
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Produto</th>
@@ -132,7 +132,7 @@ export function GarantiasPage() {
                   <td className="px-4 py-3">{vencimento.toLocaleDateString("pt-BR")}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                         vencida
                           ? "bg-red-50 text-red-700"
                           : "bg-emerald-50 text-emerald-700"
@@ -163,7 +163,7 @@ function FiltroBotao({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+      className={`px-4 py-2.5 text-corpo font-medium transition-colors ${
         ativo
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
           : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"

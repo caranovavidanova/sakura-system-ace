@@ -44,13 +44,13 @@ export function ItensFields({
 
   return (
     <section>
-      <h3 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Peças e serviços</h3>
+      <h3 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">Peças e serviços</h3>
 
-      {avisoItens && <p className="mb-3 text-xs text-sakura-muted">{avisoItens}</p>}
+      {avisoItens && <p className="mb-3 text-rotulo text-sakura-muted">{avisoItens}</p>}
 
       {itensExistentes.length > 0 && (
         <div className="mb-3 space-y-1.5 rounded-lg bg-sakura-gray/5 p-3">
-          <p className="mb-1 text-xs font-medium text-sakura-purple-dark/85">Já lançados nesta OS</p>
+          <p className="mb-1 text-rotulo font-medium text-sakura-purple-dark/85">Já lançados nesta OS</p>
           {itensExistentes.map((item) => (
             <ItemExistenteRow
               key={item.id}
@@ -80,7 +80,7 @@ export function ItensFields({
           />
         ))}
         {fields.length === 0 && (
-          <p className="text-xs text-sakura-muted">
+          <p className="text-rotulo text-sakura-muted">
             Nenhum item novo — use "+ adicionar item" pra lançar mais peças ou serviços.
           </p>
         )}
@@ -93,14 +93,14 @@ export function ItensFields({
           <button
             type="button"
             onClick={() => append({ ...itemFormVazio })}
-            className="rounded-lg border border-sakura-purple/40 px-3 py-1.5 text-xs font-medium text-sakura-purple hover:bg-sakura-purple/10"
+            className="rounded-lg border border-sakura-purple/40 px-3 py-1.5 text-rotulo font-medium text-sakura-purple hover:bg-sakura-purple/10"
           >
             + adicionar item
           </button>
         </div>
       )}
 
-      <p className="mt-3 text-right text-sm font-semibold text-sakura-purple-dark">
+      <p className="mt-3 text-right text-corpo font-semibold text-sakura-purple-dark">
         Total {ehEdicao ? "geral" : "previsto"}:{" "}
         {totalGeral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
       </p>

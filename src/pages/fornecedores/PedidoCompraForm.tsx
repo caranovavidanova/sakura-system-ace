@@ -69,10 +69,10 @@ export function PedidoCompraForm({
     <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-6 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
-        <h2 className="text-lg font-semibold text-sakura-purple-dark">Novo pedido de compra</h2>
+        <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">Novo pedido de compra</h2>
       </div>
 
-      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
       {rascunho.rascunho && (
         <AvisoRascunho
@@ -83,7 +83,7 @@ export function PedidoCompraForm({
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">
             Fornecedor <span className="text-red-500">*</span>
           </span>
@@ -94,18 +94,18 @@ export function PedidoCompraForm({
             placeholder="Selecione o fornecedor"
           />
           {errors.fornecedor_id && (
-            <span className="text-xs text-red-600">{errors.fornecedor_id.message}</span>
+            <span className="text-rotulo text-red-600">{errors.fornecedor_id.message}</span>
           )}
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">
             Data do pedido <span className="text-red-500">*</span>
           </span>
           <input type="date" {...register("data_pedido")} className={inputClasse} />
         </label>
 
-        <label className="col-span-2 flex flex-col gap-1 text-sm">
+        <label className="col-span-2 flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Observação (opcional)</span>
           <textarea rows={2} {...register("observacao")} className={inputClasse} />
         </label>
@@ -113,18 +113,18 @@ export function PedidoCompraForm({
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-sakura-purple-dark">Itens do pedido</h3>
+          <h3 className="text-corpo font-semibold text-sakura-purple-dark">Itens do pedido</h3>
           <button
             type="button"
             onClick={() => append({ ...itemPedidoVazio })}
-            className="text-xs font-medium text-sakura-purple hover:underline"
+            className="text-rotulo font-medium text-sakura-purple hover:underline"
           >
             + adicionar item
           </button>
         </div>
 
         {errors.itens?.message && (
-          <p className="mb-2 text-xs text-red-600">{errors.itens.message}</p>
+          <p className="mb-2 text-rotulo text-red-600">{errors.itens.message}</p>
         )}
 
         <div className="space-y-2">
@@ -148,14 +148,14 @@ export function PedidoCompraForm({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? "Salvando..." : "Criar pedido"}
         </button>

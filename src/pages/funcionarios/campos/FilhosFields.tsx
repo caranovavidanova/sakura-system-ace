@@ -34,7 +34,7 @@ export function FilhosFields({
             <button
               type="button"
               onClick={() => remove(index)}
-              className="mb-1 text-xs font-medium text-red-600 hover:underline"
+              className="mb-1 text-rotulo font-medium text-red-600 hover:underline"
             >
               Remover
             </button>
@@ -43,7 +43,7 @@ export function FilhosFields({
         <button
           type="button"
           onClick={() => append({ nome: "", data_nascimento: "" })}
-          className="text-sm font-medium text-sakura-purple hover:underline"
+          className="text-corpo font-medium text-sakura-purple hover:underline"
         >
           + Adicionar filho(a)
         </button>

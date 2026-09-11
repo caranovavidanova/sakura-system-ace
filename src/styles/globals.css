@@ -21,6 +21,46 @@
 
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* ------------------------------------------------------------------
+     Escala tipográfica do app (item TR-01.1 do guia de melhorias).
+
+     Antes disto não havia escala: cada tela escolhia "text-xs" ou
+     "text-sm" por conta própria, e o resultado era tabela inteira em
+     tamanho de rodapé. O nome do token diz PARA QUE serve, não o
+     tamanho — assim uma tela nova escolhe pelo papel do texto, e não
+     pelo que pareceu bonito na hora.
+
+     Nada encolheu nesta mudança: o que era 14px continua 14px. O que
+     mudou é que o menor texto do app subiu de 12px pra 13px, o de 10/11px
+     subiu pra 12px, e a altura de linha passou a ser declarada (1.45 no
+     que é pra ler, 1.2 no que é pra bater o olho).
+
+     "tabela" e "rotulo" têm o mesmo tamanho de propósito — são o mesmo
+     degrau da escala, com papéis diferentes.
+
+     Uma observação contra a intuição: a tabela COMUM do app usa "corpo"
+     (14px), não "tabela". O guia sugeria 13px pra tabela por supor que
+     elas estavam em 11-12px — só que 25 das 28 tabelas já eram 14px, e
+     baixar pra 13 seria piorar justo o que o item veio consertar. O
+     "tabela" ficou pras 3 tabelas densas, de muitas colunas, que de fato
+     estavam em 12px. */
+  --text-metrica: 1.5rem; /* número grande de cartão (Início, Caixa) */
+  --text-metrica--line-height: 1.2;
+  --text-titulo: 1.5rem; /* o <h1> de cada tela */
+  --text-titulo--line-height: 1.2;
+  --text-destaque: 1.25rem; /* valor que salta dentro de um card */
+  --text-destaque--line-height: 1.25;
+  --text-subtitulo: 1.125rem; /* título de seção dentro da tela */
+  --text-subtitulo--line-height: 1.25;
+  --text-corpo: 0.875rem; /* texto normal — a base do app */
+  --text-corpo--line-height: 1.45;
+  --text-tabela: 0.8125rem; /* tabela DENSA (muita coluna); a normal usa corpo */
+  --text-tabela--line-height: 1.45;
+  --text-rotulo: 0.8125rem; /* rótulo de campo, etiqueta, badge */
+  --text-rotulo--line-height: 1.4;
+  --text-meta: 0.75rem; /* só metadado: versão do app, "criado em" */
+  --text-meta--line-height: 1.4;
 }
 
 :root {

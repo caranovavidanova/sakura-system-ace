@@ -52,7 +52,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
 
   return (
     <Modal titulo="Marcar como paga" onFechar={onFechar}>
-      <form onSubmit={handleSubmit(aoConfirmar)} className="space-y-3 text-sm">
+      <form onSubmit={handleSubmit(aoConfirmar)} className="space-y-3 text-corpo">
         <p className="text-sakura-purple-dark/80">
           {conta.descricao} — venceu em {new Date(conta.vencimento).toLocaleDateString("pt-BR")}
           {conta.recorrente ? " · a próxima ocorrência já é criada automaticamente" : ""}
@@ -71,7 +71,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
               className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
             />
             {errors.valor && (
-              <span className="text-xs text-red-600">{errors.valor.message}</span>
+              <span className="text-rotulo text-red-600">{errors.valor.message}</span>
             )}
           </label>
           <label className="flex flex-col gap-1">
@@ -84,7 +84,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
           </label>
         </div>
 
-        <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-xs text-sakura-purple-dark/90">
+        <p className="rounded-lg bg-sakura-pink-soft/60 px-3 py-2 text-rotulo text-sakura-purple-dark/90">
           Isso lança uma Saída de {formatarMoeda(valorAtual)} no Caixa automaticamente.
         </p>
 
@@ -92,14 +92,14 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
           <button
             type="button"
             onClick={onFechar}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+            className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting ? "Confirmando..." : "Confirmar pagamento"}
           </button>

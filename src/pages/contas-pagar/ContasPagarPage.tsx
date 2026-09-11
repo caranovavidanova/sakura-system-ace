@@ -124,8 +124,8 @@ export function ContasPagarPage() {
         <div className="flex items-center gap-3">
           <BotaoVoltar />
           <div>
-            <h1 className="text-2xl font-semibold text-sakura-purple-dark">Contas a Pagar</h1>
-            <p className="text-sm text-sakura-muted">
+            <h1 className="text-titulo font-semibold text-sakura-purple-dark">Contas a Pagar</h1>
+            <p className="text-corpo text-sakura-muted">
               Contas mensais (aluguel, etc.) com vencimento — diferente das Entradas/Saídas
               manuais do Caixa
             </p>
@@ -134,14 +134,14 @@ export function ContasPagarPage() {
         {!mostrarFormulario && (
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Nova conta
           </button>
         )}
       </header>
 
-      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
       {mostrarFormulario && (
         <ContaPagarForm
@@ -153,24 +153,24 @@ export function ContasPagarPage() {
 
       {!carregando && (
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Total pendente</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Total pendente</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalPendente)}
           </p>
         </div>
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : (
         <>
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Pendentes</h2>
+            <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">Pendentes</h2>
             {pendentes.length === 0 ? (
-              <p className="text-sm text-sakura-muted">Nenhuma conta pendente.</p>
+              <p className="text-corpo text-sakura-muted">Nenhuma conta pendente.</p>
             ) : (
               <div className="overflow-hidden sakura-card">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-corpo">
                   <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                     <tr>
                       <th className="px-4 py-3 font-medium">Vencimento</th>
@@ -192,7 +192,7 @@ export function ContasPagarPage() {
                           <td className="px-4 py-3">
                             {conta.descricao}
                             {conta.recorrente && (
-                              <span className="ml-2 rounded-full bg-sakura-pink-soft px-2 py-0.5 text-xs text-sakura-purple-dark/90">
+                              <span className="ml-2 rounded-full bg-sakura-pink-soft px-2 py-0.5 text-rotulo text-sakura-purple-dark/90">
                                 mensal
                               </span>
                             )}
@@ -201,7 +201,7 @@ export function ContasPagarPage() {
                           <td className="px-4 py-3 font-medium">{formatarMoeda(conta.valor)}</td>
                           <td className="px-4 py-3">
                             <span
-                              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                              className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                                 vencida
                                   ? "bg-red-50 text-red-700"
                                   : "bg-amber-50 text-amber-700"
@@ -239,11 +239,11 @@ export function ContasPagarPage() {
 
           {pagas.length > 0 && (
             <section>
-              <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+              <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
                 Pagas recentemente
               </h2>
               <div className="overflow-hidden sakura-card">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-corpo">
                   <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                     <tr>
                       <th className="px-4 py-3 font-medium">Vencimento</th>
@@ -271,7 +271,7 @@ export function ContasPagarPage() {
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => handleDesfazerPagamento(conta)}
-                            className="text-xs font-medium text-sakura-purple hover:underline"
+                            className="text-rotulo font-medium text-sakura-purple hover:underline"
                           >
                             Desfazer pagamento
                           </button>

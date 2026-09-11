@@ -54,12 +54,12 @@ export function CancelarNotaModal({ arquivo, onFechar, onCancelado }: CancelarNo
   return (
     <Modal titulo="Cancelar nota fiscal" onFechar={onFechar}>
       <div className="space-y-4">
-        <p className="text-sm text-sakura-purple-dark/90">
+        <p className="text-corpo text-sakura-purple-dark/90">
           Isso cancela <strong>{arquivo.nome_arquivo}</strong> direto na SEFAZ/prefeitura, através
           da Focus NFe. Não dá pra desfazer.
         </p>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">
             Justificativa <span className="text-red-500">*</span> (mínimo{" "}
             {TAMANHO_MINIMO_JUSTIFICATIVA} caracteres)
@@ -69,17 +69,17 @@ export function CancelarNotaModal({ arquivo, onFechar, onCancelado }: CancelarNo
             onChange={(e) => setJustificativa(e.target.value)}
             rows={3}
             placeholder="Ex: nota emitida por engano, valor errado, teste do sistema..."
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
           />
         </label>
 
-        {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+        {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
         <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={onFechar}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+            className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
           >
             Voltar
           </button>
@@ -87,7 +87,7 @@ export function CancelarNotaModal({ arquivo, onFechar, onCancelado }: CancelarNo
             type="button"
             onClick={handleConfirmar}
             disabled={!justificativaValida || cancelando}
-            className="rounded-xl bg-red-600 px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-xl bg-red-600 px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {cancelando ? "Cancelando..." : "Confirmar cancelamento"}
           </button>

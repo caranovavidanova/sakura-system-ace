@@ -45,7 +45,7 @@ export function FuncionariosSection({
         <div className="flex justify-end">
           <button
             onClick={() => setFormulario("novo")}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Novo funcionário
           </button>
@@ -60,13 +60,13 @@ export function FuncionariosSection({
         />
       )}
 
-      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
       {funcionarios.length === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhum funcionário cadastrado ainda.</p>
+        <p className="text-corpo text-sakura-muted">Nenhum funcionário cadastrado ainda.</p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Nome</th>
@@ -86,7 +86,7 @@ export function FuncionariosSection({
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                         funcionario.ativo
                           ? "bg-emerald-50 text-emerald-700"
                           : "bg-sakura-gray/20 text-sakura-muted"

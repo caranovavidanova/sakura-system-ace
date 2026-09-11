@@ -60,15 +60,15 @@ export function ServicoForm({
     <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4 sakura-card p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <BotaoVoltar onClick={onCancelar} />
-        <h2 className="text-lg font-semibold text-sakura-purple-dark">
+        <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">
           {servicoExistente ? "Editar serviço" : "Novo serviço"}
         </h2>
       </div>
 
-      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
       <div className="grid grid-cols-2 gap-4">
-        <label className="col-span-2 flex flex-col gap-1 text-sm">
+        <label className="col-span-2 flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">
             Descrição <span className="text-red-500">*</span>
           </span>
@@ -78,11 +78,11 @@ export function ServicoForm({
             className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.descricao && (
-            <span className="text-xs text-red-600">{errors.descricao.message}</span>
+            <span className="text-rotulo text-red-600">{errors.descricao.message}</span>
           )}
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Código (opcional)</span>
           <input
             type="text"
@@ -91,7 +91,7 @@ export function ServicoForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Preço padrão</span>
           <input
             type="number"
@@ -102,7 +102,7 @@ export function ServicoForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Custo (ex: mão de obra)</span>
           <input
             type="number"
@@ -113,7 +113,7 @@ export function ServicoForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-corpo">
           <span className="text-sakura-purple-dark/80">Categoria</span>
           <Combobox
             opcoes={categorias.map((categoria) => ({ valor: categoria.id, rotulo: categoria.nome }))}
@@ -129,14 +129,14 @@ export function ServicoForm({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? "Salvando..." : servicoExistente ? "Salvar alterações" : "Salvar serviço"}
         </button>

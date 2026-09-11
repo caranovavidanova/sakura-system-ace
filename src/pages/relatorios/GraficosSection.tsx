@@ -199,26 +199,26 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
     <>
       <div className="grid grid-cols-4 gap-4">
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Vendas hoje</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Vendas hoje</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalHoje)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Vendas esta semana</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Vendas esta semana</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalSemana)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Vendas este mês</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Vendas este mês</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalMes)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Vendas este ano</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Vendas este ano</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalAno)}
           </p>
         </div>
@@ -226,7 +226,7 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
 
       <section className="sakura-card p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-sakura-purple-dark">
+          <h2 className="text-corpo font-semibold text-sakura-purple-dark">
             Vendas x Custos x Lucro
           </h2>
           <div className="flex gap-1 rounded-full bg-white/10 p-1">
@@ -234,7 +234,7 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
               <button
                 key={p.chave}
                 onClick={() => setPeriodo(p.chave)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                className={`rounded-full px-3 py-1 text-rotulo font-medium transition ${
                   periodo === p.chave
                     ? "bg-sakura-purple text-white"
                     : "text-sakura-purple-dark/85 hover:bg-white/10"
@@ -259,10 +259,10 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
 
       {penultimoIndice >= 0 && (
         <section className="sakura-card p-5">
-          <h2 className="mb-1 text-sm font-semibold text-sakura-purple-dark">
+          <h2 className="mb-1 text-corpo font-semibold text-sakura-purple-dark">
             Comparativo do período
           </h2>
-          <p className="mb-4 text-xs text-sakura-muted">
+          <p className="mb-4 text-rotulo text-sakura-muted">
             {PERIODOS.find((p) => p.chave === periodo)?.label} atual comparado com o anterior.
           </p>
           <GraficoRadar
@@ -292,14 +292,14 @@ export function GraficosSection({ movimentos, ordens, pecas, servicos }: Grafico
       )}
 
       {totaisPorDia.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Nenhuma venda registrada ainda (faturamentos de OS aparecem aqui automaticamente).
         </p>
       ) : (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">Vendas por dia</h2>
+          <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">Vendas por dia</h2>
           <div className="overflow-hidden sakura-card">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>
                   <th className="px-4 py-3 font-medium">Dia</th>

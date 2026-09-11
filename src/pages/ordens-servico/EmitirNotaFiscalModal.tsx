@@ -270,28 +270,28 @@ export function EmitirNotaFiscalModal({
 
   return (
     <Modal titulo={`Emitir ${tipoNota}`} onFechar={onFechar}>
-      {carregando && <p className="text-sm text-sakura-muted">Carregando...</p>}
+      {carregando && <p className="text-corpo text-sakura-muted">Carregando...</p>}
 
       {!carregando && erro && (
-        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>
+        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-corpo text-red-700">{erro}</p>
       )}
 
       {!carregando && !resultado && !focusNfeConfigurado && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-corpo text-amber-800">
           Falta cadastrar o token do Focus NFe (e os dados fiscais da loja) em Configurações →
           "Dados fiscais da loja" antes de emitir.
         </p>
       )}
 
       {!carregando && !resultado && focusNfeConfigurado && (
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-corpo">
           <div className="grid grid-cols-2 gap-3 rounded-lg bg-sakura-pink-soft/60 p-3">
             <div>
-              <p className="text-xs text-sakura-purple-dark/85">Cliente</p>
+              <p className="text-rotulo text-sakura-purple-dark/85">Cliente</p>
               <p className="font-medium text-sakura-purple-dark">{ordem.cliente?.nome ?? "—"}</p>
             </div>
             <div>
-              <p className="text-xs text-sakura-purple-dark/85">
+              <p className="text-rotulo text-sakura-purple-dark/85">
                 {tipoNota === "NFC-e" ? "Total de peças" : "Total de serviços"}
               </p>
               <p className="font-medium text-sakura-purple-dark">
@@ -304,13 +304,13 @@ export function EmitirNotaFiscalModal({
           </div>
 
           {tipoNota === "NFS-e" && (
-            <label className="flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+            <label className="flex flex-col gap-1 text-rotulo text-sakura-purple-dark/90">
               Código IBGE do município do cliente
               <input
                 value={codigoMunicipioCliente}
                 onChange={(e) => setCodigoMunicipioCliente(e.target.value)}
                 placeholder={cliente ? `${cliente.cidade ?? ""}/${cliente.uf ?? ""}` : ""}
-                className="w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm text-sakura-purple-dark focus:border-sakura-purple"
+                className="w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple"
               />
             </label>
           )}
@@ -323,7 +323,7 @@ export function EmitirNotaFiscalModal({
               exigir a identificação. Melhor ela saber disso antes de emitir
               do que descobrir depois. */}
           {tipoNota === "NFC-e" && cliente?.tipo_pessoa === "juridica" && !cnpjClienteValido && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
               Este cliente é pessoa jurídica, mas está <strong>sem o CNPJ no cadastro</strong> —
               a nota vai sair como consumidor não identificado. Se ele precisa da nota no nome da
               empresa, cadastre o CNPJ dele em Clientes antes de emitir.
@@ -336,7 +336,7 @@ export function EmitirNotaFiscalModal({
               do item 33 do PROJETO_STATUS.md). O botão de emitir continua
               liberado. */}
           {pecasComProblemaFiscal.length > 0 && (
-            <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
               <p>
                 <strong>
                   {pecasComProblemaFiscal.length === 1
@@ -363,7 +363,7 @@ export function EmitirNotaFiscalModal({
               cadastrei" fica no Início, onde ela vê antes de precisar. */}
           {tipoNota === "NFS-e" && <AvisoAliquotaCompetencia aviso={avisoAliquota} />}
 
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
             {configuracaoFiscal?.focus_nfe_ambiente === "homologacao"
               ? "Ambiente de homologação — esta nota é só de teste, sem valor fiscal."
               : "Ambiente de produção — esta nota será emitida de verdade."}
@@ -373,7 +373,7 @@ export function EmitirNotaFiscalModal({
             <button
               type="button"
               onClick={onFechar}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+              className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
               Cancelar
             </button>
@@ -381,7 +381,7 @@ export function EmitirNotaFiscalModal({
               type="button"
               onClick={handleEmitir}
               disabled={emitindo}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {emitindo ? "Emitindo..." : "Confirmar emissão"}
             </button>
@@ -390,27 +390,27 @@ export function EmitirNotaFiscalModal({
       )}
 
       {resultado && (
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-corpo">
           <p className="rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">
             {tipoNota} emitida com sucesso — número {resultado.numero ?? "—"}.
           </p>
           {resultado.chave_nfe && (
-            <p className="break-all text-xs text-sakura-muted">Chave: {resultado.chave_nfe}</p>
+            <p className="break-all text-rotulo text-sakura-muted">Chave: {resultado.chave_nfe}</p>
           )}
 
           {carregandoPreview && (
-            <p className="text-sm text-sakura-muted">Gerando pré-visualização do PDF...</p>
+            <p className="text-corpo text-sakura-muted">Gerando pré-visualização do PDF...</p>
           )}
 
           {!carregandoPreview && erroPreview && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
               A nota foi emitida e o XML já está salvo em Notas Fiscais, mas não deu pra carregar a
               pré-visualização do PDF: {erroPreview}
             </p>
           )}
 
           {!carregandoPreview && !erroPreview && !resultado.caminho_danfe && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-rotulo text-amber-800">
               A nota foi emitida e o XML já está salvo em Notas Fiscais — esse tipo de nota não
               trouxe um PDF de pré-visualização.
             </p>
@@ -429,7 +429,7 @@ export function EmitirNotaFiscalModal({
             <button
               type="button"
               onClick={onFechar}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+              className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
               OK
             </button>
@@ -438,14 +438,14 @@ export function EmitirNotaFiscalModal({
                 <button
                   type="button"
                   onClick={handleBaixarPdf}
-                  className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+                  className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
                 >
                   Baixar PDF
                 </button>
                 <button
                   type="button"
                   onClick={handleImprimir}
-                  className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+                  className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90"
                 >
                   Imprimir
                 </button>

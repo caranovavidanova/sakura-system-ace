@@ -110,14 +110,14 @@ export function ProdutosSection({
         <div className="flex justify-end gap-3">
           <button
             onClick={() => setMostrarImportar(true)}
-            className="flex items-center gap-2 rounded-xl border border-sakura-purple/40 px-5 py-2.5 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+            className="flex items-center gap-2 rounded-xl border border-sakura-purple/40 px-5 py-2.5 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
           >
             <IconeCamera className="h-4 w-4" />
             Importar por foto/PDF
           </button>
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Novo produto
           </button>
@@ -144,18 +144,18 @@ export function ProdutosSection({
       )}
 
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">
           {erro}
         </p>
       )}
 
       {pecas.length === 0 ? (
-        <p className="text-sm text-sakura-muted">
+        <p className="text-corpo text-sakura-muted">
           Nenhum produto cadastrado ainda.
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
                 <th className="px-4 py-3 font-medium">Descrição</th>
@@ -183,7 +183,7 @@ export function ProdutosSection({
                   <td className="px-4 py-3 font-medium">{saldos.get(peca.id) ?? 0}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                         peca.ativo
                           ? "bg-emerald-50 text-emerald-700"
                           : "bg-sakura-gray/20 text-sakura-muted"

@@ -158,19 +158,19 @@ export function OrdemServicoForm({
           <div className="flex items-center gap-3">
             <BotaoVoltar onClick={onCancelar} />
             <div>
-              <p className="text-xs text-sakura-muted">
+              <p className="text-rotulo text-sakura-muted">
                 {nomeOrdem(ordemExistente.numero)} · aberta em{" "}
                 {formatarData(ordemExistente.data_abertura)} · criado por{" "}
                 {ordemExistente.criado_por?.nome ?? "—"}
               </p>
-              <h2 className="text-lg font-semibold text-sakura-purple-dark">
+              <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">
                 {ordemExistente.cliente?.nome ?? "Cliente"}
                 {ordemExistente.veiculo?.placa ? ` — ${ordemExistente.veiculo.placa}` : ""}
               </h2>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-sakura-pink-soft px-3 py-1 text-xs font-medium text-sakura-purple-dark">
+            <span className="rounded-full bg-sakura-pink-soft px-3 py-1 text-rotulo font-medium text-sakura-purple-dark">
               {STATUS_LABEL[ordemExistente.status]}
             </span>
             {ordemExistente.status === "em_andamento" && (
@@ -178,7 +178,7 @@ export function OrdemServicoForm({
                 type="button"
                 onClick={handleEncerrar}
                 disabled={encerrando}
-                className="rounded-xl bg-sakura-purple px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-sakura-purple px-4 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 {encerrando ? "Encerrando..." : "Encerrar OS"}
               </button>
@@ -188,12 +188,12 @@ export function OrdemServicoForm({
       ) : (
         <div className="flex items-center gap-3">
           <BotaoVoltar onClick={onCancelar} />
-          <h2 className="text-lg font-semibold text-sakura-purple-dark">Nova ordem de serviço</h2>
+          <h2 className="text-subtitulo font-semibold text-sakura-purple-dark">Nova ordem de serviço</h2>
         </div>
       )}
 
       {erro && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+        <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
       )}
 
       {rascunho.rascunho && (
@@ -209,7 +209,7 @@ export function OrdemServicoForm({
           <button
             type="button"
             onClick={() => setAba("detalhes")}
-            className={`px-4 py-2 text-sm font-medium ${
+            className={`px-4 py-2 text-corpo font-medium ${
               aba === "detalhes"
                 ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
                 : "text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
@@ -220,7 +220,7 @@ export function OrdemServicoForm({
           <button
             type="button"
             onClick={() => setAba("fechamento")}
-            className={`px-4 py-2 text-sm font-medium ${
+            className={`px-4 py-2 text-corpo font-medium ${
               aba === "fechamento"
                 ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
                 : "text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
@@ -266,7 +266,7 @@ export function OrdemServicoForm({
         <button
           type="button"
           onClick={onCancelar}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+          className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
         >
           Cancelar
         </button>
@@ -274,7 +274,7 @@ export function OrdemServicoForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting
               ? "Salvando..."

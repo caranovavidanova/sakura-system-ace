@@ -24,8 +24,8 @@ export function SecaoRecolhivel({
         className="flex w-full items-start justify-between gap-4 text-left"
       >
         <div>
-          <h2 className="text-sm font-semibold text-sakura-purple-dark">{titulo}</h2>
-          {descricao && <p className="mt-1 text-xs text-sakura-muted">{descricao}</p>}
+          <h2 className="text-corpo font-semibold text-sakura-purple-dark">{titulo}</h2>
+          {descricao && <p className="mt-1 text-rotulo text-sakura-muted">{descricao}</p>}
         </div>
         <svg
           className={`mt-1 h-4 w-4 shrink-0 text-sakura-purple-dark/85 transition-transform ${

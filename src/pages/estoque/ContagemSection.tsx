@@ -103,31 +103,31 @@ export function ContagemSection({
   return (
     <div className="space-y-6">
       {pecas.length === 0 ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           Cadastre ao menos um produto na aba "Produtos" antes de fazer uma contagem.
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="sakura-card space-y-4 p-6">
-          <h2 className="text-sm font-semibold text-sakura-purple-dark">
+          <h2 className="text-corpo font-semibold text-sakura-purple-dark">
             Nova contagem
           </h2>
-          <p className="text-xs text-sakura-muted">
+          <p className="text-rotulo text-sakura-muted">
             Confira a quantidade física do produto e compare com o saldo que o
             sistema calcula. Se houver diferença, um ajuste de estoque é lançado
             automaticamente.
           </p>
 
           {erro && (
-            <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+            <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
           )}
           {sucesso && (
-            <p className="rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+            <p className="rounded-lg bg-emerald-50 px-4 py-2 text-corpo text-emerald-700">
               {sucesso}
             </p>
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Produto</span>
               <Combobox
                 opcoes={pecas.map((p) => ({ valor: p.id, rotulo: p.descricao }))}
@@ -137,7 +137,7 @@ export function ContagemSection({
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Depósito</span>
               <select
                 value={depositoId}
@@ -152,14 +152,14 @@ export function ContagemSection({
               </select>
             </label>
 
-            <div className="flex flex-col gap-1 text-sm">
+            <div className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Saldo no sistema</span>
               <p className="rounded-lg border border-transparent px-3 py-2 font-medium text-sakura-purple-dark">
                 {saldoSistema} {peca?.unidade ?? ""}
               </p>
             </div>
 
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Quantidade contada</span>
               <input
                 type="number"
@@ -171,7 +171,7 @@ export function ContagemSection({
               />
             </label>
 
-            <div className="flex flex-col gap-1 text-sm">
+            <div className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">Diferença</span>
               <p
                 className={`rounded-lg px-3 py-2 font-medium ${
@@ -186,7 +186,7 @@ export function ContagemSection({
               </p>
             </div>
 
-            <label className="col-span-2 flex flex-col gap-1 text-sm">
+            <label className="col-span-2 flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">
                 Observação (opcional)
               </span>
@@ -203,7 +203,7 @@ export function ContagemSection({
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {salvando ? "Salvando..." : "Registrar contagem"}
             </button>
@@ -212,16 +212,16 @@ export function ContagemSection({
       )}
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+        <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
           Histórico de contagens
         </h2>
         {carregandoHistorico ? (
-          <p className="text-sm text-sakura-muted">Carregando...</p>
+          <p className="text-corpo text-sakura-muted">Carregando...</p>
         ) : contagens.length === 0 ? (
-          <p className="text-sm text-sakura-muted">Nenhuma contagem registrada ainda.</p>
+          <p className="text-corpo text-sakura-muted">Nenhuma contagem registrada ainda.</p>
         ) : (
           <div className="overflow-hidden sakura-card">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>
                   <th className="px-4 py-3 font-medium">Data</th>

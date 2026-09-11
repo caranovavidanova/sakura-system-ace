@@ -30,11 +30,11 @@ export function VeiculosFields({
             <div key={campo.id} className="relative rounded-xl border border-sakura-gray/30 p-4">
               {fields.length > 1 && (
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-medium text-sakura-muted">Veículo {index + 1}</p>
+                  <p className="text-rotulo font-medium text-sakura-muted">Veículo {index + 1}</p>
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    className="text-xs font-medium text-red-600 hover:underline"
+                    className="text-rotulo font-medium text-red-600 hover:underline"
                   >
                     Remover
                   </button>
@@ -110,7 +110,7 @@ export function VeiculosFields({
       <button
         type="button"
         onClick={() => append({ ...veiculoFormVazio })}
-        className="mt-4 text-xs font-medium text-sakura-purple hover:underline"
+        className="mt-4 text-rotulo font-medium text-sakura-purple hover:underline"
       >
         + Adicionar veículo
       </button>

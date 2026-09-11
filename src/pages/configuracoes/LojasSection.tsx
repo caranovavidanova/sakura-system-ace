@@ -20,7 +20,7 @@ interface LojasSectionProps {
 }
 
 const inputClasse =
-  "rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple";
+  "rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple";
 
 export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSectionProps) {
   const [erro, setErro] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
 
   return (
     <>
-      {erro && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
       <form onSubmit={handleSubmit(aoAdicionar)} className="mt-4 grid grid-cols-4 gap-2">
         <input
@@ -102,14 +102,14 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
         <button
           type="submit"
           disabled={isSubmitting}
-          className="col-span-4 rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 sm:col-span-1 sm:justify-self-end"
+          className="col-span-4 rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50 sm:col-span-1 sm:justify-self-end"
         >
           {isSubmitting ? "Salvando..." : "+ Nova loja"}
         </button>
       </form>
 
       {lojas.length === 0 ? (
-        <p className="mt-4 text-sm text-sakura-muted">Nenhuma loja cadastrada ainda.</p>
+        <p className="mt-4 text-corpo text-sakura-muted">Nenhuma loja cadastrada ainda.</p>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
           {lojas.map((loja) =>
@@ -127,7 +127,7 @@ export function LojasSection({ lojas, operadorCriadorId, onSalvo }: LojasSection
             ) : (
               <span
                 key={loja.id}
-                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-rotulo font-medium ${
                   loja.ativo
                     ? "bg-sakura-pink-soft text-sakura-purple-dark"
                     : "bg-sakura-gray/20 text-sakura-muted"
@@ -218,13 +218,13 @@ function LinhaEdicaoLoja({
         placeholder="Nome da loja"
         autoFocus
         {...register("nome")}
-        className="w-28 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
+        className="w-28 rounded-lg border border-sakura-gray/40 px-2 py-1 text-rotulo focus:border-sakura-purple"
       />
       <input
         type="text"
         placeholder="Cidade"
         {...register("cidade")}
-        className="w-20 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
+        className="w-20 rounded-lg border border-sakura-gray/40 px-2 py-1 text-rotulo focus:border-sakura-purple"
       />
       <input
         type="text"
@@ -235,19 +235,19 @@ function LinhaEdicaoLoja({
           e.target.value = e.target.value.toUpperCase();
           ufField.onChange(e);
         }}
-        className="w-12 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
+        className="w-12 rounded-lg border border-sakura-gray/40 px-2 py-1 text-rotulo focus:border-sakura-purple"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50"
+        className="text-rotulo font-medium text-sakura-purple hover:underline disabled:opacity-50"
       >
         Salvar
       </button>
       <button
         type="button"
         onClick={onCancelar}
-        className="text-xs font-medium text-sakura-muted hover:underline"
+        className="text-rotulo font-medium text-sakura-muted hover:underline"
       >
         Cancelar
       </button>

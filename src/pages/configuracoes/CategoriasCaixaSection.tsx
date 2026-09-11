@@ -49,15 +49,15 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
   function Lista({ titulo, itens }: { titulo: string; itens: CategoriaCaixa[] }) {
     return (
       <div>
-        <p className="text-xs font-medium text-sakura-purple-dark/85">{titulo}</p>
+        <p className="text-rotulo font-medium text-sakura-purple-dark/85">{titulo}</p>
         {itens.length === 0 ? (
-          <p className="mt-2 text-sm text-sakura-muted">Nenhuma categoria ainda.</p>
+          <p className="mt-2 text-corpo text-sakura-muted">Nenhuma categoria ainda.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
             {itens.map((categoria) => (
               <span
                 key={categoria.id}
-                className="flex items-center gap-2 rounded-full bg-sakura-pink-soft px-3 py-1.5 text-xs font-medium text-sakura-purple-dark"
+                className="flex items-center gap-2 rounded-full bg-sakura-pink-soft px-3 py-1.5 text-rotulo font-medium text-sakura-purple-dark"
               >
                 {categoria.nome}
                 <button
@@ -78,14 +78,14 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
   return (
     <>
       {erro && (
-        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>
       )}
 
       <form onSubmit={handleAdicionar} className="mt-4 flex gap-2">
         <select
           value={tipo}
           onChange={(e) => setTipo(e.target.value as TipoCategoriaCaixa)}
-          className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+          className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
         >
           <option value="saida">Saída</option>
           <option value="entrada">Entrada</option>
@@ -95,12 +95,12 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Nome da categoria (ex: Aluguel, Sucata)"
-          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
         />
         <button
           type="submit"
           disabled={salvando || !nome.trim()}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {salvando ? "Salvando..." : "+ Adicionar"}
         </button>

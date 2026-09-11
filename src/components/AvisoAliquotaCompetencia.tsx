@@ -23,16 +23,16 @@ export function AvisoAliquotaCompetencia({
   if (!aviso.precisa) return null;
 
   return (
-    <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    <div className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
       <p className="font-semibold">
         Antes da primeira nota de serviço de {aviso.mes}, cadastre a alíquota da competência no
         portal da prefeitura.
       </p>
-      <p className="mt-1 text-xs">
+      <p className="mt-1 text-rotulo">
         Sem esse cadastro, a prefeitura recusa a NFS-e — é um cadastro por mês, feito no portal
         dela, não aqui no sistema.
       </p>
-      <pre className="mt-2 whitespace-pre-wrap font-sans text-xs text-amber-900">
+      <pre className="mt-2 whitespace-pre-wrap font-sans text-rotulo text-amber-900">
         {aviso.passoAPasso}
       </pre>
       {onConfirmar && (
@@ -40,7 +40,7 @@ export function AvisoAliquotaCompetencia({
           type="button"
           onClick={onConfirmar}
           disabled={confirmando}
-          className="mt-3 rounded-xl bg-amber-800 px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          className="mt-3 rounded-xl bg-amber-800 px-4 py-2 text-rotulo font-semibold text-white hover:opacity-90 disabled:opacity-50"
         >
           {confirmando ? "Guardando..." : "Já cadastrei"}
         </button>

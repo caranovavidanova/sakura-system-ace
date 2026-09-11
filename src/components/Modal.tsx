@@ -151,7 +151,7 @@ export function Modal({ titulo, onFechar, children }: ModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 id={tituloId} className="text-lg font-semibold text-sakura-purple-dark">
+          <h2 id={tituloId} className="text-subtitulo font-semibold text-sakura-purple-dark">
             {titulo}
           </h2>
           <button

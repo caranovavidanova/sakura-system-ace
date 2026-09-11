@@ -162,14 +162,14 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
   return (
     <div className="space-y-4">
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>
       )}
 
       <div className="flex justify-end">
         {!mostrarFormulario && (
           <button
             onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
           >
             + Enviar XML
           </button>
@@ -178,9 +178,9 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
 
       {mostrarFormulario && (
         <form onSubmit={handleEnviar} className="space-y-4 sakura-card p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-sakura-purple-dark">Enviar arquivo XML</h3>
+          <h3 className="text-corpo font-semibold text-sakura-purple-dark">Enviar arquivo XML</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">
                 Arquivo <span className="text-red-500">*</span>
               </span>
@@ -189,10 +189,10 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                 accept=".xml,text/xml,application/xml"
                 required
                 onChange={(e) => setArquivoSelecionado(e.target.files?.[0] ?? null)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">
                 Mês de competência <span className="text-red-500">*</span>
               </span>
@@ -204,7 +204,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                 className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-corpo">
               <span className="text-sakura-purple-dark/80">
                 Ordem de Serviço relacionada (opcional)
               </span>
@@ -226,14 +226,14 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
             <button
               type="button"
               onClick={() => setMostrarFormulario(false)}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+              className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={enviando}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {enviando ? "Enviando..." : "Enviar"}
             </button>
@@ -242,27 +242,27 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
       )}
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : grupos.size === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhum arquivo enviado ainda.</p>
+        <p className="text-corpo text-sakura-muted">Nenhum arquivo enviado ainda.</p>
       ) : (
         [...grupos.entries()].map(([chave, arquivosDoMes]) => (
           <div key={chave} className="overflow-hidden sakura-card">
             <div className="flex items-center justify-between gap-3 bg-sakura-pink-soft px-4 py-3">
-              <h3 className="text-sm font-semibold text-sakura-purple-dark">
+              <h3 className="text-corpo font-semibold text-sakura-purple-dark">
                 {formatarCompetencia(arquivosDoMes[0].competencia)}
               </h3>
               <button
                 onClick={() => handleBaixarMes(chave, arquivosDoMes)}
                 disabled={mesBaixando !== null}
-                className="text-xs font-medium text-sakura-purple hover:underline disabled:opacity-50 disabled:hover:no-underline"
+                className="text-rotulo font-medium text-sakura-purple hover:underline disabled:opacity-50 disabled:hover:no-underline"
               >
                 {mesBaixando === chave
                   ? "Preparando..."
                   : `Baixar XMLs do mês (${arquivosDoMes.length})`}
               </button>
             </div>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="text-sakura-purple-dark/90">
                 <tr>
                   <th className="px-4 py-2 font-medium">Arquivo</th>

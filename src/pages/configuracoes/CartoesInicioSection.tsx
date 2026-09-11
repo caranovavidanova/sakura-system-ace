@@ -48,21 +48,21 @@ export function CartoesInicioSection({
 
   return (
     <>
-      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
       {salvo && (
-        <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+        <p className="mt-3 rounded-lg bg-emerald-50 px-4 py-2 text-corpo text-emerald-700">
           Cartões salvos.
         </p>
       )}
 
       <div className="mt-4 grid grid-cols-3 gap-3">
         {valores.map((valor, indice) => (
-          <label key={indice} className="flex flex-col gap-1 text-xs text-sakura-purple-dark/90">
+          <label key={indice} className="flex flex-col gap-1 text-rotulo text-sakura-purple-dark/90">
             Cartão {indice + 1}
             <select
               value={valor}
               onChange={(e) => set(indice, e.target.value as CartaoMetrica)}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm text-sakura-purple-dark focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple"
             >
               {OPCOES.map((opcao) => (
                 <option key={opcao} value={opcao}>
@@ -79,7 +79,7 @@ export function CartoesInicioSection({
           type="button"
           onClick={handleSalvar}
           disabled={salvando}
-          className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {salvando ? "Salvando..." : "Salvar cartões"}
         </button>

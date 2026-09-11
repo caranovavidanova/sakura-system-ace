@@ -181,17 +181,17 @@ export function ConfiguracoesPage() {
       <header className="flex items-center gap-3">
         <BotaoVoltar />
         <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">
+          <h1 className="text-titulo font-semibold text-sakura-purple-dark">
             Configurações
           </h1>
-          <p className="text-sm text-sakura-muted">
+          <p className="text-corpo text-sakura-muted">
             Operadores do sistema e permissões de acesso
           </p>
         </div>
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para gerenciar operadores de verdade.
@@ -199,7 +199,7 @@ export function ConfiguracoesPage() {
       )}
 
       {erro && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">
           {erro}
         </p>
       )}
@@ -207,15 +207,15 @@ export function ConfiguracoesPage() {
       <div className="sakura-card p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-sakura-purple-dark">Operadores</h2>
-            <p className="mt-1 text-xs text-sakura-muted">
+            <h2 className="text-corpo font-semibold text-sakura-purple-dark">Operadores</h2>
+            <p className="mt-1 text-rotulo text-sakura-muted">
               Quem tem login no sistema e quais módulos cada um acessa.
             </p>
           </div>
           {!formulario && (
             <button
               onClick={() => abrirFormulario("novo")}
-              className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+              className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
             >
               + Novo operador
             </button>
@@ -235,9 +235,9 @@ export function ConfiguracoesPage() {
         )}
 
         {carregando ? (
-          <p className="mt-4 text-sm text-sakura-muted">Carregando...</p>
+          <p className="mt-4 text-corpo text-sakura-muted">Carregando...</p>
         ) : operadores.length === 0 ? (
-          <p className="mt-4 text-sm text-sakura-muted">
+          <p className="mt-4 text-corpo text-sakura-muted">
             Nenhum operador cadastrado ainda.
           </p>
         ) : (
@@ -247,10 +247,10 @@ export function ConfiguracoesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium text-sakura-purple-dark">{op.nome}</p>
-                    <p className="text-sm text-sakura-muted">@{op.usuario}</p>
+                    <p className="text-corpo text-sakura-muted">@{op.usuario}</p>
                   </div>
                   <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
                       op.ativo
                         ? "bg-emerald-50 text-emerald-700"
                         : "bg-sakura-gray/20 text-sakura-muted"
@@ -262,18 +262,18 @@ export function ConfiguracoesPage() {
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {op.admin ? (
-                    <span className="rounded-full bg-sakura-pink-soft px-2.5 py-1 text-xs font-medium text-sakura-purple-dark">
+                    <span className="rounded-full bg-sakura-pink-soft px-2.5 py-1 text-rotulo font-medium text-sakura-purple-dark">
                       Administrador (acesso total)
                     </span>
                   ) : op.permissoes.length === 0 ? (
-                    <span className="text-xs text-sakura-muted">
+                    <span className="text-rotulo text-sakura-muted">
                       Nenhum módulo liberado
                     </span>
                   ) : (
                     op.permissoes.map((chave) => (
                       <span
                         key={chave}
-                        className="rounded-full bg-sakura-pink-soft px-2.5 py-1 text-xs font-medium text-sakura-purple-dark"
+                        className="rounded-full bg-sakura-pink-soft px-2.5 py-1 text-rotulo font-medium text-sakura-purple-dark"
                       >
                         {MODULOS.find((m) => m.chave === chave)?.label ?? chave}
                       </span>
@@ -311,8 +311,8 @@ export function ConfiguracoesPage() {
 
       {!carregando && lojaAtual && operadorLogado && (
         <div className="sakura-card p-6">
-          <h2 className="text-sm font-semibold text-sakura-purple-dark">Lojas</h2>
-          <p className="mt-1 text-xs text-sakura-muted">
+          <h2 className="text-corpo font-semibold text-sakura-purple-dark">Lojas</h2>
+          <p className="mt-1 text-rotulo text-sakura-muted">
             Cada loja tem seu próprio estoque, caixa, ordens de serviço e configurações — clientes,
             peças, serviços e categorias continuam compartilhados entre todas.
           </p>
@@ -409,26 +409,26 @@ export function ConfiguracoesPage() {
 
       {senhaGerada && (
         <Modal titulo="Senha temporária gerada" onFechar={() => setSenhaGerada(null)}>
-          <p className="text-sm text-sakura-purple-dark/90">
+          <p className="text-corpo text-sakura-purple-dark/90">
             Repasse essa senha pra <strong>{senhaGerada.operador.nome}</strong> (WhatsApp,
             pessoalmente etc.). Ela só aparece aqui uma vez — ao fazer login com ela, o sistema
             já vai pedir pra criar uma senha nova.
           </p>
-          <p className="mt-4 select-all rounded-xl border border-sakura-gray/30 bg-black/30 px-4 py-3 text-center font-mono text-lg tracking-wider text-sakura-pink">
+          <p className="mt-4 select-all rounded-xl border border-sakura-gray/30 bg-black/30 px-4 py-3 text-center font-mono text-subtitulo tracking-wider text-sakura-pink">
             {senhaGerada.senha}
           </p>
           <div className="mt-4 flex justify-end gap-3">
             <button
               type="button"
               onClick={() => navigator.clipboard.writeText(senhaGerada.senha)}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+              className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
               Copiar
             </button>
             <button
               type="button"
               onClick={() => setSenhaGerada(null)}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90"
             >
               Já anotei
             </button>

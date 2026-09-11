@@ -63,22 +63,22 @@ export function FornecedoresPage() {
       <header className="flex items-center gap-3">
         <BotaoVoltar />
         <div>
-          <h1 className="text-2xl font-semibold text-sakura-purple-dark">Fornecedores</h1>
-          <p className="text-sm text-sakura-muted">
+          <h1 className="text-titulo font-semibold text-sakura-purple-dark">Fornecedores</h1>
+          <p className="text-corpo text-sakura-muted">
             Cadastro de fornecedores e pedidos de compra
           </p>
         </div>
       </header>
 
       {!isSupabaseConfigured && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           O Supabase ainda não está configurado. Defina{" "}
           <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>{" "}
           no arquivo <code>.env</code> para começar a usar fornecedores de verdade.
         </p>
       )}
 
-      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">{erro}</p>}
 
       <div className="flex gap-1 border-b border-sakura-gray/30">
         <AbaBotao label="Cadastro" ativa={aba === "cadastro"} onClick={() => setAba("cadastro")} />
@@ -90,11 +90,11 @@ export function FornecedoresPage() {
       </div>
 
       {carregando ? (
-        <p className="text-sm text-sakura-muted">Carregando...</p>
+        <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : aba === "cadastro" ? (
         <FornecedoresSection fornecedores={fornecedores} onRecarregar={carregar} />
       ) : !lojaAtual ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           Seu usuário não tem loja atribuída. Fale com o administrador.
         </p>
       ) : (
@@ -124,7 +124,7 @@ function AbaBotao({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+      className={`px-4 py-2.5 text-corpo font-medium transition-colors ${
         ativa
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
           : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"

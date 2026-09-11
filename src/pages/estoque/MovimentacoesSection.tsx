@@ -43,7 +43,7 @@ export function MovimentacoesSection({
   return (
     <div className="space-y-6">
       {pecas.length === 0 ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
           Cadastre ao menos um produto na aba "Produtos" antes de registrar
           movimentações de estoque.
         </p>
@@ -52,7 +52,7 @@ export function MovimentacoesSection({
           <div className="flex justify-end">
             <button
               onClick={() => setMostrarFormulario(true)}
-              className="rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+              className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
             >
               + Registrar movimentação
             </button>
@@ -71,11 +71,11 @@ export function MovimentacoesSection({
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-sakura-purple-dark">
+          <h2 className="text-corpo font-semibold text-sakura-purple-dark">
             Histórico de movimentações
           </h2>
           {movimentos.length > 0 && (
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-corpo">
               <span className="text-sakura-purple-dark/80">Produto</span>
               <Combobox
                 className="w-56"
@@ -90,14 +90,14 @@ export function MovimentacoesSection({
         </div>
 
         {movimentosFiltrados.length === 0 ? (
-          <p className="text-sm text-sakura-muted">
+          <p className="text-corpo text-sakura-muted">
             {movimentos.length === 0
               ? "Nenhuma movimentação registrada ainda."
               : "Nenhuma movimentação para este produto."}
           </p>
         ) : (
           <div className="overflow-hidden sakura-card">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>
                   <th className="px-4 py-3 font-medium">Data</th>

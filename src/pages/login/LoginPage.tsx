@@ -38,21 +38,21 @@ export function LoginPage({ onConfigurarConexao }: LoginPageProps) {
           <Logo className="drop-shadow-sm" />
         </div>
 
-        <h1 className="text-center text-xl font-semibold text-sakura-purple-dark">
+        <h1 className="text-center text-destaque font-semibold text-sakura-purple-dark">
           Bem-vindo de volta
         </h1>
-        <p className="mb-6 text-center text-sm text-sakura-purple-dark/90">
+        <p className="mb-6 text-center text-corpo text-sakura-purple-dark/90">
           Entre com seu usuário para continuar
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {erro && (
-            <p className="rounded-lg bg-red-50/90 px-4 py-2 text-sm text-red-700">
+            <p className="rounded-lg bg-red-50/90 px-4 py-2 text-corpo text-red-700">
               {erro}
             </p>
           )}
 
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Usuário</span>
             <input
               type="text"
@@ -63,7 +63,7 @@ export function LoginPage({ onConfigurarConexao }: LoginPageProps) {
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-corpo">
             <span className="text-sakura-purple-dark/80">Senha</span>
             <input
               type="password"
@@ -76,7 +76,7 @@ export function LoginPage({ onConfigurarConexao }: LoginPageProps) {
           <button
             type="submit"
             disabled={entrando}
-            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-sm font-medium text-white shadow-[0_0_15px_rgba(182,36,255,0.4)] hover:shadow-[0_0_25px_rgba(182,36,255,0.7)] hover:bg-sakura-purple/90 transition-all disabled:opacity-50"
+            className="w-full rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white shadow-[0_0_15px_rgba(182,36,255,0.4)] hover:shadow-[0_0_25px_rgba(182,36,255,0.7)] hover:bg-sakura-purple/90 transition-all disabled:opacity-50"
           >
             {entrando ? "Entrando..." : "Entrar"}
           </button>
@@ -88,7 +88,7 @@ export function LoginPage({ onConfigurarConexao }: LoginPageProps) {
         <button
           type="button"
           onClick={onConfigurarConexao}
-          className="mx-auto mt-6 block text-xs text-sakura-muted hover:text-sakura-pink hover:underline"
+          className="mx-auto mt-6 block text-rotulo text-sakura-muted hover:text-sakura-pink hover:underline"
         >
           Configurar conexão com o banco de dados
         </button>

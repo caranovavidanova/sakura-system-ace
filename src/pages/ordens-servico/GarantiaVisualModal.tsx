@@ -74,14 +74,14 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
   return (
     <Modal titulo="Garantia da OS" onFechar={onFechar}>
       {!textoGarantia ? (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-corpo text-amber-800">
           Configure o texto de garantia em Configurações (seção "Texto de garantia") antes de
           imprimir ou baixar.
         </p>
       ) : (
         <>
-          {carregando && <p className="text-sm text-sakura-muted">Gerando pré-visualização...</p>}
-          {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>}
+          {carregando && <p className="text-corpo text-sakura-muted">Gerando pré-visualização...</p>}
+          {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-corpo text-red-700">{erro}</p>}
 
           {!carregando && !erro && html && (
             <>
@@ -95,21 +95,21 @@ export function GarantiaVisualModal({ ordem, textoGarantia, onFechar }: Garantia
                 <button
                   type="button"
                   onClick={onFechar}
-                  className="rounded-xl px-4 py-2 text-sm font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
+                  className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
                 >
                   Fechar
                 </button>
                 <button
                   type="button"
                   onClick={handleBaixarHtml}
-                  className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-sm font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+                  className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
                 >
                   Baixar HTML
                 </button>
                 <button
                   type="button"
                   onClick={handleImprimir}
-                  className="rounded-xl bg-sakura-purple px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                  className="rounded-xl bg-sakura-purple px-4 py-2 text-corpo font-medium text-white hover:opacity-90"
                 >
                   Imprimir
                 </button>

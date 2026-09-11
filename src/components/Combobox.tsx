@@ -178,7 +178,7 @@ export function Combobox({
                 e.preventDefault();
                 selecionar("");
               }}
-              className={`block w-full px-3 py-1.5 text-left text-sm text-sakura-muted ${
+              className={`block w-full px-3 py-1.5 text-left text-corpo text-sakura-muted ${
                 indiceAtivo === 0 ? "bg-sakura-purple/20 text-sakura-pink" : "hover:bg-white/5"
               }`}
             >
@@ -193,12 +193,12 @@ export function Combobox({
                   e.preventDefault();
                   selecionar(filtro.trim());
                 }}
-                className="block w-full px-3 py-1.5 text-left text-sm text-sakura-pink hover:bg-white/5"
+                className="block w-full px-3 py-1.5 text-left text-corpo text-sakura-pink hover:bg-white/5"
               >
                 Usar "{filtro.trim()}"
               </button>
             ) : (
-              <p className="px-3 py-1.5 text-sm text-sakura-muted">Nenhum resultado encontrado</p>
+              <p className="px-3 py-1.5 text-corpo text-sakura-muted">Nenhum resultado encontrado</p>
             )
           ) : (
             opcoesFiltradas.map((opcao, indice) => {
@@ -211,7 +211,7 @@ export function Combobox({
                     e.preventDefault();
                     selecionar(opcao.valor);
                   }}
-                  className={`block w-full px-3 py-1.5 text-left text-sm text-white/90 ${
+                  className={`block w-full px-3 py-1.5 text-left text-corpo text-white/90 ${
                     indiceReal === indiceAtivo ? "bg-sakura-purple/20 text-sakura-pink" : "hover:bg-white/5"
                   }`}
                 >

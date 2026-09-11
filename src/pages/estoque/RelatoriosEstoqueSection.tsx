@@ -54,22 +54,22 @@ export function RelatoriosEstoqueSection({
   return (
     <div className="space-y-6">
       <section className="sakura-card p-6">
-        <h2 className="text-sm font-semibold text-sakura-purple-dark">
+        <h2 className="text-corpo font-semibold text-sakura-purple-dark">
           Estoque físico-financeiro
         </h2>
-        <p className="mt-1 text-xs text-sakura-muted">
+        <p className="mt-1 text-rotulo text-sakura-muted">
           Valor do estoque parado (saldo atual × preço de custo), só produtos ativos.
         </p>
-        <p className="mt-3 text-xl font-semibold text-sakura-purple-dark">
+        <p className="mt-3 text-destaque font-semibold text-sakura-purple-dark">
           {formatarMoeda(valorTotalEstoque)}
         </p>
       </section>
 
       <section className="sakura-card p-6">
-        <h2 className="text-sm font-semibold text-sakura-purple-dark">
+        <h2 className="text-corpo font-semibold text-sakura-purple-dark">
           Saldo por situação
         </h2>
-        <p className="mt-1 text-xs text-sakura-muted">
+        <p className="mt-1 text-rotulo text-sakura-muted">
           Produtos ativos, agrupados pelo saldo atual calculado.
         </p>
         <div className="mt-3 flex gap-1 border-b border-sakura-gray/30">
@@ -96,10 +96,10 @@ export function RelatoriosEstoqueSection({
         </div>
 
         {pecasFiltradasPorSaldo.length === 0 ? (
-          <p className="mt-4 text-sm text-sakura-muted">Nenhum produto nessa situação.</p>
+          <p className="mt-4 text-corpo text-sakura-muted">Nenhum produto nessa situação.</p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-xl border border-sakura-gray/20">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Produto</th>
@@ -127,14 +127,14 @@ export function RelatoriosEstoqueSection({
       </section>
 
       <section className="sakura-card p-6">
-        <h2 className="text-sm font-semibold text-sakura-purple-dark">
+        <h2 className="text-corpo font-semibold text-sakura-purple-dark">
           Produtos sem movimentação
         </h2>
-        <p className="mt-1 text-xs text-sakura-muted">
+        <p className="mt-1 text-rotulo text-sakura-muted">
           Produtos ativos que nunca tiveram entrada ou saída registrada.
         </p>
         {pecasSemMovimento.length === 0 ? (
-          <p className="mt-4 text-sm text-sakura-muted">
+          <p className="mt-4 text-corpo text-sakura-muted">
             Todos os produtos ativos já tiveram alguma movimentação.
           </p>
         ) : (
@@ -142,7 +142,7 @@ export function RelatoriosEstoqueSection({
             {pecasSemMovimento.map((peca) => (
               <li
                 key={peca.id}
-                className="rounded-full bg-sakura-pink-soft px-3 py-1.5 text-xs font-medium text-sakura-purple-dark"
+                className="rounded-full bg-sakura-pink-soft px-3 py-1.5 text-rotulo font-medium text-sakura-purple-dark"
               >
                 {peca.descricao}
               </li>
@@ -166,7 +166,7 @@ function FiltroBotao({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-2 text-xs font-medium transition-colors ${
+      className={`px-3 py-2 text-rotulo font-medium transition-colors ${
         ativo
           ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
           : "text-sakura-purple-dark/85 hover:text-sakura-purple-dark"

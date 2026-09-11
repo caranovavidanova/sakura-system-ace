@@ -4,7 +4,7 @@ export const inputClasse =
 export function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <fieldset className="space-y-3">
-      <legend className="text-sm font-semibold text-sakura-purple-dark">{titulo}</legend>
+      <legend className="text-corpo font-semibold text-sakura-purple-dark">{titulo}</legend>
       {children}
     </fieldset>
   );
@@ -24,12 +24,12 @@ export function Campo({
   children: React.ReactNode;
 }) {
   return (
-    <label className={`flex flex-col gap-1 text-sm ${className ?? ""}`}>
+    <label className={`flex flex-col gap-1 text-corpo ${className ?? ""}`}>
       <span className="text-sakura-purple-dark/80">
         {label} {obrigatorio && <span className="text-red-500">*</span>}
       </span>
       {children}
-      {erro && <span className="text-xs text-red-600">{erro}</span>}
+      {erro && <span className="text-rotulo text-red-600">{erro}</span>}
     </label>
   );
 }

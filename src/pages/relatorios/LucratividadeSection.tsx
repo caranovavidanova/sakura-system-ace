@@ -94,7 +94,7 @@ export function LucratividadeSection({ ordens, pecas, servicos }: LucratividadeS
   return (
     <>
       <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+        <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
           De:
           <input
             type="date"
@@ -103,7 +103,7 @@ export function LucratividadeSection({ ordens, pecas, servicos }: LucratividadeS
             className="rounded-lg border border-sakura-gray/40 px-3 py-1.5"
           />
         </label>
-        <label className="flex items-center gap-2 text-sm text-sakura-purple-dark/80">
+        <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
           Até:
           <input
             type="date"
@@ -116,34 +116,34 @@ export function LucratividadeSection({ ordens, pecas, servicos }: LucratividadeS
 
       <div className="grid grid-cols-3 gap-4">
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Receita do período</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Receita do período</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalReceita)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Custo do período</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Custo do período</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalCusto)}
           </p>
         </div>
         <div className="sakura-card p-4">
-          <p className="text-xs text-sakura-muted">Margem do período</p>
-          <p className="text-xl font-semibold text-sakura-purple-dark">
+          <p className="text-rotulo text-sakura-muted">Margem do período</p>
+          <p className="text-destaque font-semibold text-sakura-purple-dark">
             {formatarMoeda(totalMargem)}
           </p>
         </div>
       </div>
 
       {linhas.length === 0 ? (
-        <p className="text-sm text-sakura-muted">Nenhuma peça ou serviço vendido nesse período.</p>
+        <p className="text-corpo text-sakura-muted">Nenhuma peça ou serviço vendido nesse período.</p>
       ) : (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-sakura-purple-dark">
+          <h2 className="mb-3 text-corpo font-semibold text-sakura-purple-dark">
             Margem por peça/serviço
           </h2>
           <div className="overflow-hidden sakura-card">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-corpo">
               <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
                 <tr>
                   <th className="px-4 py-3 font-medium">Descrição</th>

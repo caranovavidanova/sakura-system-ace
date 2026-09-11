@@ -246,7 +246,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # Configurações), GraficoBarras.tsx / GraficoRadar.tsx (SVG puro,
 │   │                             # usados em Relações), VeiculoIcone.tsx (ícone por tipo de
 │   │                             # veículo, pintado com a cor cadastrada), AreaRolavel.tsx (barra
-│   │                             # de rolagem 100% customizada, ver seção 2), LojaSwitcher.tsx
+│   │                             # de rolagem 100% customizada, ver seção 2), AcoesDaLinha.tsx
+│   │                             # (ações de linha de lista: botão de ícone de 32x32 pro que é
+│   │                             # do dia a dia + menu de três pontinhos pro que não dá pra
+│   │                             # desfazer — ver item 51 da seção 6), LojaSwitcher.tsx
 │   │                             # (seletor de loja ativa, só aparece com 2+ lojas — fica no
 │   │                             # rodapé da Sidebar), VersaoApp.tsx (mostra a versão do app,
 │   │                             # pequena, no canto inferior direito, lendo
@@ -1780,6 +1783,34 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     um passo separado que reprova se um `.pfx`/`.p12`/`conexao.json` for versionado — certificado
     digital é a identidade fiscal da empresa, e o repositório é público.
 
+51. **Classe do Tailwind vence CSS de `@layer base` — o lado inverso do item 14 (11/09/2026).**
+    Ao dar foco de teclado ao app (`TR-02.2`), a regra `:focus-visible` foi escrita em
+    `@layer base`, como manda o item 14. Só que existiam **78 `outline-none` espalhados em 37
+    arquivos**, nos campos de formulário. Como classe do Tailwind, eles moram na camada
+    `utilities`, que vence a `base` **não importa a especificidade** — ou seja, o anel de foco
+    funcionaria em tudo, menos justo nos campos onde ele mais importa. Foram removidos (o
+    `focus:border-sakura-purple` que acompanhava cada um ficou, agora como reforço).
+    **Lição**: o item 14 diz que CSS fora de camada vence classe do Tailwind; o contrário também
+    é verdade, e é o caso mais comum — ao escrever regra global em `@layer base`, procurar antes
+    a classe utilitária que a anula.
+
+    **Cuidado de portal, da mesma leva**: toda lista do app fica dentro de
+    `overflow-hidden sakura-card`, então um menu suspenso posicionado ali dentro nasce
+    **recortado**. E `position: fixed` **não** salva: o `backdrop-filter` do `sakura-card` vira
+    bloco de contenção pra elemento fixo. Por isso o menu de `AcoesDaLinha.tsx` é renderizado num
+    portal pro `<body>`. Vale pra qualquer coisa suspensa que venha a existir dentro de um card.
+
+52. **`Number(undefined)` é `NaN`, e comparador que devolve `NaN` não ordena nada (11/09/2026).**
+    O menu de ações novo ordena pra deixar o destrutivo por último — a garantia que o item
+    `TR-02.1` inteiro existe pra dar. O comparador era
+    `Number(a.tipo === "menu" && a.perigosa) - Number(...)`; quando `perigosa` vem `undefined`,
+    aquele `&&` devolve `undefined` e `Number(undefined)` é **`NaN`**, não `0`. Comparador que
+    devolve `NaN` faz o `sort` não reordenar nada, e o **"Excluir" nascia em primeiro no menu**,
+    bem onde o dedo cai. Corrigido com `=== true`. **Lição de método, mais que de JavaScript**:
+    isso passou pela leitura do código e foi pego pelo teste de tela, que conferia justamente a
+    promessa do item ("o destrutivo é o último"). Quando uma mudança tem uma promessa em uma
+    frase, essa frase vira teste.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -1813,6 +1844,32 @@ escondidas — o valor só muda quando alguém escreve. Vale pros 32 campos num�
 quantidade, desconto, juros, alíquota). Global, sem nada a fazer em tela nova
 (`src/hooks/useNaoMexerNoNumeroSemDigitar.ts` + CSS em `globals.css`). Ver item 41 da seção 6 pro
 estoque de "1,99 UN" que revelou isso.
+
+**Foco de teclado visível em tudo** (11/09/2026, item `TR-02.2` do guia): até aqui o app não
+desenhava foco nenhum — o anel padrão do Chromium é escuro e sumia no fundo quase preto. Num app
+feito pra ser usado só de teclado no balcão, isso é armadilha: dava pra apertar Enter sem saber em
+que campo se estava. Agora todo campo, botão e link mostra um anel ao ser alcançado pelo teclado.
+São dois anéis sobrepostos (um escuro colado na borda, um claro 2px pra fora) pra funcionar tanto
+sobre o card escuro quanto sobre a faixa amarela de aviso da emissão de nota. Regra única em
+`@layer base` do `globals.css`, sem nada a fazer em tela nova. Ver item 51 da seção 6 pro motivo
+de os 78 `outline-none` do app terem saído junto.
+
+**Ações de linha das listas** (11/09/2026, item `TR-02.1` do guia): em toda lista, o trio
+`Editar Inativar Excluir` era três palavras coladas em texto de ~10px, com o destrutivo
+encostado no anterior. Virou um padrão único (`components/AcoesDaLinha.tsx`): ícone de 32x32 com
+8px de folga pro que é do dia a dia, e menu de três pontinhos pro que não dá pra desfazer — então
+excluir um cliente passou a ser dois gestos, não um clique torto. Onde virar ícone seria
+adivinhação ("Marcar como paga", "Receber", "Ver DANFE"), a palavra continua lá, num botão de
+32px de altura. Vale em Clientes, Produtos, Serviços, Fornecedores, Pedidos de compra,
+Funcionários, Contas a Pagar, Notas Fiscais e Operadores. **Ponto ainda em aberto com ela**:
+"Editar" e "Inativar" viraram ícone (com o nome no balãozinho do mouse), que é o que o guia pedia
+— se ela preferir a palavra escrita na linha, é troca de uma palavra por lista.
+
+**Modal com foco preso** (11/09/2026, item `TR-02.3` do guia): o `Modal.tsx` — usado em
+confirmação de dinheiro e de documento fiscal — deixava o Tab escapar pra tela de trás. Agora
+prende o Tab, fecha no `Esc`, devolve o foco pro botão que abriu e marca o fundo como inerte. O
+foco inicial cai sempre no ✕: num modal de cancelar nota, um Enter no automático fecha, nunca
+confirma.
 
 **Auto-save de rascunho** (estendido nesta sessão): os formulários longos guardam sozinhos uma
 cópia local do que está digitado, a cada 30s — **não é um "salvar" de verdade** (não manda nada pro
@@ -3640,3 +3697,40 @@ Postgres local e a `0049` sozinha duas vezes num banco com dado plantado.
    senha do portal da prefeitura) — item 50 da seção 6.
 5. E, todo mês, o de sempre: **cadastrar a alíquota da competência no portal da prefeitura** antes
    da primeira NFS-e do mês — que agora, pelo menos, o sistema lembra.
+
+### ⏸ O ponto exato onde parou (11/09/2026, fim do dia) — LEIA ISTO PRIMEIRO
+
+**Os três itens `P0` da Etapa 2 do guia saíram e estão na `main`. Nada foi publicado em tag** —
+o computador da loja segue na `v0.9.30`, então nada disso chegou lá ainda. **Perguntar a ela se é
+pra publicar** antes de mexer em versão (ver "Gerar o instalador Windows", seção 9).
+
+Os três são de ergonomia de balcão, e o fio comum é o mesmo: o app foi desenhado pra ser usado só
+de teclado, e faltava a outra metade disso.
+
+1. **`TR-02.2` — foco de teclado visível** em todo campo, botão e link (PR #233).
+2. **`TR-02.3` — foco preso dentro do modal**, com `Esc`, devolução do foco e fundo inerte
+   (PR #233).
+3. **`TR-02.1` — alvos de clique de 32px nas listas**, com o "Excluir" saindo da linha pra um
+   menu de três pontinhos (PR #234).
+
+O que cada um faz está em "Estado atual por módulo" (seção 7, no começo, junto dos outros
+comportamentos globais); o que se aprendeu está nos itens **51 e 52** da seção 6.
+
+**Uma pergunta aberta pra ela**, que é decisão de gosto e não de código: "Editar" e "Inativar"
+viraram **ícone** nas listas (com o nome aparecendo no balãozinho do mouse), que é o que o guia
+pedia. Se ela achar melhor manter a **palavra escrita** na linha, é trocar uma palavra por lista.
+Vale mostrar uma tela pra ela antes de publicar tag.
+
+**Como foi validado**: além de `tsc`, lint, os 296 testes nos dois fusos e o `npm run contraste`,
+as duas mudanças foram dirigidas **no Electron real** (Playwright + `xvfb`, renderizando os
+componentes de verdade) — 13 verificações no foco/modal e 14 nas ações de linha. Foi esse teste
+que pegou o bug do item 52, que a leitura do código tinha deixado passar.
+
+**O que continua pendente é o mesmo de antes** (a lista logo acima): confirmar o "Ver DANFE" numa
+nota de verdade, marcar o CI como obrigatório, trocar as três credenciais expostas e cadastrar a
+alíquota da competência todo mês.
+
+**Da Etapa 2, ainda não foram feitos**: `TR-01.1` (escala tipográfica), `TR-01.3` (auditoria de
+contraste WCAG), `TL-04` (cartões e calendário do Início), `TL-08` (cadastrar cliente sem sair da
+OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais), `TL-27` (categoria obrigatória no caixa) e
+`FN-03` (WhatsApp). Ela escolhe o próximo pelo código do item — não sair fazendo a lista inteira.

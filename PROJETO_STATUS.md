@@ -1923,9 +1923,9 @@ encostado no anterior. Virou um padrão único (`components/AcoesDaLinha.tsx`): 
 excluir um cliente passou a ser dois gestos, não um clique torto. Onde virar ícone seria
 adivinhação ("Marcar como paga", "Receber", "Ver DANFE"), a palavra continua lá, num botão de
 32px de altura. Vale em Clientes, Produtos, Serviços, Fornecedores, Pedidos de compra,
-Funcionários, Contas a Pagar, Notas Fiscais e Operadores. **Ponto ainda em aberto com ela**:
-"Editar" e "Inativar" viraram ícone (com o nome no balãozinho do mouse), que é o que o guia pedia
-— se ela preferir a palavra escrita na linha, é troca de uma palavra por lista.
+Funcionários, Contas a Pagar, Notas Fiscais e Operadores. **Ela viu a tela renderizada e escolheu
+manter o ícone** (11/09/2026) — "Editar" e "Inativar" ficam como lápis e afins, com o nome no
+balãozinho do mouse. Assunto fechado, não reabrir.
 
 **Modal com foco preso** (11/09/2026, item `TR-02.3` do guia): o `Modal.tsx` — usado em
 confirmação de dinheiro e de documento fiscal — deixava o Tab escapar pra tela de trás. Agora
@@ -2581,6 +2581,13 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
     mesmo dia** ("pronto, instalado a nova versao") — o que ainda não foi testado em uso real é o
     "Ver DANFE" numa nota de verdade (a busca do PDF na Focus NFe é justamente o que não dá pra
     testar daqui) e o aviso da alíquota aparecendo no Início.
+
+  - `v0.9.31`: a leva de acessibilidade e ergonomia da **Etapa 2** do guia, acumulada a pedido
+    dela e publicada de uma vez — **foco de teclado visível** (`TR-02.2`), **foco preso dentro do
+    modal** (`TR-02.3`), **alvos de clique de 32px nas listas** com o "Excluir" fora da linha
+    (`TR-02.1`), a **escala tipográfica** com nome por papel (`TR-01.1`, nada encolheu) e os
+    **cartões e o calendário do Início** (`TL-04`). Sem migration: o banco dela já estava em
+    `0049`. Publicada via `workflow_dispatch`.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -3354,9 +3361,8 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.30"` — é a última tag publicada, mas a `main` **já tem cinco
-  itens esperando tag** (`TR-02.1`, `TR-02.2`, `TR-02.3`, `TR-01.1` e `TL-04`), por decisão dela
-  de acumular (ver "O ponto exato onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.31"` — publicada em 11/09/2026, com a `main` em dia e
+  **nada esperando tag** (ver "Onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -3386,7 +3392,7 @@ cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehy
 npm run dev
 ```
 
-### Onde parou em 02/09/2026 (histórico — o marco mais recente é o de 03/09, logo abaixo)
+### Onde parou em 02/09/2026 (histórico — o marco mais recente está no FIM do arquivo)
 
 Três entregas, acumuladas a pedido dela e publicadas juntas na **`v0.9.26`** — ou seja, tudo
 abaixo já chega na loja pelo auto-update.
@@ -3412,7 +3418,7 @@ abaixo já chega na loja pelo auto-update.
    fora. Junto: alíquota do ISS em branco virava 0% na nota sem ninguém reclamar. O que **não** foi
    mexido, e por quê, está em "O que ainda está frágil na parte fiscal" (seção 8, item 1).
 
-### Onde tudo parou (03/09/2026)
+### Onde parou em 03/09/2026 (histórico — o marco mais recente está no FIM do arquivo)
 
 Tudo desta data já está **publicado na `v0.9.27`** e **confirmado por ela rodando na loja** ("tudo
 certo" depois do auto-update). Foram duas frentes:
@@ -3489,7 +3495,7 @@ a última tag e **ela confirmou que chegou na loja pelo auto-update e está tudo
 quase todos os novos cobrem as contas de dinheiro e de data que estavam erradas, e agora o
 destinatário da NFC-e).
 
-### Onde tudo parou (08-09/09/2026)
+### Onde parou em 08-09/09/2026 (histórico — o marco mais recente está no FIM do arquivo)
 
 **1. Corrigir um item já lançado numa OS** — publicado na **`v0.9.28`** e **confirmado por ela
 usando na loja**: ela digitou R$120 num alinhamento e num balanceamento que eram R$60, editou
@@ -3596,7 +3602,7 @@ mais importam antes da terceira empresa:
 5. RLS por módulo (item 1 da seção 6) e teste de tela (item 4) — as duas dívidas conhecidas que
    mudam de gravidade quando o sistema roda na loja dos outros.
 
-### Onde parou em 10/09/2026 (histórico — o marco mais recente é o de 11/09, no fim do arquivo)
+### Onde parou em 10/09/2026 (histórico — o marco mais recente está no FIM do arquivo)
 
 > A `v0.9.29` que esta seção dá como pendente **foi publicada em 11/09/2026**, com o "sim" dela.
 
@@ -3634,238 +3640,140 @@ era a única, e já foi corrigida à mão. **Não reabrir esse assunto**; a cons
 receita, caso um dia entre peça de fornecedor novo por uma versão antiga do app (`pecas` é
 compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
-### Onde parou em 11/09/2026, de manhã (histórico — o marco mais recente está no fim do arquivo)
+### ⏸ Onde parou em 11/09/2026 — LEIA ISTO PRIMEIRO
 
-> A `v0.9.29` que esta seção dá como pendente **foi publicada** mais tarde no mesmo dia, com o
-> "sim" dela. A migration `0048` continua pendente. O resto desta seção segue valendo como
-> registro do que foi feito na Etapa 1 do guia.
+**Estado: `v0.9.31` publicada, `main` em dia, banco em `0049`, nada pendente do meu lado nem de
+SQL.** Foi um dia longo, com três levas de trabalho — o resumo de cada uma está logo abaixo, e o
+que sobrou pra ela está no fim desta seção.
 
-#### O que aquela sessão fez
+> As três levas deste dia foram escolhidas por ela **pelo código do item**, no guia de melhorias
+> (`MELHORIAS.md`, na raiz do repositório). Ele **não** carrega sozinho em sessão nova, de
+> propósito: são 227 KB. Abrir só quando ela citar um item ou pedir sugestão de próximo passo —
+> e, ao abrir, **conferir a premissa do item contra o código antes de aplicar** (ver item 53 da
+> seção 6: um item do guia pediu uma mudança que teria PIORADO o que ele veio consertar).
 
-Ela trouxe um **guia de melhorias** — que a partir de 11/09/2026 está **commitado na raiz do
-repositório, em `MELHORIAS.md`**, pra a próxima sessão não depender de ela anexar de novo. Ele
-**não** é carregado sozinho (não entrou nos `@imports` do `CLAUDE.md`): são 227 KB, e gastar isso
-de contexto em toda sessão atrapalharia mais que ajudaria — abrir só quando ela citar um item pelo
-código ou pedir sugestão de próximo passo. Foi gerado fora daqui, a partir do
-`PROJETO_STATUS.md`, do PDF das 54 telas e de uma pesquisa de mercado/acessibilidade, e traz 12
-eixos transversais, as 54 telas uma a uma, 15 funcionalidades novas e um roteiro em 5 etapas. **É um
-cardápio, não ordem de execução.** Ela escolheu a **Etapa 1 — "fundação barata que protege tudo o
-resto"**, que são cinco itens curtos cujo objetivo é parar de deixar erro conhecido voltar.
-Os cinco saíram, e o detalhe técnico de cada um está nos **itens 48, 49 e 50 da seção 6**:
+#### Leva 1 — Etapa 1 do guia: a fundação que impede erro conhecido de voltar
 
-- **CI** (`TR-07.1`) — as cinco checagens que antes eram rodadas à mão agora rodam em todo push e
-  PR. Item 48.
-- **Trava de fuso** (`TR-05.5`) — regra de lint contra cortar o dia de um timestamp em UTC, mais a
-  suíte rodando nos dois fusos. Item 48.
-- **Teste de arquitetura** (`TR-06.2`) — reprova conta de dinheiro escrita dentro de tela. Item 49.
-- **Tipos de coluna de dinheiro** (`TR-05.3`) — auditoria feita, **um bug real encontrado e
-  corrigido**, migration `0048`. Item 49.
-- **Varredura de segredo** (`TR-04.7`) — `gitleaks` no CI com regras próprias, `.gitignore`
-  fechado pra certificado digital, e a regra "nenhuma credencial neste arquivo" promovida pro topo
-  deste documento. Item 50.
+Cinco itens curtos, todos de mecanismo e não de tela. O detalhe técnico está nos **itens 48, 49 e
+50 da seção 6**; em uma linha cada:
 
-Junto disso, a branch `claude/cool-lamport-uzyh8w` (o gerador do catálogo das 54 telas, parada sem
-PR desde 10/09) foi mesclada — PR #226. Dois itens do guia dependiam dela pra existir.
+- **CI** (`TR-07.1`) — `tsc`, lint, testes, contraste e "o SQL de instalação está em dia?" agora
+  rodam em todo push e PR, em vez de dependerem de a sessão lembrar de rodar.
+- **Trava de fuso** (`TR-05.5`) — regra de lint contra cortar o dia de um timestamp em UTC (o bug
+  já tinha voltado quatro vezes), e a suíte rodando nos **dois fusos**.
+- **Teste de arquitetura** (`TR-06.2`) — reprova conta de dinheiro escrita dentro de tela.
+- **Tipos de coluna de dinheiro** (`TR-05.3`) — a auditoria achou **um bug de verdade**: o valor
+  que ia pra Contas a Receber ao faturar vinha de uma soma sem arredondar, e a coluna guardava a
+  cauda inteira (`1234.5600000000002`). Corrigido nos dois lados — migration `0048` + a conta de
+  centavo num arquivo só (`schemas/dinheiro.ts`, que substituiu a mesma expressão copiada 12
+  vezes em 7 arquivos).
+- **Varredura de segredo** (`TR-04.7`) — `gitleaks` no CI, com 3 regras próprias porque as de
+  fábrica deixavam passar justamente os formatos que este projeto manuseia.
 
-#### O achado que vale contar
-
-A auditoria de tipo de coluna começou como uma conferência chata e **achou um bug de dinheiro de
-verdade**: ao faturar uma OS escolhendo "a receber depois", o valor gravado em Contas a Receber
-vinha de uma soma sem arredondamento, e a coluna aceitava qualquer número de casas decimais — um
-`1234.5600000000002` era gravado com as 13 casas. Não dava erro, não aparecia na tela (a exibição
-formata em 2 casas). Corrigido nos dois lados: a soma agora fecha no centavo, e a coluna passa a
-arredondar sozinha. Detalhe completo no item 49 da seção 6.
-
-Descobriu também que a **mesma** expressão de arredondamento estava copiada **12 vezes em 7
-arquivos** — a quarta ocorrência do padrão "conta de dinheiro repetida acaba divergindo" (itens 35,
-40 e 44). Virou `src/schemas/dinheiro.ts`, com a aritmética **idêntica** de propósito: mudar regra
-de arredondamento altera valor de nota fiscal, e isso é decisão dela.
-
-#### Estado do código
-
-`main` em dia. `tsc`, lint e `npm run contraste` limpos, e **275 testes** passando **nos dois
-fusos** (eram 176 num fuso só). A sequência inteira de migrations foi rodada três vezes num
-Postgres local, do zero, sem erro.
-
-#### O que dependia dela naquele momento (a lista atualizada está no fim do arquivo)
-
-1. ✅ **Dizer se publica a `v0.9.29`** — disse que sim mais tarde no mesmo dia; publicada.
-2. **Rodar a migration `0048`** no SQL Editor (seção 9).
-3. **Marcar o CI como obrigatório pra mesclar**, em Settings → Branches — mas só **depois** de ver
-   ele verde algumas vezes, pra não travar o fluxo de mesclar direto na `main`. Item 48.
-4. **As três credenciais expostas continuam para trocar** (CSC da SEFAZ, token do portal Giap,
-   senha do portal da prefeitura). A varredura nova **não** substitui isso: ela pega chave de API
-   com formato reconhecível, e nenhuma das três tem formato — item 50 explica por quê. Continua
-   sendo uma tarde dela, e cada dia que passa é um dia a mais com os três no histórico público.
-5. E, todo mês, o de sempre: **cadastrar a alíquota da competência no portal da prefeitura** antes
-   da primeira NFS-e do mês (item 1 da seção 8).
-
-#### Da Etapa 1 do guia, o que ficou de fora por escolha
-
-O guia sugeria, dentro do `TR-05.3`, passar **toda** conta intermediária de dinheiro pra centavos
-inteiros, reescrevendo `faturamento.ts`, `metricasCaixa.ts` e `comissoes.ts`. **Não foi feito**, e
-não por falta de tempo: é refatoração grande no código financeiramente mais sensível do projeto,
-para um ganho que hoje é teórico — essas funções já arredondam em cada borda, e a partir da `0048`
-as colunas também. A recomendação registrada é só fazer isso se aparecer uma divergência real, com
-o caso concreto na mão. Se ela quiser fazer de qualquer forma, é uma sessão inteira, não um item
+**Do `TR-05.3` ficou de fora, por escolha:** passar **toda** conta intermediária de dinheiro pra
+centavos inteiros, reescrevendo `faturamento.ts`, `metricasCaixa.ts` e `comissoes.ts`. É
+refatoração grande no código financeiramente mais sensível do projeto, para um ganho hoje teórico
+(essas funções já arredondam em cada borda, e desde a `0048` as colunas também). Só fazer se
+aparecer uma divergência real, com o caso concreto na mão — e aí é uma sessão inteira, não um item
 curto.
 
-### Onde parou em 11/09/2026, à tarde (histórico — o marco mais recente está no FIM do arquivo)
+#### Leva 2 — os dois itens fiscais (`v0.9.29` e `v0.9.30`)
 
-> Esta seção era o "leia primeiro" até o fim daquele dia. A frase "nada pendente do meu lado"
-> valia só naquele momento — depois dela saíram quatro itens da Etapa 2 que **não foram
-> publicados em tag**. O estado de verdade está no último marco, no fim do arquivo.
+- **`TR-11.1` — "Ver DANFE"**: reabrir o PDF de uma nota já emitida, em Notas Fiscais e na aba
+  Fechamento da OS. O cliente voltar e pedir a nota de novo é o pedido de balcão mais comum que
+  existe, e antes o PDF só existia dentro da janela de emissão. Detalhe em "Notas Fiscais",
+  seção 7. **Decisão que vale saber**: o PDF continua **não** sendo guardado aqui — o que a lei
+  manda guardar 5 anos é o XML, e o PDF é pedido de volta pra Focus NFe pela `focus_nfe_ref`.
+- **`TR-11.2` — aviso da alíquota da competência** no Início, com o passo a passo e o botão "Já
+  cadastrei". Existe porque essa recusa da prefeitura é mensal, conhecida, com data certa, e já
+  custou uma manhã. Detalhe em "Início", seção 7. Precisou da migration `0049`. **Decisão**: o
+  aviso se cala sozinho quando uma NFS-e do mês é autorizada — se a prefeitura autorizou, a
+  alíquota está cadastrada, e aviso que vira barulho é aviso que a pessoa aprende a ignorar.
 
-**Naquele momento: nada pendente do meu lado nem do banco. Duas tags publicadas, esperando só o
-teste dela na loja.**
+#### Leva 3 — Etapa 2: acessibilidade, tipografia e o Início (`v0.9.31`)
 
-1. ✅ **`v0.9.29` publicada** — aviso de código fiscal pelo nome da peça + correção da importação
-   de XML do fornecedor.
-2. ✅ **Migrations `0048` e `0049` rodadas por ela** no SQL Editor, as duas com "Success. No rows
-   returned" — e a `0049` **antes** da tag, que era a ordem obrigatória. Nada pendente de SQL:
-   `0001` a `0049` estão todas aplicadas.
-3. ✅ **`v0.9.30` publicada e INSTALADA por ela** no mesmo dia ("pronto, instalado a nova
-   versao") — "Ver DANFE" e aviso da alíquota do mês.
+Os três primeiros têm um fio comum: o app foi desenhado pra ser usado **só de teclado** no balcão,
+e faltava a outra metade disso.
 
-**O que falta é confirmação de uso real**, não código — e é só isso que sobrou desta sessão:
+1. **`TR-02.2` — foco de teclado visível** em todo campo, botão e link. Antes não se desenhava
+   foco nenhum, então dava pra apertar Enter sem saber em que campo se estava.
+2. **`TR-02.3` — foco preso dentro do modal**, com `Esc`, devolução do foco e fundo inerte.
+3. **`TR-02.1` — alvos de clique de 32px nas listas**, com o "Excluir" saindo da linha pra um menu
+   de três pontinhos: excluir um cliente virou dois gestos, não um clique torto.
+4. **`TR-01.1` — escala tipográfica** com nome por papel (`text-metrica`, `text-corpo`,
+   `text-rotulo`…): 756 classes cruas em 89 arquivos. **Nada encolheu** — o menor texto do app
+   subiu de 12 pra 13px.
+5. **`TL-04` — cartões e calendário do Início**: "Contas a pagar vencendo" passou a olhar 15 dias
+   corridos em vez do mês (era o ponto cego do dia 31); prejuízo virou vermelho com seta e sinal,
+   inclusive no Caixa Diário; a seta "›" que não indicava nada virou a variação real contra a
+   mesma fatia do mês anterior; cada cartão ganhou um "?" com a definição em uma frase; OS aberta
+   e carro no pátio passaram a dizer "há 6 dias", em amarelo a partir de 3; e o calendário ganhou
+   as setas ‹ › pra andar de mês.
 
-- **Abrir o "Ver DANFE" numa nota de verdade** (Notas Fiscais → uma nota emitida pelo sistema, ou
-  OS → aba Fechamento). É a única parte que não dá pra testar daqui: a busca do PDF fala com a
-  Focus NFe, e este ambiente não alcança rede externa. Se der errado, **a mensagem na tela já diz
-  o motivo** — e o primeiro lugar pra olhar é se o token da Focus NFe está preenchido em
-  Configurações → Dados fiscais.
-- **O aviso da alíquota no Início — ele APARECE agora, e isso está certo.** A coluna
-  `competencia_aliquota_confirmada` nasce vazia com a migration `0049`, e o "se cala sozinho
-  depois de uma NFS-e autorizada" só vale pras notas emitidas **daqui pra frente** — as de
-  setembro saíram antes desse código existir. Então, na primeira abertura depois de atualizar, o
-  aviso de setembro está lá mesmo com a alíquota já cadastrada no portal. O caminho é clicar em
-  **"Já cadastrei"** (é verdade: ela cadastrou em 01/09) e ele some até 1º de outubro. **Não
-  tratar isso como bug** — é só o primeiro mês, que começa sem histórico.
+O que cada um faz está em "Estado atual por módulo" (seção 7); o que se aprendeu, nos **itens 51 a
+54 da seção 6**. Do `TL-04` ficou de fora, de propósito, só o item P2 (mais opções de cartão: OS
+abertas, contas a receber vencidas, peças abaixo do mínimo).
 
-#### O que esta sessão fez
+**Uma pergunta que estava aberta e foi respondida**: "Editar" e "Inativar" viraram **ícone** nas
+listas — ela viu a tela de Clientes renderizada e escolheu manter assim. Não reabrir.
 
-Dois itens da **Etapa 2** do guia de melhorias (`MELHORIAS.md`), escolhidos por ela — os dois da
-área fiscal, que é onde o balcão mais sente:
+#### O que apareceu no caminho e NÃO foi mexido
 
-- **`TR-11.1` — "Ver DANFE" de uma nota já emitida.** Era o item nº 2 da lista dela de "guardar
-  pra em breve", desde 03/09. O PDF da nota só existia dentro da janela de emissão: fechou,
-  acabou, e reabrir só entrando no painel da Focus NFe — sendo que o cliente voltar e pedir a nota
-  de novo é o pedido mais comum que existe num balcão. Agora tem botão em Notas Fiscais e na aba
-  Fechamento da OS. Detalhe em "Notas Fiscais", seção 7.
-- **`TR-11.2` — aviso da alíquota da competência.** Toda primeira NFS-e do mês é recusada até a
-  alíquota daquele mês ser cadastrada no portal da prefeitura — armadilha mensal, conhecida, com
-  data e consequência certas, que já custou uma manhã. O Início passou a avisar antes, com o passo
-  a passo e um botão "Já cadastrei". Detalhe em "Início", seção 7. Precisou da migration `0049`.
-
-#### Duas decisões que valem mais que o código
-
-1. **O PDF da nota continua NÃO sendo guardado aqui.** O que o sistema guarda é o XML — que é o
-   documento que a lei manda guardar por 5 anos. O "Ver DANFE" pede o PDF de volta pra Focus NFe
-   pela referência da migration `0046`. Guardar o PDF também seria duplicar arquivo, gastar
-   Storage e criar uma segunda fonte de verdade pra mesma nota.
-2. **O aviso da alíquota se cala sozinho quando a prefeitura autoriza uma NFS-e no mês.** Se ela
-   autorizou, a alíquota está cadastrada — continuar avisando seria barulho, e aviso que vira
-   barulho é aviso que a pessoa aprende a ignorar. O botão "Já cadastrei" existe pro caso de ela
-   cadastrar antes de emitir a primeira nota, que é justamente o caminho certo.
-
-#### O que NÃO dá pra confirmar daqui
-
-As duas funcionalidades conversam com a Focus NFe/prefeitura, e o ambiente onde eu rodo não
-alcança rede externa (item 6 da seção 6). Então: a regra de quando dá/não dá reabrir o PDF está
-testada, as duas telas foram conferidas **renderizadas de verdade** (inclusive o caminho de
-falha), mas **a busca do PDF em si e o comportamento com a prefeitura só ela confirma na loja** —
-depois de rodar as migrations e receber a `v0.9.30`.
-
-#### Estado do código
-
-`main` em dia, `v0.9.29` publicada. `tsc`, lint e `npm run contraste` limpos; **296 testes**
-passando **nos dois fusos** (eram 275). A instalação completa foi rodada três vezes do zero num
-Postgres local e a `0049` sozinha duas vezes num banco com dado plantado.
+Há vermelho escuro (`text-red-600`/`text-red-700`) usado **sobre card escuro** em vários lugares —
+a coluna de saída do Caixa Diário e as mensagens de erro embaixo dos campos de formulário são os
+dois casos claros. É sobra do tema claro antigo, e o `npm run contraste` não pega porque fundo e
+letra ficam em elementos diferentes (mesma limitação do item 17 da seção 6). São **92 ocorrências**
+de vermelho escuro no app, quase todas legítimas (`bg-red-50` + `text-red-700` juntos) — separar as
+legítimas das ilegíveis é exatamente o trabalho do `TR-01.3`, e meio-arrumar seria pior que não
+mexer.
 
 #### O que depende dela agora
 
-1. **Confirmar em uso real** o "Ver DANFE" numa nota de verdade (o aviso da alíquota, pelo
-   motivo acima, só se testa de verdade em 1º de outubro). A instalação da `v0.9.30` já está
-   confirmada.
-3. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), só depois de vê-lo verde
-   algumas vezes — item 48 da seção 6.
-4. **As três credenciais expostas continuam para trocar** (CSC da SEFAZ, token do portal Giap,
-   senha do portal da prefeitura) — item 50 da seção 6.
-5. E, todo mês, o de sempre: **cadastrar a alíquota da competência no portal da prefeitura** antes
-   da primeira NFS-e do mês — que agora, pelo menos, o sistema lembra.
+**Confirmar em uso real** (nada disso dá pra testar daqui):
 
-### ⏸ O ponto exato onde parou (11/09/2026, fim do dia) — LEIA ISTO PRIMEIRO
+1. **Que a `v0.9.31` chegou na loja** pelo auto-update, e que o sistema continua se comportando —
+   é a leva que mais mexeu na aparência de todas as telas (tamanho de letra, ações das listas,
+   foco). Se algo parecer estranho, `%APPDATA%\Sakura System - AutoCenter Edition\erros.log` é o
+   primeiro lugar pra olhar (item 39 da seção 6).
+2. **O "Ver DANFE" numa nota de verdade** — a busca do PDF fala com a Focus NFe, e este ambiente
+   não alcança rede externa. Se der errado, a mensagem na tela já diz o motivo; o primeiro lugar a
+   conferir é se o token da Focus NFe está preenchido em Configurações → Dados fiscais.
+3. **O aviso da alíquota no Início — ele APARECE agora, e isso está certo.** A coluna
+   `competencia_aliquota_confirmada` nasce vazia, e o "se cala sozinho depois de uma NFS-e
+   autorizada" só vale pras notas emitidas **daqui pra frente** — as de setembro saíram antes desse
+   código existir. O caminho é clicar em **"Já cadastrei"** uma vez (é verdade: ela cadastrou em
+   01/09) e ele some até 1º de outubro. **Não tratar como bug** — é só o primeiro mês, que começa
+   sem histórico.
 
-**Cinco itens da Etapa 2 do guia saíram e estão na `main`. Nada foi publicado em tag** — o
-computador da loja segue na `v0.9.30`, então nada disso chegou lá ainda; ela decidiu esperar e
-publicar tudo junto. **Perguntar a ela se é pra publicar** antes de mexer em versão (ver "Gerar
-o instalador Windows", seção 9).
+**Tarefas fora do código**, nenhuma some sozinha e nenhuma bloqueia o uso do sistema:
 
-Os três primeiros são de ergonomia de balcão, e o fio comum é o mesmo: o app foi desenhado pra
-ser usado só de teclado, e faltava a outra metade disso. (Os outros dois, `TR-01.1` e `TL-04`,
-estão no fim desta seção.)
+4. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), agora que ele já foi visto
+   verde várias vezes — item 48 da seção 6.
+5. **Trocar as três credenciais expostas** (CSC da SEFAZ, token do portal Giap, senha do portal da
+   prefeitura). A varredura automática **não** substitui isso: ela pega chave de API com formato
+   reconhecível, e nenhuma das três tem formato — item 50 da seção 6 explica por quê. Cada dia que
+   passa é um dia a mais com as três no histórico público.
+6. **Todo mês: cadastrar a alíquota da competência no portal da prefeitura** antes da primeira
+   NFS-e do mês (item 1 da seção 8) — que agora, pelo menos, o sistema lembra.
 
-1. **`TR-02.2` — foco de teclado visível** em todo campo, botão e link (PR #233).
-2. **`TR-02.3` — foco preso dentro do modal**, com `Esc`, devolução do foco e fundo inerte
-   (PR #233).
-3. **`TR-02.1` — alvos de clique de 32px nas listas**, com o "Excluir" saindo da linha pra um
-   menu de três pontinhos (PR #234).
+#### O que ela já pediu pra guardar pra "em breve" (não retomar sozinho)
 
-O que cada um faz está em "Estado atual por módulo" (seção 7, no começo, junto dos outros
-comportamentos globais); o que se aprendeu está nos itens **51 e 52** da seção 6.
+A lista continua a mesma de 03/09 (ver "O que depende dela pra andar", mais acima): crédito da
+Anthropic zerado travando o "Importar por foto"; se cancelar nota deveria estornar estoque/Caixa
+(pergunta de design nunca respondida); token da Focus NFe compartilhado; botão de diagnóstico pra
+suporte; e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-**A pergunta aberta sobre os ícones foi respondida (11/09/2026)**: ela viu a tela de Clientes
-renderizada e escolheu **manter o ícone** (lápis pra editar, três pontinhos pro resto). Não
-reabrir.
+#### Da Etapa 2, ainda não foram feitos
 
-**Como foi validado**: além de `tsc`, lint, os 296 testes nos dois fusos e o `npm run contraste`,
-as duas mudanças foram dirigidas **no Electron real** (Playwright + `xvfb`, renderizando os
-componentes de verdade) — 13 verificações no foco/modal e 14 nas ações de linha. Foi esse teste
-que pegou o bug do item 52, que a leitura do código tinha deixado passar.
+`TR-01.3` (auditoria de contraste WCAG — o item que o achado acima alimenta), `TL-08` (cadastrar
+cliente sem sair da OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais), `TL-27` (categoria
+obrigatória no caixa) e `FN-03` (WhatsApp). **Ela escolhe o próximo pelo código do item — não sair
+fazendo a lista inteira.**
 
-**O que continua pendente é o mesmo de antes** (a lista logo acima): confirmar o "Ver DANFE" numa
-nota de verdade, marcar o CI como obrigatório, trocar as três credenciais expostas e cadastrar a
-alíquota da competência todo mês.
+#### Estado do código
 
-**Também saiu, logo depois dos três**: `TR-01.1` — a **escala tipográfica** (PR #236). O tamanho
-de fonte deixou de ser escolhido tela a tela: 756 classes cruas em 89 arquivos viraram tokens com
-nome por papel, e o menor texto do app subiu de 12 pra 13px (nada encolheu). O que cada token
-significa está em "Estado atual por módulo"; as três lições, no item **53** da seção 6 — entre
-elas, que **a premissa do guia estava errada** sobre o tamanho das tabelas, e que o `TR-02.1`
-tinha quebrado em silêncio o gerador do catálogo de telas.
-
-**E, escolhido por ela na mesma conversa, saiu o `TL-04` — os cartões e o calendário do Início.**
-O que cada pedaço faz está em "Início", na seção 7; a lição nova está no item **54** da seção 6.
-Em uma linha cada: "Contas a pagar vencendo" passou a olhar 15 dias corridos em vez do mês (era o
-ponto cego do dia 31); prejuízo virou vermelho com seta e sinal, inclusive no Caixa Diário; a
-seta "›" que não indicava nada virou a variação real contra a mesma fatia do mês anterior; cada
-cartão ganhou um "?" com a definição em uma frase; e OS aberta e carro no pátio passaram a dizer
-"há 6 dias", em amarelo a partir de 3. **Do `TL-04` ficou de fora, de propósito, só o item P2**
-(mais opções de cartão: OS abertas, contas a receber vencidas, peças abaixo do mínimo).
-
-**Uma coisa que apareceu no caminho e NÃO foi mexida**, porque é do `TR-01.3` e meio-arrumar
-seria pior: há vermelho escuro (`text-red-600`/`text-red-700`) usado **sobre card escuro** em
-vários lugares — a coluna de saída do Caixa Diário e as mensagens de erro embaixo dos campos de
-formulário são os dois casos claros. São sobra do tema claro antigo, e o `npm run contraste` não
-pega porque fundo e letra ficam em elementos diferentes (mesma limitação já anotada no item 17).
-São 92 ocorrências de vermelho escuro no app, quase todas legítimas (`bg-red-50` + `text-red-700`
-juntos); separar as legítimas das ilegíveis é justamente o trabalho do `TR-01.3`.
-
-**Da Etapa 2, ainda não foram feitos**: `TR-01.3` (auditoria de contraste WCAG), `TL-08`
-(cadastrar cliente sem sair da OS), `TL-11`/`TL-12` (estoque mínimo e campos fiscais), `TL-27`
-(categoria obrigatória no caixa) e `FN-03` (WhatsApp). Ela escolhe o próximo pelo código do item
-— não sair fazendo a lista inteira.
-
-**Nada disso foi publicado em tag** — o computador da loja segue na `v0.9.30`. Ela decidiu, em
-11/09/2026, **esperar** e publicar junto com o que vier depois (mesmo combinado da `v0.9.29`).
-Então já são **cinco** itens prontos na `main` e fora da loja: `TR-02.1`, `TR-02.2`, `TR-02.3`,
-`TR-01.1` e `TL-04`. Quando ela disser pra publicar, é o passo a passo de "Gerar o instalador
-Windows e publicar uma versão nova" (seção 9) — subir o `package.json`, PR, merge,
-`workflow_dispatch` com `ref: "main"`. **Não publicar sozinho.**
-
-**Como o `TL-04` foi validado**: `tsc`, lint e `npm run contraste` limpos, **327 testes** passando
-nos dois fusos (eram 296), as 54 telas do catálogo geradas de novo sem nenhuma falha, e a tela
-renderizada de verdade (Playwright + `xvfb`, com o Supabase respondido por dados de mentira) em
-cinco situações: cartões normais, prejuízo, variação contra o mês anterior, "?" aberto, calendário
-no mês seguinte e OS envelhecida. Foi a renderização que pegou o bug do item 54 — o código lia
-certo.
+`main` em dia na `v0.9.31`. `tsc`, lint e `npm run contraste` limpos; **327 testes** passando nos
+dois fusos (eram 149 no começo de setembro). As 54 telas do catálogo
+(`site/ferramentas/gerar-catalogo-telas.mjs`) geradas de novo sem nenhuma falha — vale rodar esse
+gerador depois de qualquer mexida grande de tela, é o único teste de tela que existe hoje, e ele
+já quebrou em silêncio uma vez (item 53 da seção 6).

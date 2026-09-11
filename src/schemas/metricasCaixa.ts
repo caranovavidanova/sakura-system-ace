@@ -1,3 +1,4 @@
+import { arredondarCentavo } from "./dinheiro";
 import type { MovimentoCaixa } from "@/types/caixa";
 import type { ItemOS } from "@/types/os";
 import { totalOrdem } from "@/types/os";
@@ -130,7 +131,7 @@ export function lucroPorMovimento(
       totalOrdem(ordem.itens ?? []) - custoDosItens(ordem.itens ?? [], custoPeca, custoServico);
     const pagoNaOrdem = pagoPorOrdem.get(movimento.ordem_servico_id) ?? 0;
     const fatia = pagoNaOrdem > 0 ? movimento.valor / pagoNaOrdem : 1;
-    lucros.set(movimento.id, Math.round(lucroDaOrdem * fatia * 100) / 100);
+    lucros.set(movimento.id, arredondarCentavo(lucroDaOrdem * fatia));
   }
   return lucros;
 }

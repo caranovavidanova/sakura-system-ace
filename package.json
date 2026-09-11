@@ -16,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "contraste": "node scripts/varredura-contraste.mjs",
-    "gerar-instalacao": "node scripts/gerar-instalacao-completa.mjs"
+    "gerar-instalacao": "node scripts/gerar-instalacao-completa.mjs",
+    "typecheck": "tsc -b",
+    "test:fusos": "node scripts/testar-nos-dois-fusos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

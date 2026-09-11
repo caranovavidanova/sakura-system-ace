@@ -1,5 +1,20 @@
 # Sakura System — AutoCenter Edition — Estado do Projeto
 
+> ## ⛔ NENHUMA CREDENCIAL NESTE ARQUIVO
+>
+> **Senha, token, chave, CSC, certificado: o lugar deles é o painel do próprio serviço — nunca
+> um arquivo deste repositório, este incluído.** O repositório é **público** (foi aberto pra o
+> auto-update funcionar, seção 6 item 21), então tudo aqui é lido por qualquer pessoa.
+>
+> E apagar depois **não resolve**: o texto continua no histórico do Git pra sempre. Já aconteceu —
+> o CSC da SEFAZ, o token do portal da prefeitura e a senha do portal ficaram escritos aqui, foram
+> removidos em 02/09/2026 e **seguem no histórico**; a única saída é trocar as três (ver "O que
+> depende dela pra andar"). Não repetir o gesto de "colo aqui só pra não esquecer".
+>
+> Desde 11/09/2026 o CI tem uma varredura automática (`.gitleaks.toml`), mas ela só pega
+> credencial com formato reconhecível — uma senha de portal ou um CSC são texto comum, e passam
+> batido. A trava de verdade é esta regra.
+
 > Este arquivo existe para que qualquer sessão futura (eu, sem memória da conversa) consiga
 > entender o projeto e continuar exatamente de onde parou. Sempre que uma funcionalidade nova
 > for concluída e validada pela usuária, **atualize este arquivo** (não deixe ele ficar
@@ -381,7 +396,13 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # form↔banco, e as contas de dinheiro como funções puras
 │   │                             # testáveis (metricasCaixa.ts — lucro/custo/ticket médio
 │   │                             # compartilhados; faturamento.ts — juros/parcelas/rateio;
-│   │                             # comissoes.ts — comissão por vendedor e por técnico)
+│   │                             # comissoes.ts — comissão por vendedor e por técnico;
+│   │                             # dinheiro.ts — paraCentavos/deCentavos/arredondarCentavo/somar,
+│   │                             # as contas de centavo num lugar só: a MESMA expressão de
+│   │                             # arredondamento estava copiada 12 vezes em 7 arquivos, ver
+│   │                             # item 49 da seção 6) + arquitetura.test.ts (não testa conta
+│   │                             # nenhuma — varre src/pages/ e reprova conta de dinheiro escrita
+│   │                             # dentro de uma tela, item 49)
 │   │                             # (ex: funcionario.ts — paraValoresFormulario,
 │   │                             # paraNovoFuncionario, paraFilhosPreenchidos). Pasta nova —
 │   │                             # `funcionario.ts`, `cliente.ts`, `peca.ts` até agora (este último
@@ -450,9 +471,25 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── scripts/varredura-contraste.mjs # `npm run contraste` — procura combinação de fundo/letra
 │                                  # ilegível nas classes do app (sobra do tema claro antigo), ver
 │                                  # item 17 da seção 6
+├── scripts/testar-nos-dois-fusos.mjs # `npm run test:fusos` — roda a suíte DUAS vezes, em
+│                                  # America/Sao_Paulo e em UTC. Está em .mjs porque
+│                                  # `TZ=x npm test` não funciona no PowerShell do Windows dela.
+│                                  # Ver item 48 da seção 6
+├── .github/workflows/ci.yml      # CI — roda em todo push/PR as cinco checagens que antes eram
+│                                  # feitas à mão: typecheck, lint, testes nos dois fusos,
+│                                  # contraste e "o instalacao-completa.sql está em dia?". Tem um
+│                                  # segundo job ("segredos") que varre credencial e barra
+│                                  # certificado digital versionado. NÃO builda o instalador
+│                                  # (isso é do release.yml). Ver item 48 da seção 6
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
 │                                  # (NÃO embute mais a conexão do Supabase — ver seção 7)
-├── eslint.config.js              # flat config do ESLint 9
+├── .gitleaks.toml                # regras da varredura de segredo do CI. Tem 3 regras próprias
+│                                  # além das de fábrica, porque as de fábrica deixavam passar
+│                                  # justamente `sb_secret_...` (Supabase) e `sk-ant-...`
+│                                  # (Anthropic) — testado, não suposto. Ver item 49 da seção 6
+├── eslint.config.js              # flat config do ESLint 9 — além das regras de hooks, tem a
+│                                  # trava contra cortar o dia de um timestamp em UTC
+│                                  # (`no-restricted-syntax`), ver item 48 da seção 6
 ├── vitest.config.ts              # config de teste separado do vite.config.ts de propósito (não
 │                                  # carrega os plugins do Electron, que não fazem sentido numa
 │                                  # rodada de teste unitário puro) — `npm test` roda uma vez,
@@ -617,6 +654,32 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   idempotência — **ainda não rodada por ela**): adiciona `configuracoes_fiscais_loja.codigo_cnae`
   — campo exigido por Araraquara (e provavelmente outras prefeituras) pra autorizar a NFS-e, que o
   Sakura System não pedia nem mandava. Ver item 1 da seção 8.
+- `0048` (criada em 11/09/2026, validada num Postgres local — a sequência inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado 0047 **com dado plantado**
+  — **ainda NÃO rodada por ela**): declara a precisão de 5 colunas de valor que eram `numeric`
+  "solto", sem casas decimais — `contas_pagar.valor`, `contas_receber.valor`,
+  `funcionarios.salario`, `servicos.custo` (todas pra `numeric(12,2)`) e
+  `configuracoes_fiscais_loja.aliquota_iss` (pra `numeric(5,2)`). **Não é mudança cosmética**:
+  `numeric` sem casas guarda exatamente o que mandarem, e o valor que ia pra
+  `contas_receber.valor` ao faturar uma OS vinha de uma soma **sem arredondamento** — dá pra ver
+  o efeito no teste que foi feito: um `1234.5600000000002` foi gravado inteiro, com as 13 casas.
+  Depois da migration ele vira `1234.56`. Ver item 49 da seção 6 pro lado do aplicativo, que foi
+  corrigido junto.
+
+**Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
+rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
+do guia de melhorias (TR-05.3 e TR-05.5):
+- **Dinheiro: nenhuma coluna é `double precision`/`real`.** Todas as 16 colunas de valor são
+  `numeric` — ou seja, o erro clássico de ponto flutuante nunca entrou pelo armazenamento. As 5
+  que estavam sem casas declaradas foram fechadas pela migration `0048` acima; o resto já era
+  `numeric(12,2)` (dinheiro), `numeric(12,2)` (quantidade) ou `numeric(5,2)`/`numeric(6,2)`
+  (percentual).
+- **Data: nenhuma coluna é `timestamp` sem fuso.** As 28 colunas de instante são `timestamptz`, e
+  as 12 de dia de calendário são `date` (vencimento, competência, data do pedido, nascimento,
+  admissão, férias) — que é exatamente a separação certa.
+- **`caixa_movimentos.data` é `timestamptz` de propósito, não é engano.** À primeira vista parece
+  que devia ser `date` ("a data do movimento"), mas o Caixa Diário mostra a **hora** de cada
+  lançamento e já converte pro dia local ao filtrar. Não trocar pra `date` — perderia a hora.
 
 **`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
 (auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
@@ -895,7 +958,11 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
    de Compra, saldo de estoque, cotação por fornecedor) — **não** testa componente React, tela,
    nem nada que dependa do Supabase (esse tipo de teste, de UI/integração, é bem mais trabalhoso de
-   montar e não foi feito ainda). **145 testes**, todos passando. Achou e corrigiu de brinde um bug
+   montar e não foi feito ainda). **275 testes**, todos passando — e, desde 11/09/2026, rodando
+   nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
+   UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
+   conta nenhuma: `schemas/arquitetura.test.ts` varre `src/pages/` e reprova conta de dinheiro
+   escrita dentro de tela (item 49). Achou e corrigiu de brinde um bug
    real de arredondamento de ponto flutuante em `calcularValorCobrado` (`100 * 1.1` podia sair
    `110.00000000000001` em vez de `110`) — e, na varredura de 02/09/2026 (itens 42 a 45), foi
    escrevendo teste pro comportamento esperado que os bugs de desconto na NFC-e apareceram, dois
@@ -1602,6 +1669,89 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     É a família dos itens 14/17, e o `npm run contraste` **não pega** esse caso (fundo e texto
     ficam em elementos diferentes). Regra prática: **campo de formulário nunca vai dentro de uma
     faixa de aviso clara** — o aviso fica só com o texto, e o campo desce pro fundo escuro do card.
+
+48. **As checagens deixaram de depender de alguém lembrar (11/09/2026).** Até aqui, `tsc`, lint,
+    `npm test`, `npm run contraste` e "o `instalacao-completa.sql` está em dia?" eram rodados **à
+    mão, sessão a sessão** — o que significa que cada sessão nova (sem memória da conversa
+    anterior) podia simplesmente não rodar. Agora há um CI (`.github/workflows/ci.yml`) que roda as
+    cinco em todo push e PR. Duas travas novas foram junto, e as duas nasceram de bug real:
+    - **Regra de lint contra cortar o dia em UTC** (`eslint.config.js`,
+      `no-restricted-syntax`). O bug dos itens 34 e 42 já voltou **quatro vezes** — a correção
+      sempre foi trocar os lugares achados, o que nunca impediu o quinto. Agora
+      `.toISOString().slice(...)` e cortar exatamente 10 caracteres reprovam o lint.
+      **Cuidado ao mexer**: a regra proíbe o GESTO de cortar o dia, **não** o `toISOString()` em
+      si — gravar um instante completo em UTC (`data_pagamento`, `data_fechamento`,
+      `atualizado_em`) está certo e continua liberado. Proibir `toISOString` inteiro geraria ~10
+      falsos positivos e ensinaria a espalhar `eslint-disable`, que é pior que não ter regra. As
+      duas ÚNICAS exceções declaradas são `datas.test.ts` e `comissoes.test.ts`, que cortam o dia
+      errado de propósito pra provar que o jeito errado erra.
+    - **A suíte roda nos dois fusos** (`npm run test:fusos`,
+      `scripts/testar-nos-dois-fusos.mjs`). A máquina de teste — aqui e no GitHub — usa UTC, e é
+      justamente em UTC que esse bug **não aparece**. Antes, cada teste que se importava precisava
+      lembrar de fixar o fuso na mão. **Não trocar por `TZ=x npm test` no `package.json`**: essa
+      sintaxe não funciona no PowerShell do Windows, que é onde ela roda os comandos.
+    **O que ainda depende dela**: deixar o CI como obrigatório pra mesclar (Settings → Branches)
+    só **depois** de ver ele verde algumas vezes — travar o merge antes disso atrapalharia o fluxo
+    de mesclar direto na `main`, que é decisão dela (seção 3).
+
+49. **A mesma conta de centavo estava escrita 12 vezes — e uma delas estava errada (11/09/2026).**
+    A varredura do guia de melhorias (TR-05.3) começou como uma conferência de tipo de coluna e
+    achou três coisas encaixadas:
+    - **A boa notícia primeiro**: nenhuma coluna de dinheiro do banco é `double precision` — o erro
+      de ponto flutuante nunca entrou pelo armazenamento. Inventário completo na seção 5, pra
+      ninguém precisar checar de novo.
+    - **O bug**: `valorTotal`, em `faturarOrdem()` (`src/lib/ordensServico.ts`), somava os
+      pagamentos com um `reduce` **sem arredondar**, e esse valor ia pro banco em Contas a Receber.
+      Somar números **já arredondados** ainda deixa cauda (`0.1 + 0.2` dá `0.30000000000000004`), e
+      a coluna `contas_receber.valor` era `numeric` sem casas declaradas, então guardava a cauda
+      inteira — testado num Postgres local: `1234.5600000000002` foi gravado com as 13 casas. Não
+      dava erro em lugar nenhum e não aparecia na tela (a exibição formata em 2 casas), que é
+      exatamente o tipo de defeito que este projeto costuma descobrir tarde.
+    - **A causa de fundo**: a expressão `Math.round(valor * 100) / 100` estava escrita **12 vezes
+      em 7 arquivos**, sendo 4 delas funções privadas idênticas chamadas `arredondar`, copiadas de
+      um arquivo pro outro. É a quarta vez que "conta de dinheiro repetida divergiu" neste projeto
+      (itens 35, 40 e 44). Virou `src/schemas/dinheiro.ts` — `paraCentavos`, `deCentavos`,
+      `arredondarCentavo` e `somar` —, usado pelos 7 arquivos.
+    **Decisão deliberada: a aritmética NÃO mudou.** `arredondarCentavo` faz exatamente a mesma
+    conta que já estava espalhada, inclusive o canto conhecido dela (1,005 vira 1,00, não 1,01,
+    porque em binário 1,005 fica um fio abaixo da metade). Mudar a regra de arredondamento
+    alteraria valor que sai em nota fiscal e em lançamento de caixa — isso é decisão dela, não
+    efeito colateral de uma arrumação de código. Há um teste que **fixa** esse comportamento, pra
+    que mudá-lo um dia seja escolha visível.
+    **Trava pra não voltar**: `src/schemas/arquitetura.test.ts` varre `src/pages/` e reprova conta
+    de dinheiro escrita dentro de tela. Ele pega as duas formas do item 40
+    (`const lucro = vendas - custos` e `const ticketMedio = total / qtd`) e deixa passar tela que
+    só **chama** a função pura. Foi calibrado contra o código real, não no papel: a primeira versão
+    passou batido justo na forma mais comum do bug, e acusou dois falsos positivos porque a barra
+    de um fecha-tag de JSX (`</td>`) parece uma divisão.
+    **Duas telas estão na lista de dívida conhecida do teste**, com nome e sobrenome, porque já
+    faziam conta de dinheiro antes dele existir: `relatorios/LucratividadeSection.tsx` (receita,
+    custo e margem por item — já apontada no item 38 e nunca movida) e
+    `estoque/RelatoriosEstoqueSection.tsx` (valor do estoque = saldo × preço de custo). Mover as
+    duas é refatoração de tela (pede preview renderizado), não foi feito aqui. O teste garante que
+    a lista **não cresce**, e reprova pedindo pra apagar a entrada se alguém mover a conta — assim
+    ela encolhe em vez de envelhecer.
+    **Uma conta saiu de dentro da tela nesta leva**: `jurosDasLinhas` (quanto os juros do cartão
+    acrescentam no pagamento dividido) morava em `FaturamentoCard.tsx` e virou função pura testada
+    em `schemas/faturamento.ts`.
+
+50. **A varredura de segredo automática NÃO pega o tipo de credencial que vazou aqui
+    (11/09/2026)** — e é importante não confundir as duas coisas. O CI agora roda `gitleaks`
+    (`.gitleaks.toml`), com 3 regras próprias além das de fábrica, porque as de fábrica foram
+    **testadas** contra os formatos deste projeto e deixavam passar justamente
+    `sb_secret_...` (Supabase) e `sk-ant-...` (Anthropic) — as duas que ele de fato manuseia.
+    **Mas**: varrer o histórico completo (414 commits) com as regras de fábrica devolveu
+    *"no leaks found"*, mesmo o CSC da SEFAZ, o token do portal Giap e a senha da prefeitura
+    estando lá. O motivo é simples e vale entender: essas três são **texto comum**, sem formato
+    que as distinga de uma palavra qualquer. Nenhuma ferramenta pega. **Conclusão prática**: a
+    varredura é uma rede pra chave de API; a proteção contra colar senha de portal é a regra no
+    topo deste arquivo, e trocar as três credenciais continua sendo obrigatório.
+    **Duas decisões de desenho, pra não serem "corrigidas" depois**: (a) o CI varre a árvore de
+    arquivos **como ela está agora** (`--no-git`), não o histórico — uma checagem que nunca pode
+    ficar verde (o histórico já carrega segredo, e reescrever histórico está proibido: quebraria o
+    auto-update e invalidaria as releases) é uma checagem que todo mundo aprende a ignorar; (b) há
+    um passo separado que reprova se um `.pfx`/`.p12`/`conexao.json` for versionado — certificado
+    digital é a identidade fiscal da empresa, e o repositório é público.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -2732,7 +2882,14 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0047` estão todas aplicadas no projeto dela.** `0046` (`focus_nfe_ref` em
+**Estado hoje: `0001` a `0047` estão aplicadas; a `0048` está pronta e NÃO foi rodada ainda.**
+A `0048` (precisão das colunas de valor — ver seção 5) precisa ser colada por ela no SQL Editor do
+Supabase, igual às outras: painel do projeto → SQL Editor → New query → cola o conteúdo de
+`supabase/migrations/0048_precisao_das_colunas_de_dinheiro.sql` → Run. Não tem pressa nem risco de
+quebrar tela nenhuma: sem ela o sistema funciona igual, só continua sem a segunda linha de defesa
+contra centavo com cauda. É idempotente (seguro rodar de novo) e foi testada num Postgres local
+com dado plantado.
+**Sobre `0047` e anteriores:** `0046` (`focus_nfe_ref` em
 `notas_fiscais_arquivos`, pro botão "Cancelar nota") e `0047` (`codigo_cnae` em
 `configuracoes_fiscais_loja`, pra NFS-e) foram criadas e já rodadas na mesma sessão — confirmado
 funcionando (a NFS-e número 10/11 só autorizou depois da `0047` e do Código CNAE preenchido).
@@ -3225,11 +3382,11 @@ mais importam antes da terceira empresa:
 5. RLS por módulo (item 1 da seção 6) e teste de tela (item 4) — as duas dívidas conhecidas que
    mudam de gravidade quando o sistema roda na loja dos outros.
 
-### ⏸ O ponto exato onde parou (10/09/2026) — LEIA ISTO PRIMEIRO
+### Onde parou em 10/09/2026 (histórico — o marco mais recente é o de 11/09, no fim do arquivo)
 
 **A `v0.9.29` está pronta pra sair e NÃO foi publicada, por decisão dela.** A correção do item 2
 de "Onde tudo parou (08-09/09/2026)" — o código de ICMS do fornecedor virando o código da peça —
-já está mesclada na `main`, validada (`tsc`/lint/contraste limpos, **176 testes** passando)
+já está mesclada na `main`, validada (`tsc`/lint/contraste limpos, 176 testes passando na época)
 e com as duas telas conferidas por preview renderizado — só falta a tag. Ela pediu pra segurar:
 *"ainda nao, deixa pendente, atualiza o projeto status, volto em outra sessao"*.
 
@@ -3260,3 +3417,81 @@ where ativo and (cst_ou_csosn is null or length(trim(cst_ou_csosn)) <> 3);
 era a única, e já foi corrigida à mão. **Não reabrir esse assunto**; a consulta fica aqui só como
 receita, caso um dia entre peça de fornecedor novo por uma versão antiga do app (`pecas` é
 compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
+
+### ⏸ O ponto exato onde parou (11/09/2026) — LEIA ISTO PRIMEIRO
+
+**Duas coisas pendentes, as duas dependendo de uma decisão dela. Nada quebrado.**
+
+1. **A `v0.9.29` continua sem sair, por decisão dela (agora carregando mais coisa).** Ela pediu
+   pra segurar em 10/09 (*"ainda nao, deixa pendente... volto em outra sessao"*) e isso **foi
+   respeitado nesta sessão** — nada foi publicado. Mas a `main` acumulou mais uma leva desde
+   então (tudo desta sessão, abaixo), então a próxima tag leva os dois pacotes de uma vez.
+   **Perguntar antes de publicar.** O computador da loja segue na `v0.9.28`.
+2. **A migration `0048` precisa ser colada por ela no SQL Editor** — passo a passo na seção 9.
+   Sem ela o sistema funciona igual; ela é a segunda linha de defesa contra centavo com cauda.
+
+#### O que esta sessão fez
+
+Ela trouxe um **guia de melhorias** (`MELHORIAS.md`, gerado fora daqui a partir do
+`PROJETO_STATUS.md`, do PDF das 54 telas e de uma pesquisa de mercado/acessibilidade): 12 eixos
+transversais, as 54 telas uma a uma, 15 funcionalidades novas e um roteiro em 5 etapas. **É um
+cardápio, não ordem de execução.** Ela escolheu a **Etapa 1 — "fundação barata que protege tudo o
+resto"**, que são cinco itens curtos cujo objetivo é parar de deixar erro conhecido voltar.
+Os cinco saíram, e o detalhe técnico de cada um está nos **itens 48, 49 e 50 da seção 6**:
+
+- **CI** (`TR-07.1`) — as cinco checagens que antes eram rodadas à mão agora rodam em todo push e
+  PR. Item 48.
+- **Trava de fuso** (`TR-05.5`) — regra de lint contra cortar o dia de um timestamp em UTC, mais a
+  suíte rodando nos dois fusos. Item 48.
+- **Teste de arquitetura** (`TR-06.2`) — reprova conta de dinheiro escrita dentro de tela. Item 49.
+- **Tipos de coluna de dinheiro** (`TR-05.3`) — auditoria feita, **um bug real encontrado e
+  corrigido**, migration `0048`. Item 49.
+- **Varredura de segredo** (`TR-04.7`) — `gitleaks` no CI com regras próprias, `.gitignore`
+  fechado pra certificado digital, e a regra "nenhuma credencial neste arquivo" promovida pro topo
+  deste documento. Item 50.
+
+Junto disso, a branch `claude/cool-lamport-uzyh8w` (o gerador do catálogo das 54 telas, parada sem
+PR desde 10/09) foi mesclada — PR #226. Dois itens do guia dependiam dela pra existir.
+
+#### O achado que vale contar
+
+A auditoria de tipo de coluna começou como uma conferência chata e **achou um bug de dinheiro de
+verdade**: ao faturar uma OS escolhendo "a receber depois", o valor gravado em Contas a Receber
+vinha de uma soma sem arredondamento, e a coluna aceitava qualquer número de casas decimais — um
+`1234.5600000000002` era gravado com as 13 casas. Não dava erro, não aparecia na tela (a exibição
+formata em 2 casas). Corrigido nos dois lados: a soma agora fecha no centavo, e a coluna passa a
+arredondar sozinha. Detalhe completo no item 49 da seção 6.
+
+Descobriu também que a **mesma** expressão de arredondamento estava copiada **12 vezes em 7
+arquivos** — a quarta ocorrência do padrão "conta de dinheiro repetida acaba divergindo" (itens 35,
+40 e 44). Virou `src/schemas/dinheiro.ts`, com a aritmética **idêntica** de propósito: mudar regra
+de arredondamento altera valor de nota fiscal, e isso é decisão dela.
+
+#### Estado do código
+
+`main` em dia. `tsc`, lint e `npm run contraste` limpos, e **275 testes** passando **nos dois
+fusos** (eram 176 num fuso só). A sequência inteira de migrations foi rodada três vezes num
+Postgres local, do zero, sem erro.
+
+#### O que depende dela agora
+
+1. **Dizer se publica a `v0.9.29`** (ver item 1 acima).
+2. **Rodar a migration `0048`** no SQL Editor (seção 9).
+3. **Marcar o CI como obrigatório pra mesclar**, em Settings → Branches — mas só **depois** de ver
+   ele verde algumas vezes, pra não travar o fluxo de mesclar direto na `main`. Item 48.
+4. **As três credenciais expostas continuam para trocar** (CSC da SEFAZ, token do portal Giap,
+   senha do portal da prefeitura). A varredura nova **não** substitui isso: ela pega chave de API
+   com formato reconhecível, e nenhuma das três tem formato — item 50 explica por quê. Continua
+   sendo uma tarde dela, e cada dia que passa é um dia a mais com os três no histórico público.
+5. E, todo mês, o de sempre: **cadastrar a alíquota da competência no portal da prefeitura** antes
+   da primeira NFS-e do mês (item 1 da seção 8).
+
+#### Da Etapa 1 do guia, o que ficou de fora por escolha
+
+O guia sugeria, dentro do `TR-05.3`, passar **toda** conta intermediária de dinheiro pra centavos
+inteiros, reescrevendo `faturamento.ts`, `metricasCaixa.ts` e `comissoes.ts`. **Não foi feito**, e
+não por falta de tempo: é refatoração grande no código financeiramente mais sensível do projeto,
+para um ganho que hoje é teórico — essas funções já arredondam em cada borda, e a partir da `0048`
+as colunas também. A recomendação registrada é só fazer isso se aparecer uma divergência real, com
+o caso concreto na mão. Se ela quiser fazer de qualquer forma, é uma sessão inteira, não um item
+curto.

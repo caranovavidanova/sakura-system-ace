@@ -11,6 +11,21 @@
 .env.*
 !.env.example
 
+# credenciais e identidade fiscal — NUNCA versionar.
+# Este repositório é PÚBLICO (foi aberto pra o auto-update funcionar, seção 6
+# item 21 do PROJETO_STATUS.md), então qualquer coisa daqui vai junto: um
+# certificado digital commitado é a identidade fiscal da empresa na mão de
+# quem quiser. O `conexao.json` é o arquivo que cada computador cria na
+# primeira abertura, com a URL e a chave do banco daquela empresa.
+conexao.json
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.cer
+*.crt
+*.key
+
 # misc
 .DS_Store
 *.pem

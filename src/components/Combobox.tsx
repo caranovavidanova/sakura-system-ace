@@ -160,7 +160,7 @@ export function Combobox({
         aria-expanded={aberto}
         aria-autocomplete="list"
         autoComplete="off"
-        className="w-full rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple disabled:opacity-50"
+        className="w-full rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple disabled:opacity-50"
       />
 
       {aberto && (

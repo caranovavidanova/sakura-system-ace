@@ -85,7 +85,7 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
         <select
           value={tipo}
           onChange={(e) => setTipo(e.target.value as TipoCategoriaCaixa)}
-          className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
         >
           <option value="saida">Saída</option>
           <option value="entrada">Entrada</option>
@@ -95,7 +95,7 @@ export function CategoriasCaixaSection({ categorias, onSalvo }: CategoriasCaixaS
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Nome da categoria (ex: Aluguel, Sucata)"
-          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
         />
         <button
           type="submit"

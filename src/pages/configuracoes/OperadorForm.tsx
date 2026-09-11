@@ -73,7 +73,7 @@ export function OperadorForm({
             type="text"
             disabled={editando}
             {...register("usuario")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-muted"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-muted"
           />
           {errors.usuario && (
             <span className="text-xs text-red-600">{errors.usuario.message}</span>
@@ -87,7 +87,7 @@ export function OperadorForm({
           <input
             type="text"
             {...register("nome")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
           />
           {errors.nome && <span className="text-xs text-red-600">{errors.nome.message}</span>}
         </label>
@@ -100,7 +100,7 @@ export function OperadorForm({
             <input
               type="password"
               {...register("senha")}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
             />
             {errors.senha && (
               <span className="text-xs text-red-600">{errors.senha.message}</span>

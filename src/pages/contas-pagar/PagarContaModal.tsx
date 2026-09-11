@@ -68,7 +68,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
               min="0.01"
               step="0.01"
               {...register("valor")}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
             />
             {errors.valor && (
               <span className="text-xs text-red-600">{errors.valor.message}</span>
@@ -79,7 +79,7 @@ export function PagarContaModal({ conta, onConfirmar, onFechar }: PagarContaModa
             <input
               type="text"
               {...register("formaPagamento")}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 outline-none focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
             />
           </label>
         </div>

@@ -69,7 +69,7 @@ export function CancelarNotaModal({ arquivo, onFechar, onCancelado }: CancelarNo
             onChange={(e) => setJustificativa(e.target.value)}
             rows={3}
             placeholder="Ex: nota emitida por engano, valor errado, teste do sistema..."
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
           />
         </label>
 

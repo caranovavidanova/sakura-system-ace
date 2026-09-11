@@ -54,7 +54,7 @@ export function CategoriasSection({ categorias, onSalvo }: CategoriasSectionProp
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Nome da categoria (ex: Pneus, Lubrificantes)"
-          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
         />
         <button
           type="submit"

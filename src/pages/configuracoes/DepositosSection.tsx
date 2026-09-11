@@ -77,7 +77,7 @@ export function DepositosSection({ depositos, lojaId, onSalvo }: DepositosSectio
           type="text"
           placeholder="Nome do depósito (ex: Depósito Principal, Fundos)"
           {...register("nome")}
-          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm outline-none focus:border-sakura-purple"
+          className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-sm focus:border-sakura-purple"
         />
         <button
           type="submit"
@@ -182,7 +182,7 @@ function LinhaEdicaoDeposito({
         type="text"
         autoFocus
         {...register("nome")}
-        className="w-40 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs outline-none focus:border-sakura-purple"
+        className="w-40 rounded-lg border border-sakura-gray/40 px-2 py-1 text-xs focus:border-sakura-purple"
       />
       <button
         type="submit"

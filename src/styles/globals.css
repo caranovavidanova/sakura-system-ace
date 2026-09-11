@@ -14,6 +14,11 @@
   /* Muted agora é mais claro pra ler sobre fundo escuro */
   --color-sakura-muted: #9e8d9a;
 
+  /* Cor do anel de foco de teclado. Clara de propósito: o anel precisa
+     aparecer sobre o fundo quase preto do app e sobre o vidro do
+     sakura-card. Ver o bloco ":focus-visible" mais abaixo. */
+  --color-sakura-focus: #ffb3ec;
+
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
@@ -84,6 +89,46 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     appearance: none;
     -webkit-appearance: none;
     margin: 0;
+  }
+}
+
+/* Anel de foco de teclado, um só pro app inteiro (WCAG 2.4.11 / 2.4.13).
+
+   Por que isto importa aqui mais que na média: este app foi feito pra ser
+   operado SÓ de teclado no balcão (o Enter avança de campo, ver
+   useEnterParaProximoCampo) — e até agora não desenhava foco nenhum. O
+   Chromium desenha um anel escuro por padrão, que sobre o fundo quase preto
+   simplesmente some. Ou seja: dava pra apertar Enter sem saber em que campo
+   se estava.
+
+   São DOIS anéis, de propósito, e a ordem importa:
+     - o box-shadow ocupa de 0 a 2px da borda do elemento (escuro);
+     - o outline, com offset de 2px, ocupa de 2 a 4px (claro).
+   Sobre fundo escuro quem aparece é o claro; sobre fundo claro (a faixa de
+   aviso amarela da emissão de nota, por exemplo) quem separa é o escuro.
+   Um anel de cor única falharia em um dos dois casos.
+
+   Precisa ficar dentro de "@layer base" pelo mesmo motivo de sempre neste
+   arquivo (ver seção 6 item 14 do PROJETO_STATUS): CSS fora de camada venceria
+   as classes do Tailwind. E o contrário também vale — por isso os 78
+   "outline-none" que existiam espalhados nos campos foram removidos: como
+   classe do Tailwind, eles estão na camada "utilities", que vence a "base",
+   e apagariam este anel justo nos campos de formulário. O
+   "focus:border-sakura-purple" que acompanhava cada um deles continua lá,
+   agora como reforço em vez de único sinal de foco. */
+@layer base {
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-sakura-focus);
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 2px rgba(11, 7, 10, 0.95),
+      0 0 12px rgba(255, 77, 206, 0.45);
   }
 }
 

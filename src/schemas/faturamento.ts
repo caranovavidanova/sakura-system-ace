@@ -1,4 +1,4 @@
-import { arredondarCentavo } from "./dinheiro";
+import { arredondarCentavo, repartirEmCentavos } from "./dinheiro";
 import { z } from "zod";
 import type { PagamentoOrdem } from "@/lib/ordensServico";
 import type { JurosParcela } from "@/types/configuracao";
@@ -83,17 +83,17 @@ export function calcularListaParcelas(
   parcelas: number,
   apartirDe: Date = new Date(),
 ): ParcelaCalculada[] {
-  const valorParcela = arredondarCentavo(valorCobrado / parcelas);
-  return Array.from({ length: parcelas }, (_, i) => {
-    const ultima = i === parcelas - 1;
-    return {
-      numero: i + 1,
-      vencimento: addMeses(apartirDe, i + 1),
-      valor: ultima
-        ? arredondarCentavo(valorCobrado - valorParcela * (parcelas - 1))
-        : valorParcela,
-    };
-  });
+  // Reparte em centavos inteiros (pesos iguais) em vez de arredondar cada
+  // parcela e jogar a sobra toda na última: assim a soma fecha exatamente,
+  // nenhuma parcela sai negativa e nenhuma fica mais de um centavo fora das
+  // outras — ver `repartirEmCentavos` em dinheiro.ts pros contraexemplos que
+  // motivaram isso. R$100 em 3x continua saindo 33,33 / 33,33 / 33,34.
+  const valores = repartirEmCentavos(valorCobrado, Array(parcelas).fill(1));
+  return valores.map((valor, i) => ({
+    numero: i + 1,
+    vencimento: addMeses(apartirDe, i + 1),
+    valor,
+  }));
 }
 
 export function somarLinhasPagamento(linhas: LinhaPagamentoValues[]): number {
@@ -208,14 +208,15 @@ export function ratearPagamentos<T extends { valor: number }>(
   const somaOriginal = pagamentos.reduce((soma, p) => soma + p.valor, 0);
   if (pagamentos.length === 0 || somaOriginal <= 0) return [];
 
-  const fator = totalDestino / somaOriginal;
-  const rateados = pagamentos.map((p) => ({
-    ...p,
-    valor: arredondarCentavo(p.valor * fator),
-  }));
-
-  const somaSemUltima = rateados.slice(0, -1).reduce((soma, p) => soma + p.valor, 0);
-  rateados[rateados.length - 1].valor = arredondarCentavo(totalDestino - somaSemUltima);
-
-  return rateados;
+  // Mesma razão de `calcularListaParcelas`: repartir em centavos inteiros,
+  // proporcional ao que foi pago em cada forma. A versão antiga arredondava
+  // cada linha e deixava a última absorver a diferença, o que podia deixá-la
+  // NEGATIVA quando o pagamento estava dividido em várias formas e o total
+  // de destino era bem menor que o pago (uma OS quase toda de serviço, com a
+  // parte de peça indo pra NFC-e). Valor negativo é rejeição na emissão.
+  const valores = repartirEmCentavos(
+    totalDestino,
+    pagamentos.map((p) => p.valor),
+  );
+  return pagamentos.map((p, i) => ({ ...p, valor: valores[i] }));
 }

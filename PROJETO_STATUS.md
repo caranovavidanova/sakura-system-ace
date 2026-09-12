@@ -1074,9 +1074,12 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
 4. **Testes automatizados — começando** (Vitest). Cobre principalmente **funções puras de cálculo**
    isoladas dos componentes durante a migração pro `react-hook-form` (juros/parcelas/split de
    pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
-   de Compra, saldo de estoque, cotação por fornecedor) — **não** testa componente React, tela,
-   nem nada que dependa do Supabase (esse tipo de teste, de UI/integração, é bem mais trabalhoso de
-   montar e não foi feito ainda). **298 testes**, todos passando — e, desde 11/09/2026, rodando
+   de Compra, saldo de estoque, cotação por fornecedor). **Desde 12/09/2026 também testa TELA**
+   (item `TR-07.2`, ver item 62 desta seção): os cinco formulários que mexem em dinheiro são
+   montados de verdade com `@testing-library/react` e exercitados a clique e digitação. O que
+   continua fora é **qualquer coisa que dependa do Supabase** — nenhum teste fala com o banco, e
+   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **482 testes**,
+   todos passando — e, desde 11/09/2026, rodando
    nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
    UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
    conta nenhuma: `schemas/arquitetura.test.ts` varre `src/pages/` e reprova conta de dinheiro
@@ -2067,6 +2070,61 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     desconto do item for maior que a linha. Não foi posto um clamp em zero — isso faria a nota
     sair com valor que não corresponde à OS. A correção certa é a constraint do item `TR-05.1`,
     que ainda não foi feita (precisa de migration e de conferir o banco real antes).
+
+61. **O corpo da nota fiscal virou arquivo versionado — e a regra é que mudá-lo é uma DECISÃO
+    (12/09/2026, item `TR-06.3` do guia).** A parte fiscal deste projeto tem um histórico ruim e
+    um sintoma característico: ela quase nunca falha com erro na tela, falha autorizando algo
+    errado (é o resumo do item 46). O que faltava era um jeito de VER o que muda no JSON que sai
+    daqui, antes de ele chegar na SEFAZ.
+    Agora `src/lib/focusNfe.golden.test.ts` monta seis notas — NFC-e de consumidor não
+    identificado, de pessoa física, de pessoa jurídica, com desconto, mista com pagamento
+    dividido, e uma NFS-e completa — e compara cada uma com um arquivo guardado em
+    `src/lib/__ouro__/*.json`. Qualquer mexida no corpo aparece como diff no PR, campo a campo.
+    **Três cuidados que valem entender antes de mexer nesses arquivos:**
+    - **O relógio é fixado** (`vi.setSystemTime`) no meio-dia UTC, não em qualquer hora: a NFS-e
+      manda a data de hoje (`hojeLocal()`), e meio-dia é o único horário que dá o mesmo dia em
+      `America/Sao_Paulo` e em UTC — os dois fusos em que a suíte roda (item 48).
+    - **Os campos estranhos estão explicados no cabeçalho do arquivo de teste**, um por um: as
+      alíquotas de IBS/CBS fixadas por lei pra 2026, o indicador `"9"` sem inscrição estadual, o
+      desconto abatido no preço unitário (a SEFAZ confere `bruto = qtd × unitário`), o preço
+      unitário com 10 casas, a `forma_pagamento: "0"` mesmo com cartão parcelado. Sem isso, o
+      próximo a ler o JSON acha que é erro e "conserta".
+    - **Atualizar um arquivo de ouro nunca é o conserto de um teste vermelho.** Se o snapshot
+      mudou, ou a mudança é intencional (e aí o diff é a revisão) ou é um bug indo pra nota
+      fiscal. O mecanismo foi conferido quebrando a `cbs_aliquota` de propósito — a mesma
+      alteração que gerou a rejeição 1026 de verdade —, e cinco dos seis arquivos ficaram
+      vermelhos.
+
+62. **Os cinco formulários que mexem em dinheiro passaram a ter teste de TELA (12/09/2026, item
+    `TR-07.2`).** Até aqui o projeto testava só função pura — o que deixava de fora exatamente a
+    costura onde os bugs deste app acontecem: a conta estava certa e a tela não a usava, ou usava
+    com o campo errado. São 42 testes em `FaturamentoCard`, `ClienteForm`, `PecaForm`,
+    `ContaPagarForm` e `OrdemServicoForm`, todos de comportamento (clicam e digitam como a pessoa
+    faria), e cada um guardando uma promessa que já foi quebrada de verdade ou que a tela existe
+    pra dar. Ferramentas em `src/testes/tela.tsx`; jsdom declarado por arquivo, como já se fazia
+    em `notaFiscalXmlFornecedor.test.ts`.
+    **Cada teste foi conferido quebrando o código de propósito** — um teste de regra que nunca
+    falhou na frente de alguém não prova nada (a lição do item 53). Voltar o filtro de veículo
+    pra "tem placa?" reprova o teste do item 26; tirar a trava de item pós-fatura reprova o do
+    item 31; trocar a ligação custo→preço reprova o do `PecaForm`.
+    **Quatro coisas aprendidas escrevendo isso, que valem pro próximo teste de tela:**
+    - **`Combobox` vazio não tem placeholder**: com `opcaoVazia`, o rótulo vazio é o VALOR do
+      input, então a consulta certa é `getByDisplayValue("Selecione a peça")`, não
+      `getByPlaceholderText`. Perdi duas rodadas nisso.
+    - **Consultar por posição (`getAllByRole("combobox")[4]`) é frágil**: a posição muda quando a
+      OS ganha um item. Consultar pelo que aparece na tela sobrevive.
+    - **O `min="0.01"` do HTML barra antes do zod**: em Contas a Pagar, o valor zero é recusado
+      pelo próprio navegador, então a frase do zod nunca aparece na tela. As duas travas existem
+      e concordam — mas um teste que espera a mensagem do zod falha sem que nada esteja errado.
+    - **O input escondido de `id` do `useFieldArray` não é o que preserva o id.** Apagá-lo não
+      quebra nenhum dos testes de veículo: nesta versão do react-hook-form o valor do item vive
+      no estado do formulário, com ou sem campo registrado. Isso NÃO é um convite a removê-lo (a
+      convenção da seção 4 pode estar guardando outro caminho, tipo restaurar rascunho) — é só
+      pra ninguém achar que aqueles testes provam algo sobre ele.
+    **O que ficou de fora, de propósito**: nenhum destes testes fala com o Supabase. Todos os
+    cinco formulários recebem o que precisam por `props`, então o que se testa é o formulário —
+    o que acontece depois do `onSalvar` continua sem cobertura, e continua sendo o tipo de coisa
+    que só a usuária pega usando.
 
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -4333,13 +4391,51 @@ Estão nos itens **58 e 59** da seção 6, e as duas são sobre desconfiar do pr
   esquecido, a varredura media as telas servidas por um estranho sem avisar. As duas coisas foram
   corrigidas na ferramenta.
 
+### ⏸ Começou a Etapa 3 do guia — 3 dos 7 itens (12/09/2026, mais tarde no mesmo dia)
+
+**Estado: a `main` está TRÊS levas à frente da `v0.9.33`, e nada disso chegou na loja.** Não foi
+publicada tag nenhuma de propósito — publicar é decisão dela. Quando ela retomar, o primeiro passo
+é perguntar se é pra publicar; se sim, o caminho é o de sempre ("Gerar o instalador Windows",
+seção 9): subir o `package.json` pra `0.9.34`, PR, merge, `workflow_dispatch` com `ref: "main"`.
+
+**Nenhuma migration nova** — o banco dela continua na `0052`, nada de SQL pendente.
+
+#### O que essas três levas trouxeram
+
+1. **A borda dos campos de formulário** (dívida de contraste do `TR-01.3`) — a decisão que estava
+   adiada foi tomada por ela, olhando duas imagens, e aplicada: de 1,15:1 pra 3,13:1. Detalhe na
+   seção "A borda dos campos de formulário", logo acima. **É a única das três que ela enxerga na
+   tela** — as outras duas são rede de segurança.
+2. **`TR-06.1` — testes de propriedade no rateio.** Mil casos gerados acharam **três defeitos
+   reais** em duas funções que repartem dinheiro, um deles alcançável com uma OS plausível
+   (R$ 900 de mão de obra + R$ 0,05 de peça em três formas de pagamento mandava −R$ 0,01 pra
+   nota, que é rejeição na emissão). Item 60 da seção 6.
+3. **`TR-06.3` + `TR-07.2` — o corpo da nota virou arquivo versionado, e os cinco formulários de
+   dinheiro ganharam teste de tela.** Itens 61 e 62 da seção 6. São 42 testes de tela novos, e
+   cada um foi conferido quebrando o código de propósito pra ver o teste ficar vermelho.
+
+#### O que falta da Etapa 3 — e por que parou aqui
+
+Os **4 itens restantes dependem dela**, não de mim, e é por isso que a leva terminou:
+
+- **`TR-05.1` (constraints de valor) e `TR-05.2` (uma nota por OS por tipo)** — os dois precisam
+  de migration **e** de uma consulta rodada antes no Supabase real dela, pra saber se já existe
+  linha que a constraint recusaria. Se existir, é conversa com ela (o que fazer com o dado
+  antigo), nunca decisão minha.
+- **`TR-06.4` (fechamento de caixa do dia)** e **`TL-46.1` (travar comissão já paga)** — os dois
+  pedem migration e tela nova.
+
+**Um limite conhecido ficou de fora de propósito** (está no item 60): `valorLiquidoItem` fica
+negativo quando o desconto do item é maior que a linha. Não foi posto um limite em zero, porque
+isso faria a nota sair com um valor que não corresponde à OS — o conserto certo é justamente a
+constraint do `TR-05.1`.
+
 #### Estado do código
 
-`main` **em dia com a `v0.9.33`**, e o banco dela na `0052` — nada esperando tag nem SQL.
-`tsc`, lint, `npm run contraste` e `npm run contraste:telas` limpos; **407 testes** passando nos
-dois fusos (eram 369 em 11/09). As 54 telas do catálogo geradas de novo sem nenhuma falha.
+`main` **três levas à frente da `v0.9.33`**, e o banco dela na `0052` — nada esperando SQL, e a
+publicação esperando a palavra dela. `tsc`, lint, `npm run contraste` e `npm run contraste:telas`
+limpos; **482 testes** passando nos dois fusos (eram 407 de manhã, 369 em 11/09).
 
-**A decisão de contraste que estava adiada foi tomada e aplicada** (a borda dos campos — ver a
-seção logo acima). O que depende dela continua sendo o de sempre, na lista de 11/09: trocar as
-três credenciais expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal da
-alíquota no portal da prefeitura.
+O que depende dela continua sendo o de sempre, na lista de 11/09: trocar as três credenciais
+expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal da alíquota no portal da
+prefeitura.

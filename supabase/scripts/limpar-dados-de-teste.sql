@@ -35,6 +35,13 @@
 -- ============================================================================
 
 -- Ordem pensada pra não esbarrar em chave estrangeira (filho antes do pai).
+-- Registro de mensagem de WhatsApp aberta (migration 0052). Não tem chave
+-- estrangeira (a `referencia` aponta pra tabelas diferentes conforme a
+-- chave), então nada quebraria deixando aqui — mas sobrariam linhas apontando
+-- pra contas e OS que não existem mais. Os MODELOS de mensagem
+-- (`configuracoes_whatsapp`) NÃO são apagados: são configuração da loja, como
+-- o texto de garantia.
+delete from whatsapp_mensagens;
 delete from contas_pagar;
 delete from contas_receber; -- referencia clientes/ordens_servico, precisa vir antes dos dois
 delete from caixa_movimentos;

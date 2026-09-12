@@ -747,7 +747,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   uma categoria de caixa de cada tipo, caso em que ela deixa de importar.
 - `0051` (criada em 12/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` **com peça
-  plantada** — **ainda não rodada por ela**): quatro colunas opcionais em `pecas`. O **estoque
+  plantada** — **rodada e confirmada por ela em 12/09/2026**, antes da tag `v0.9.33`): quatro
+  colunas opcionais em `pecas`. O **estoque
   mínimo** (`estoque_minimo numeric(12,2)`, item TL-11 do guia) é o campo que faltava pro sistema
   responder "o que eu preciso comprar?"; e o **bloco de pneu** (`medida`,
   `indice_carga_velocidade`, `dot`, todos texto, item TL-12) tira da descrição em texto livre o
@@ -759,8 +760,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   nascesse. `pecas` é compartilhada entre as lojas, então nada aqui precisa de backfill por loja
   nem de policy nova.
 - `0052` (criada em 12/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` — **ainda não rodada
-  por ela**): as duas tabelas do WhatsApp (item FN-03). `configuracoes_whatsapp` (PK composta
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` — **rodada e
+  confirmada por ela em 12/09/2026**, antes da tag `v0.9.33`): as duas tabelas do WhatsApp (item FN-03). `configuracoes_whatsapp` (PK composta
   `loja_id, chave`, mesma forma de `configuracoes_juros_parcelas`) guarda os textos editáveis de
   cada loja — **uma linha por modelo, e não uma coluna por modelo**, pra que um modelo novo seja
   uma linha e não uma migration. **Nada é semeado**: sem linha, vale o texto padrão de
@@ -2874,6 +2875,13 @@ Quatro coisas que valem saber:
     sem categoria. Ver "Caixa Diário" nesta seção. **Publicada depois** de ela rodar a `0050`, que
     era a ordem obrigatória — mesma disciplina da `v0.9.30` com a `0049`. Via `workflow_dispatch`.
 
+  - `v0.9.33`: **a Etapa 2 do guia inteira** — estoque mínimo e busca por código de barras na
+    lista de Produtos (`TL-11`), campos fiscais explicados e bloco de pneu no cadastro (`TL-12`),
+    botões de WhatsApp em Contas a Receber/OS/Pedidos de compra (`FN-03`) — mais o `TL-08` de
+    11/09 (cadastrar cliente e veículo sem sair da OS), que tinha ficado sem tag. **Publicada
+    depois** de ela rodar as migrations `0051` e `0052`, que era a ordem obrigatória. Via
+    `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3391,13 +3399,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0050` estão aplicadas no Supabase real dela. A `0051` e a `0052`, criadas
-em 12/09/2026, estão ESPERANDO ela rodar** — as duas foram validadas num Postgres local (instalação
-inteira rodada três vezes do zero, e cada uma rodada duas vezes num banco no estado `0050` com dado
-plantado), mas nenhuma foi colada no SQL Editor ainda. **A ordem importa**: as duas precisam estar
-rodadas ANTES de a versão nova chegar no computador da loja — sem as colunas da `0051`, salvar um
-produto dá erro de "coluna não existe"; sem as tabelas da `0052`, Configurações → Mensagens de
-WhatsApp não abre. É a mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
+**Estado hoje: `0001` a `0052` estão TODAS aplicadas no Supabase real dela — nada pendente de
+SQL.** As duas últimas (`0051`, estoque mínimo e bloco de pneu; `0052`, as tabelas do WhatsApp)
+foram rodadas por ela em 12/09/2026, **antes** da tag `v0.9.33` — a ordem que elas exigiam, a
+mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
 Histórico das anteriores: a `0048`
 (precisão das colunas de valor) e a `0049` (lembrete da alíquota da competência) foram coladas por
 ela no SQL Editor em 11/09/2026, as duas com "Success. No rows returned", e a `0049` **antes** da
@@ -3655,7 +3660,7 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.32"` — publicada em 11/09/2026, com a `main` em dia e
+- `package.json` em `"version": "0.9.33"` — publicada em 12/09/2026, com a `main` em dia e
   **nada esperando tag** (ver "Onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -4186,23 +4191,14 @@ já quebrou em silêncio uma vez (item 53 da seção 6).
 `TL-11` (estoque mínimo), `TL-12` (campos fiscais explicados e bloco de pneu), `FN-03`
 (WhatsApp) e `TR-01.3` (a auditoria de contraste que nunca tinha sido feita).
 
-**Estado: a `main` está DUAS levas à frente da `v0.9.32`** — o `TL-08` de 11/09 e tudo isto — e
-**duas migrations esperam ela rodar** (`0051` e `0052`). Nada disso foi publicado em tag.
+**Estado: tudo publicado na `v0.9.33`** — esta leva mais o `TL-08` de 11/09, que tinha ficado sem
+tag. Ela rodou as migrations `0051` e `0052` **antes** da tag, que era a ordem obrigatória, e o
+banco dela está na `0052`. Nada pendente de SQL, nada esperando publicação.
 
-#### O que ela precisa fazer, nesta ordem
-
-1. **Rodar as duas migrations no SQL Editor do Supabase** (New query → colar → Run), uma de cada
-   vez. A ordem entre elas não importa; o que importa é que as DUAS estejam rodadas **antes** de
-   a versão nova chegar no computador da loja:
-   - `supabase/migrations/0051_pecas_estoque_minimo_e_pneu.sql` — sem ela, salvar um produto dá
-     erro de "coluna não existe".
-   - `supabase/migrations/0052_modelos_whatsapp.sql` — sem ela, Configurações → Mensagens de
-     WhatsApp não abre.
-   É a mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
-2. **Decidir se publica.** Se sim, seguir "Gerar o instalador Windows e publicar uma versão nova"
-   (seção 9): subir o `package.json` pra `0.9.33`, PR, merge, `workflow_dispatch` com
-   `ref: "main"`. **Não publicar sozinho** — e lembrar de conferir a lista real de releases antes
-   de propor o número, não a memória deste arquivo.
+**O que ainda não foi visto rodando na loja**: nada desta leva. Vale conferir, quando o
+auto-update chegar, a busca por código de barras na lista de Produtos (é a que mais muda o dia a
+dia do balcão) e os três botões de WhatsApp — principalmente se o telefone cadastrado abre a
+conversa certa, que é a única parte que depende de dado real dela.
 
 #### O que cada item entregou
 
@@ -4249,7 +4245,12 @@ decisões), o que deixa a checagem verde hoje sem deixar entrar coisa nova:
 campo começa e termina quase não existe. E ela **não se resolve com opacidade** — `sakura-gray`
 (`#3a3238`) sobre o card escuro dá 1,63:1 mesmo a 100%; precisa de uma cor mais clara pra borda
 de campo, o que muda a aparência de todo formulário do app.
-**A pergunta pra ela é essa: pode clarear a borda dos campos?**
+
+> ⏭️ **A pergunta foi feita e ela adiou: "fazemos esse contraste em outra sessão" (12/09/2026).**
+> Ou seja, a pergunta continua aberta e **é a primeira coisa a retomar quando ela voltar ao
+> assunto**: *pode clarear a borda dos campos de formulário?* Não mexer nisso por conta própria —
+> e não refazer a auditoria pra "descobrir" de novo: o relatório está aqui e a checagem do CI
+> continua verde, segurando só o que for NOVO.
 
 As duas do meio (botão roxo e texto roxo) estão a **dois centésimos** do mínimo — corrigir exige
 mexer no roxo da marca, que o item proíbe, ou engrossar a letra dos botões. E a última é
@@ -4271,6 +4272,11 @@ Estão nos itens **58 e 59** da seção 6, e as duas são sobre desconfiar do pr
 
 #### Estado do código
 
-`main` **duas levas à frente da `v0.9.32`** e com **duas migrations esperando** (`0051`, `0052`).
+`main` **em dia com a `v0.9.33`**, e o banco dela na `0052` — nada esperando tag nem SQL.
 `tsc`, lint, `npm run contraste` e `npm run contraste:telas` limpos; **407 testes** passando nos
 dois fusos (eram 369 em 11/09). As 54 telas do catálogo geradas de novo sem nenhuma falha.
+
+**A única coisa em aberto desta sessão** é a decisão de contraste adiada por ela (a borda dos
+campos, logo acima). O resto do que depende dela continua sendo o de sempre, na lista de 11/09:
+trocar as três credenciais expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal
+da alíquota no portal da prefeitura.

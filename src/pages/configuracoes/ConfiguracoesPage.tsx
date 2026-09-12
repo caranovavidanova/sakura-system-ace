@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { Modal } from "@/components/Modal";
 import { SecaoRecolhivel } from "@/components/SecaoRecolhivel";
+import { listarModelosWhatsapp } from "@/lib/modelosWhatsapp";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
 import { listarCategoriasCaixa } from "@/lib/categoriasCaixa";
@@ -40,6 +41,7 @@ import { JurosParcelasSection } from "./JurosParcelasSection";
 import { LojasSection } from "./LojasSection";
 import { OperadorForm } from "./OperadorForm";
 import { TextoGarantiaSection } from "./TextoGarantiaSection";
+import { ModelosWhatsappSection } from "./ModelosWhatsappSection";
 import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
 export function ConfiguracoesPage() {
@@ -52,6 +54,7 @@ export function ConfiguracoesPage() {
   const [categoriasCaixa, setCategoriasCaixa] = useState<CategoriaCaixa[]>([]);
   const [categoriasServico, setCategoriasServico] = useState<CategoriaServico[]>([]);
   const [textoGarantia, setTextoGarantia] = useState("");
+  const [modelosWhatsapp, setModelosWhatsapp] = useState<Record<string, string>>({});
   const [configuracaoFiscal, setConfiguracaoFiscal] = useState<ConfiguracaoFiscalLoja | null>(
     null,
   );
@@ -84,6 +87,7 @@ export function ConfiguracoesPage() {
         textoGarantiaCarregado,
         configuracaoFiscalCarregada,
         cartoesInicioCarregados,
+        modelosWhatsappCarregados,
       ] = await Promise.all([
         listarOperadores(),
         listarLojas(),
@@ -95,6 +99,7 @@ export function ConfiguracoesPage() {
         buscarTextoGarantia(lojaAtual.id),
         buscarConfiguracaoFiscal(lojaAtual.id),
         buscarConfiguracaoPainelInicio(lojaAtual.id),
+        listarModelosWhatsapp(lojaAtual.id),
       ]);
       setOperadores(operadoresCarregados);
       setLojas(lojasCarregadas);
@@ -106,6 +111,7 @@ export function ConfiguracoesPage() {
       setTextoGarantia(textoGarantiaCarregado);
       setConfiguracaoFiscal(configuracaoFiscalCarregada);
       setCartoesInicio(cartoesInicioCarregados);
+      setModelosWhatsapp(modelosWhatsappCarregados);
     } catch (err) {
       console.error("Erro ao carregar operadores:", err);
       setErro(mensagemDeErro(err));
@@ -378,6 +384,17 @@ export function ConfiguracoesPage() {
           >
             <TextoGarantiaSection
               texto={textoGarantia}
+              lojaId={lojaAtual.id}
+              onSalvo={carregar}
+            />
+          </SecaoRecolhivel>
+
+          <SecaoRecolhivel
+            titulo="Mensagens de WhatsApp"
+            descricao="Os textos que o sistema abre no WhatsApp — na cobrança de uma conta a receber, no aviso de que o carro está pronto e no pedido para o fornecedor. O sistema abre a conversa com a mensagem pronta; quem envia é você."
+          >
+            <ModelosWhatsappSection
+              modelos={modelosWhatsapp}
               lojaId={lojaAtual.id}
               onSalvo={carregar}
             />

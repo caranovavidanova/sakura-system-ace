@@ -268,7 +268,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # está na lista de sugestões em vez de exigir escolher uma opção,
 │   │                             # usado hoje só na Marca do veículo, ver seção 7 "Clientes"),
 │   │                             # AvisoRascunho.tsx (faixa "restaurar rascunho não salvo?", usada
-│   │                             # por todo formulário com auto-save — ver hooks abaixo)
+│   │                             # por todo formulário com auto-save — ver hooks abaixo),
+│   │                             # BotaoWhatsapp.tsx (abre a conversa no WhatsApp com a mensagem
+│   │                             # já escrita — usado em Contas a Receber, na lista de OS e em
+│   │                             # Pedidos de compra; ver "WhatsApp" na seção 7)
 │   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
 │   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
 │   │                             # globalmente, em App.tsx + useLimparDataAoApagar.ts (nesta
@@ -306,6 +309,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
+│   │                             # + whatsapp.ts (abre a conversa no WhatsApp pela ponte do
+│   │                             # Electron, com a URL conferida) + modelosWhatsapp.ts (os textos
+│   │                             # editáveis por loja e o registro de que a mensagem foi ABERTA)
 │   │                             # fornecedores.ts + pedidosCompra.ts + cotacoesPecas.ts (histórico
 │   │                             # de preço por fornecedor, ver "Cotação de peças" na seção 7) +
 │   │                             # notaFiscalXmlFornecedor.ts (lê o XML de NFe que o fornecedor
@@ -341,8 +347,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │   estoque/       # EstoquePage.tsx com 4 abas: Produtos (ProdutosSection.tsx + PecaForm.tsx —
 │   │                   # orquestrador, ~80 linhas, terceiro módulo migrado pro padrão
 │   │                   # react-hook-form + zod — + campos/ com DadosCadastraisFields,
-│   │                   # TributosFields, PrecosFields (custo/margem%/preço final calculados entre
-│   │                   # si, ver schemas/peca.ts) + ImportarNotasFiscaisModal.tsx — leitura por
+│   │                   # TributosFields (cada campo fiscal com um "?" explicando de onde tirar o
+│   │                   # valor, e o CST/CSOSN já sugerido com o código que a loja mais usa),
+│   │                   # PrecosFields (custo/margem%/preço final calculados entre si, ver
+│   │                   # schemas/peca.ts; avisa quando o preço fica abaixo do custo) e PneuFields
+│   │                   # (medida, índice de carga/velocidade e DOT — só aparece quando a categoria
+│   │                   # escolhida é a de Pneus) + ImportarNotasFiscaisModal.tsx — leitura por
 │   │                   # foto), Movimentações (MovimentacoesSection.tsx + MovimentoForm.tsx),
 │   │                   # Contagem (ContagemSection.tsx — inventário físico), Relatórios
 │   │                   # (RelatoriosEstoqueSection.tsx). Sem módulo "Peças" separado.
@@ -371,6 +381,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                   # status concluída/faturada) + GarantiaVisualModal.tsx
 │   │   configuracoes/  # JurosParcelasSection.tsx, CategoriasSection.tsx, CategoriasCaixaSection.tsx,
 │   │                   # CategoriasServicoSection.tsx, TextoGarantiaSection.tsx,
+│   │                   # ModelosWhatsappSection.tsx (os textos que o sistema abre no WhatsApp),
 │   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
 │   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora); LojasSection.tsx
 │   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
@@ -415,6 +426,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # item 49 da seção 6) + arquitetura.test.ts (não testa conta
 │   │                             # nenhuma — varre src/pages/ e reprova conta de dinheiro escrita
 │   │                             # dentro de uma tela, item 49)
+│   │                             # estoque.ts — o que o saldo de uma peça está dizendo
+│   │                             # (negativo/zerado/abaixo do mínimo) e a busca da lista de
+│   │                             # Produtos, inclusive o casamento exato de código de barras;
+│   │                             # whatsapp.ts — telefone no formato do wa.me, marcadores das
+│   │                             # mensagens e os textos padrão
 │   │                             # (ex: funcionario.ts — paraValoresFormulario,
 │   │                             # paraNovoFuncionario, paraFilhosPreenchidos). Pasta nova —
 │   │                             # `funcionario.ts`, `cliente.ts`, `peca.ts` até agora (este último
@@ -430,8 +446,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0050), todas idempotentes
-├── supabase/instalacao/          # instalacao-completa.sql (as 50 migrations concatenadas num
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0052), todas idempotentes
+├── supabase/instalacao/          # instalacao-completa.sql (as 52 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
 │                                  # INSTALAR-LOJA-NOVA.md (o checklist que ela segue de verdade ao
@@ -465,6 +481,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # telas/*.jpg (imagens do sistema com dados inventados),
 │                                  # ferramentas/ (abre o app de verdade num navegador com o
 │                                  # Supabase respondido por dados inventados, e fotografa as
+│                                  # cenas.mjs (a lista das 54 telas, com os cliques pra chegar em
+│                                  # cada uma) + percorrer-telas.mjs (abre o app, faz login e visita
+│                                  # as 54, chamando quem pediu em cada tela — usado pelo gerador de
+│                                  # imagens E pela varredura de contraste) + playwright.mjs (acha o
+│                                  # Playwright sem ele virar dependência do projeto) +
 │                                  # telas — ver site/README.md): banco-falso.mjs (o Supabase de
 │                                  # mentira, compartilhado) + dados-demo.mjs (os dados
 │                                  # inventados, cobrem TODAS as tabelas) + gerar-telas.mjs (as
@@ -480,6 +501,13 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # migrations. Rodar SEMPRE que criar uma migration nova; o
 │                                  # `npm test` reprova se o arquivo estiver desatualizado
 │                                  # (scripts/gerar-instalacao-completa.test.ts)
+├── scripts/varredura-contraste-dom.mjs # `npm run contraste:telas` — abre o app de VERDADE,
+│                                  # percorre as 54 telas e mede a cor que a pessoa enxerga,
+│                                  # compondo cada fundo translúcido com o que está atrás dele.
+│                                  # medir-contraste.mjs é a medição em si; divida-de-contraste.mjs
+│                                  # é a lista do que já estava abaixo da WCAG antes disto existir
+│                                  # e ainda não foi corrigido — ela encolhe, nunca cresce.
+│                                  # Ver item TR-01.3 e o item 58 da seção 6
 ├── scripts/varredura-contraste.mjs # `npm run contraste` — procura combinação de fundo/letra
 │                                  # ilegível nas classes do app (sobra do tema claro antigo), ver
 │                                  # item 17 da seção 6
@@ -717,6 +745,29 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   **A ordem foi cumprida**: ela rodou a migration primeiro e a `v0.9.32` só saiu depois. Numa loja
   nova, a ordem continua valendo (a migration antes da versão) — a menos que já exista pelo menos
   uma categoria de caixa de cada tipo, caso em que ela deixa de importar.
+- `0051` (criada em 12/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` **com peça
+  plantada** — **ainda não rodada por ela**): quatro colunas opcionais em `pecas`. O **estoque
+  mínimo** (`estoque_minimo numeric(12,2)`, item TL-11 do guia) é o campo que faltava pro sistema
+  responder "o que eu preciso comprar?"; e o **bloco de pneu** (`medida`,
+  `indice_carga_velocidade`, `dot`, todos texto, item TL-12) tira da descrição em texto livre o
+  dado que está escrito na lateral do pneu. Duas escolhas que valem saber: (a) `numeric(12,2)`, e
+  não `(12,3)` como o guia sugeria — TODA quantidade deste banco é `(12,2)`, e um mínimo com três
+  casas só criaria divergência; (b) o mínimo nasce **NULL** em todo o catálogo, de propósito: NULL
+  quer dizer "essa peça não tem mínimo" e nunca vira aviso, enquanto zero é um mínimo de verdade.
+  Um backfill com zero transformaria cada peça sem saldo num alarme no dia em que a coluna
+  nascesse. `pecas` é compartilhada entre as lojas, então nada aqui precisa de backfill por loja
+  nem de policy nova.
+- `0052` (criada em 12/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` — **ainda não rodada
+  por ela**): as duas tabelas do WhatsApp (item FN-03). `configuracoes_whatsapp` (PK composta
+  `loja_id, chave`, mesma forma de `configuracoes_juros_parcelas`) guarda os textos editáveis de
+  cada loja — **uma linha por modelo, e não uma coluna por modelo**, pra que um modelo novo seja
+  uma linha e não uma migration. **Nada é semeado**: sem linha, vale o texto padrão de
+  `src/schemas/whatsapp.ts`, então uma loja recém-instalada já manda mensagem sem configurar nada
+  (o contrário do que aconteceu com as categorias de caixa na `0050`). E `whatsapp_mensagens`
+  registra que uma conversa foi **aberta** — nunca "enviada", que é uma coisa que este sistema não
+  tem como saber (ver "WhatsApp" na seção 7).
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -824,7 +875,10 @@ outro projeto Supabase do zero (ver seção 9).
 - **`pecas`**: id, codigo_interno (exibido como "Referência"), codigo_barras, descricao, marca,
   modelo, aplicacao, unidade, preco_custo, preco_venda, ncm, cest, cfop_padrao, origem,
   cst_ou_csosn, aliquota_icms, categoria_id (FK categorias, opcional), prazo_garantia_dias (int,
-  opcional, usado pelo módulo Garantias), ativo, criado_em. **Margem % não é salva no banco** — é
+  opcional, usado pelo módulo Garantias), **estoque_minimo** (numeric, opcional — NULL quer dizer
+  "sem mínimo definido" e nunca vira aviso; zero é um mínimo de verdade), **medida** /
+  **indice_carga_velocidade** / **dot** (o bloco de pneu, só aparece no formulário quando a
+  categoria é a de Pneus), ativo, criado_em. **Margem % não é salva no banco** — é
   só calculada na tela a partir de `preco_custo`/`preco_venda`.
 - **`categorias`**: id, nome (único), criado_em. Gerenciada em Configurações (admin), selecionável
   no cadastro de produto. Sem hierarquia nem campos extras, de propósito. Vem semeada com 5
@@ -964,6 +1018,14 @@ outro projeto Supabase do zero (ver seção 9).
   `nulls not distinct`, que não foi usado aqui), então cabem quantas contas avulsas forem precisas.
   **Não precisou de migration nova.** `cliente_id` continua obrigatório, então o formulário exige
   escolher o cliente.
+- **`configuracoes_whatsapp`** (migration `0052`): loja_id + chave (PK composta), texto,
+  atualizado_em. Os textos de mensagem editáveis por loja — uma linha por modelo
+  (`cobranca`, `carro_pronto`, `pedido_compra`). A linha só existe depois que alguém edita;
+  enquanto não existir, vale o padrão de `src/schemas/whatsapp.ts`.
+- **`whatsapp_mensagens`** (migration `0052`): id, loja_id, chave, referencia (o id do que
+  motivou a mensagem — conta a receber, OS, pedido —, texto e sem FK de propósito, porque aponta
+  pra tabelas diferentes conforme a chave), destino, operador_id, criado_em. Registra que a
+  conversa foi **aberta**, nunca que foi enviada.
 - **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
   (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
   Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
@@ -1170,6 +1232,13 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     depois de qualquer mexida grande de estilo — hoje passa limpo. Ele não enxerga fundo e texto
     declarados em elementos diferentes, então continua valendo olhar a tela; serve pra pegar de
     graça o caso mais comum, que é fundo e cor na mesma classe.
+    **Desde 12/09/2026 existe a outra metade**: `npm run contraste:telas`
+    (`scripts/varredura-contraste-dom.mjs`, item TR-01.3 do guia) abre o app de verdade, percorre
+    as 54 telas e mede a cor que a pessoa **realmente enxerga** — compondo cada fundo translúcido
+    com o que está atrás dele até achar um opaco. É justamente o que a varredura por `className`
+    não tem como saber, e é onde este app se complica, porque quase toda tela fica dentro de um
+    `sakura-card`, que é vidro. Os dois existem, e não um só, porque este é lento (uns 3 minutos,
+    precisa de navegador) e aquele é instantâneo.
 18. **Padrão de bug: `process.env.npm_package_version` não existe no app empacotado** —
     `VersaoApp.tsx` (canto inferior direito, em toda tela) sempre dependeu dessa variável, que o npm
     só injeta quando o processo é lançado via `npm run ...`. No `.exe` instalado (aberto direto,
@@ -1924,6 +1993,46 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     inteiro no app (Playwright + o banco de mentira de `site/ferramentas/banco-falso.mjs`, que
     responde qualquer método HTTP e por isso deixa exercitar até o caminho de gravar).
 
+58. **A cor que o Tailwind v4 entrega NÃO é `rgb()` — e uma medição que supõe isso erra em todas
+    as telas sem dar erro em lugar nenhum (12/09/2026).** A primeira versão da varredura de
+    contraste no DOM (item TR-01.3) lia a cor com uma expressão regular procurando
+    `rgb(...)`/`rgba(...)`. Parecia óbvio, e está errado: no Tailwind v4, toda cor com opacidade
+    — `text-sakura-purple-dark/80`, `bg-black/40`, que é quase tudo neste app — chega do
+    `getComputedStyle` como **`oklab(0.89 0.026 -0.014 / 0.8)`**. A regex não casava, devolvia
+    "transparente", e a composição de letra sobre fundo dava letra e fundo IGUAIS. Resultado:
+    **183 reprovações, todas com exatamente 1:1, em todas as 54 telas** — um relatório que parecia
+    catastrófico e não continha uma única informação verdadeira.
+    **Corrigido** deixando o próprio navegador ler a cor: pinta num canvas de 1 pixel e lê o
+    pixel que saiu (`scripts/medir-contraste.mjs`). Entende oklab, oklch, `color-mix` e o que mais
+    vier, porque é o mesmo código que pinta a tela. Depois disso os números viraram específicos e
+    plausíveis, e a lista caiu de 183 para uma mão cheia.
+    **A lição de método é a que vale**: o erro não foi a regex, foi eu quase ter levado o
+    relatório adiante. O que salvou foi olhar para a FORMA do resultado antes do conteúdo —
+    "todas as 183 dão exatamente 1:1" não é um achado, é uma confissão de que o medidor está
+    quebrado. Número redondo demais, repetido demais, em lugares demais: desconfie do
+    instrumento antes da tela.
+
+59. **Ferramenta que sobe o próprio servidor tem que RECUSAR uma porta já ocupada — e o
+    "aquecido" engana (12/09/2026).** Dois enganos seguidos, na mesma varredura, os dois com o
+    mesmo sintoma inútil (`TimeoutError` em 36 das 54 telas):
+    - **Porta ocupada por um estranho.** O config das telas usa `strictPort`, então, com a porta
+      já tomada, o servidor novo simplesmente não sobe — e a varredura passa a medir as telas
+      servidas por *outro* servidor (um `npm run dev` esquecido, ou o da rodada anterior que não
+      morreu porque `npx` é só um intermediário e matar ele deixa o `vite` vivo). Esse servidor
+      estranho não tem as variáveis do Supabase de mentira, então o app esconde os botões de
+      cadastrar, e as cenas "falham" sem nada explicar. Corrigido em duas pontas: a varredura
+      **para e explica** se já tem alguém respondendo na porta, e mata o GRUPO de processos no
+      fim, não só o `npx`.
+    - **Tempo curto demais a frio.** Com o servidor já aquecido de uma rodada anterior, as 54
+      telas passavam; a frio — que é como o CI sempre roda — tudo a partir da oitava cena
+      estourava os 8s de espera por botão, porque o servidor de desenvolvimento compila cada tela
+      na PRIMEIRA visita. Subiu pra 30s, que é teto e não espera: não deixa nada mais lento
+      quando está tudo certo.
+    **Lição**: "passou aqui" não quer dizer nada quando o passe dependeu de estado deixado pela
+    rodada anterior. Antes de acreditar num verde, rodar uma vez do zero — servidor novo, cache
+    apagado. É irmã da lição do item 56 (comparar rodadas antes de ler falha como regressão), do
+    outro lado: lá era desconfiar do vermelho, aqui é desconfiar do verde.
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
@@ -2007,6 +2116,33 @@ são duas linhas: o hook `useRascunho(chave, watch, reset)` (`src/hooks/useRascu
 mais o `<AvisoRascunho>`. **Cuidado embutido**: o autosave compara com o retrato de quando a tela
 abriu e ignora formulário intocado — sem isso, só abrir uma tela e deixar 30s já criaria um
 rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
+
+**WhatsApp (12/09/2026, item `FN-03` do guia)**: o sistema abre a conversa no WhatsApp com a
+mensagem já escrita, em três lugares — **"Cobrar"** em cada conta pendente de Contas a Receber,
+**"Avisar"** ("seu carro está pronto") em cada OS concluída ou faturada, e **"Enviar"** em cada
+pedido de compra ainda não recebido, com a lista de itens. Existe porque o WhatsApp já é o canal
+por onde essa operação funciona — é por lá que o pai dela manda foto de nota, que ela fala com a
+contabilidade e com o suporte, e que a senha temporária de um operador é repassada; o sistema era
+a única parte do fluxo que ignorava isso, e quem precisava cobrar copiava valor e data na mão.
+Quatro coisas que valem saber:
+- **Os textos são editáveis em Configurações → "Mensagens de WhatsApp"**, com marcadores no mesmo
+  padrão do texto de garantia (`{cliente}`, `{valor}`, `{vencimento}`, `{os}`, `{placa}`,
+  `{loja}`...). Cada loja fala do seu jeito, e o que o dono manda pro cliente dele é decisão dele.
+  Sem linha no banco, vale o padrão de `src/schemas/whatsapp.ts` — loja nova já manda mensagem
+  sem configurar nada.
+- **O sistema registra que a conversa foi ABERTA, nunca que foi enviada** — ele abre o WhatsApp
+  com o texto pronto e, dali em diante, quem decide é a pessoa. Afirmar "enviada" seria uma
+  mentira que um dia viraria decisão de cobrança. Em Contas a Receber isso aparece como "cobrado
+  em dd/mm" ao lado do botão, que responde a pergunta que hoje mora só na memória de quem cobrou.
+- **O telefone é normalizado** pra `55 + DDD + número` (`schemas/whatsapp.ts`, testado): tira
+  pontuação e o zero do DDD, não duplica o 55 de quem cadastrou com DDI, e acrescenta o nono
+  dígito em celular antigo — mas **não** em telefone fixo, porque isso criaria um número que não
+  existe. Sem DDD, ele **recusa e explica**, em vez de abrir conversa com o número errado.
+- **Quem abre é o processo principal do Electron** (`shell.openExternal`), que **confere de novo**
+  que a URL é `https://wa.me/` antes de entregar pro sistema operacional — é o item 15 do
+  checklist de segurança do Electron, e URL montada com dado do banco (telefone + texto editável)
+  é exatamente o caso que ele descreve. Fora do Electron cai num `window.open`.
+**Ainda não visto por ela na loja.**
 
 - **Conexão com o banco (multi-empresa)** — construída nesta sessão e **confirmada funcionando de
   verdade por ela** (instalou a `v0.9.18` no notebook dela, colou URL + chave, entrou no sistema
@@ -2106,6 +2242,40 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   Edge Function. **Desde 09/09/2026, o CST/CSOSN lido na nota do fornecedor já entra corrigido
   pro padrão da loja** (a coluna continua editável), com aviso quando algum produto ficar sem um
   código que sirva — ver item 47 da seção 6.
+
+  **A lista de Produtos respondendo "o que preciso comprar?" (12/09/2026, item `TL-11` do
+  guia)** — até aqui "Estoque atual" era um número neutro: dava pra ver que sobrou 1, mas não
+  dava pra saber se 1 é pouco. Quatro coisas mudaram:
+  - **Estoque mínimo por peça** (campo novo no cadastro, migration `0051`). Chegando no mínimo, a
+    peça aparece destacada e entra no filtro **"Precisa comprar"**, com a contagem ao lado. Peça
+    sem mínimo cadastrado nunca vira aviso — e é assim que o catálogo inteiro nasce, então nada
+    muda pra quem não quiser usar.
+  - **Saldo com semântica**: negativo em vermelho e escrito ("negativo"), porque saldo negativo
+    **não é pouco estoque, é erro de lançamento** — saiu peça que nunca entrou; zerado e "no
+    mínimo ou abaixo" em amarelo. A regra fica em `schemas/estoque.ts`, função pura testada, pra
+    a mesma leitura valer na lista, no relatório e na abertura de OS — este projeto já viu quatro
+    vezes o que dá reescrever regra de negócio em cada tela (itens 35, 40, 44 e 49 da seção 6).
+  - **Busca com leitor de código de barras**: um campo no topo, já focado ao abrir, que filtra por
+    descrição, referência, código, marca e **medida do pneu**. O leitor se comporta como um
+    teclado (digita o código e aperta Enter), então Enter com correspondência **exata** abre a
+    peça direto. Exata, e não "contém", de propósito: abrir a peça errada é pior que não abrir
+    nada — e com duas peças de mesmo código ele não escolhe sozinho, só filtra a lista.
+  - **Coluna de margem %**, que já era calculada e não aparecia.
+
+  **O cadastro de produto explicando os campos fiscais (12/09/2026, item `TL-12`)** — eles são a
+  maior fonte de erro deste sistema, e o erro deles é silencioso: o campo fica com cara de
+  preenchido e certo, e a conta chega semanas depois numa nota recusada (item 47 da seção 6).
+  Agora cada campo fiscal tem um "?" com uma frase dizendo o que é e **de onde tirar o valor**
+  ("NCM: código de 8 dígitos, está na nota do fornecedor"), e o **CST/CSOSN já nasce preenchido
+  com o código que a própria loja mais usa** — a sugestão existia só na importação de XML, ou
+  seja, faltava justo no caminho mais usado. Só em peça nova, e só se o campo estiver vazio.
+  Junto: **aviso quando o preço de venda fica abaixo do custo** (erro de digitação em preço não
+  dá erro em lugar nenhum, só vira prejuízo repetido até alguém reparar), **unidade virou lista
+  fechada** com uma saída "Outra..." (UN/Un/un viravam três coisas em qualquer agrupamento, e
+  unidade divergente é rejeição de nota), e o **bloco de pneu** (medida, índice de carga e
+  velocidade, DOT) que aparece só quando a categoria escolhida é a de Pneus. Nenhum dos avisos
+  trava o salvar — são todos aviso (item 33 da seção 6).
+  **Ainda não visto por ela na loja.**
 - **Serviços**: catálogo simples (descrição, código opcional, preço padrão, **custo** — ex: mão de
   obra, usado pela aba Lucratividade —, categoria de serviço opcional), sem estoque/fiscal. Vem
   semeado com ~17 serviços padrão sem preço (organizados por categoria: Pneus, Suspensão,
@@ -2470,7 +2640,7 @@ rascunho falso pra próxima abertura, o que em cinco telas viraria chateação.
   possível, mas só funciona com a loja "vazia" — sem estoque/caixa/OS/funcionários vinculados; com
   dado de negócio, o app explica e sugere inativar em vez de excluir), e seções recolhíveis — Juros
   de parcelamento, Categorias de produto, Categorias de serviço, Categorias de caixa, Texto de
-  garantia, Dados fiscais da loja, Cartões do Início (essas últimas 4, junto com Juros, agora são
+  garantia, **Mensagens de WhatsApp**, Dados fiscais da loja, Cartões do Início (essas últimas 4, junto com Juros, agora são
   **por loja** — ver seção 5). Em "Dados fiscais da loja" há também, desde 11/09/2026, o campo
   "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
   Início; em branco, vale o passo a passo de Araraquara que está no código.
@@ -3221,7 +3391,14 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0050` estão TODAS aplicadas no Supabase real dela — nada pendente de SQL** — a `0048`
+**Estado hoje: `0001` a `0050` estão aplicadas no Supabase real dela. A `0051` e a `0052`, criadas
+em 12/09/2026, estão ESPERANDO ela rodar** — as duas foram validadas num Postgres local (instalação
+inteira rodada três vezes do zero, e cada uma rodada duas vezes num banco no estado `0050` com dado
+plantado), mas nenhuma foi colada no SQL Editor ainda. **A ordem importa**: as duas precisam estar
+rodadas ANTES de a versão nova chegar no computador da loja — sem as colunas da `0051`, salvar um
+produto dá erro de "coluna não existe"; sem as tabelas da `0052`, Configurações → Mensagens de
+WhatsApp não abre. É a mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
+Histórico das anteriores: a `0048`
 (precisão das colunas de valor) e a `0049` (lembrete da alíquota da competência) foram coladas por
 ela no SQL Editor em 11/09/2026, as duas com "Success. No rows returned", e a `0049` **antes** da
 tag `v0.9.30`, que é a ordem que essa migration exigia (sem as colunas dela, "Salvar dados
@@ -3757,7 +3934,7 @@ era a única, e já foi corrigida à mão. **Não reabrir esse assunto**; a cons
 receita, caso um dia entre peça de fornecedor novo por uma versão antiga do app (`pecas` é
 compartilhada entre lojas, então ela cobre o cadastro inteiro de uma vez).
 
-### ⏸ Onde parou em 11/09/2026 — LEIA ISTO PRIMEIRO
+### Onde parou em 11/09/2026 (histórico — o marco mais recente está no FIM do arquivo)
 
 **Estado: `v0.9.32` é a última tag publicada, o banco dela está na `0050` (nada de SQL pendente),
 e a `main` está UMA leva à frente — o `TL-08`, mesclado e esperando ela decidir se publica (ver
@@ -3947,15 +4124,19 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 | Etapa | Feito | Falta |
 |---|---|---|
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
-| **2** — o que dói hoje, no balcão | 9 de 13 | **4** |
+| **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
 | **3** — confiança nos números | 0 de 7 | **7** |
 | **4** — antes da segunda empresa | 0 de 12 | **12** |
 | **5** — escala e produto | 0 de 15 | **15** |
 
-**Da Etapa 2 faltam 4**: `TR-01.3` (auditoria de contraste WCAG — o item que o achado do vermelho
-escuro, logo acima, alimenta), `TL-11` + `TL-12` (estoque mínimo e campos fiscais explicados — **os
-dois pedem migration**) e `FN-03` (WhatsApp). O `TL-27` e o `TL-08` saíram desta lista em
-11/09/2026 — ver as levas 4 e 5 acima.
+**A Etapa 2 fechou em 12/09/2026** com os quatro que faltavam: `TR-01.3` (a auditoria de
+contraste que nunca tinha sido feita), `TL-11` + `TL-12` (estoque mínimo e campos fiscais
+explicados, migrations `0051`) e `FN-03` (WhatsApp, migration `0052`). O `TL-27` e o `TL-08`
+tinham saído da lista em 11/09/2026.
+
+**Duas sobras conhecidas, deixadas de fora de propósito** (nenhuma é P0): do `TL-11`, a foto da
+peça; do `TL-12`, a foto e a ficha de aplicação. As duas pedem armazenamento de imagem, que é
+assunto maior que o item.
 
 **Duas etapas mudam de peso por causa da venda, e vale dizer em voz alta:**
 
@@ -3997,3 +4178,99 @@ passando nos dois fusos (eram 149 no começo de setembro). As 54 telas do catál
 (`site/ferramentas/gerar-catalogo-telas.mjs`) geradas de novo sem nenhuma falha — vale rodar esse
 gerador depois de qualquer mexida grande de tela, é o único teste de tela que existe hoje, e ele
 já quebrou em silêncio uma vez (item 53 da seção 6).
+
+
+### ⏸ Onde parou em 12/09/2026 — LEIA ISTO PRIMEIRO
+
+**A Etapa 2 do guia de melhorias FECHOU.** Eram quatro itens e todos saíram nesta sessão:
+`TL-11` (estoque mínimo), `TL-12` (campos fiscais explicados e bloco de pneu), `FN-03`
+(WhatsApp) e `TR-01.3` (a auditoria de contraste que nunca tinha sido feita).
+
+**Estado: a `main` está DUAS levas à frente da `v0.9.32`** — o `TL-08` de 11/09 e tudo isto — e
+**duas migrations esperam ela rodar** (`0051` e `0052`). Nada disso foi publicado em tag.
+
+#### O que ela precisa fazer, nesta ordem
+
+1. **Rodar as duas migrations no SQL Editor do Supabase** (New query → colar → Run), uma de cada
+   vez. A ordem entre elas não importa; o que importa é que as DUAS estejam rodadas **antes** de
+   a versão nova chegar no computador da loja:
+   - `supabase/migrations/0051_pecas_estoque_minimo_e_pneu.sql` — sem ela, salvar um produto dá
+     erro de "coluna não existe".
+   - `supabase/migrations/0052_modelos_whatsapp.sql` — sem ela, Configurações → Mensagens de
+     WhatsApp não abre.
+   É a mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
+2. **Decidir se publica.** Se sim, seguir "Gerar o instalador Windows e publicar uma versão nova"
+   (seção 9): subir o `package.json` pra `0.9.33`, PR, merge, `workflow_dispatch` com
+   `ref: "main"`. **Não publicar sozinho** — e lembrar de conferir a lista real de releases antes
+   de propor o número, não a memória deste arquivo.
+
+#### O que cada item entregou
+
+O detalhe está na seção 7 (Estoque → Produtos e cadastro de produto; e o bloco **WhatsApp**). Em
+uma linha cada:
+
+1. **`TL-11`** — a lista de Produtos passou a responder "o que preciso comprar?": estoque mínimo
+   por peça, filtro "Precisa comprar", saldo com semântica (negativo é **erro de lançamento**, não
+   pouco estoque), busca que aceita o leitor de código de barras e coluna de margem.
+2. **`TL-12`** — cada campo fiscal ganhou um "?" dizendo **de onde tirar o valor**, o CST/CSOSN já
+   nasce com o código que a loja mais usa, a unidade virou lista fechada, o preço abaixo do custo
+   avisa, e apareceu o bloco de pneu (medida, índice de carga/velocidade, DOT).
+3. **`FN-03`** — botões de WhatsApp em Contas a Receber ("Cobrar"), na lista de OS ("Avisar") e em
+   Pedidos de compra ("Enviar"), com textos editáveis em Configurações.
+4. **`TR-01.3`** — `npm run contraste:telas`: abre o app de verdade, percorre as 54 telas e mede a
+   cor que a pessoa **realmente enxerga**. Entrou no CI, como job próprio.
+
+#### O que a auditoria de contraste achou
+
+Ela percorreu as 54 telas e reprovou **87 combinações**. Duas eram erro claro e **foram
+corrigidas na hora**:
+
+- **"Ver garantia" em 2,91:1** — letra branca sobre o rosa neon, o pior texto do app. A cor da
+  marca não mudou (é o que o item proíbe); o que mudou foi a letra em cima dela, que passou a ser
+  o fundo escuro do app. Sobe pra ~7:1.
+- **"Remover"/mensagens de erro em vermelho ESCURO sobre card escuro** (4,13:1) — a sobra do tema
+  claro antigo que o próprio status já suspeitava existir (itens 14 e 17 da seção 6) e que o
+  `npm run contraste` não pega, porque fundo e letra ficam em elementos diferentes. Achada por
+  **medição**, não por relato.
+
+**As outras 85 não foram tocadas de propósito** — o item TR-01.3 é explícito em "corrija só o que
+ela aprovar, não saia trocando cor da paleta sozinho", e todas mudam a cara do app. Elas estão em
+`scripts/divida-de-contraste.mjs`, catalogadas por **causa** (85 combinações, mas só quatro
+decisões), o que deixa a checagem verde hoje sem deixar entrar coisa nova:
+
+| Decisão dela | Quantas | Pior caso | Mínimo |
+|---|---|---|---|
+| **Borda dos campos de formulário** | 51 | 1,15:1 | 3:1 |
+| **Botão roxo com letra branca** | 24 | 4,48:1 | 4,5:1 |
+| **Texto roxo usado como link** | 9 | 4,14:1 | 4,5:1 |
+| **Dias do mês vizinho no calendário** | 1 | 2,56:1 | 4,5:1 |
+
+**A mais importante é a primeira, e é a única que dá pra sentir usando**: a borda que diz onde o
+campo começa e termina quase não existe. E ela **não se resolve com opacidade** — `sakura-gray`
+(`#3a3238`) sobre o card escuro dá 1,63:1 mesmo a 100%; precisa de uma cor mais clara pra borda
+de campo, o que muda a aparência de todo formulário do app.
+**A pergunta pra ela é essa: pode clarear a borda dos campos?**
+
+As duas do meio (botão roxo e texto roxo) estão a **dois centésimos** do mínimo — corrigir exige
+mexer no roxo da marca, que o item proíbe, ou engrossar a letra dos botões. E a última é
+deliberada: os dias do mês vizinho são apagados de propósito, pra não competirem com o mês
+corrente; clarear resolve o número e estraga a ideia.
+
+#### Duas armadilhas que esta varredura revelou (e que valem além dela)
+
+Estão nos itens **58 e 59** da seção 6, e as duas são sobre desconfiar do próprio instrumento:
+
+- **A primeira versão relatou 183 reprovações, todas exatamente 1:1, e nenhuma era verdadeira** —
+  a cor era lida com uma regex procurando `rgb(...)`, e o Tailwind v4 entrega `oklab(...)` em
+  toda cor com opacidade. Número redondo demais, repetido demais, em lugares demais: desconfie do
+  medidor antes da tela.
+- **"Passou aqui" não vale nada quando o passe dependeu da rodada anterior** — com o servidor
+  aquecido as 54 telas passavam; a frio, 36 falhavam. E, com a porta já ocupada por um servidor
+  esquecido, a varredura media as telas servidas por um estranho sem avisar. As duas coisas foram
+  corrigidas na ferramenta.
+
+#### Estado do código
+
+`main` **duas levas à frente da `v0.9.32`** e com **duas migrations esperando** (`0051`, `0052`).
+`tsc`, lint, `npm run contraste` e `npm run contraste:telas` limpos; **407 testes** passando nos
+dois fusos (eram 369 em 11/09). As 54 telas do catálogo geradas de novo sem nenhuma falha.

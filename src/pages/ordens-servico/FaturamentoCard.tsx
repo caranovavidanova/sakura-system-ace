@@ -273,7 +273,7 @@ export function FaturamentoCard({
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="text-rotulo font-medium text-red-600 hover:underline"
+                      className="text-rotulo font-medium text-red-300 hover:underline"
                     >
                       Remover
                     </button>
@@ -304,7 +304,7 @@ export function FaturamentoCard({
           </button>
           <p
             className={`text-right text-corpo font-medium ${
-              linhasBatem ? "text-sakura-purple-dark" : "text-red-600"
+              linhasBatem ? "text-sakura-purple-dark" : "text-red-300"
             }`}
           >
             {linhasBatem

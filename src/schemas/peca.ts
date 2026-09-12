@@ -17,6 +17,10 @@ export const pecaFormSchema = z.object({
   categoria_id: z.string(),
   prazo_garantia_dias: z.string(),
   aplicacao: z.string(),
+  estoque_minimo: z.string(),
+  medida: z.string(),
+  indice_carga_velocidade: z.string(),
+  dot: z.string(),
   ncm: z.string().trim().min(1, "NCM é obrigatório"),
   cest: z.string().trim().min(1, "C.E.S.T é obrigatório"),
   cfop_padrao: z.string().trim().min(1, "CFOP padrão é obrigatório"),
@@ -41,6 +45,10 @@ export const pecaFormVazio: PecaFormValues = {
   categoria_id: "",
   prazo_garantia_dias: "",
   aplicacao: "",
+  estoque_minimo: "",
+  medida: "",
+  indice_carga_velocidade: "",
+  dot: "",
   ncm: "",
   cest: "",
   cfop_padrao: "",
@@ -65,6 +73,10 @@ export function paraValoresFormulario(peca?: Peca): PecaFormValues {
     categoria_id: peca.categoria_id ?? "",
     prazo_garantia_dias: peca.prazo_garantia_dias?.toString() ?? "",
     aplicacao: peca.aplicacao ?? "",
+    estoque_minimo: peca.estoque_minimo?.toString() ?? "",
+    medida: peca.medida ?? "",
+    indice_carga_velocidade: peca.indice_carga_velocidade ?? "",
+    dot: peca.dot ?? "",
     ncm: peca.ncm ?? "",
     cest: peca.cest ?? "",
     cfop_padrao: peca.cfop_padrao ?? "",
@@ -92,6 +104,10 @@ export function paraNovaPeca(valores: PecaFormValues): NovaPeca {
     marca: paraTextoOuNulo(valores.marca),
     modelo: paraTextoOuNulo(valores.modelo),
     aplicacao: paraTextoOuNulo(valores.aplicacao),
+    estoque_minimo: paraNumeroOuNulo(valores.estoque_minimo),
+    medida: paraTextoOuNulo(valores.medida),
+    indice_carga_velocidade: paraTextoOuNulo(valores.indice_carga_velocidade),
+    dot: paraTextoOuNulo(valores.dot),
     unidade: valores.unidade.trim(),
     preco_custo: paraNumeroOuNulo(valores.preco_custo),
     preco_venda: paraNumeroOuNulo(valores.preco_venda),
@@ -140,4 +156,66 @@ export function margemAPartirDoPreco(custo: string, precoVenda: string): string 
   }
   const margem = ((precoNum - custoNum) / custoNum) * 100;
   return (Math.round(margem * 10) / 10).toString();
+}
+
+// --- Unidade: lista fechada (item TL-12 do guia) -------------------------
+// Era texto livre, e texto livre em unidade custa de dois jeitos: "UN", "Un"
+// e "un" viram três coisas diferentes em qualquer agrupamento, e unidade
+// divergente do que a nota fiscal espera é rejeição da SEFAZ. A lista abaixo
+// são as unidades de medida usadas de verdade num autocenter.
+//
+// "OUTRA" não é uma unidade — é a saída pra quem precisar de algo que não
+// está aqui (o formulário troca o select por um campo digitável). Sem essa
+// saída, a lista fechada viraria tranca, que é justamente o que este projeto
+// já aprendeu a não fazer (PROJETO_STATUS.md, seção 6, item 33).
+export const UNIDADES_PADRAO = [
+  { valor: "UN", rotulo: "UN — unidade" },
+  { valor: "PC", rotulo: "PC — peça" },
+  { valor: "PAR", rotulo: "PAR — par" },
+  { valor: "JG", rotulo: "JG — jogo" },
+  { valor: "CX", rotulo: "CX — caixa" },
+  { valor: "KG", rotulo: "KG — quilo" },
+  { valor: "L", rotulo: "L — litro" },
+  { valor: "M", rotulo: "M — metro" },
+  { valor: "M2", rotulo: "M2 — metro quadrado" },
+  { valor: "SV", rotulo: "SV — serviço" },
+] as const;
+
+export const UNIDADE_OUTRA = "OUTRA";
+
+export function unidadeEstaNaLista(unidade: string): boolean {
+  return UNIDADES_PADRAO.some((u) => u.valor === unidade.trim().toUpperCase());
+}
+
+/**
+ * Preço de venda menor que o custo. Erro de digitação em preço é silencioso:
+ * não dá erro em lugar nenhum, a peça só passa a ser vendida com prejuízo, a
+ * cada venda, até alguém reparar no relatório de lucratividade semanas
+ * depois. É AVISO, não trava — venda abaixo do custo existe de verdade
+ * (queima de estoque parado, peça encalhada), e barrar seria decidir pelo
+ * dono da loja.
+ *
+ * Preço igual ao custo não avisa: margem zero é escolha possível, e avisar
+ * nela só ensinaria a ignorar o aviso.
+ */
+export function precoAbaixoDoCusto(custo: string, precoVenda: string): boolean {
+  const custoNum = Number(custo);
+  const vendaNum = Number(precoVenda);
+  if (custo.trim() === "" || precoVenda.trim() === "") return false;
+  if (Number.isNaN(custoNum) || Number.isNaN(vendaNum)) return false;
+  if (custoNum <= 0) return false;
+  return vendaNum < custoNum;
+}
+
+/**
+ * A categoria escolhida é a de pneu? Decide se o bloco de pneu (medida,
+ * índice de carga/velocidade, DOT) aparece no formulário.
+ *
+ * Casa pelo NOME da categoria, e não por um id fixo, de propósito: a
+ * categoria "Pneus" é semeada pela migration 0030, mas ela é uma linha comum
+ * de `categorias` — cada empresa pode renomear, apagar ou criar a sua. Um id
+ * cravado no código funcionaria só na loja onde foi escrito.
+ */
+export function ehCategoriaDePneu(nomeDaCategoria: string | null | undefined): boolean {
+  return /pneu/i.test(nomeDaCategoria ?? "");
 }

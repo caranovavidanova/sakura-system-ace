@@ -6,6 +6,7 @@ import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useRascunho } from "@/hooks/useRascunhoFormulario";
 import { mensagemDeErro } from "@/lib/errors";
 import {
+  ehCategoriaDePneu,
   paraNovaPeca,
   paraQuantidadeInicial,
   paraValoresFormulario,
@@ -13,19 +14,34 @@ import {
   type PecaFormValues,
 } from "@/schemas/peca";
 import type { Categoria } from "@/types/categoria";
+import type { RegimeTributario } from "@/types/configuracao";
 import type { NovaPeca, Peca } from "@/types/peca";
 import { DadosCadastraisFields } from "./campos/DadosCadastraisFields";
+import { PneuFields } from "./campos/PneuFields";
 import { PrecosFields } from "./campos/PrecosFields";
 import { TributosFields } from "./campos/TributosFields";
 
 interface PecaFormProps {
   pecaExistente?: Peca;
   categorias: Categoria[];
+  /** Regime da loja (Configurações → Dados fiscais) — decide se o código de
+   *  ICMS desta peça é CSOSN ou CST, e alimenta o aviso de incompatível. */
+  regime: RegimeTributario | null;
+  /** O código de ICMS que a própria loja mais usa no cadastro dela, usado
+   *  pra pré-preencher uma peça nova em vez de deixar o campo em branco. */
+  csosnSugerido: string | null;
   onSalvar: (peca: NovaPeca, quantidadeInicial: number | null) => Promise<void>;
   onCancelar: () => void;
 }
 
-export function PecaForm({ pecaExistente, categorias, onSalvar, onCancelar }: PecaFormProps) {
+export function PecaForm({
+  pecaExistente,
+  categorias,
+  regime,
+  csosnSugerido,
+  onSalvar,
+  onCancelar,
+}: PecaFormProps) {
   const [erro, setErro] = useState<string | null>(null);
 
   const {
@@ -85,7 +101,21 @@ export function PecaForm({ pecaExistente, categorias, onSalvar, onCancelar }: Pe
         errors={errors}
         categorias={categorias}
       />
-      <TributosFields register={register} errors={errors} />
+      {/* O bloco de pneu só aparece quando a categoria escolhida é a de
+          pneus — é a peça que essa loja mais vende, e a medida ficava
+          afogada na descrição em texto livre. */}
+      {ehCategoriaDePneu(categorias.find((c) => c.id === watch("categoria_id"))?.nome) && (
+        <PneuFields register={register} />
+      )}
+      <TributosFields
+        register={register}
+        watch={watch}
+        setValue={setValue}
+        errors={errors}
+        regime={regime}
+        csosnSugerido={csosnSugerido}
+        editando={Boolean(pecaExistente)}
+      />
       <PrecosFields
         register={register}
         watch={watch}

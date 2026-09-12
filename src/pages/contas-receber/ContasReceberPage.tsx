@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { BotaoWhatsapp } from "@/components/BotaoWhatsapp";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarClientes } from "@/lib/clientes";
 import { criarContaReceber, listarContasReceber, receberConta } from "@/lib/contasReceber";
 import { mensagemDeErro } from "@/lib/errors";
+import {
+  listarModelosWhatsapp,
+  registrarMensagemAberta,
+  textoDoModelo,
+  ultimasMensagensPorReferencia,
+} from "@/lib/modelosWhatsapp";
+import { preencherModelo } from "@/schemas/whatsapp";
 import type { Cliente } from "@/types/cliente";
 import type { ContaReceber, NovaContaReceber } from "@/types/contaReceber";
 import { ContaReceberForm } from "./ContaReceberForm";
@@ -30,6 +38,11 @@ export function ContasReceberPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [contaRecebendo, setContaRecebendo] = useState<ContaReceber | null>(null);
+  const [modelosWhatsapp, setModelosWhatsapp] = useState<Record<string, string>>({});
+  // Quando cada conta teve a última cobrança ABERTA no WhatsApp. Responde a
+  // pergunta que hoje mora só na memória de quem cobrou: "já falei com essa
+  // pessoa?". Ver a tabela `whatsapp_mensagens` na migration 0052.
+  const [ultimasCobrancas, setUltimasCobrancas] = useState<Map<string, string>>(new Map());
 
   async function carregar() {
     if (!lojaAtual) {
@@ -39,12 +52,16 @@ export function ContasReceberPage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [listaContas, listaClientes] = await Promise.all([
+      const [listaContas, listaClientes, modelos, cobrancas] = await Promise.all([
         listarContasReceber(lojaAtual.id),
         listarClientes(),
+        listarModelosWhatsapp(lojaAtual.id),
+        ultimasMensagensPorReferencia(lojaAtual.id, "cobranca"),
       ]);
       setContas(listaContas);
       setClientes(listaClientes);
+      setModelosWhatsapp(modelos);
+      setUltimasCobrancas(cobrancas);
     } catch (err) {
       console.error("Erro ao carregar contas a receber:", err);
       setErro(mensagemDeErro(err));
@@ -85,6 +102,16 @@ export function ContasReceberPage() {
     .filter((c) => c.status === "recebido")
     .sort((a, b) => b.vencimento.localeCompare(a.vencimento));
   const totalPendente = pendentes.reduce((soma, c) => soma + c.valor, 0);
+
+  function textoDaCobranca(conta: ContaReceber): string {
+    return preencherModelo(textoDoModelo(modelosWhatsapp, "cobranca"), {
+      cliente: conta.cliente?.nome,
+      valor: formatarMoeda(conta.valor),
+      vencimento: new Date(conta.vencimento).toLocaleDateString("pt-BR"),
+      descricao: conta.descricao,
+      loja: lojaAtual?.nome,
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -152,6 +179,8 @@ export function ContasReceberPage() {
                   <tbody>
                     {pendentes.map((conta) => {
                       const vencida = conta.vencimento < hoje;
+                      const cliente = clientes.find((c) => c.id === conta.cliente_id);
+                      const ultimaCobranca = ultimasCobrancas.get(conta.id);
                       return (
                         <tr
                           key={conta.id}
@@ -185,15 +214,43 @@ export function ContasReceberPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setContaRecebendo(conta);
-                              }}
-                              className="rounded-full bg-sakura-purple px-3 py-1.5 text-rotulo font-medium text-white hover:opacity-90"
+                            {/* O clique no botão não pode abrir a OS junto: a
+                                linha inteira é clicável. */}
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center justify-end gap-2"
                             >
-                              Marcar como recebido
-                            </button>
+                              {ultimaCobranca && (
+                                <span
+                                  className="text-rotulo text-sakura-muted"
+                                  title="O sistema só sabe que a conversa foi aberta — se a mensagem foi mesmo enviada, só você sabe."
+                                >
+                                  cobrado em {new Date(ultimaCobranca).toLocaleDateString("pt-BR")}
+                                </span>
+                              )}
+                              <BotaoWhatsapp
+                                telefone={cliente?.telefone}
+                                texto={textoDaCobranca(conta)}
+                                rotulo="Cobrar"
+                                titulo="Abrir a conversa no WhatsApp com a cobrança pronta"
+                                aoAbrir={() => {
+                                  if (!lojaAtual) return;
+                                  registrarMensagemAberta(
+                                    lojaAtual.id,
+                                    "cobranca",
+                                    conta.id,
+                                    cliente?.telefone ?? null,
+                                    operador?.id ?? null,
+                                  ).then(carregar);
+                                }}
+                              />
+                              <button
+                                onClick={() => setContaRecebendo(conta)}
+                                className="h-8 rounded-full bg-sakura-purple px-3 text-rotulo font-medium text-white hover:opacity-90"
+                              >
+                                Marcar como recebido
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

@@ -2,7 +2,9 @@ name: CI
 
 # Roda, em toda alteração enviada ao GitHub, as MESMAS cinco checagens que até
 # hoje eram feitas à mão, sessão a sessão: tipos, lint, testes (nos dois
-# fusos), contraste de cores e o SQL único de instalação.
+# fusos), contraste de cores e o SQL único de instalação — mais a varredura de
+# contraste NAS TELAS, que abre o app de verdade e mede a cor que a pessoa
+# enxerga (item TR-01.3 do guia de melhorias).
 #
 # Por que isto vale a pena: cada sessão nova que trabalha neste projeto começa
 # sem memória da conversa anterior. Um erro conhecido — cortar o dia em UTC,
@@ -67,6 +69,39 @@ jobs:
             echo "::error::O supabase/instalacao/instalacao-completa.sql está desatualizado. Rode 'npm run gerar-instalacao' e faça commit do resultado."
             exit 1
           fi
+
+  contraste-telas:
+    name: Contraste nas telas (WCAG, no DOM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # O Playwright NÃO é dependência do projeto de propósito: instalá-lo
+      # baixaria centenas de MB de navegador na máquina de quem desenvolve o
+      # app, que nunca roda esta ferramenta. Aqui ele é instalado só pra esta
+      # rodada — `--no-save` não encosta no package.json.
+      - name: Playwright (só nesta rodada)
+        run: |
+          npm i --no-save playwright
+          npx playwright install --with-deps chromium
+
+      # Abre o app de verdade, percorre as 54 telas e mede a cor que a pessoa
+      # realmente enxerga — compondo cada fundo translúcido com o que está
+      # atrás. É o que a varredura por className do outro job não consegue
+      # ver, e foi assim que um contraste de 1,39:1 passou meses sem ninguém
+      # notar (PROJETO_STATUS.md, seção 6, item 17).
+      #
+      # Job separado porque é lento (uns 3 minutos) — assim ele não segura o
+      # retorno rápido de tipos, lint e testes.
+      - name: Contraste nas telas
+        run: npm run contraste:telas
 
   segredos:
     name: Varredura de segredo

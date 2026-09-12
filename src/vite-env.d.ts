@@ -21,5 +21,9 @@ interface Window {
     conexao?: { url: string; chave: string };
     salvarConexao: (conexao: { url: string; chave: string }) => Promise<void>;
     registrarErro?: (mensagem: string) => void;
+    // Abre uma conversa no WhatsApp no navegador padrão. Opcional porque
+    // o app também roda no navegador (preview/catálogo de telas), onde
+    // essa ponte não existe — ver lib/whatsapp.ts.
+    abrirWhatsapp?: (url: string) => Promise<boolean>;
   };
 }

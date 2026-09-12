@@ -9,7 +9,14 @@ import {
   mapaCustoPecas,
   mapaCustoServicos,
 } from "@/schemas/metricasCaixa";
+import { BotaoWhatsapp } from "@/components/BotaoWhatsapp";
 import { criarCliente, criarVeiculo, listarClientes } from "@/lib/clientes";
+import {
+  listarModelosWhatsapp,
+  registrarMensagemAberta,
+  textoDoModelo,
+} from "@/lib/modelosWhatsapp";
+import { preencherModelo } from "@/schemas/whatsapp";
 import { calcularSaldoPorPeca, listarMovimentos } from "@/lib/estoque";
 import { listarFuncionarios } from "@/lib/funcionarios";
 import {
@@ -82,6 +89,7 @@ export function OrdensServicoPage() {
   const navigate = useNavigate();
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [modelosWhatsapp, setModelosWhatsapp] = useState<Record<string, string>>({});
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
@@ -158,6 +166,7 @@ export function OrdensServicoPage() {
         servicosCarregados,
         funcionariosCarregados,
         jurosCarregados,
+        modelosWhatsappCarregados,
       ] = await Promise.all([
         listarOrdens(lojaAtual.id),
         listarClientes(),
@@ -165,6 +174,7 @@ export function OrdensServicoPage() {
         listarServicos(),
         listarFuncionarios(lojaAtual.id),
         listarJurosParcelas(lojaAtual.id),
+        listarModelosWhatsapp(lojaAtual.id),
       ]);
       setOrdens(ordensCarregadas);
       setClientes(clientesCarregados);
@@ -172,6 +182,7 @@ export function OrdensServicoPage() {
       setServicos(servicosCarregados);
       setFuncionarios(funcionariosCarregados);
       setJurosParcelas(jurosCarregados);
+      setModelosWhatsapp(modelosWhatsappCarregados);
 
       // Notas de todas as OS de uma vez só (uma consulta, não uma por linha)
       // — é o que diz quais notas cada OS já tem. Falhar aqui não pode
@@ -274,6 +285,22 @@ export function OrdensServicoPage() {
     const ordensAtualizadas = await carregar();
     const ordemAtualizada = ordensAtualizadas?.find((o) => o.id === ordemEmEdicao.id);
     if (ordemAtualizada) setOrdemEmEdicao(ordemAtualizada);
+  }
+
+  // "Seu carro está pronto" (item FN-03). O total sai da MESMA função que a
+  // coluna Total da lista usa — se um dia a conta mudar, a mensagem muda
+  // junto, em vez de virar a quinta versão divergente do mesmo número
+  // (PROJETO_STATUS.md, seção 6, item 40).
+  function textoCarroPronto(ordem: OrdemServico): string {
+    const veiculo = [ordem.veiculo?.marca, ordem.veiculo?.modelo].filter(Boolean).join(" ");
+    return preencherModelo(textoDoModelo(modelosWhatsapp, "carro_pronto"), {
+      cliente: ordem.cliente?.nome,
+      veiculo: veiculo || "veículo",
+      placa: ordem.veiculo?.placa,
+      valor: formatarMoeda(totalOrdem(ordem.itens ?? [])),
+      os: nomeOrdem(ordem.numero),
+      loja: lojaAtual?.nome,
+    });
   }
 
   // Cadastro rápido de dentro da OS (item TL-08). Os dois recarregam a lista
@@ -508,7 +535,33 @@ export function OrdensServicoPage() {
                   <td className="px-4 py-3">{formatarMoeda(totalOrdem(ordem.itens ?? []))}</td>
                   <td className="px-4 py-3">{formatarMoeda(lucroOrdem(ordem))}</td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center justify-end gap-2"
+                    >
+                      {/* O carro só fica pronto pra retirar quando a OS é
+                          concluída ou faturada — antes disso o aviso seria
+                          mentira. */}
+                      {STATUS_COM_FECHAMENTO.includes(ordem.status) && (
+                        <BotaoWhatsapp
+                          telefone={
+                            clientes.find((c) => c.id === ordem.cliente_id)?.telefone
+                          }
+                          texto={textoCarroPronto(ordem)}
+                          rotulo="Avisar"
+                          titulo="Avisar o cliente pelo WhatsApp que o carro está pronto"
+                          aoAbrir={() => {
+                            if (!lojaAtual) return;
+                            registrarMensagemAberta(
+                              lojaAtual.id,
+                              "carro_pronto",
+                              ordem.id,
+                              clientes.find((c) => c.id === ordem.cliente_id)?.telefone ?? null,
+                              operador?.id ?? null,
+                            );
+                          }}
+                        />
+                      )}
                       {STATUS_COM_FECHAMENTO.includes(ordem.status) && (
                         <button
                           onClick={(e) => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarCategorias } from "@/lib/categorias";
+import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { listarDepositos } from "@/lib/depositos";
 import { mensagemDeErro } from "@/lib/errors";
 import {
@@ -12,6 +13,7 @@ import {
 import { listarPecas } from "@/lib/pecas";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Categoria } from "@/types/categoria";
+import type { RegimeTributario } from "@/types/configuracao";
 import type { Deposito } from "@/types/deposito";
 import type { MovimentoEstoque } from "@/types/estoque";
 import type { Peca } from "@/types/peca";
@@ -29,6 +31,9 @@ export function EstoquePage() {
   const [movimentos, setMovimentos] = useState<MovimentoEstoque[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [depositos, setDepositos] = useState<Deposito[]>([]);
+  // O regime da loja decide se o código de ICMS de uma peça é CSOSN ou CST
+  // — é o que alimenta o aviso do cadastro de produto (item TL-12).
+  const [regime, setRegime] = useState<RegimeTributario | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -40,17 +45,24 @@ export function EstoquePage() {
     setCarregando(true);
     setErro(null);
     try {
-      const [pecasCarregadas, movimentosCarregados, categoriasCarregadas, depositosCarregados] =
-        await Promise.all([
-          listarPecas(),
-          listarMovimentos(lojaAtual.id),
-          listarCategorias(),
-          listarDepositos(lojaAtual.id),
-        ]);
+      const [
+        pecasCarregadas,
+        movimentosCarregados,
+        categoriasCarregadas,
+        depositosCarregados,
+        configFiscal,
+      ] = await Promise.all([
+        listarPecas(),
+        listarMovimentos(lojaAtual.id),
+        listarCategorias(),
+        listarDepositos(lojaAtual.id),
+        buscarConfiguracaoFiscal(lojaAtual.id),
+      ]);
       setPecas(pecasCarregadas);
       setMovimentos(movimentosCarregados);
       setCategorias(categoriasCarregadas);
       setDepositos(depositosCarregados);
+      setRegime(configFiscal?.regime_tributario ?? null);
     } catch (err) {
       console.error("Erro ao carregar estoque:", err);
       setErro(mensagemDeErro(err));
@@ -125,6 +137,7 @@ export function EstoquePage() {
           pecas={pecas}
           categorias={categorias}
           saldos={saldos}
+          regime={regime}
           lojaId={lojaAtual.id}
           onRecarregar={carregar}
         />

@@ -2974,6 +2974,15 @@ Quatro coisas que valem saber:
     depois** de ela rodar as migrations `0051` e `0052`, que era a ordem obrigatória. Via
     `workflow_dispatch`.
 
+  - `v0.9.34`: **os três primeiros itens da Etapa 3** — a borda dos campos de formulário clareada
+    (dívida de contraste do `TR-01.3`, a única das três que ela enxerga na tela), as correções de
+    rateio achadas por teste de propriedade (`TR-06.1`, item 60 da seção 6 — é a versão em que a
+    última parcela e a última linha de pagamento da nota param de poder sair negativas), o
+    teste-ouro do corpo da nota fiscal (`TR-06.3`) e o teste de tela nos cinco formulários que
+    mexem em dinheiro (`TR-07.2`). **Sem migration nenhuma** — o banco dela continua na `0052`,
+    então aqui não havia ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`. Via
+    `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3458,6 +3467,8 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 01/09 | Primeira NFS-e de um mês novo revelou o **cadastro mensal de alíquota** exigido pela prefeitura (item 1 da seção 8) — tarefa recorrente, todo mês. |
 | 02/09 | Baixar os XMLs de um mês num **`.zip` só**, a aba **Comissões**, e as **12 correções** das duas varreduras (itens 42 a 46 da seção 6). Tag `v0.9.26`. |
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
+| 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
+| 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
 
 **Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na
 seção 1, mas é aqui que costumam ser lidas): *intenção futura não é autorização pra começar agora*
@@ -3752,8 +3763,8 @@ sempre antes de disparar o build, nunca depois.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.33"` — publicada em 12/09/2026, com a `main` em dia e
-  **nada esperando tag** (ver "Onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.34"` — publicada em 12/09/2026 (fim do dia), com a `main`
+  em dia e **nada esperando tag nem SQL** (ver "Onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -4280,7 +4291,7 @@ gerador depois de qualquer mexida grande de tela, é o único teste de tela que 
 já quebrou em silêncio uma vez (item 53 da seção 6).
 
 
-### ⏸ Onde parou em 12/09/2026 — LEIA ISTO PRIMEIRO
+### Onde parou em 12/09/2026, de manhã (histórico — o marco mais recente está no FIM do arquivo)
 
 **A Etapa 2 do guia de melhorias FECHOU.** Eram quatro itens e todos saíram nesta sessão:
 `TL-11` (estoque mínimo), `TL-12` (campos fiscais explicados e bloco de pneu), `FN-03`
@@ -4394,14 +4405,17 @@ Estão nos itens **58 e 59** da seção 6, e as duas são sobre desconfiar do pr
   esquecido, a varredura media as telas servidas por um estranho sem avisar. As duas coisas foram
   corrigidas na ferramenta.
 
-### ⏸ Começou a Etapa 3 do guia — 3 dos 7 itens (12/09/2026, mais tarde no mesmo dia)
+### ⏸ Onde parou em 12/09/2026, fim do dia — LEIA ISTO PRIMEIRO
 
-**Estado: a `main` está TRÊS levas à frente da `v0.9.33`, e nada disso chegou na loja.** Não foi
-publicada tag nenhuma de propósito — publicar é decisão dela. Quando ela retomar, o primeiro passo
-é perguntar se é pra publicar; se sim, o caminho é o de sempre ("Gerar o instalador Windows",
-seção 9): subir o `package.json` pra `0.9.34`, PR, merge, `workflow_dispatch` com `ref: "main"`.
+**Estado: tudo desta leva está publicado na `v0.9.34`** e chega na loja pelo auto-update. Ela
+mandou publicar no fim da sessão ("publica, deixe o projeto status efetivamente atualizado e até a
+próxima sessão").
 
-**Nenhuma migration nova** — o banco dela continua na `0052`, nada de SQL pendente.
+**Nenhuma migration** — o banco dela continua na `0052`, nada de SQL pendente. Ela perguntou isso
+explicitamente antes de publicar, e a resposta foi conferida contra o repositório (`git diff` de
+`supabase/` entre a `v0.9.33` e a `main`: vazio), não contra a memória. **Por isso esta foi a
+primeira tag em quatro sem ordem a cumprir** — a `v0.9.30`, a `v0.9.32` e a `v0.9.33` todas
+exigiram migration rodada ANTES.
 
 #### O que essas três levas trouxeram
 
@@ -4433,12 +4447,40 @@ negativo quando o desconto do item é maior que a linha. Não foi posto um limit
 isso faria a nota sair com um valor que não corresponde à OS — o conserto certo é justamente a
 constraint do `TR-05.1`.
 
+#### O que confirmar quando ela voltar
+
+Nada disso bloqueia o uso do sistema, e nada dá pra testar daqui.
+
+1. **Que a `v0.9.34` chegou** pelo auto-update, e que **a borda dos campos** ficou do jeito que ela
+   escolheu na imagem — é a única mudança desta leva que aparece na tela. As outras duas são rede
+   de segurança: só se percebe que existem no dia em que elas impedem um erro.
+2. Continua valendo o que ficou pendente da `v0.9.33`: a **busca por código de barras** na lista
+   de Produtos e os **três botões de WhatsApp** (principalmente se o telefone cadastrado abre a
+   conversa certa, que é a única parte que depende de dado real dela).
+
 #### Estado do código
 
-`main` **três levas à frente da `v0.9.33`**, e o banco dela na `0052` — nada esperando SQL, e a
-publicação esperando a palavra dela. `tsc`, lint, `npm run contraste` e `npm run contraste:telas`
-limpos; **482 testes** passando nos dois fusos (eram 407 de manhã, 369 em 11/09).
+`main` **em dia com a `v0.9.34`**, e o banco dela na `0052` — nada esperando tag nem SQL.
+`tsc`, lint, `npm run contraste` e `npm run contraste:telas` limpos; **482 testes** passando nos
+dois fusos (eram 407 de manhã, 369 em 11/09, 149 no começo de setembro).
 
 O que depende dela continua sendo o de sempre, na lista de 11/09: trocar as três credenciais
 expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal da alíquota no portal da
 prefeitura.
+
+#### Por onde uma sessão nova começa
+
+**Perguntar a ela qual item do `MELHORIAS.md` entra** — ela escolhe pelo código (ex: "faz o
+TR-05.1"), e o guia **não** carrega sozinho (são 227 KB; abrir só quando ela citar um item ou
+pedir sugestão).
+
+Se ela pedir sugestão, as duas respostas honestas são:
+
+- **Fechar a Etapa 3** (4 itens). Todos pedem migration, e os dois de constraint (`TR-05.1` e
+  `TR-05.2`) pedem **antes** uma consulta rodada por ela no Supabase real, pra saber se já existe
+  linha que a constraint recusaria — se existir, o que fazer com o dado antigo é decisão dela.
+- **Começar a Etapa 4** (12 itens, nenhum feito), que o guia trata como **pré-requisito da
+  venda**: *"nenhuma loja de terceiro deveria entrar antes desta etapa fechar"*. Isso pesa agora
+  porque a fase 2 (as duas lojas do amigo do pai dela) está no horizonte, e três desses doze já
+  apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
+  diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.

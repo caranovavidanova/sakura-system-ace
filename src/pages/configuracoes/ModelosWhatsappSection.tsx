@@ -105,7 +105,7 @@ function ModeloEditavel({
           setSalvo(false);
         }}
         rows={5}
-        className="mt-3 w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+        className="mt-3 w-full rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
       />
 
       <div className="mt-2 flex justify-end gap-3">

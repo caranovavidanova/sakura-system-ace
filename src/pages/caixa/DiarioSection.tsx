@@ -88,7 +88,7 @@ export function DiarioSection({
             type="date"
             value={dataFiltro}
             onChange={(e) => setDataFiltro(e.target.value)}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-1.5"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-1.5"
           />
         </label>
         {!mostrarFormulario && (

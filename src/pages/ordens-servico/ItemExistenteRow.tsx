@@ -30,7 +30,7 @@ function formatarMoeda(valor: number): string {
 }
 
 const inputClasse =
-  "rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark";
+  "rounded-lg border border-sakura-borda-campo px-2 py-1.5 text-corpo text-sakura-purple-dark";
 
 // Uma linha da lista "Já lançados nesta OS". Em repouso é o mesmo texto de
 // sempre; clicando em "Editar" ela vira um formulário só dela, salvo na hora

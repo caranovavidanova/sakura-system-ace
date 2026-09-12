@@ -82,7 +82,7 @@ export function ComissoesSection({
             type="date"
             value={dataInicio}
             onChange={(e) => setDataInicio(e.target.value)}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-1.5"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-1.5"
           />
         </label>
         <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
@@ -91,7 +91,7 @@ export function ComissoesSection({
             type="date"
             value={dataFim}
             onChange={(e) => setDataFim(e.target.value)}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-1.5"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-1.5"
           />
         </label>
       </div>

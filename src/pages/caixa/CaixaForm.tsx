@@ -77,7 +77,7 @@ export function CaixaForm({
               setValue("categoria_id", "");
             }}
             disabled={tipoBloqueado}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-muted"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-muted"
           >
             <option value="entrada">Entrada</option>
             <option value="saida">Saída</option>
@@ -91,7 +91,7 @@ export function CaixaForm({
             min="0.01"
             step="0.01"
             {...register("valor")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
           {errors.valor && <span className="text-rotulo text-red-400">{errors.valor.message}</span>}
         </label>
@@ -125,7 +125,7 @@ export function CaixaForm({
           <input
             type="text"
             {...register("forma_pagamento")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
         </label>
 
@@ -134,7 +134,7 @@ export function CaixaForm({
           <input
             type="text"
             {...register("descricao")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
         </label>
       </div>

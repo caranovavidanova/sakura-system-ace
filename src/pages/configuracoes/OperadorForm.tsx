@@ -73,7 +73,7 @@ export function OperadorForm({
             type="text"
             disabled={editando}
             {...register("usuario")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-muted"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple disabled:bg-sakura-gray/10 disabled:text-sakura-muted"
           />
           {errors.usuario && (
             <span className="text-rotulo text-red-600">{errors.usuario.message}</span>
@@ -87,7 +87,7 @@ export function OperadorForm({
           <input
             type="text"
             {...register("nome")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
           {errors.nome && <span className="text-rotulo text-red-600">{errors.nome.message}</span>}
         </label>
@@ -100,7 +100,7 @@ export function OperadorForm({
             <input
               type="password"
               {...register("senha")}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
             />
             {errors.senha && (
               <span className="text-rotulo text-red-600">{errors.senha.message}</span>
@@ -113,7 +113,7 @@ export function OperadorForm({
             <input
               type="checkbox"
               {...register("ativo")}
-              className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
+              className="h-4 w-4 rounded border-sakura-borda-campo text-sakura-purple focus:ring-sakura-purple"
             />
             <span className="text-sakura-purple-dark/80">
               Operador ativo (desmarque para bloquear o login)
@@ -127,7 +127,7 @@ export function OperadorForm({
           <input
             type="checkbox"
             {...register("admin")}
-            className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
+            className="h-4 w-4 rounded border-sakura-borda-campo text-sakura-purple focus:ring-sakura-purple"
           />
           <span className="font-medium text-sakura-purple-dark">
             Administrador (acesso total, inclusive Configurações)
@@ -146,7 +146,7 @@ export function OperadorForm({
                     type="checkbox"
                     value={modulo.chave}
                     {...register("permissoes")}
-                    className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
+                    className="h-4 w-4 rounded border-sakura-borda-campo text-sakura-purple focus:ring-sakura-purple"
                   />
                   <span className="text-sakura-purple-dark/80">{modulo.label}</span>
                 </label>
@@ -166,7 +166,7 @@ export function OperadorForm({
                   type="checkbox"
                   value={loja.id}
                   {...register("lojaIds")}
-                  className="h-4 w-4 rounded border-sakura-gray/40 text-sakura-purple focus:ring-sakura-purple"
+                  className="h-4 w-4 rounded border-sakura-borda-campo text-sakura-purple focus:ring-sakura-purple"
                 />
                 <span className="text-sakura-purple-dark/80">{loja.nome}</span>
               </label>

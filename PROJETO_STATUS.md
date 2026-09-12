@@ -4229,33 +4229,62 @@ corrigidas na hora**:
   `npm run contraste` não pega, porque fundo e letra ficam em elementos diferentes. Achada por
   **medição**, não por relato.
 
-**As outras 85 não foram tocadas de propósito** — o item TR-01.3 é explícito em "corrija só o que
-ela aprovar, não saia trocando cor da paleta sozinho", e todas mudam a cara do app. Elas estão em
-`scripts/divida-de-contraste.mjs`, catalogadas por **causa** (85 combinações, mas só quatro
-decisões), o que deixa a checagem verde hoje sem deixar entrar coisa nova:
+**As outras 85 não foram tocadas na hora, de propósito** — o item TR-01.3 é explícito em "corrija
+só o que ela aprovar, não saia trocando cor da paleta sozinho", e todas mudam a cara do app. Elas
+ficaram catalogadas por **causa** em `scripts/divida-de-contraste.mjs`, o que deixa a checagem
+verde sem deixar entrar coisa nova:
 
-| Decisão dela | Quantas | Pior caso | Mínimo |
-|---|---|---|---|
-| **Borda dos campos de formulário** | 51 | 1,15:1 | 3:1 |
-| **Botão roxo com letra branca** | 24 | 4,48:1 | 4,5:1 |
-| **Texto roxo usado como link** | 9 | 4,14:1 | 4,5:1 |
-| **Dias do mês vizinho no calendário** | 1 | 2,56:1 | 4,5:1 |
+| Decisão dela | Quantas | Pior caso | Mínimo | Situação |
+|---|---|---|---|---|
+| **Borda dos campos de formulário** | 51 | 1,15:1 | 3:1 | ✅ **resolvida — ela aprovou clarear** |
+| **Botão roxo com letra branca** | 24 | 4,48:1 | 4,5:1 | continua em aberto |
+| **Texto roxo usado como link** | 9 | 4,14:1 | 4,5:1 | continua em aberto |
+| **Dias do mês vizinho no calendário** | 1 | 2,56:1 | 4,5:1 | deliberada, fica como está |
 
-**A mais importante é a primeira, e é a única que dá pra sentir usando**: a borda que diz onde o
-campo começa e termina quase não existe. E ela **não se resolve com opacidade** — `sakura-gray`
-(`#3a3238`) sobre o card escuro dá 1,63:1 mesmo a 100%; precisa de uma cor mais clara pra borda
-de campo, o que muda a aparência de todo formulário do app.
-
-> ⏭️ **A pergunta foi feita e ela adiou: "fazemos esse contraste em outra sessão" (12/09/2026).**
-> Ou seja, a pergunta continua aberta e **é a primeira coisa a retomar quando ela voltar ao
-> assunto**: *pode clarear a borda dos campos de formulário?* Não mexer nisso por conta própria —
-> e não refazer a auditoria pra "descobrir" de novo: o relatório está aqui e a checagem do CI
-> continua verde, segurando só o que for NOVO.
+> ✅ **A borda dos campos foi resolvida (12/09/2026).** Era a mais importante das quatro e a única
+> que dava pra sentir usando: a caixa que diz onde o campo começa e termina quase não existia.
+> Ela escolheu, olhando um comparativo em imagem, a versão **discreta**. Detalhe em "A borda dos
+> campos de formulário", logo abaixo. As três de baixo continuam esperando decisão — **não mexer
+> nelas por conta própria**, e não refazer a auditoria pra "descobrir" de novo.
 
 As duas do meio (botão roxo e texto roxo) estão a **dois centésimos** do mínimo — corrigir exige
 mexer no roxo da marca, que o item proíbe, ou engrossar a letra dos botões. E a última é
 deliberada: os dias do mês vizinho são apagados de propósito, pra não competirem com o mês
 corrente; clarear resolve o número e estraga a ideia.
+
+#### A borda dos campos de formulário (12/09/2026, decisão dela)
+
+Era o achado mais forte da auditoria de contraste e a única das quatro dívidas que dá pra sentir
+usando: a borda que delimita cada campo compunha **1,15:1** contra o vidro do card, quase
+invisível — bem abaixo dos 3:1 que a WCAG pede pra contorno de componente.
+
+**Como foi decidido**: não por número, por imagem. Foram geradas fotos da mesma tela (cadastro de
+cliente) com a borda atual e duas versões mais claras, e ela escolheu a **discreta**. Vale repetir
+o padrão em qualquer mudança de aparência — foi assim também no `TR-02.1` (ícone x palavra nas
+ações da linha).
+
+**O que mudou**: nasceu o token `--color-sakura-borda-campo` (branco a 35%) em `globals.css`, e
+ele substituiu `border-sakura-gray/40` nos campos. Resultado medido: **3,13:1**, e a varredura das
+54 telas não acha mais nenhum campo abaixo de 3:1 — a entrada `borda-de-campo` saiu da lista de
+dívida.
+
+**Três cuidados que valem saber, se alguém for mexer nisso de novo:**
+
+- **É um token próprio, não o `sakura-gray`.** O mesmo cinza também desenha borda de tabela, de
+  card e de `iframe`; mexer nele mudaria tudo isso junto. Foi conferido: as outras opacidades
+  (`/20`, `/25`, `/30`) estão só em `<tr>`, `<div>` e `<iframe>` — **nenhum campo** —, então o
+  `/40` era exatamente o conjunto certo.
+- **Os 5 botões que usavam a mesma classe ficaram como estavam.** O que ela aprovou foi a borda
+  dos *campos*; botão é outra decisão, e a dívida do botão roxo continua aberta logo acima.
+- **Não dava pra resolver com uma regra em `@layer base`** — os campos carregam a borda como
+  classe do Tailwind, que vence `@layer base` não importa a especificidade (é o item 51 da seção
+  6). Por isso a troca foi na classe de cada campo, e não numa regra global.
+
+**E faltou um pedaço na primeira passada**: as telas de **login, conexão e troca de senha** usam
+outra classe (`border-white/10`, sobre `bg-black/40`) e continuaram reprovando em 1,22:1 depois da
+troca. Só apareceram porque a varredura foi rodada de novo — leitura de código não teria pego.
+É a lição do item 20 da seção 6 outra vez: ao corrigir "classe X está errada", conferir a lista
+**completa** de lugares com o mesmo problema, não só os que apareceram primeiro.
 
 #### Duas armadilhas que esta varredura revelou (e que valem além dela)
 
@@ -4276,7 +4305,7 @@ Estão nos itens **58 e 59** da seção 6, e as duas são sobre desconfiar do pr
 `tsc`, lint, `npm run contraste` e `npm run contraste:telas` limpos; **407 testes** passando nos
 dois fusos (eram 369 em 11/09). As 54 telas do catálogo geradas de novo sem nenhuma falha.
 
-**A única coisa em aberto desta sessão** é a decisão de contraste adiada por ela (a borda dos
-campos, logo acima). O resto do que depende dela continua sendo o de sempre, na lista de 11/09:
-trocar as três credenciais expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal
-da alíquota no portal da prefeitura.
+**A decisão de contraste que estava adiada foi tomada e aplicada** (a borda dos campos — ver a
+seção logo acima). O que depende dela continua sendo o de sempre, na lista de 11/09: trocar as
+três credenciais expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal da
+alíquota no portal da prefeitura.

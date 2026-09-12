@@ -78,7 +78,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           <span className="text-sakura-purple-dark/80">Depósito</span>
           <select
             {...register("deposito_id")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           >
             {depositos.map((deposito) => (
               <option key={deposito.id} value={deposito.id}>
@@ -92,7 +92,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           <span className="text-sakura-purple-dark/80">Tipo</span>
           <select
             {...register("tipo")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           >
             <option value="entrada">Entrada</option>
             <option value="saida">Saída</option>
@@ -106,7 +106,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
             step="1"
             min="1"
             {...register("quantidade")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
           {errors.quantidade && (
             <span className="text-rotulo text-red-600">{errors.quantidade.message}</span>
@@ -117,7 +117,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           <span className="text-sakura-purple-dark/80">Motivo</span>
           <select
             {...register("motivo")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           >
             {motivos.map((m) => (
               <option key={m.valor} value={m.valor}>
@@ -134,7 +134,7 @@ export function MovimentoForm({ pecas, depositos, onSalvar, onCancelar }: Movime
           <input
             type="text"
             {...register("referencia")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
         </label>
       </div>

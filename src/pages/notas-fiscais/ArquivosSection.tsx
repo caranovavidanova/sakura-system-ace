@@ -189,7 +189,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                 accept=".xml,text/xml,application/xml"
                 required
                 onChange={(e) => setArquivoSelecionado(e.target.files?.[0] ?? null)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
               />
             </label>
             <label className="flex flex-col gap-1 text-corpo">
@@ -201,7 +201,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                 required
                 value={competencia.slice(0, 7)}
                 onChange={(e) => setCompetencia(`${e.target.value}-01`)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
               />
             </label>
             <label className="flex flex-col gap-1 text-corpo">

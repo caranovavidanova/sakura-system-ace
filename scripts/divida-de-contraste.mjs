@@ -15,23 +15,15 @@
  * corrigir um item apaga a entrada, e o próprio script reprova se uma entrada
  * daqui parar de casar com alguma coisa.
  *
- * As entradas são por CAUSA, não por seletor: são 85 combinações reprovadas,
- * mas apenas quatro decisões — e uma lista de 85 seletores quebraria inteira
- * na primeira classe que alguém mudasse.
+ * As entradas são por CAUSA, não por seletor: são 34 combinações reprovadas,
+ * mas apenas três decisões — e uma lista de seletores quebraria inteira na
+ * primeira classe que alguém mudasse.
+ *
+ * A entrada `borda-de-campo` (51 combinações, 1,15:1) saiu daqui em
+ * 12/09/2026: a usuária aprovou clarear a borda, e ela virou o token
+ * --color-sakura-borda-campo em globals.css.
  */
 export const DIVIDA_DE_CONTRASTE = [
-  {
-    id: "borda-de-campo",
-    // 51 combinações, 1,15:1 e 1,22:1 contra os 3:1 do critério 1.4.11.
-    // É o achado mais importante do relatório e o mais fácil de sentir usando:
-    // a borda que diz onde o campo começa e termina quase não existe.
-    //
-    // NÃO dá pra resolver mexendo na opacidade: `sakura-gray` (#3a3238) sobre
-    // o card escuro dá 1,63:1 mesmo a 100%. Precisa de uma cor mais clara pra
-    // borda de campo — o que muda a aparência de TODO formulário do app, e
-    // por isso é decisão dela.
-    quando: (g) => g.tipo === "campo (borda)",
-  },
   {
     id: "botao-roxo-com-letra-branca",
     // 23 combinações, todas em 4,48:1 contra 4,5:1 — o botão principal do app

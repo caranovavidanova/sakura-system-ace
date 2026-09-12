@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -127,6 +127,33 @@ ipcMain.handle(
     };
   },
 );
+
+// Abre uma conversa no WhatsApp no navegador padrão do computador (item
+// FN-03 do guia de melhorias). Precisa acontecer no processo principal: a
+// tela do app não tem como pedir ao sistema operacional pra abrir nada.
+//
+// A URL é CONFERIDA aqui antes de sair, e não só montada com cuidado do
+// outro lado: ela é construída com dado que veio do banco (telefone e texto
+// de mensagem editável), e `shell.openExternal` entrega o endereço pro
+// sistema operacional — que obedece esquemas bem além de http (`file:`,
+// `javascript:`, e no Windows qualquer protocolo registrado por um programa
+// instalado). É o item 15 do checklist de segurança do Electron, e URL
+// montada com dado de banco é exatamente o caso que ele descreve.
+//
+// Por isso a checagem é por lista de permissão, não por lista de proibição:
+// tem que ser https, tem que ser o host wa.me, e nada mais passa.
+ipcMain.handle("whatsapp:abrir", async (_evento, url: unknown): Promise<boolean> => {
+  if (typeof url !== "string") return false;
+  let endereco: URL;
+  try {
+    endereco = new URL(url);
+  } catch {
+    return false;
+  }
+  if (endereco.protocol !== "https:" || endereco.hostname !== "wa.me") return false;
+  await shell.openExternal(endereco.toString());
+  return true;
+});
 
 // Sem isso, o Electron mostra a barra de menu padrão (File/Edit/View/
 // Window/Help) — itens genéricos em inglês sem função nenhuma pro app,

@@ -21,7 +21,7 @@ export function Campo({
         {obrigatorio && <span className="text-red-500"> *</span>}
       </span>
       {children}
-      {erro && <span className="text-rotulo text-red-600">{erro}</span>}
+      {erro && <span className="text-rotulo text-red-300">{erro}</span>}
     </label>
   );
 }

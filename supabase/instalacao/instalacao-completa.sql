@@ -6,7 +6,7 @@
 -- ARQUIVO GERADO AUTOMATICAMENTE — não editar à mão.
 -- Para regerar: npm run gerar-instalacao
 --
--- Contém as 50 migrations de supabase/migrations/, na ordem.
+-- Contém as 52 migrations de supabase/migrations/, na ordem.
 --
 -- Como usar: painel do Supabase → SQL Editor → New query → colar TUDO
 -- deste arquivo → Run. Leva alguns segundos.
@@ -2584,3 +2584,165 @@ insert into categorias_caixa (nome, tipo)
 values ('Outros', 'entrada'),
        ('Outros', 'saida')
 on conflict (nome, tipo) do nothing;
+
+
+-- -------------------------------------------------------------------
+-- 0051_pecas_estoque_minimo_e_pneu.sql
+-- -------------------------------------------------------------------
+
+-- Sakura System — AutoCenter Edition
+-- Migration 0051: quatro colunas opcionais em `pecas` — o estoque mínimo
+-- (item TL-11 do guia de melhorias) e o bloco de pneu (item TL-12).
+--
+-- 1) estoque_minimo
+--
+--    É o campo que falta pro sistema responder "o que eu preciso comprar?".
+--    Hoje a lista de Produtos mostra o saldo como um número neutro: dá pra
+--    ver que sobrou 1, mas não dá pra saber se 1 é pouco. Num autocenter,
+--    peça em falta é venda perdida na hora, com o carro parado no pátio —
+--    é a pergunta que mais dá dinheiro, e a única que o cadastro não sabia
+--    responder.
+--
+--    numeric(12,2), e não (12,3) como o guia sugeria: TODA quantidade deste
+--    banco é numeric(12,2) (estoque_movimentos.quantidade,
+--    contagens_estoque.quantidade_contada, ordens_servico_itens.quantidade,
+--    pedidos_compra_itens). Um mínimo com três casas decimais compararia
+--    com saldos de duas e só criaria uma diferença sem motivo.
+--
+--    Fica NULL por padrão de propósito: NULL quer dizer "essa peça não tem
+--    mínimo definido" e não entra no filtro "abaixo do mínimo" — diferente
+--    de zero, que é um mínimo de verdade ("não pode faltar nenhuma"). Zerar
+--    todo o catálogo no backfill transformaria cada peça sem saldo num
+--    alarme, e alarme que toca pra tudo é alarme que ninguém olha.
+--
+-- 2) medida / indice_carga_velocidade / dot
+--
+--    O bloco de pneu. É a peça que essa loja mais vende, o dado está escrito
+--    na lateral do pneu, e hoje ele só existe afogado na descrição em texto
+--    livre — o que impede responder "tem 175/70 R14?" sem ler peça por peça.
+--    Três campos de texto simples, todos opcionais, mostrados na tela só
+--    quando a categoria da peça for a de Pneus (a tela decide, não o banco:
+--    a categoria é uma linha de `categorias`, que cada empresa nomeia como
+--    quiser, então prender isso numa constraint aqui quebraria quem chamar a
+--    categoria de outra coisa).
+--
+--    `medida` guarda o formato da lateral (ex: "175/70 R14"),
+--    `indice_carga_velocidade` o índice de carga e velocidade (ex: "84T") e
+--    `dot` a semana/ano de fabricação (ex: "3823" = 38ª semana de 2023), que
+--    é o que diz se o pneu está velho no estoque.
+--
+-- `pecas` é compartilhada entre as lojas da mesma empresa (não tem loja_id),
+-- então nada aqui precisa de backfill por loja nem de policy nova — a RLS de
+-- `pecas` já cobre estas colunas, porque é por tabela, não por coluna.
+--
+-- Idempotente: seguro rodar de novo (`add column if not exists`).
+
+alter table pecas
+  add column if not exists estoque_minimo numeric(12, 2),
+  add column if not exists medida text,
+  add column if not exists indice_carga_velocidade text,
+  add column if not exists dot text;
+
+-- Mínimo negativo não quer dizer nada, e deixar passar viraria uma peça
+-- eternamente "abaixo do mínimo" (ou nunca) sem explicação na tela.
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.constraint_column_usage
+    where table_name = 'pecas' and constraint_name = 'pecas_estoque_minimo_nao_negativo'
+  ) then
+    alter table pecas
+      add constraint pecas_estoque_minimo_nao_negativo
+      check (estoque_minimo is null or estoque_minimo >= 0);
+  end if;
+end $$;
+
+
+-- -------------------------------------------------------------------
+-- 0052_modelos_whatsapp.sql
+-- -------------------------------------------------------------------
+
+-- Sakura System — AutoCenter Edition
+-- Migration 0052: `configuracoes_whatsapp` — os modelos de mensagem que o
+-- sistema abre no WhatsApp (item FN-03 do guia de melhorias).
+--
+-- Por que existe: o WhatsApp já é o canal por onde essa operação funciona —
+-- é por lá que o pai dela manda foto de nota, que ela fala com a
+-- contabilidade e com o suporte, e que a senha temporária de um operador é
+-- repassada. O sistema era a única parte do fluxo que ignorava isso, e quem
+-- precisava cobrar um cliente copiava valor e data na mão, de uma tela pra
+-- outra, todo dia.
+--
+-- Por que os textos ficam no BANCO e não no código: cada loja fala do seu
+-- jeito, e o texto que o dono manda pro cliente dele é decisão dele, não
+-- minha. É o mesmo caminho já percorrido pelo texto de garantia
+-- (`configuracoes_garantia`, migration 0018) — que também nasceu fixo e
+-- precisou virar editável.
+--
+-- Por que uma linha por modelo, e não uma coluna por modelo: assim um modelo
+-- novo (orçamento, lembrete de revisão — os dois já previstos no guia) é uma
+-- linha, não uma migration. É exatamente a forma de `configuracoes_juros_parcelas`
+-- (migration 0033): per-loja, PK composta, várias linhas.
+--
+-- A linha só existe depois que alguém edita o texto naquela loja: enquanto
+-- não existir, vale o modelo padrão que está em `src/schemas/whatsapp.ts`.
+-- Ou seja, nada aqui precisa ser semeado, e uma loja recém-instalada já
+-- manda mensagem — ao contrário do que aconteceu com as categorias de caixa
+-- na migration 0050, onde a tabela vazia deixava a tela sem saída.
+--
+-- Idempotente: seguro rodar de novo.
+
+create table if not exists configuracoes_whatsapp (
+  loja_id uuid not null references lojas (id),
+  chave text not null,
+  texto text not null,
+  atualizado_em timestamptz not null default now(),
+  primary key (loja_id, chave)
+);
+
+alter table configuracoes_whatsapp enable row level security;
+
+-- Mesma regra das outras configurações por loja (migration 0033): quem tem
+-- acesso à loja lê e grava. O reforço de "só admin edita" é da tela, como no
+-- resto de Configurações.
+drop policy if exists "configuracoes_whatsapp_acesso_por_loja" on configuracoes_whatsapp;
+create policy "configuracoes_whatsapp_acesso_por_loja" on configuracoes_whatsapp
+  for all
+  using (operador_tem_acesso_loja(loja_id))
+  with check (operador_tem_acesso_loja(loja_id));
+
+-- Registro de que uma mensagem foi ABERTA — nunca "enviada".
+--
+-- A diferença não é preciosismo: o sistema abre a conversa no WhatsApp com o
+-- texto pronto, e daí em diante quem decide é a pessoa (pode editar, pode
+-- fechar sem mandar). Gravar "enviada" seria afirmar uma coisa que este
+-- sistema não tem como saber, e um dia alguém tomaria uma decisão de cobrança
+-- em cima dessa mentira.
+--
+-- O que isso responde, na prática: "já cobrei esse cliente?". Hoje a resposta
+-- mora só na memória de quem cobrou.
+--
+-- `referencia` é o id do que motivou a mensagem (a conta a receber, a OS, o
+-- pedido de compra) — texto e sem FK de propósito, porque aponta pra tabelas
+-- diferentes conforme a `chave`, e uma FK por destino faria esta tabela
+-- crescer a cada modelo novo.
+create table if not exists whatsapp_mensagens (
+  id uuid primary key default gen_random_uuid(),
+  loja_id uuid not null references lojas (id),
+  chave text not null,
+  referencia text,
+  destino text,
+  operador_id uuid references operadores (id),
+  criado_em timestamptz not null default now()
+);
+
+create index if not exists whatsapp_mensagens_referencia_idx
+  on whatsapp_mensagens (loja_id, chave, referencia);
+
+alter table whatsapp_mensagens enable row level security;
+
+drop policy if exists "whatsapp_mensagens_acesso_por_loja" on whatsapp_mensagens;
+create policy "whatsapp_mensagens_acesso_por_loja" on whatsapp_mensagens
+  for all
+  using (operador_tem_acesso_loja(loja_id))
+  with check (operador_tem_acesso_loja(loja_id));

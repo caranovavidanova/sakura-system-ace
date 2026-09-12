@@ -135,11 +135,11 @@ export const contasPagar = [
 ];
 
 export const pecas = [
-  { id: "p1", codigo_interno: "PN-17570R14", codigo_barras: "7891234567890", descricao: "Pneu 175/70 R14", marca: "Rovelo", modelo: "RHP-A68", aplicacao: "Gol, Onix, HB20", unidade: "UN", preco_custo: 245, preco_venda: 389.9, ncm: "40111000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat1", prazo_garantia_dias: 90, ativo: true, criado_em: dia(-200) },
-  { id: "p2", codigo_interno: "PN-20560R16", codigo_barras: "7891234567891", descricao: "Pneu 205/60 R16", marca: "Pirelli", modelo: "Cinturato P1", aplicacao: "Corolla, Civic, Cruze", unidade: "UN", preco_custo: 410, preco_venda: 612, ncm: "40111000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat1", prazo_garantia_dias: 90, ativo: true, criado_em: dia(-200) },
-  { id: "p3", codigo_interno: "AM-DIA-001", codigo_barras: "7891234567892", descricao: "Amortecedor dianteiro", marca: "Cofap", modelo: "GP32812", aplicacao: "Renegade, Compass", unidade: "UN", preco_custo: 298, preco_venda: 445, ncm: "87088000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat2", prazo_garantia_dias: 180, ativo: true, criado_em: dia(-150) },
-  { id: "p4", codigo_interno: "PF-DIA-220", codigo_barras: "7891234567893", descricao: "Pastilha de freio dianteira", marca: "Bosch", modelo: "BN1234", aplicacao: "Onix, Prisma", unidade: "JG", preco_custo: 121, preco_venda: 189.5, ncm: "87083090", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat3", prazo_garantia_dias: 90, ativo: true, criado_em: dia(-140) },
-  { id: "p5", codigo_interno: "BT-60AH", codigo_barras: "7891234567894", descricao: "Bateria 60Ah", marca: "Moura", modelo: "M60GD", aplicacao: "Uso geral", unidade: "UN", preco_custo: 372, preco_venda: 549, ncm: "85071000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat4", prazo_garantia_dias: 365, ativo: true, criado_em: dia(-90) },
+  { id: "p1", codigo_interno: "PN-17570R14", codigo_barras: "7891234567890", descricao: "Pneu 175/70 R14", marca: "Rovelo", modelo: "RHP-A68", aplicacao: "Gol, Onix, HB20", unidade: "UN", preco_custo: 245, preco_venda: 389.9, ncm: "40111000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat1", prazo_garantia_dias: 90, estoque_minimo: 8, medida: "175/70 R14", indice_carga_velocidade: "84T", dot: "3823", ativo: true, criado_em: dia(-200) },
+  { id: "p2", codigo_interno: "PN-20560R16", codigo_barras: "7891234567891", descricao: "Pneu 205/60 R16", marca: "Pirelli", modelo: "Cinturato P1", aplicacao: "Corolla, Civic, Cruze", unidade: "UN", preco_custo: 410, preco_venda: 612, ncm: "40111000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat1", prazo_garantia_dias: 90, estoque_minimo: 4, medida: "205/60 R16", indice_carga_velocidade: "92V", dot: "1224", ativo: true, criado_em: dia(-200) },
+  { id: "p3", codigo_interno: "AM-DIA-001", codigo_barras: "7891234567892", descricao: "Amortecedor dianteiro", marca: "Cofap", modelo: "GP32812", aplicacao: "Renegade, Compass", unidade: "UN", preco_custo: 298, preco_venda: 445, ncm: "87088000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat2", prazo_garantia_dias: 180, estoque_minimo: null, medida: null, indice_carga_velocidade: null, dot: null, ativo: true, criado_em: dia(-150) },
+  { id: "p4", codigo_interno: "PF-DIA-220", codigo_barras: "7891234567893", descricao: "Pastilha de freio dianteira", marca: "Bosch", modelo: "BN1234", aplicacao: "Onix, Prisma", unidade: "JG", preco_custo: 121, preco_venda: 189.5, ncm: "87083090", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat3", prazo_garantia_dias: 90, estoque_minimo: 2, medida: null, indice_carga_velocidade: null, dot: null, ativo: true, criado_em: dia(-140) },
+  { id: "p5", codigo_interno: "BT-60AH", codigo_barras: "7891234567894", descricao: "Bateria 60Ah", marca: "Moura", modelo: "M60GD", aplicacao: "Uso geral", unidade: "UN", preco_custo: 372, preco_venda: 549, ncm: "85071000", cest: "", cfop_padrao: "5102", origem: "0", cst_ou_csosn: "500", aliquota_icms: 18, categoria_id: "cat4", prazo_garantia_dias: 365, estoque_minimo: 1, medida: null, indice_carga_velocidade: null, dot: null, ativo: true, criado_em: dia(-90) },
 ];
 
 export const servicos = [
@@ -244,6 +244,15 @@ export const cotacoes = [
   { id: "ct5", peca_id: "p3", fornecedor_id: "fo2", preco: 305.9, criado_em: dia(-70), fornecedor: { nome: fornecedores[1].nome } },
   { id: "ct6", peca_id: "p4", fornecedor_id: "fo2", preco: 118.4, criado_em: dia(-13), fornecedor: { nome: fornecedores[1].nome } },
   { id: "ct7", peca_id: "p5", fornecedor_id: "fo4", preco: 372, criado_em: dia(-90), fornecedor: { nome: fornecedores[3].nome } },
+];
+
+// Migration 0052: os modelos de mensagem ficam vazios de propósito — é o
+// estado real de uma loja que não editou nada, e aí vale o texto padrão de
+// src/schemas/whatsapp.ts.
+export const modelosWhatsapp = [];
+// Uma cobrança já aberta, pra o "cobrado em dd/mm" aparecer no catálogo.
+export const whatsappMensagens = [
+  { id: "wa1", loja_id: LOJA, chave: "cobranca", referencia: "cr2", destino: "(16) 99123-4567", operador_id: OP, criado_em: dia(-2) },
 ];
 
 export const contasReceber = [
@@ -399,6 +408,8 @@ export const TABELAS = {
   funcionarios,
   funcionario_filhos: funcionarios.flatMap((f) => f.filhos),
   auditoria,
+  configuracoes_whatsapp: modelosWhatsapp,
+  whatsapp_mensagens: whatsappMensagens,
 };
 export const SESSAO = {
   access_token: "demo-access-token", token_type: "bearer", expires_in: 3600,

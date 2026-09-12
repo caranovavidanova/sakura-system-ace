@@ -25,6 +25,11 @@ contextBridge.exposeInMainWorld("sakuraApp", {
       : undefined,
   salvarConexao: (conexao: { url: string; chave: string }) =>
     ipcRenderer.invoke("conexao:salvar", conexao),
+  // Abre uma conversa no WhatsApp no navegador padrão (item FN-03). O
+  // processo principal confere que a URL é mesmo do wa.me antes de entregar
+  // pro sistema operacional — ver o handler "whatsapp:abrir" em main.ts.
+  // Devolve `false` quando a URL não passa na checagem.
+  abrirWhatsapp: (url: string): Promise<boolean> => ipcRenderer.invoke("whatsapp:abrir", url),
   // Manda um erro da tela pro processo principal gravar em "erros.log" (na
   // pasta de dados do app). É de mão única (`send`, não `invoke`): quem
   // reporta erro não precisa de resposta, e se o log falhar não faz sentido

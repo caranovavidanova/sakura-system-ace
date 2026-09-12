@@ -124,7 +124,7 @@ export function ItemOSRow({
         <button
           type="button"
           onClick={onRemover}
-          className="shrink-0 text-rotulo font-medium text-red-600 hover:underline"
+          className="shrink-0 text-rotulo font-medium text-red-300 hover:underline"
         >
           Remover
         </button>

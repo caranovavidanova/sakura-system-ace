@@ -188,7 +188,7 @@ export interface DadosEmissaoNFCe {
  * (o item, o total dos produtos e a base do ICMS) e antes cada um refazia a
  * conta — dois deles esquecendo o desconto.
  */
-function valorLiquidoItem(item: ItemParaNFCe): number {
+export function valorLiquidoItem(item: ItemParaNFCe): number {
   return arredondar(item.quantidade * item.precoUnitario - item.desconto);
 }
 

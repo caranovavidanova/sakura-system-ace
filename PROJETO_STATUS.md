@@ -2034,6 +2034,40 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     apagado. É irmã da lição do item 56 (comparar rodadas antes de ler falha como regressão), do
     outro lado: lá era desconfiar do vermelho, aqui é desconfiar do verde.
 
+60. **Duas contas que repartiam dinheiro deixavam a última linha negativa — e os testes de
+    exemplo não pegavam (12/09/2026, item `TR-06.1` do guia).** Os dois bugs mais caros deste
+    projeto são da mesma família: uma soma que precisa fechar exatamente. Os testes existentes
+    cobriam casos escolhidos à mão; mil casos gerados por propriedade (`fast-check`) acharam
+    **três defeitos reais** em duas funções, em menos de um segundo:
+    - **`ratearPagamentos` podia devolver linha negativa.** É a função que reparte o pagamento
+      da OS sobre o total da NFC-e. Com o pagamento dividido em várias formas e um total de
+      destino bem menor que o pago, cada linha arredondava pra cima e a última — que absorvia
+      toda a diferença — estourava pra baixo. **Alcançável com OS plausível**: R$ 900 de mão de
+      obra + R$ 0,05 de peça, pago em três formas, mandava `−R$ 0,01` pra nota. Valor negativo
+      é rejeição na emissão — a mesma família dos itens 31 e 32, que já custaram duas rejeições
+      de verdade. Já existia um teste chamado *"nunca gera valor negativo"*, escrito justamente
+      pra isso: ele cobria **duas** linhas, e o defeito só aparece com três ou mais.
+    - **`calcularListaParcelas` também**: R$ 0,03 em 5x deixava a última parcela em −R$ 0,01.
+    - **E espalhava centavo**: R$ 1,14 em 12x saía com onze parcelas de R$ 0,10 e uma de
+      R$ 0,04 — seis centavos fora das outras. Com valor realista também acontece (R$ 1.000,06
+      em 12x dava dois centavos de diferença).
+    **A causa era a mesma nas duas**, e é o padrão do item 49: arredondar cada pedaço e jogar
+    **toda** a sobra na última linha acumula o erro de N−1 pedaços num só. Virou uma função só,
+    `repartirEmCentavos` (`schemas/dinheiro.ts`), que reparte em centavos inteiros com maior
+    resto primeiro.
+    **A correção não mudou nada do que já aparecia na tela**, de propósito: no empate o centavo
+    vai pro pedaço mais à direita, então R$ 100 em 3x continua saindo 33,33 / 33,33 / 33,34 —
+    como a maquininha mostra e como o teste de exemplo antigo já fixava. Os 407 testes que
+    existiam antes continuam passando sem nenhuma alteração.
+    **Lição de método**: o teste de exemplo que cobria exatamente essa preocupação existia e
+    passava — ele só não tinha imaginado a terceira linha. É a diferença entre "testei o que
+    pensei" e "testei a regra". Onde a regra couber numa frase ("a soma fecha exatamente",
+    "nenhuma linha é negativa"), essa frase vira propriedade, não exemplo.
+    **Um limite ficou documentado em vez de escondido**: `valorLiquidoItem` fica negativo se o
+    desconto do item for maior que a linha. Não foi posto um clamp em zero — isso faria a nota
+    sair com valor que não corresponde à OS. A correção certa é a constraint do item `TR-05.1`,
+    que ainda não foi feita (precisa de migration e de conferir o banco real antes).
+
 ## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais

@@ -72,3 +72,58 @@ export function somar(valores: readonly number[]): number {
 export function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
+
+/**
+ * Reparte um total entre N pedaços, em centavos inteiros, de modo que a soma
+ * feche **exatamente** e nenhum pedaço fique negativo.
+ *
+ * Por que existe (item TR-06.1 do guia). As duas funções que repartiam valor
+ * — `calcularListaParcelas` e `ratearPagamentos` — faziam a mesma coisa do
+ * mesmo jeito: arredondavam cada pedaço e jogavam TODA a sobra na última
+ * linha. Isso fecha a soma, mas o erro de arredondamento de N−1 pedaços se
+ * acumula num só, e os testes de propriedade acharam os dois efeitos disso:
+ *
+ * - **última linha negativa** — R$ 0,03 em 5x deixava a última em −R$ 0,01, e
+ *   no rateio da nota fiscal uma OS quase toda de serviço com o pagamento
+ *   dividido em várias formas fazia a parte de peça ficar negativa. Valor
+ *   negativo é rejeição na hora de emitir (é a família dos itens 31 e 32 da
+ *   seção 6 do PROJETO_STATUS).
+ * - **centavos espalhados** — R$ 1,14 em 12x saía com onze parcelas de
+ *   R$ 0,10 e uma de R$ 0,04, seis centavos fora das outras.
+ *
+ * Aqui a sobra é distribuída **um centavo por pedaço** (maior resto primeiro),
+ * então a diferença entre dois pedaços nunca passa de um centavo.
+ *
+ * **A ordem foi escolhida pra não mudar nada do que já aparecia na tela**: no
+ * empate, o centavo vai pro pedaço mais à direita. É o que mantém R$ 100 em
+ * 3x saindo como 33,33 / 33,33 / 33,34 — do jeito que a maquininha mostra, e
+ * do jeito que os testes de exemplo já fixavam antes desta função existir.
+ *
+ * @param total  Valor a repartir (em reais).
+ * @param pesos  Peso de cada pedaço. Pesos iguais = divisão igual.
+ */
+export function repartirEmCentavos(total: number, pesos: readonly number[]): number[] {
+  if (pesos.length === 0) return [];
+
+  const totalCentavos = paraCentavos(total);
+  const somaPesos = pesos.reduce((soma, peso) => soma + peso, 0);
+
+  // Sem peso nenhum (tudo zero) não há proporção pra respeitar: reparte em
+  // partes iguais, que é o que "dividir sem critério" deve significar.
+  const fracoes = pesos.map((peso) =>
+    somaPesos > 0 ? (totalCentavos * peso) / somaPesos : totalCentavos / pesos.length,
+  );
+
+  const base = fracoes.map(Math.floor);
+  const sobra = totalCentavos - base.reduce((soma, c) => soma + c, 0);
+
+  // Quem tem o maior resto leva o centavo que sobrou; no empate, o de índice
+  // maior (ver o comentário sobre a ordem, acima).
+  const ordem = fracoes
+    .map((fracao, indice) => ({ indice, resto: fracao - Math.floor(fracao) }))
+    .sort((a, b) => b.resto - a.resto || b.indice - a.indice);
+
+  for (let i = 0; i < sobra; i++) base[ordem[i % ordem.length].indice] += 1;
+
+  return base.map(deCentavos);
+}

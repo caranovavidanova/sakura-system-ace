@@ -19,7 +19,7 @@ interface PedidoCompraItemRowProps {
 }
 
 const inputClasse =
-  "rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple";
+  "rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple";
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

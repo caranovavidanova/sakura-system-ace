@@ -186,7 +186,7 @@ export function FaturamentoCard({
               <input
                 type="date"
                 {...register("previsaoRecebimento")}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-borda-campo px-3 py-1.5 focus:border-sakura-purple"
               />
             </label>
           </>
@@ -230,7 +230,7 @@ export function FaturamentoCard({
                         setValue(`linhasPagamento.${index}.parcelas`, "1");
                       }
                     }}
-                    className="flex-1 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+                    className="flex-1 rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
                   >
                     {FORMAS_PAGAMENTO.map((forma) => (
                       <option key={forma.valor} value={forma.valor}>
@@ -246,7 +246,7 @@ export function FaturamentoCard({
                         ? "Em quantas vezes o cliente passou no cartão"
                         : "Só o cartão de crédito parcela"
                     }
-                    className="w-40 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple disabled:opacity-50"
+                    className="w-40 rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple disabled:opacity-50"
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
                       const percentual = calcularJurosPercentual(jurosParcelas, n);
@@ -267,7 +267,7 @@ export function FaturamentoCard({
                     step="0.01"
                     min="0"
                     {...register(`linhasPagamento.${index}.valor`)}
-                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+                    className="w-32 rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
                   />
                   {fields.length > 1 && (
                     <button
@@ -330,7 +330,7 @@ export function FaturamentoCard({
                 formaPagamentoField.onChange(e);
                 if (e.target.value !== "cartao_credito") setValue("parcelas", "1");
               }}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
             >
               {FORMAS_PAGAMENTO.map((forma) => (
                 <option key={forma.valor} value={forma.valor}>
@@ -345,7 +345,7 @@ export function FaturamentoCard({
             <select
               {...register("parcelas")}
               disabled={!permiteParcelar}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple disabled:opacity-50"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple disabled:opacity-50"
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
                 const percentual = calcularJurosPercentual(jurosParcelas, n);

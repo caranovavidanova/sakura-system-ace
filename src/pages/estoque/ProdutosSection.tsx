@@ -197,7 +197,7 @@ export function ProdutosSection({
                 onChange={(e) => setBusca(e.target.value)}
                 onKeyDown={handleTeclaNaBusca}
                 placeholder="Descrição, referência, código, marca ou medida"
-                className="w-80 rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+                className="w-80 rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
               />
             </label>
 
@@ -206,7 +206,7 @@ export function ProdutosSection({
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
               >
                 <option value="">Todas</option>
                 {categorias.map((categoria) => (

@@ -6,6 +6,22 @@
   --color-sakura-purple: #b624ff;
   --color-sakura-gray: #3a3238;
 
+  /* Borda dos campos de formulário (input/select/textarea).
+     NÃO é o mesmo cinza das bordas de tabela e de card: os campos ficam em
+     cima do vidro do sakura-card, e ali o sakura-gray a 40% compunha
+     1,15:1 contra o fundo — bem abaixo dos 3:1 que a WCAG 1.4.11 pede pra
+     contorno de componente. Na prática a caixa do campo quase não existia,
+     que foi o achado mais forte da varredura de contraste (TR-01.3).
+     Depois da troca: 3,13:1 medido no cadastro de cliente, e a varredura
+     das 54 telas não acha mais nenhum campo abaixo de 3:1.
+
+     É branco com transparência, e não uma cor sólida, de propósito: assim a
+     borda se compõe com o que estiver atrás dela (o card é translúcido e
+     muda de tom por tela) em vez de virar uma faixa opaca num fundo que não
+     é o previsto. É a mesma linguagem que o próprio sakura-card já usa nas
+     bordas dele. Mexer na opacidade daqui muda TODO formulário do app. */
+  --color-sakura-borda-campo: rgba(255, 255, 255, 0.35);
+
   /* Variações de fundo escuro e detalhes neon */
   --color-sakura-purple-dark: #e8d5e5;
   --color-sakura-pink-soft: #1a1018;

@@ -62,7 +62,7 @@ export function CartoesInicioSection({
             <select
               value={valor}
               onChange={(e) => set(indice, e.target.value as CartaoMetrica)}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple"
             >
               {OPCOES.map((opcao) => (
                 <option key={opcao} value={opcao}>

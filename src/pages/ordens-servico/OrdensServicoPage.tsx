@@ -450,7 +450,7 @@ export function OrdensServicoPage() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Ex: João ou ABC1D23"
-              className="w-56 rounded-lg border border-sakura-gray/40 px-3 py-1.5 text-corpo focus:border-sakura-purple"
+              className="w-56 rounded-lg border border-sakura-borda-campo px-3 py-1.5 text-corpo focus:border-sakura-purple"
             />
           </label>
           <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
@@ -460,7 +460,7 @@ export function OrdensServicoPage() {
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
               disabled={!!busca.trim()}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 disabled:opacity-40"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-1.5 disabled:opacity-40"
             />
           </label>
           <label className="flex items-center gap-2 text-corpo text-sakura-purple-dark/80">
@@ -470,7 +470,7 @@ export function OrdensServicoPage() {
               value={dataFim}
               onChange={(e) => setDataFim(e.target.value)}
               disabled={!!busca.trim()}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-1.5 disabled:opacity-40"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-1.5 disabled:opacity-40"
             />
           </label>
           <p className="text-rotulo text-sakura-muted">

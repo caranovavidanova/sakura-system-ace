@@ -49,7 +49,7 @@ function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFi
 }
 
 const campoClasse =
-  "w-full rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple";
+  "w-full rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple";
 
 export function DadosFiscaisSection({
   configuracao,

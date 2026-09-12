@@ -196,7 +196,7 @@ export function ImportarNotasFiscaisModal({
                 accept="image/*,.pdf,application/pdf"
                 multiple
                 onChange={(e) => setArquivos(Array.from(e.target.files ?? []))}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
               />
             </label>
             {arquivos.length > 0 && (
@@ -323,7 +323,7 @@ export function ImportarNotasFiscaisModal({
                             onChange={(e) =>
                               atualizarItem(indice, { origem: e.target.value || null })
                             }
-                            className="w-16 rounded border border-sakura-gray/40 px-1.5 py-1 focus:border-sakura-purple"
+                            className="w-16 rounded border border-sakura-borda-campo px-1.5 py-1 focus:border-sakura-purple"
                           >
                             <option value="">—</option>
                             {OPCOES_ORIGEM.map((opcao) => (
@@ -414,7 +414,7 @@ function CelulaTexto({
       type="text"
       value={valor}
       onChange={(e) => onChange(e.target.value)}
-      className={`${largura} rounded border border-sakura-gray/40 px-1.5 py-1 focus:border-sakura-purple`}
+      className={`${largura} rounded border border-sakura-borda-campo px-1.5 py-1 focus:border-sakura-purple`}
     />
   );
 }
@@ -434,7 +434,7 @@ function CelulaNumero({
       step="0.01"
       value={valor ?? ""}
       onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-      className={`${largura} rounded border border-sakura-gray/40 px-1.5 py-1 focus:border-sakura-purple`}
+      className={`${largura} rounded border border-sakura-borda-campo px-1.5 py-1 focus:border-sakura-purple`}
     />
   );
 }

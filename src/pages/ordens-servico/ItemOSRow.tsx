@@ -95,7 +95,7 @@ export function ItemOSRow({
         <select
           value={tipo}
           onChange={(e) => aoMudarTipo(e.target.value as TipoItemOS)}
-          className="w-28 shrink-0 rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo"
+          className="w-28 shrink-0 rounded-lg border border-sakura-borda-campo px-2 py-1.5 text-corpo"
         >
           <option value="peca">Peça</option>
           <option value="servico">Serviço</option>
@@ -135,7 +135,7 @@ export function ItemOSRow({
           type="text"
           placeholder="Descrição do serviço"
           {...register(`itens.${index}.descricao`)}
-          className="w-full rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo"
+          className="w-full rounded-lg border border-sakura-borda-campo px-2 py-1.5 text-corpo"
         />
       )}
 
@@ -147,7 +147,7 @@ export function ItemOSRow({
             min="0.01"
             step="0.01"
             {...register(`itens.${index}.quantidade`)}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
+            className="rounded-lg border border-sakura-borda-campo px-2 py-1.5 text-corpo text-sakura-purple-dark"
           />
         </label>
 
@@ -158,7 +158,7 @@ export function ItemOSRow({
             min="0"
             step="0.01"
             {...register(`itens.${index}.preco_unitario`)}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
+            className="rounded-lg border border-sakura-borda-campo px-2 py-1.5 text-corpo text-sakura-purple-dark"
           />
         </label>
 
@@ -169,7 +169,7 @@ export function ItemOSRow({
             min="0"
             step="0.01"
             {...register(`itens.${index}.desconto`)}
-            className="rounded-lg border border-sakura-gray/40 px-2 py-1.5 text-corpo text-sakura-purple-dark"
+            className="rounded-lg border border-sakura-borda-campo px-2 py-1.5 text-corpo text-sakura-purple-dark"
           />
         </label>
 

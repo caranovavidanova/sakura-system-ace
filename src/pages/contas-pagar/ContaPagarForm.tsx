@@ -62,7 +62,7 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
             type="text"
             placeholder="Ex: Aluguel"
             {...register("descricao")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
           {errors.descricao && (
             <span className="text-rotulo text-red-600">{errors.descricao.message}</span>
@@ -78,7 +78,7 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
             min="0.01"
             step="0.01"
             {...register("valor")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
           {errors.valor && <span className="text-rotulo text-red-600">{errors.valor.message}</span>}
         </label>
@@ -90,7 +90,7 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
           <input
             type="date"
             {...register("vencimento")}
-            className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+            className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
           />
           {errors.vencimento && (
             <span className="text-rotulo text-red-600">{errors.vencimento.message}</span>
@@ -115,7 +115,7 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
           <input
             type="checkbox"
             {...register("recorrente")}
-            className="h-4 w-4 rounded border-sakura-gray/40"
+            className="h-4 w-4 rounded border-sakura-borda-campo"
           />
           Conta mensal recorrente (ao pagar, já cria a próxima automaticamente)
         </label>
@@ -126,7 +126,7 @@ export function ContaPagarForm({ categorias, onSalvar, onCancelar }: ContaPagarF
             <input
               type="date"
               {...register("recorrente_ate")}
-              className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+              className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
             />
             <span className="text-rotulo text-sakura-muted">
               Deixe em branco pra continuar repetindo sem data pra parar.

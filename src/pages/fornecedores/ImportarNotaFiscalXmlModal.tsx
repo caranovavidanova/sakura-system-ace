@@ -261,7 +261,7 @@ export function ImportarNotaFiscalXmlModal({
                 type="file"
                 accept=".xml,text/xml,application/xml"
                 onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-                className="rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+                className="rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
               />
             </label>
             <div className="flex justify-end gap-3">
@@ -309,7 +309,7 @@ export function ImportarNotaFiscalXmlModal({
                 <select
                   value={depositoId}
                   onChange={(e) => setDepositoId(e.target.value)}
-                  className="rounded-lg border border-sakura-gray/40 px-3 py-2 focus:border-sakura-purple"
+                  className="rounded-lg border border-sakura-borda-campo px-3 py-2 focus:border-sakura-purple"
                 >
                   {depositos.map((deposito) => (
                     <option key={deposito.id} value={deposito.id}>
@@ -344,7 +344,7 @@ export function ImportarNotaFiscalXmlModal({
                     value={codigoIcmsNovas}
                     onChange={(e) => setCodigoIcmsNovas(e.target.value)}
                     placeholder={regimeUsaCsosn(regime) ? "Ex: 500" : "Ex: 00"}
-                    className="w-32 rounded-lg border border-sakura-gray/40 px-3 py-2 text-corpo focus:border-sakura-purple"
+                    className="w-32 rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo focus:border-sakura-purple"
                   />
                 </label>
               </div>
@@ -406,7 +406,7 @@ export function ImportarNotaFiscalXmlModal({
                                 quantidadeEditavel: Number(e.target.value),
                               })
                             }
-                            className="w-20 rounded border border-sakura-gray/40 px-1.5 py-1 focus:border-sakura-purple"
+                            className="w-20 rounded border border-sakura-borda-campo px-1.5 py-1 focus:border-sakura-purple"
                           />
                         </td>
                         <td className="px-2 py-1.5">
@@ -418,7 +418,7 @@ export function ImportarNotaFiscalXmlModal({
                             onChange={(e) =>
                               atualizarItem(indice, { precoEditavel: Number(e.target.value) })
                             }
-                            className="w-24 rounded border border-sakura-gray/40 px-1.5 py-1 focus:border-sakura-purple"
+                            className="w-24 rounded border border-sakura-borda-campo px-1.5 py-1 focus:border-sakura-purple"
                           />
                         </td>
                       </tr>

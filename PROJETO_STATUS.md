@@ -4222,7 +4222,7 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 |---|---|---|
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
 | **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
-| **3** — confiança nos números | 0 de 7 | **7** |
+| **3** — confiança nos números | 3 de 7 | **4** (ver 12/09 no fim do arquivo) |
 | **4** — antes da segunda empresa | 0 de 12 | **12** |
 | **5** — escala e produto | 0 de 15 | **15** |
 
@@ -4237,12 +4237,15 @@ assunto maior que o item.
 
 **Duas etapas mudam de peso por causa da venda, e vale dizer em voz alta:**
 
-- **Etapa 3 (7 itens)** é a que o guia descreve como *"fecha a área com o pior histórico do
-  projeto"* — e ele tem razão: já foram **cinco** divergências de conta de dinheiro aqui (itens
-  35, 40, 44 e 49 da seção 6). São testes de propriedade no rateio, teste-ouro do corpo da nota,
+- **Etapa 3 (7 itens, 3 feitos)** é a que o guia descreve como *"fecha a área com o pior
+  histórico do projeto"* — e ele tem razão: já foram **cinco** divergências de conta de dinheiro
+  aqui (itens 35, 40, 44 e 49 da seção 6). Saíram em 12/09/2026 os três que não dependiam de rodar
+  SQL: testes de propriedade no rateio (`TR-06.1`), teste-ouro do corpo da nota (`TR-06.3`) e
+  teste de tela nos cinco formulários de dinheiro (`TR-07.2`). **Os 4 que faltam dependem dela**:
   constraints no banco (inclusive "uma nota por OS por tipo", que hoje só é protegido pela tela —
-  ver item 3 de "O que ainda está frágil na parte fiscal"), teste de tela nos cinco formulários
-  que mexem em dinheiro, e fechamento de caixa do dia.
+  ver item 3 de "O que ainda está frágil na parte fiscal"), fechamento de caixa do dia e travar
+  comissão já paga — todos pedem migration, e os dois de constraint pedem antes uma consulta no
+  Supabase real dela.
 - **Etapa 4 (12 itens) está INTEIRA por fazer, e o guia a trata como pré-requisito da venda**:
   *"Nenhuma loja de terceiro deveria entrar antes desta etapa fechar. Não por perfeccionismo:
   porque cada item aqui é uma coisa que, dando errado com dado de outra empresa, não tem conserto

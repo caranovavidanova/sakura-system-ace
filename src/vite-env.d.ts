@@ -25,5 +25,19 @@ interface Window {
     // o app também roda no navegador (preview/catálogo de telas), onde
     // essa ponte não existe — ver lib/whatsapp.ts.
     abrirWhatsapp?: (url: string) => Promise<boolean>;
+    // Tela de Diagnóstico (item TR-08.1). Opcionais pelo mesmo motivo do
+    // abrirWhatsapp: fora do Electron essas pontes não existem, e a tela
+    // precisa continuar abrindo (mostrando o que conseguir descobrir).
+    diagnostico?: () => Promise<{
+      versaoApp: string;
+      electron: string;
+      chromium: string;
+      node: string;
+      plataforma: string;
+      sistema: string;
+      arquitetura: string;
+      pastaDados: string;
+    }>;
+    lerLogs?: (linhas: number) => Promise<{ erros: string; atualizacoes: string }>;
   };
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AreaRolavel } from "./components/AreaRolavel";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
 import { Sidebar } from "./components/Sidebar";
 import { VersaoApp } from "./components/VersaoApp";
@@ -9,11 +10,13 @@ import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { useLimparDataAoApagar } from "./hooks/useLimparDataAoApagar";
 import { useNaoMexerNoNumeroSemDigitar } from "./hooks/useNaoMexerNoNumeroSemDigitar";
 import { conexaoConfigurada } from "./lib/conexao";
+import { definirContextoDeErro } from "./lib/registrarErros";
 import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
 import { CaixaPage } from "./pages/caixa/CaixaPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ConexaoPage } from "./pages/conexao/ConexaoPage";
 import { ConfiguracoesPage } from "./pages/configuracoes/ConfiguracoesPage";
+import { DiagnosticoPage } from "./pages/diagnostico/DiagnosticoPage";
 import { ContasPagarPage } from "./pages/contas-pagar/ContasPagarPage";
 import { ContasReceberPage } from "./pages/contas-receber/ContasReceberPage";
 import { EstoquePage } from "./pages/estoque/EstoquePage";
@@ -40,7 +43,8 @@ function PaginaInicial() {
   }
 
   const primeiroModulo = MODULOS.find(
-    (modulo) => modulo.chave !== "painel" && temPermissao(operador, modulo.chave),
+    (modulo) =>
+      modulo.chave !== "painel" && temPermissao(operador, modulo.chave),
   );
   if (primeiroModulo) {
     return <Navigate to={primeiroModulo.rota} replace />;
@@ -56,20 +60,33 @@ function PaginaInicial() {
 }
 
 export default function App() {
-  const { carregando, session, operador } = useAuth();
+  const { carregando, session, operador, lojaAtual } = useAuth();
   useEnterParaProximoCampo();
   useLimparDataAoApagar();
   useNaoMexerNoNumeroSemDigitar();
   // Na primeira abertura deste computador ainda não se sabe de qual empresa é
   // este app — sem isso não há nem como fazer login.
-  const [configurandoConexao, setConfigurandoConexao] = useState(!conexaoConfigurada());
+  const [configurandoConexao, setConfigurandoConexao] =
+    useState(!conexaoConfigurada());
+
+  // Sem isto, a pilha gravada em "erros.log" não diz em que tela nem com que
+  // usuário o erro aconteceu — e é justamente isso que falta pra ela
+  // significar alguma coisa dias depois (item TR-08.3).
+  useEffect(() => {
+    definirContextoDeErro({
+      usuario: operador?.usuario,
+      loja: lojaAtual?.nome,
+    });
+  }, [operador?.usuario, lojaAtual?.nome]);
 
   if (configurandoConexao) {
     return (
       <>
         <ConexaoPage
           onCancelar={
-            conexaoConfigurada() ? () => setConfigurandoConexao(false) : undefined
+            conexaoConfigurada()
+              ? () => setConfigurandoConexao(false)
+              : undefined
           }
         />
         <VersaoApp />
@@ -110,121 +127,125 @@ export default function App() {
       <Sidebar />
       <main className="min-h-0 flex-1">
         <AreaRolavel className="p-4">
-          <Routes>
-            <Route path="/" element={<PaginaInicial />} />
-            <Route
-              path="/clientes"
-              element={
-                <PermissaoRoute modulo="clientes">
-                  <ClientesPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/estoque"
-              element={
-                <PermissaoRoute modulo="estoque">
-                  <EstoquePage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/fornecedores"
-              element={
-                <PermissaoRoute modulo="fornecedores">
-                  <FornecedoresPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/servicos"
-              element={
-                <PermissaoRoute modulo="servicos">
-                  <ServicosPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/ordens-servico"
-              element={
-                <PermissaoRoute modulo="ordens_servico">
-                  <OrdensServicoPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/caixa"
-              element={
-                <PermissaoRoute modulo="caixa">
-                  <CaixaPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/contas-pagar"
-              element={
-                <PermissaoRoute modulo="contas_pagar">
-                  <ContasPagarPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/contas-receber"
-              element={
-                <PermissaoRoute modulo="contas_receber">
-                  <ContasReceberPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/relatorios"
-              element={
-                <PermissaoRoute modulo="relatorios">
-                  <RelatoriosPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/garantias"
-              element={
-                <PermissaoRoute modulo="garantias">
-                  <GarantiasPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/notas-fiscais"
-              element={
-                <PermissaoRoute modulo="notas_fiscais">
-                  <NotasFiscaisPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/funcionarios"
-              element={
-                <PermissaoRoute modulo="funcionarios">
-                  <FuncionariosPage />
-                </PermissaoRoute>
-              }
-            />
-            <Route
-              path="/configuracoes"
-              element={
-                <AdminRoute>
-                  <ConfiguracoesPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/auditoria"
-              element={
-                <AdminRoute>
-                  <AuditoriaPage />
-                </AdminRoute>
-              }
-            />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<PaginaInicial />} />
+              {/* Sem AdminRoute de propósito: quem pede socorro é o balcão. */}
+              <Route path="/diagnostico" element={<DiagnosticoPage />} />
+              <Route
+                path="/clientes"
+                element={
+                  <PermissaoRoute modulo="clientes">
+                    <ClientesPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/estoque"
+                element={
+                  <PermissaoRoute modulo="estoque">
+                    <EstoquePage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/fornecedores"
+                element={
+                  <PermissaoRoute modulo="fornecedores">
+                    <FornecedoresPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/servicos"
+                element={
+                  <PermissaoRoute modulo="servicos">
+                    <ServicosPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/ordens-servico"
+                element={
+                  <PermissaoRoute modulo="ordens_servico">
+                    <OrdensServicoPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/caixa"
+                element={
+                  <PermissaoRoute modulo="caixa">
+                    <CaixaPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/contas-pagar"
+                element={
+                  <PermissaoRoute modulo="contas_pagar">
+                    <ContasPagarPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/contas-receber"
+                element={
+                  <PermissaoRoute modulo="contas_receber">
+                    <ContasReceberPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/relatorios"
+                element={
+                  <PermissaoRoute modulo="relatorios">
+                    <RelatoriosPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/garantias"
+                element={
+                  <PermissaoRoute modulo="garantias">
+                    <GarantiasPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/notas-fiscais"
+                element={
+                  <PermissaoRoute modulo="notas_fiscais">
+                    <NotasFiscaisPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/funcionarios"
+                element={
+                  <PermissaoRoute modulo="funcionarios">
+                    <FuncionariosPage />
+                  </PermissaoRoute>
+                }
+              />
+              <Route
+                path="/configuracoes"
+                element={
+                  <AdminRoute>
+                    <ConfiguracoesPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/auditoria"
+                element={
+                  <AdminRoute>
+                    <AuditoriaPage />
+                  </AdminRoute>
+                }
+              />
+            </Routes>
+          </ErrorBoundary>
         </AreaRolavel>
       </main>
     </div>

@@ -2851,6 +2851,30 @@ Quatro coisas que valem saber:
   **por loja** — ver seção 5). Em "Dados fiscais da loja" há também, desde 11/09/2026, o campo
   "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
   Início; em branco, vale o passo a passo de Araraquara que está no código.
+- **Diagnóstico** (13/09/2026, item `TR-08.1`): ícone no rodapé da Sidebar, **visível pra
+  qualquer operador** — e isso é a decisão que importa: quem liga pedindo socorro é quem está no
+  balcão com o cliente na frente, não o admin. A tela recolhe sozinha ao abrir e mostra: as três
+  **checagens ao vivo** com o tempo de cada uma (alcança a internet — o GitHub, que é de onde vem
+  a atualização; o endereço do banco responde; consegue ler uma linha de `lojas`); versão do app,
+  Electron/Chromium, sistema, **data/hora e fuso do computador** (é a informação que teria
+  encurtado o item 34 da seção 6); endereço do banco daquela empresa, usuário logado e loja ativa;
+  e as últimas 200 linhas de `erros.log` e `atualizacoes.log`. Dois botões: **"Copiar resumo"**
+  (texto curto pro WhatsApp) e **"Salvar arquivo para enviar"** (um `.zip`, montado pelo
+  `lib/zip.ts` que já existia).
+  **A promessa que é testada, não prometida**: senha, chave e token **não saem** no pacote. O
+  relatório é montado campo a campo (nada é despejado), e o que vem de fora — os dois registros em
+  disco — passa por `mascararSegredos` (`schemas/diagnostico.ts`), que esconde a chave deste
+  computador e mais cinco formatos conhecidos (Anthropic, Supabase, JWT, `Bearer`, `Basic`). O
+  resumo do WhatsApp não leva **nenhuma** linha de registro. O que o código **não** promete, e a
+  própria tela diz: uma linha de `erros.log` pode citar um dado da tela onde o erro aconteceu.
+  **Junto veio a metade do `TR-08.3` que dava pra fazer sem migration**: um `ErrorBoundary`
+  (`components/ErrorBoundary.tsx`) em volta das rotas — erro de renderização deixava a janela
+  **em branco**, sem saída a não ser fechar o programa; agora vira "Alguma coisa quebrou nesta
+  tela" com "Voltar ao Início" e "Abrir diagnóstico", e o erro vai pro `erros.log` com a pilha de
+  componentes. E o `erros.log` passou a gravar **rota, usuário, loja e versão** junto com a pilha.
+  **Ficou de fora, de propósito**: a trilha das últimas 20 ações do usuário (o resto do `TR-08.3`)
+  e a versão do esquema do banco no diagnóstico (depende do `TR-05.7`, que pede migration).
+  **Ainda não visto por ela rodando.**
 - **Auditoria**: admin-only, acesso via ícone no rodapé da Sidebar (ao lado da engrenagem de
   Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem **criou**,
   editou ou excluiu o quê e quando, com filtro por tabela, por **ação** e por operador, e um "Ver
@@ -4718,7 +4742,26 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 13/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 13/09/2026 (fim do dia) — LEIA ISTO PRIMEIRO
+
+**Depois da matriz de RLS saiu mais um item da Etapa 4: `TR-08.1` — a tela de Diagnóstico**
+(mais a metade do `TR-08.3` que não pedia migration: o `ErrorBoundary` e o contexto no
+`erros.log`). Detalhe completo em "Diagnóstico", seção 7.
+
+**Sem migration e sem tag**: é código de app, mas **não foi publicado** — a próxima tag leva isto
+junto. Banco continua na `0054`.
+
+**Etapa 4: 5 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
+Function · `TR-12.1` backup · `TR-09.1` canal de teste · `TR-04.6` endurecer o Electron ·
+`TR-05.7` versão do esquema · `TR-12.2` contrato e papéis — mais as **etapas 2 e 3 do
+`TR-04.1`**, que precisam da decisão dela antes de começar.
+
+**O primeiro passo da próxima sessão é perguntar se é pra publicar** (`0.9.36` no
+`package.json`, PR, merge, `workflow_dispatch` com `ref: "main"`) — não publicar sozinho.
+
+O que está abaixo é o marco anterior do mesmo dia.
+
+### Onde parou em 13/09/2026, mais cedo
 
 **A Etapa 4 do guia começou.** Ela escolheu (entre fechar a Etapa 3 e começar a 4) a **Etapa 4** —
 a que o guia trata como **pré-requisito da venda**: *"nenhuma loja de terceiro deveria entrar

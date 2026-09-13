@@ -11,11 +11,32 @@
  * nenhuma pista pra investigar depois. Mesmo espírito do "atualizacoes.log"
  * já usado pelo autoUpdater (ver PROJETO_STATUS.md, seção 6, item 19).
  */
+// Contexto de quem está usando, pra pilha de erro significar alguma coisa.
+// Fica em módulo (e não no React) porque `registrarErrosDaTela` roda uma vez
+// só, na abertura, fora de qualquer componente — quem atualiza é o App.tsx.
+let contexto: { usuario?: string; loja?: string } = {};
+
+export function definirContextoDeErro(novo: { usuario?: string; loja?: string }): void {
+  contexto = novo;
+}
+
+function linhaDeContexto(): string {
+  const partes = [
+    `rota=${typeof location !== "undefined" ? location.hash || "#/" : "?"}`,
+    contexto.usuario ? `usuário=@${contexto.usuario}` : "usuário=(não logado)",
+    contexto.loja ? `loja=${contexto.loja}` : "loja=(nenhuma)",
+    `app=${window.sakuraApp?.version ?? "?"}`,
+  ];
+  return `Contexto: ${partes.join(" · ")}`;
+}
+
 export function registrarErrosDaTela(): void {
   if (typeof window === "undefined") return;
 
   function reportar(origem: string, detalhe: unknown, pilha?: string) {
-    const linha = [`${origem}: ${String(detalhe)}`, pilha].filter(Boolean).join("\n");
+    const linha = [`${origem}: ${String(detalhe)}`, pilha, linhaDeContexto()]
+      .filter(Boolean)
+      .join("\n");
     // Continua indo pro console também: em `npm run dev` é lá que se olha.
     console.error(linha);
     window.sakuraApp?.registrarErro?.(linha);

@@ -39,6 +39,24 @@ function IconeAuditoria({ className = "" }: { className?: string }) {
   );
 }
 
+function IconeDiagnostico({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
 export function Sidebar() {
   const { operador, logout } = useAuth();
 
@@ -52,7 +70,9 @@ export function Sidebar() {
         <AreaRolavel className="flex flex-col">
           <div className="px-6 pb-6 pt-8">
             <Logo />
-            <p className="mt-4 text-meta font-semibold tracking-widest text-sakura-pink drop-shadow-[0_0_5px_rgba(255,77,206,0.5)]">AUTOCENTER EDITION</p>
+            <p className="mt-4 text-meta font-semibold tracking-widest text-sakura-pink drop-shadow-[0_0_5px_rgba(255,77,206,0.5)]">
+              AUTOCENTER EDITION
+            </p>
           </div>
 
           <nav className="flex flex-1 flex-col gap-1 px-3 pb-3">
@@ -88,38 +108,58 @@ export function Sidebar() {
               <p className="truncate text-corpo font-medium text-sakura-purple-dark">
                 {operador.nome}
               </p>
-              <p className="truncate text-rotulo text-sakura-purple-dark/85">@{operador.usuario}</p>
+              <p className="truncate text-rotulo text-sakura-purple-dark/85">
+                @{operador.usuario}
+              </p>
             </div>
-            {operador.admin && (
-              <div className="flex shrink-0 gap-1">
-                <NavLink
-                  to="/auditoria"
-                  title="Auditoria"
-                  className={({ isActive }) =>
-                    `rounded-full p-2 transition-all ${
-                      isActive
-                        ? "bg-sakura-purple/20 text-sakura-pink"
-                        : "text-sakura-purple-dark/85 hover:bg-white/10 hover:text-white"
-                    }`
-                  }
-                >
-                  <IconeAuditoria className="h-5 w-5" />
-                </NavLink>
-                <NavLink
-                  to="/configuracoes"
-                  title="Configurações"
-                  className={({ isActive }) =>
-                    `rounded-full p-2 transition-all ${
-                      isActive
-                        ? "bg-sakura-purple/20 text-sakura-pink"
-                        : "text-sakura-purple-dark/85 hover:bg-white/10 hover:text-white"
-                    }`
-                  }
-                >
-                  <IconeEngrenagem className="h-5 w-5" />
-                </NavLink>
-              </div>
-            )}
+            <div className="flex shrink-0 gap-1">
+              {/* Diagnóstico fica FORA do `operador.admin` de propósito: quem
+                  liga pedindo socorro é quem está no balcão com o cliente na
+                  frente, e não é ele quem tem senha de administrador. */}
+              <NavLink
+                to="/diagnostico"
+                title="Diagnóstico"
+                className={({ isActive }) =>
+                  `rounded-full p-2 transition-all ${
+                    isActive
+                      ? "bg-sakura-purple/20 text-sakura-pink"
+                      : "text-sakura-purple-dark/85 hover:bg-white/10 hover:text-white"
+                  }`
+                }
+              >
+                <IconeDiagnostico className="h-5 w-5" />
+              </NavLink>
+              {operador.admin && (
+                <>
+                  <NavLink
+                    to="/auditoria"
+                    title="Auditoria"
+                    className={({ isActive }) =>
+                      `rounded-full p-2 transition-all ${
+                        isActive
+                          ? "bg-sakura-purple/20 text-sakura-pink"
+                          : "text-sakura-purple-dark/85 hover:bg-white/10 hover:text-white"
+                      }`
+                    }
+                  >
+                    <IconeAuditoria className="h-5 w-5" />
+                  </NavLink>
+                  <NavLink
+                    to="/configuracoes"
+                    title="Configurações"
+                    className={({ isActive }) =>
+                      `rounded-full p-2 transition-all ${
+                        isActive
+                          ? "bg-sakura-purple/20 text-sakura-pink"
+                          : "text-sakura-purple-dark/85 hover:bg-white/10 hover:text-white"
+                      }`
+                    }
+                  >
+                    <IconeEngrenagem className="h-5 w-5" />
+                  </NavLink>
+                </>
+              )}
+            </div>
           </div>
           <LojaSwitcher />
           <button

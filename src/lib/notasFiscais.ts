@@ -8,6 +8,7 @@ import {
   FocusNfeError,
 } from "./focusNfe";
 import { supabase } from "./supabase";
+import { salvarComoDownload } from "./download";
 import { criarZip, type ArquivoParaZip } from "./zip";
 import { motivoDanfeIndisponivel } from "@/schemas/danfe";
 import type { AmbienteFocusNfe } from "@/types/configuracao";
@@ -206,15 +207,6 @@ export async function buscarConteudoArquivo(arquivo: NotaFiscalArquivo): Promise
     .download(arquivo.storage_path);
   if (error) throw error;
   return data.text();
-}
-
-function salvarComoDownload(conteudo: Blob, nomeArquivo: string): void {
-  const url = URL.createObjectURL(conteudo);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivo;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 export async function baixarArquivo(arquivo: NotaFiscalArquivo): Promise<void> {

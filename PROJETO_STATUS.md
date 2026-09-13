@@ -320,7 +320,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # "Importar XML de nota fiscal" em Pedidos de Compra, ver seção
 │   │                             # 7; módulo de Fornecedores) +
 │   │                             # auditoria.ts (só leitura — `listarAuditoria`, filtra por
-│   │                             # tabela/operador; a escrita é 100% via trigger de banco, ver
+│   │                             # tabela/ação/operador; a escrita é 100% via trigger de banco, ver
 │   │                             # seção 5) + marcasVeiculo.ts (nesta sessão — lista estática de
 │   │                             # ~80 montadoras, usada só como sugestão no Combobox de Marca do
 │   │                             # veículo, ver seção 7 "Clientes")
@@ -446,8 +446,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0052), todas idempotentes
-├── supabase/instalacao/          # instalacao-completa.sql (as 52 migrations concatenadas num
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0054), todas idempotentes
+├── supabase/instalacao/          # instalacao-completa.sql (as 54 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
 │                                  # INSTALAR-LOJA-NOVA.md (o checklist que ela segue de verdade ao
@@ -457,6 +457,13 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # stub-supabase-local.sql (cria os schemas auth/storage e as
 │                                  # permissões que o Supabase dá sozinho, pra validar migrations e
 │                                  # testar RLS num Postgres local — NUNCA rodar no Supabase real) +
+│                                  # testar-auditoria.sql e testar-permissao-modulo.sql (TESTE, não
+│                                  # instalação: rodam num Postgres local depois da
+│                                  # instalacao-completa.sql e estouram com "FALHOU: ..." se algo
+│                                  # quebrar — o primeiro prova, entre outras coisas, que o token
+│                                  # da Focus NFe sai mascarado na trilha de auditoria; o segundo,
+│                                  # que um balconista só-Caixa é recusado em "clientes". NUNCA
+│                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5) + excluir-os-teste-eduarda.sql
 │                                  # (uso único, criado numa sessão pra apagar as OS de teste abertas
@@ -769,6 +776,40 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   (o contrário do que aconteceu com as categorias de caixa na `0050`). E `whatsapp_mensagens`
   registra que uma conversa foi **aberta** — nunca "enviada", que é uma coisa que este sistema não
   tem como saber (ver "WhatsApp" na seção 7).
+- `0053` (criada em 13/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0052` **com dado
+  plantado** — **ainda NÃO rodada por ela**): a trilha de auditoria passa a cobrir o que
+  escapava. `INSERT` vira `acao = 'criar'`; entram `ordens_servico_itens` (o buraco mais grave —
+  desde a `v0.9.28` dá pra corrigir o **valor** de um item de OS pela tela, e isso não deixava
+  rastro nenhum), `notas_fiscais_arquivos`, `configuracoes_fiscais_loja`,
+  `configuracoes_juros_parcelas` e `operador_lojas`; o `focus_nfe_token` sai **mascarado**; e
+  nasce `expurgar_auditoria(meses)`, que **não roda sozinha**. Quatro decisões que valem saber
+  antes de mexer aqui:
+  (a) **a coluna-chave virou argumento do trigger** — três das cinco tabelas novas não têm coluna
+  `id` (a `0033` derrubou o `id` de `configuracoes_fiscais_loja`, e duas têm PK composta), e a
+  função da `0040` gravava `new.id` fixo; o resto da chave composta não se perde, porque a linha
+  inteira continua indo em `dados_antes`/`dados_depois`.
+  (b) **a FK `auditoria.operador_id` foi REMOVIDA** e o nome de quem fez passou a ser gravado no
+  momento do fato (`operador_nome`, com backfill das linhas antigas) — com criação auditada, todo
+  operador passa a ter linha na trilha, e a FK faria a exclusão de operador pelo painel do
+  Supabase falhar, que é justamente o caminho documentado no item 23 da seção 6. **`on delete set
+  null` não resolve** e vale saber por quê antes de alguém tentar: a linha é gravada DEPOIS da
+  exclusão, então um admin que exclui a própria conta estoura na FK (testado, não suposto).
+  Trilha append-only não deve ter chave capaz de bloquear ou reescrever o passado.
+  (c) **o `revoke execute` do expurgo é a trava que importa** — sem ele, `security definer` +
+  permissão padrão do Postgres deixaria qualquer operador logado apagar a própria pegada pela API.
+  Depois do revoke, só quem tem acesso de dono ao banco (o SQL Editor) consegue. Retenção mínima
+  de 6 meses; o padrão sugerido é 24 (`select expurgar_auditoria(24);`).
+  (d) **a máscara é por NOME DE COLUNA, não por tabela** — coluna nova com esse nome já nasce
+  protegida. Teste repetível em `supabase/scripts/testar-auditoria.sql` (7 checagens).
+- `0054` (criada em 13/09/2026, mesma validação — **ainda NÃO rodada por ela**): a função
+  `operador_tem_permissao(modulo text)`, **etapa 1 de 3** do item `TR-04.1` (RLS por módulo).
+  **Nenhuma policy usa ela ainda, e rodar esta migration não muda comportamento nenhum** — as
+  policies são a etapa 2, que é mudança de arquitetura de segurança e precisa ser decidida com
+  ela antes. `security definer` pelo motivo do item 13 da seção 6 (recursão de policy). O
+  cabeçalho da migration guarda como chamar na etapa 2 — `TO authenticated` e a chamada envolvida
+  em `select`, que são desempenho medido e documentado pelo Supabase, não estilo. Teste em
+  `supabase/scripts/testar-permissao-modulo.sql` (5 perfis).
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -988,11 +1029,15 @@ outro projeto Supabase do zero (ver seção 9).
   marcado `true` quando um admin redefine a senha de alguém, obriga trocar antes de liberar o app,
   ver seção 7 "Login e permissões"), criado_em. Não tem `loja_id` — o acesso a loja(s) vem de
   `operador_lojas` (ver subseção "Multi-loja" acima). RLS de verdade baseada em login (ver seção 6).
-- **`auditoria`** (migration `0040`): id, tabela (nome da tabela afetada), registro_id, acao
-  (`atualizar`/`excluir`), operador_id (FK operadores — quem fez), dados_antes/dados_depois
+- **`auditoria`** (migrations `0040` e `0053`): id, tabela (nome da tabela afetada),
+  registro_id, acao (`criar`/`atualizar`/`excluir`), operador_id (quem fez — **sem FK desde a
+  `0053`**, ver acima), operador_nome (o nome congelado no momento do fato, e é ele que a tela
+  mostra — o registro histórico continua respondendo mesmo se o operador for excluído depois),
+  dados_antes/dados_depois
   (jsonb, snapshot da linha inteira via `to_jsonb(old)`/`to_jsonb(new)`), criado_em. **Não é
   gravada pelo app** — uma função trigger (`registrar_auditoria()`, `security definer`) grava
-  sozinha em `UPDATE`/`DELETE` das tabelas cobertas (ver lista no comentário da migration `0040`),
+  sozinha em `INSERT`/`UPDATE`/`DELETE` das 16 tabelas cobertas (ver a lista no comentário da
+  migration `0053`, que é a mais recente),
   então pega qualquer alteração não importa a origem (tela do app, SQL Editor manual, bug futuro).
   Leitura só pra admin (`operador_atual_e_admin()`); sem policy de insert pra ninguém — só a
   função (dona = quem rodou a migration) consegue gravar. Ver "Auditoria" na seção 7.
@@ -1053,8 +1098,20 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
 1. **Permissão por módulo checada só na interface, não em RLS por categoria** — um operador
    logado com permissão só de "Caixa", por exemplo, ainda consegue chamar a API do Supabase
    direto pra mexer em "Clientes" se tentar de propósito. RLS exige **login** pra tudo (fecha o
-   acesso sem estar logado), mas não reforça por módulo. Fica pra uma etapa futura se o risco
-   mudar (ex: sistema vendido pra terceiros, não só a própria loja).
+   acesso sem estar logado), mas não reforça por módulo. **Enquanto quem opera é o pai dela e os
+   funcionários da loja dele, isso é risco teórico** — e este documento sempre foi honesto sobre
+   isso. Deixa de ser quando o operador for funcionário de uma empresa que só comprou o sistema:
+   dá pra exportar o cadastro de clientes inteiro (e o de TODAS as lojas da mesma empresa, já que
+   `clientes` e `pecas` são compartilhados) sem deixar rastro, porque a auditoria registra
+   escrita, nunca leitura.
+   **A etapa 1 de 3 saiu em 13/09/2026** (item `TR-04.1`, migration `0054`): existe a função
+   `operador_tem_permissao(modulo)`, no mesmo padrão de `operador_atual_e_admin()`. **Nenhuma
+   policy usa ela ainda** — a etapa 2 (aplicar nas policies, uma tabela por vez) é mudança de
+   arquitetura de segurança e o guia manda alinhar com ela antes, então não foi feita por conta
+   própria. **O que ela precisa saber antes de aprovar a etapa 2**: a partir dela, permissão
+   errada no cadastro de um operador deixa de ser "o menu some" e passa a ser "a tela abre
+   vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
+   teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
 2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). **Redefinir senha de
    operador esquecida** já está implementado (Configurações → Operadores → "Redefinir senha",
    migration `0038` + Edge Function `redefinir-senha-operador` — ver "Login e permissões" na seção
@@ -2459,10 +2516,10 @@ Quatro coisas que valem saber:
   - **Não tem "Remover"** — só editar. Um item lançado por engano ainda precisa ser transformado em
     outro item pela edição; excluir de vez não foi construído (não foi pedido, e teria a mesma
     conversa de estoque/nota). Fácil de acrescentar depois, se fizer falta.
-  - **Não é auditado**: `ordens_servico_itens` não está na lista de tabelas cobertas pelo trigger
-    de auditoria (migration `0040`, ver seção 5). Agora que dá pra mexer em valor de item, incluir
-    essa tabela virou candidato natural — é uma migration pequena, no mesmo padrão, ainda **não
-    feita**.
+  - **Passou a ser auditado em 13/09/2026** (migration `0053`, ainda não rodada por ela):
+    `ordens_servico_itens` entrou na trilha de auditoria, inclusive a criação do item. Era a
+    ponta solta registrada aqui desde a `v0.9.28` — mexer no valor de um item não deixava rastro
+    nenhum. Ver "Auditoria" nesta seção.
 
   **Aviso de código fiscal antes de emitir (09/09/2026)**: a aba Fechamento → "Emitir NFC-e"
   agora confere o CST/CSOSN de cada peça da nota contra o regime da loja **antes** de mandar, e
@@ -2737,14 +2794,33 @@ Quatro coisas que valem saber:
   **por loja** — ver seção 5). Em "Dados fiscais da loja" há também, desde 11/09/2026, o campo
   "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
   Início; em branco, vale o passo a passo de Araraquara que está no código.
-- **Auditoria** (módulo novo nesta sessão, migration `0040` já rodada e testada por ela de
-  verdade): admin-only, acesso via ícone novo no rodapé da Sidebar (ao lado da engrenagem de
-  Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem editou ou
-  excluiu o quê e quando, com filtro por tabela e por operador, e um "Ver detalhes" que mostra o
-  registro inteiro antes/depois (ou só "antes" se foi exclusão) em JSON. Cobre só
-  `UPDATE`/`DELETE` (não criação) num conjunto de tabelas sensíveis — ver lista completa na seção
-  5, tabela `auditoria`. É gravado por trigger de banco, não pelo código do app — funciona mesmo
-  se a alteração vier de outro lugar (SQL Editor manual, por exemplo).
+- **Auditoria**: admin-only, acesso via ícone no rodapé da Sidebar (ao lado da engrenagem de
+  Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem **criou**,
+  editou ou excluiu o quê e quando, com filtro por tabela, por **ação** e por operador, e um "Ver
+  detalhes" que mostra o registro inteiro em JSON (antes/depois numa edição; só "depois" numa
+  criação; só "antes" numa exclusão). É gravado por trigger de banco, não pelo código do app —
+  funciona mesmo se a alteração vier de outro lugar (SQL Editor manual, por exemplo).
+  **Ampliado em 13/09/2026 (item `TR-04.9` do guia, migration `0053` — ainda NÃO rodada por
+  ela)**: passou a cobrir **criação** e mais cinco tabelas. A que mais importa é
+  `ordens_servico_itens` — desde a `v0.9.28` dá pra corrigir o **valor** de um item de OS pela
+  tela, e até aqui essa mudança não deixava rastro nenhum; era a ponta solta registrada em
+  "Ordens de Serviço" e em 10/09/2026, agora fechada. Entraram junto
+  `notas_fiscais_arquivos` (excluir nota é ação séria), `configuracoes_fiscais_loja` e
+  `configuracoes_juros_parcelas` (mexer aqui muda documento fiscal e o que o cliente paga) e
+  `operador_lojas` (dar a alguém acesso a uma loja). Três coisas que valem saber:
+  - **O token da Focus NFe sai mascarado** (`***`). Sem isso, auditar os dados fiscais
+    transformaria a própria trilha no lugar novo onde o segredo fica legível — o contrário do que
+    ela existe pra fazer. O que não é segredo (CNPJ, alíquota) continua auditável normalmente.
+  - **A trilha cresce bem mais rápido agora**, porque toda criação gera linha. Existe
+    `expurgar_auditoria(meses)` pra isso, mas ela **não roda sozinha** — apagar histórico é
+    decisão dela, não efeito colateral de migration, e só quem tem o SQL Editor consegue chamar.
+    Quando for a hora: `select expurgar_auditoria(24);` no SQL Editor devolve quantas linhas
+    apagou. O padrão sugerido é 24 meses, e a função recusa menos de 6.
+  - **O "quem" passou a ser gravado junto com o fato** (`operador_nome`), e não buscado por join.
+    Isso é o que permite excluir um operador pelo painel do Supabase sem a trilha travar — e é
+    como registro histórico deve funcionar de qualquer forma: ele conta o que era verdade naquele
+    dia, não o que o cadastro diz hoje. Ver a migration `0053` na seção 5 pro detalhe da FK.
+  **Ainda não visto por ela rodando** — depende de rodar a migration.
 - **Multi-loja** — já aplicada e testada de verdade no Supabase real da usuária (criou uma 2ª loja
   de teste pra validar o fluxo, o que revelou o bug corrigido na migration 0034 — essa loja de teste
   foi excluída nesta sessão, ver abaixo). 1 projeto Supabase serve 2+ lojas com um painel único (não
@@ -3469,6 +3545,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
+| 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). **Nada publicado em tag** — e as migrations `0053`/`0054` esperam ela rodar. |
 
 **Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na
 seção 1, mas é aqui que costumam ser lidas): *intenção futura não é autorização pra começar agora*
@@ -3502,8 +3579,21 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0052` estão TODAS aplicadas no Supabase real dela — nada pendente de
-SQL.** As duas últimas (`0051`, estoque mínimo e bloco de pneu; `0052`, as tabelas do WhatsApp)
+**Estado hoje: `0001` a `0052` estão aplicadas no Supabase real dela; a `0053` e a `0054`
+foram criadas em 13/09/2026 e AINDA NÃO FORAM RODADAS por ela.**
+
+> **A `0053` (auditoria completa) tem ordem obrigatória: rodar ANTES de a versão nova chegar no
+> computador da loja.** Sem as colunas dela, a tela de Auditoria pediria `operador_nome`, que não
+> existiria. Mesma disciplina já cumprida com a `0049`/`v0.9.30`, a `0050`/`v0.9.32` e a
+> `0051`+`0052`/`v0.9.33`.
+>
+> A `0054` (a função de permissão por módulo) **não tem ordem a cumprir** — ela só cria uma função
+> que nenhuma policy usa ainda, então rodar antes ou depois não muda nada. Vale rodar junto, pra
+> não ficar SQL pendurado.
+>
+> As duas são idempotentes e foram validadas num Postgres local: a instalação inteira rodada três
+> vezes do zero, cada migration sozinha duas vezes num banco no estado `0052` com dado plantado, e
+> os dois scripts de teste passando num banco recém-instalado. As duas últimas (`0051`, estoque mínimo e bloco de pneu; `0052`, as tabelas do WhatsApp)
 foram rodadas por ela em 12/09/2026, **antes** da tag `v0.9.33` — a ordem que elas exigiam, a
 mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
 Histórico das anteriores: a `0048`
@@ -3834,8 +3924,9 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.34"` — publicada em 12/09/2026 (fim do dia), com a `main`
-  em dia e **nada esperando tag nem SQL** (ver "Onde parou", no fim deste arquivo). (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.34"` — publicada em 12/09/2026 (fim do dia). **Desde
+  13/09/2026 a `main` está uma leva à frente**, com DUAS migrations esperando ela rodar (`0053` e
+  `0054`) e nada publicado em tag — ver "Onde parou", no fim deste arquivo. (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -4305,7 +4396,7 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
 | **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
 | **3** — confiança nos números | 3 de 7 | **4** (ver 12/09 no fim do arquivo) |
-| **4** — antes da segunda empresa | 0 de 12 | **12** |
+| **4** — antes da segunda empresa | 2 de 12 | **10** (ver 13/09 no fim do arquivo) |
 | **5** — escala e produto | 0 de 15 | **15** |
 
 **A Etapa 2 fechou em 12/09/2026** com os quatro que faltavam: `TR-01.3` (a auditoria de
@@ -4476,7 +4567,7 @@ Estão nos itens **58 e 59** da seção 6, e as duas são sobre desconfiar do pr
   esquecido, a varredura media as telas servidas por um estranho sem avisar. As duas coisas foram
   corrigidas na ferramenta.
 
-### ⏸ Onde parou em 12/09/2026, fim do dia — LEIA ISTO PRIMEIRO
+### Onde parou em 12/09/2026, fim do dia (histórico — o marco mais recente está no FIM do arquivo)
 
 **Estado: tudo desta leva está publicado na `v0.9.34`** e chega na loja pelo auto-update. Ela
 mandou publicar no fim da sessão ("publica, deixe o projeto status efetivamente atualizado e até a
@@ -4555,3 +4646,95 @@ Se ela pedir sugestão, as duas respostas honestas são:
   porque a fase 2 (as duas lojas do amigo do pai dela) está no horizonte, e três desses doze já
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
+
+### ⏸ Onde parou em 13/09/2026 — LEIA ISTO PRIMEIRO
+
+**A Etapa 4 do guia começou.** Ela escolheu (entre fechar a Etapa 3 e começar a 4) a **Etapa 4** —
+a que o guia trata como **pré-requisito da venda**: *"nenhuma loja de terceiro deveria entrar
+antes desta etapa fechar"*. Pesa agora porque a fase 2 (as duas lojas do amigo do pai dela) está
+no horizonte. São 12 itens; saíram **dois inteiros e o primeiro terço de um terceiro**.
+
+> ## ⚠️ O QUE DEPENDE DELA, ANTES DE QUALQUER COISA
+>
+> **Rodar as migrations `0053` e `0054` no SQL Editor do Supabase** — e a `0053` **antes** de
+> publicar a próxima versão, senão a tela de Auditoria quebra no computador da loja (detalhe na
+> seção 9). **Nada foi publicado em tag**: a `v0.9.34` continua sendo a última, de propósito.
+
+#### O que saiu
+
+1. **`TR-04.9` — a auditoria passou a cobrir o que escapava** (migration `0053`). O buraco mais
+   grave era `ordens_servico_itens`: desde a `v0.9.28` dá pra corrigir o **valor** de um item de
+   OS pela tela, e isso não deixava rastro nenhum — era a ponta solta anotada desde 10/09. Agora
+   **criação** também é auditada, mais cinco tabelas entraram, e o token da Focus NFe sai
+   **mascarado** (sem isso, auditar os dados fiscais transformaria a própria trilha no lugar novo
+   onde o segredo fica legível). Detalhe em "Auditoria", seção 7.
+2. **`TR-09.2` — como voltar uma versão** (só documento, em "Voltar uma versão", seção 9). O fato
+   que muda o procedimento inteiro: **o `electron-updater` só anda pra frente**, então apagar a
+   release ruim NÃO desfaz nada em computador que já atualizou — desfazer de verdade é publicar
+   uma versão NOVA com o código da antiga. Junto veio uma regra de trabalho adotada aqui:
+   **migration nunca tira nem renomeia coluna em uso na mesma versão que passa a usar a nova** —
+   sempre em duas versões. É o que mantém o código antigo funcionando em cima do banco novo, e
+   portanto o que torna o rollback possível.
+3. **`TR-04.1`, etapa 1 de 3 — a função de permissão por módulo** (migration `0054`). **Nenhuma
+   policy usa ela ainda e rodar a migration não muda comportamento nenhum**, de propósito: aplicar
+   as policies é mudança de arquitetura de segurança e o próprio guia manda alinhar com ela antes.
+   Ver item 1 da seção 6 pro que ela precisa saber antes de aprovar a etapa 2.
+
+#### Duas coisas que só apareceram testando, e que o guia não previa
+
+As duas estão no commit e no cabeçalho da migration `0053`; ficam aqui porque são o tipo de coisa
+que se redescobre do zero:
+
+- **Três das cinco tabelas novas não têm coluna `id`** — `configuracoes_fiscais_loja` teve o `id`
+  derrubado pela `0033`, e duas têm PK composta. A função da `0040` gravava `new.id` fixo, então
+  teria estourado. A coluna-chave virou argumento do trigger.
+- **A FK `auditoria.operador_id` precisou sair.** Com criação auditada, todo operador passa a ter
+  linha na trilha — e a FK faria a exclusão de operador pelo painel do Supabase falhar, que é
+  justamente o caminho documentado no item 23 da seção 6. **`on delete set null` não resolve**: a
+  linha é gravada DEPOIS da exclusão, então um admin que exclui a própria conta estoura na FK
+  (testado, não suposto). O "quem" passou a ser gravado junto com o fato (`operador_nome`), que é
+  como registro histórico deve funcionar de qualquer forma.
+
+#### Como isso foi validado (e o que continua sem validação)
+
+Num Postgres local: a instalação inteira rodada **três vezes do zero**, cada migration sozinha
+**duas vezes** num banco no estado `0052` com dado plantado, e dois scripts de teste novos
+(`supabase/scripts/testar-auditoria.sql`, 7 checagens; `testar-permissao-modulo.sql`, 5 perfis).
+**Os dois foram conferidos quebrando o código de propósito** pra vê-los ficar vermelhos — quebrar
+a máscara de segredo e a coluna-chave no primeiro, e uma função que sempre diz "sim" no segundo.
+É a lição do item 53 da seção 6: teste de regra que nunca falhou na frente de alguém não prova
+nada.
+
+**O que continua sem validação, e não dá pra validar daqui**: nada disso rodou contra o Supabase
+de verdade (este ambiente não alcança `supabase.co`). Depois de rodar a `0053`, o que vale
+conferir na tela de Auditoria é se aparece o filtro **Ação** novo, se cadastrar um cliente vira
+uma linha "Criou", e se editar o preço de um item de OS aparece com o antes/depois.
+
+#### O que falta da Etapa 4 (10 dos 12)
+
+`TR-04.3` dado de RH · `TR-07.3` matriz de RLS · `TR-04.2` token da Focus NFe na Edge Function ·
+`TR-12.1` backup próprio e testado · `TR-09.1` canal de teste · `TR-08.1` diagnóstico ·
+`TR-04.6` endurecer o Electron · `TR-05.7` versão do esquema · `TR-12.2` contrato e papéis —
+mais as **etapas 2 e 3 do `TR-04.1`**, que são o trabalho grande (as policies, tabela por tabela,
+com teste que prova o bloqueio) e **precisam da decisão dela antes de começar**.
+
+Três desses já apareciam soltos na fila dela por outro caminho: token da Focus NFe compartilhado,
+botão de diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
+
+#### Estado do código
+
+`main` **uma leva à frente da `v0.9.34`**, com **duas migrations esperando ela** (`0053`, `0054`).
+`tsc`, lint e `npm run contraste` limpos; **482 testes** passando nos dois fusos (o número não
+mudou: o que entrou nesta leva é SQL, e os testes dele são os dois scripts que rodam num Postgres
+local, fora do `npm test`).
+
+O que depende dela continua sendo o de sempre, além das duas migrations: trocar as três
+credenciais expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal da alíquota no
+portal da prefeitura.
+
+#### Por onde uma sessão nova começa
+
+**Perguntar se é pra publicar** (a leva está pronta, e a `0053` tem que ser rodada antes) e **qual
+item entra depois**. Se ela pedir sugestão, o próximo natural é a **etapa 2 do `TR-04.1`** — mas
+ela é a que precisa de decisão dela antes, então vale apresentar a consequência (permissão errada
+deixa de esconder o menu e passa a abrir tela vazia) em vez de só começar.

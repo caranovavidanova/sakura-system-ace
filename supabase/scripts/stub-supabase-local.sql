@@ -76,15 +76,21 @@ $$;
 -- --- permissões que o Supabase concede sozinho ---
 -- Sem isto, um teste de RLS falha com "permission denied for schema auth" em
 -- vez de mostrar o que o operador realmente enxerga.
+--
+-- O `anon` entra na lista junto com o `authenticated` de propósito, porque é
+-- assim no Supabase de verdade: quem não logou TEM permissão de tabela, e
+-- quem barra ele é a RLS, não o GRANT. Deixar o anon de fora daqui faria um
+-- teste de "sem login" passar pelo motivo errado — e esconderia exatamente o
+-- buraco que a RLS existe pra fechar.
 grant usage on schema public, auth, storage to authenticated, anon, service_role;
 grant execute on function auth.uid() to authenticated, anon, service_role;
 grant select on auth.users to authenticated, service_role;
 
 -- Vale pras tabelas que as migrations criarem DEPOIS deste arquivo.
 alter default privileges in schema public
-  grant select, insert, update, delete on tables to authenticated, service_role;
+  grant select, insert, update, delete on tables to authenticated, anon, service_role;
 alter default privileges in schema public
-  grant usage, select on sequences to authenticated, service_role;
+  grant usage, select on sequences to authenticated, anon, service_role;
 
 -- E pras que porventura já existam.
-grant select, insert, update, delete on all tables in schema public to authenticated, service_role;
+grant select, insert, update, delete on all tables in schema public to authenticated, anon, service_role;

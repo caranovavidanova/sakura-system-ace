@@ -1,0 +1,14 @@
+# Tabelas com RLS ligada que NÃO têm policy para algum dos quatro comandos.
+#
+# Comando sem policy nenhuma não dá erro nem aviso: o Postgres simplesmente
+# filtra a zero linhas (ou recusa a inserção), e do lado do app isso é
+# indistinguível de "deu certo" — foi assim que o botão "excluir loja" passou
+# meses sem fazer nada (§6 item 15).
+#
+# Por isso o runner reprova qualquer lacuna que não esteja declarada aqui.
+# Entrar nesta lista é dizer, por escrito, "é assim de propósito".
+#
+tabela,comando,motivo
+auditoria,INSERT,só a função de gatilho (security definer) escreve na trilha
+auditoria,UPDATE,trilha é append-only: registro histórico não se reescreve
+auditoria,DELETE,apagar é só pelo SQL Editor via expurgar_auditoria()

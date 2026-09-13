@@ -464,7 +464,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # da Focus NFe sai mascarado na trilha de auditoria; o segundo,
 │                                  # que um balconista só-Caixa é recusado em "clientes". NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
-│                                  # limpar-dados-de-teste.sql (apaga dados de negócio de teste,
+│                                  # limpar-dados-de-teste.sql
+ (apaga dados de negócio de teste,
 │                                  # preserva login/config; ver seção 5) + excluir-os-teste-eduarda.sql
 │                                  # (uso único, criado numa sessão pra apagar as OS de teste abertas
 │                                  # em nome de "Eduarda Cristina" na loja real, sem tocar no cadastro
@@ -473,7 +474,20 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # nesta sessão pra limpar a OS usada no teste de NFS-e em PRODUÇÃO
 │                                  # sugerido pelo suporte da Focus NFe — troca o número da OS antes
 │                                  # de rodar; ver item 1 da seção 8)
+├── supabase/testes-rls/          # `npm run test:rls` — a MATRIZ DE RLS (item TR-07.3). Monta um
+│                                  # banco descartável do zero, simula cinco papéis (admin das duas
+│                                  # lojas, admin de uma, balconista só-Caixa, operador SEM loja, e
+│                                  # ninguém logado) e confere as 640 combinações de
+│                                  # tabela × comando × papel. expectativas.csv é A PARTE QUE SE
+│                                  # REVISA — cada número é "quantas linhas este papel consegue
+│                                  # mexer", então mudança de segurança aparece no diff do PR em vez
+│                                  # de sumir dentro de uma migration; lacunas-de-proposito.csv
+│                                  # declara os comandos que, de propósito, não têm policy nenhuma.
+│                                  # cenario.sql / sondas.sql / matriz.sql / rodar.mjs são o
+│                                  # encanamento. Ver README.md da pasta e o item 63 da seção 6.
+│                                  # NÃO roda no Windows (precisa de Postgres e psql) — é do CI
 ├── supabase/functions/           # Edge Functions (Deno) — ler-notas-fiscais/index.ts: lê fotos ou
+
 │                                  # PDFs de nota fiscal via Claude/Anthropic e devolve os produtos
 │                                  # estruturados (a ANTHROPIC_API_KEY fica só como secret dessa
 │                                  # função no Supabase, nunca no app instalado); e
@@ -524,10 +538,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # Ver item 48 da seção 6
 ├── .github/workflows/ci.yml      # CI — roda em todo push/PR as cinco checagens que antes eram
 │                                  # feitas à mão: typecheck, lint, testes nos dois fusos,
-│                                  # contraste e "o instalacao-completa.sql está em dia?". Tem um
-│                                  # segundo job ("segredos") que varre credencial e barra
-│                                  # certificado digital versionado. NÃO builda o instalador
-│                                  # (isso é do release.yml). Ver item 48 da seção 6
+│                                  # contraste e "o instalacao-completa.sql está em dia?". Tem mais
+│                                  # três jobs próprios: contraste nas telas, a MATRIZ DE RLS
+│                                  # (sobe um Postgres de serviço) e "segredos", que varre
+│                                  # credencial e barra certificado digital versionado. NÃO builda
+│                                  # o instalador (isso é do release.yml). Ver item 48 da seção 6
+
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
 │                                  # (NÃO embute mais a conexão do Supabase — ver seção 7)
 ├── .gitleaks.toml                # regras da varredura de segredo do CI. Tem 3 regras próprias
@@ -1112,6 +1128,11 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    errada no cadastro de um operador deixa de ser "o menu some" e passa a ser "a tela abre
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
    teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
+   **E esse teste já existe, desde 13/09/2026**: é a matriz de RLS (`npm run test:rls`, item
+   `TR-07.3`, item 63 desta seção), que hoje já fotografa o comportamento atual em 640 células.
+   Quando a etapa 2 for feita, o diff do `expectativas.csv` **é** a revisão: ele mostra, tabela
+   por tabela, quem passou a enxergar o quê.
+
 2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). **Redefinir senha de
    operador esquecida** já está implementado (Configurações → Operadores → "Redefinir senha",
    migration `0038` + Edge Function `redefinir-senha-operador` — ver "Login e permissões" na seção
@@ -1150,8 +1171,13 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    caminho de falha — e ali o sandbox ajuda em vez de atrapalhar, porque a ausência de rede pro
    Supabase reproduz naturalmente o cenário "a checagem reprovou". Não está no `npm test` (é script
    avulso), mas é o único jeito de pegar falha silenciosa de preload.
+   **E desde 13/09/2026 a RLS também é conferida por máquina**, fora do `npm test`:
+   `npm run test:rls` (item `TR-07.3`) monta um banco do zero, simula cinco papéis e confere as
+   640 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
+   seção. Continua sem falar com o Supabase de verdade: é um Postgres local/do CI.
    **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
-   o parser de XML de verdade (precisa de `DOMParser`, uma API de navegador que o ambiente "node"
+   o parser de XML de verdade
+ (precisa de `DOMParser`, uma API de navegador que o ambiente "node"
    padrão do Vitest não tem) — usa jsdom só nesse arquivo, via comentário `// @vitest-environment
    jsdom` no topo do arquivo (`jsdom` virou devDependency só pra isso; o resto dos testes continua
    no ambiente node simples, mais rápido).
@@ -2183,7 +2209,38 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     o que acontece depois do `onSalvar` continua sem cobertura, e continua sendo o tipo de coisa
     que só a usuária pega usando.
 
-## 7. Estado atual por módulo (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
+63. **A RLS passou a ser conferida por máquina, e três armadilhas apareceram no caminho
+    (13/09/2026, item `TR-07.3`).** Existe agora `npm run test:rls`
+    (`supabase/testes-rls/`): um banco descartável montado do zero, cinco papéis simulados, e as
+    **640 combinações** de tabela × comando × papel conferidas contra um arquivo declarado
+    (`expectativas.csv`). Detalhe de uso no README da pasta; o que se aprendeu construindo é isto:
+    - **`session_replication_role = replica` desliga gatilho e chave estrangeira e NÃO desliga
+      RLS** (conferido, não suposto). É o que torna a sonda de DELETE possível: sem isso, apagar
+      um cliente que tem veículo daria erro de chave, e esse erro se pareceria com "a RLS
+      bloqueou" — exatamente a confusão que o teste existe pra evitar.
+    - **O erro 42501 chega por dois motivos opostos, e confundi-los faria o teste passar pelo
+      motivo errado.** `violates row-level security policy` é a RLS recusando (resultado legítimo:
+      zero linhas); `permission denied for table` é falta de `GRANT`, ou seja, banco montado
+      errado. A primeira versão tratava os dois como "bloqueado", o que teria dado verde num
+      cenário em que a RLS nem chegou a ser exercida. Isso descobriu, de brinde, que o
+      `stub-supabase-local.sql` **não dava permissão de tabela ao `anon`** — e o Supabase de
+      verdade dá. Sem a correção, todo o teste de "sem login" passaria pelo GRANT, nunca pela RLS.
+    - **A checagem de "comando sem policy nenhuma" não achava lacuna nenhuma, em banco nenhum.**
+      A consulta usava `cmd` como apelido do comando alvo, e `pg_policies` **tem** uma coluna
+      chamada `cmd`: dentro da subconsulta o nome de dentro ganha do de fora, a condição virava
+      `p.cmd in (p.cmd, 'ALL')` — sempre verdadeira. Só apareceu porque a lista de lacunas
+      declaradas ficou vermelha reclamando do contrário ("a `auditoria` agora tem policy de
+      insert"), ou seja, foi a **checagem cruzada** que denunciou, não a principal.
+    **Cada uma das sete checagens foi conferida quebrando o código de propósito** e vendo o teste
+    ficar vermelho: furo de RLS numa tabela por loja, policy de DELETE sumindo (o bug real do item
+    15), sonda com coluna errada, tabela nova com RLS sem sonda, tabela nova sem linha no
+    `expectativas.csv`, `GRANT` faltando, e expectativa falando de tabela que não existe. É a
+    lição do item 53: teste de regra que nunca falhou na frente de alguém não prova nada — e aqui
+    valia dobrado, porque a matriz bateu 640 de 640 na primeira rodada de verdade, e "acertou
+    tudo de primeira" é motivo pra desconfiar do instrumento (item 58), não pra comemorar.
+
+## 7. Estado atual por módulo
+ (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
 **Escopo da v1 original** (100% completo): Clientes (+ veículo), Peças/Produtos (campos fiscais
 completos), Estoque (entrada/saída, saldo), Ordens de Serviço, Caixa Diário, Relações,
@@ -3552,7 +3609,8 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
-| 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. |
+| 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
+
 
 **Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na
 seção 1, mas é aqui que costumam ser lidas): *intenção futura não é autorização pra começar agora*
@@ -3634,6 +3692,20 @@ Supabase dá sozinho — inclusive as necessárias pra simular login e testar RL
 (`set local role authenticated` + `set local "request.jwt.claim.sub"`, dentro de uma transação,
 senão o `set local` não pega e o teste roda como superusuário, que ignora RLS). Existe porque toda
 sessão que precisava validar uma migration recriava esses mesmos stubs do zero.
+
+**E toda migration que mexa em policy tem que passar na matriz de RLS** (item `TR-07.3`), que faz
+esse mesmo trabalho por conta própria e confere 640 combinações de tabela × comando × papel:
+
+```bash
+service postgresql start
+sudo -u postgres psql -c "alter user postgres password 'postgres'"
+npm run test:rls
+```
+
+Ela monta um banco descartável do zero e o apaga no fim; no CI roda sozinha, num job com Postgres
+de serviço. **No Windows não roda** (precisa de Postgres e `psql` instalados) — não é problema, é
+suíte de CI. Ver `supabase/testes-rls/README.md`.
+
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 
@@ -3921,8 +3993,10 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.35"` — publicada em 13/09/2026, depois de ela rodar as
-  migrations `0053` e `0054`. **`main` em dia, banco na `0054`, nada esperando tag nem SQL** —
-  ver "Onde parou", no fim deste arquivo. (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+  migrations `0053` e `0054`. **`main` uma leva à frente (a matriz de RLS, que é ferramenta de
+  teste e não pede tag), banco na `0054`, nada esperando SQL** — ver "Onde parou", no fim deste
+  arquivo.
+ (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -4392,7 +4466,8 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
 | **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
 | **3** — confiança nos números | 3 de 7 | **4** (ver 12/09 no fim do arquivo) |
-| **4** — antes da segunda empresa | 2 de 12 | **10** (ver 13/09 no fim do arquivo) |
+| **4** — antes da segunda empresa | 3 de 12 | **9** (ver 13/09 no fim do arquivo) |
+
 | **5** — escala e produto | 0 de 15 | **15** |
 
 **A Etapa 2 fechou em 12/09/2026** com os quatro que faltavam: `TR-01.3` (a auditoria de
@@ -4648,11 +4723,15 @@ Se ela pedir sugestão, as duas respostas honestas são:
 **A Etapa 4 do guia começou.** Ela escolheu (entre fechar a Etapa 3 e começar a 4) a **Etapa 4** —
 a que o guia trata como **pré-requisito da venda**: *"nenhuma loja de terceiro deveria entrar
 antes desta etapa fechar"*. Pesa agora porque a fase 2 (as duas lojas do amigo do pai dela) está
-no horizonte. São 12 itens; saíram **dois inteiros e o primeiro terço de um terceiro**.
+no horizonte. São 12 itens; saíram **três inteiros e o primeiro terço de um quarto**.
 
 **Estado: publicado na `v0.9.35`, e o banco dela está na `0054`.** Ela rodou as duas migrations
 e mandou publicar ("rodei, se tiver q publicar algo pode publicar") — a ordem obrigatória da
 `0053` foi cumprida: SQL primeiro, tag depois. Nada esperando SQL nem tag.
+
+**O quarto item (`TR-07.3`, a matriz de RLS) saiu DEPOIS da `v0.9.35` e NÃO precisa de tag
+nenhuma**: é ferramenta de teste, não muda uma linha do que roda no computador da loja.
+
 
 #### O que saiu
 
@@ -4673,11 +4752,31 @@ e mandou publicar ("rodei, se tiver q publicar algo pode publicar") — a ordem 
    policy usa ela ainda e rodar a migration não muda comportamento nenhum**, de propósito: aplicar
    as policies é mudança de arquitetura de segurança e o próprio guia manda alinhar com ela antes.
    Ver item 1 da seção 6 pro que ela precisa saber antes de aprovar a etapa 2.
+4. **`TR-07.3` — a matriz de RLS** (`npm run test:rls`, pasta `supabase/testes-rls/`). Monta um
+   banco descartável do zero, simula **cinco papéis** — admin das duas lojas, admin só da loja A,
+   balconista só-Caixa, o operador **sem loja nenhuma** (o caso do §6 item 23) e ninguém logado —
+   e confere as **640 combinações** de tabela × comando × papel contra um arquivo declarado.
+   Três coisas que valem saber:
+   - **A parte que se revisa é o `expectativas.csv`**, e cada número é "quantas linhas este papel
+     consegue mexer". É por isso que o item existe: mudança de segurança passa a aparecer **no
+     diff do PR**, em números, em vez de sumir dentro de uma migration.
+   - **Ele também caça o furo que não tem cara de furo**: comando sem policy nenhuma. Isso não dá
+     erro, filtra a zero linhas e do lado do app parece "deu certo" — foi assim que o botão
+     "excluir loja" passou meses sem fazer nada (§6 item 15). As três lacunas que existem de
+     propósito (a trilha de auditoria não aceita escrita de ninguém) estão **declaradas por
+     escrito** em `lacunas-de-proposito.csv`.
+   - **Isto é o que faltava pra etapa 3 do `TR-04.1`.** O guia é explícito: "nenhuma policy entra
+     sem um teste automatizado que prove o bloqueio". A matriz já fotografou o comportamento de
+     hoje, então, quando a etapa 2 for feita, o que mudou fica visível célula a célula.
+   Nada disso roda no Windows (precisa de Postgres e `psql`) — é do CI, onde ganhou job próprio
+   com um Postgres de serviço. O `npm test` de todo dia não mudou.
 
-#### Duas coisas que só apareceram testando, e que o guia não previa
 
-As duas estão no commit e no cabeçalho da migration `0053`; ficam aqui porque são o tipo de coisa
-que se redescobre do zero:
+#### Coisas que só apareceram testando, e que o guia não previa
+
+As duas primeiras estão no commit e no cabeçalho da migration `0053`; ficam aqui porque são o
+tipo de coisa que se redescobre do zero:
+
 
 - **Três das cinco tabelas novas não têm coluna `id`** — `configuracoes_fiscais_loja` teve o `id`
   derrubado pela `0033`, e duas têm PK composta. A função da `0040` gravava `new.id` fixo, então
@@ -4689,7 +4788,16 @@ que se redescobre do zero:
   (testado, não suposto). O "quem" passou a ser gravado junto com o fato (`operador_nome`), que é
   como registro histórico deve funcionar de qualquer forma.
 
+E da matriz de RLS saíram mais três, todas no **item 63 da seção 6**, que é onde vale ler o
+detalhe. Em uma linha cada: `session_replication_role = replica` desliga gatilho e chave
+estrangeira **sem** desligar RLS (é o que torna a sonda de DELETE possível); o erro **42501 chega
+por dois motivos opostos** — a RLS recusando, ou falta de `GRANT` —, e tratar os dois igual faria
+o teste passar pelo motivo errado; e a checagem de "comando sem policy" **não achava lacuna
+nenhuma em banco nenhum**, porque o apelido `cmd` era engolido por uma coluna de mesmo nome em
+`pg_policies`.
+
 #### Como isso foi validado (e o que continua sem validação)
+
 
 Num Postgres local: a instalação inteira rodada **três vezes do zero**, cada migration sozinha
 **duas vezes** num banco no estado `0052` com dado plantado, e dois scripts de teste novos
@@ -4699,6 +4807,15 @@ a máscara de segredo e a coluna-chave no primeiro, e uma função que sempre di
 É a lição do item 53 da seção 6: teste de regra que nunca falhou na frente de alguém não prova
 nada.
 
+A matriz de RLS teve o mesmo tratamento, e mereceu: ela bateu **640 de 640 na primeira rodada de
+verdade**, e "acertou tudo de primeira" é motivo pra desconfiar do instrumento (§6 item 58), não
+pra comemorar. As **sete** checagens dela foram conferidas uma a uma quebrando o código de
+propósito — furo de RLS numa tabela por loja, policy de DELETE sumindo (o bug real do item 15),
+sonda com coluna errada, tabela nova sem sonda, tabela nova sem linha nas expectativas, `GRANT`
+faltando, e expectativa falando de tabela que não existe. Todas ficaram vermelhas; a árvore limpa
+voltou a ficar verde.
+
+
 **O que continua sem validação, e não dá pra validar daqui**: nada disso rodou contra o Supabase
 de verdade (este ambiente não alcança `supabase.co`). As migrations foram aceitas sem erro por
 ela, mas **o comportamento na tela ainda não foi visto**. Quando a `v0.9.35` chegar pelo
@@ -4706,10 +4823,11 @@ auto-update, o que vale conferir em Auditoria é: se aparece o filtro **Ação**
 um cliente vira uma linha "Criou"; e se editar o preço de um item de OS aparece com o
 antes/depois — esse último é o buraco que o item veio fechar.
 
-#### O que falta da Etapa 4 (10 dos 12)
+#### O que falta da Etapa 4 (9 dos 12)
 
-`TR-04.3` dado de RH · `TR-07.3` matriz de RLS · `TR-04.2` token da Focus NFe na Edge Function ·
+`TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge Function ·
 `TR-12.1` backup próprio e testado · `TR-09.1` canal de teste · `TR-08.1` diagnóstico ·
+
 `TR-04.6` endurecer o Electron · `TR-05.7` versão do esquema · `TR-12.2` contrato e papéis —
 mais as **etapas 2 e 3 do `TR-04.1`**, que são o trabalho grande (as policies, tabela por tabela,
 com teste que prova o bloqueio) e **precisam da decisão dela antes de começar**.
@@ -4719,10 +4837,14 @@ botão de diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de um
 
 #### Estado do código
 
-`main` **em dia com a `v0.9.35`**, e o banco dela na `0054` — nada esperando tag nem SQL.
+`main` **uma leva à frente da `v0.9.35`** — a matriz de RLS —, e o banco dela na `0054`. **Nada
+esperando SQL, e nada esperando tag**: a matriz é ferramenta de teste, não muda o que roda na
+loja, então a próxima tag só sai quando houver mudança de app pra levar junto.
 `tsc`, lint e `npm run contraste` limpos; **482 testes** passando nos dois fusos (o número não
-mudou: o que entrou nesta leva é SQL, e os testes dele são os dois scripts que rodam num Postgres
-local, fora do `npm test`).
+mudou: o que entrou nesta leva é SQL e ferramenta, e os testes disso são os três scripts que
+rodam num Postgres local, fora do `npm test` — `testar-auditoria.sql`,
+`testar-permissao-modulo.sql` e `npm run test:rls`).
+
 
 O que depende dela continua sendo o de sempre, além das duas migrations: trocar as três
 credenciais expostas, marcar o CI como obrigatório pra mesclar, e o cadastro mensal da alíquota no
@@ -4734,7 +4856,10 @@ portal da prefeitura.
 sugestão, o próximo natural é a **etapa 2 do `TR-04.1`** (aplicar as policies, tabela por tabela),
 mas ela **precisa da decisão dela antes de começar**: vale apresentar a consequência — permissão
 errada no cadastro de um operador deixa de esconder o menu e passa a abrir tela vazia, e RLS falha
-em silêncio (item 15 da seção 6) — em vez de só começar.
+em silêncio (item 15 da seção 6) — em vez de só começar. O que mudou de 13/09 pra cá é que a
+ferramenta que prova o bloqueio já está pronta (a matriz de RLS), então a etapa 2 deixou de ser
+"mexer na segurança no escuro": cada policy nova aparece como diff no `expectativas.csv`.
+
 
 E vale perguntar se ela já viu a Auditoria funcionando depois do auto-update (a lista logo acima),
 porque é a única parte desta leva que aparece na tela.

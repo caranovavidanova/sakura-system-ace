@@ -103,6 +103,49 @@ jobs:
       - name: Contraste nas telas
         run: npm run contraste:telas
 
+  matriz-rls:
+    name: Matriz de RLS
+    runs-on: ubuntu-latest
+
+    # A RLS é a única defesa real deste sistema (a permissão por módulo é
+    # checada só na tela), e ela falha em SILÊNCIO: policy faltando não dá
+    # erro, filtra a zero linhas, e do lado do app isso parece "deu certo"
+    # (PROJETO_STATUS.md, seção 6, item 15). Este job monta um banco do zero,
+    # simula cinco papéis e confere as 640 combinações de
+    # tabela × comando × papel contra supabase/testes-rls/expectativas.csv.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Sem `npm ci` de propósito: o runner desta suíte não usa dependência
+      # nenhuma do projeto, só o `psql`. Assim o job fica curto.
+      - name: Cliente psql
+        run: |
+          command -v psql >/dev/null 2>&1 || {
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends postgresql-client
+          }
+          psql --version
+
+      - name: Matriz de RLS
+        run: npm run test:rls
+
   segredos:
     name: Varredura de segredo
     runs-on: ubuntu-latest

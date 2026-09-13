@@ -1,0 +1,180 @@
+# ===================================================================
+# MATRIZ DE RLS — O QUE CADA PAPEL PODE FAZER EM CADA TABELA
+# ===================================================================
+#
+# Este arquivo é a parte que se REVISA. O resto da pasta é encanamento.
+#
+# Cada número é "quantas linhas este papel consegue ler / inserir / alterar /
+# apagar" no cenário fixo de cenario.sql: duas lojas da mesma empresa, duas
+# linhas por tabela compartilhada, uma linha por loja nas tabelas de loja.
+#
+# Os cinco papéis, nesta ordem:
+#   admin_ab   admin das DUAS lojas (o dono)
+#   admin_a    admin só da loja A
+#   caixa_a    balconista da loja A, permissão só de Caixa
+#   orfao      operador logado e SEM loja nenhuma (§6 item 23)
+#   sem_login  ninguém logado (papel `anon`)
+#
+# Como ler os padrões que se repetem:
+#   2,1,1,0,0  tabela DA LOJA: o dono vê as duas, quem é da loja A vê a dele,
+#              órfão e deslogado não veem nada. É o isolamento entre lojas.
+#   2,2,2,2,0  tabela COMPARTILHADA: qualquer um logado mexe em tudo. É uma
+#              decisão de produto (catálogo único da empresa), não um furo —
+#              mas é também o alcance real do §6 item 1, à vista.
+#   1,1,0,0,0  só admin.
+#   0,0,0,0,0  ninguém, nem o dono: só o banco escreve ali.
+#
+# ⚠️  Mudou um número aqui? Então mudou o que alguém pode fazer com o dado de
+#     uma loja. Esse é o ponto do arquivo: a mudança de segurança aparece no
+#     diff do PR, em vez de sumir dentro de uma migration.
+#
+# Linha começada por # é comentário; linha em branco é ignorada.
+#
+tabela,comando,admin_ab,admin_a,caixa_a,orfao,sem_login,nota
+
+# ---------------------------------------------------------------------------
+# CATÁLOGO COMPARTILHADO — sem dono, aberto a qualquer um logado
+# ---------------------------------------------------------------------------
+categorias,select,2,2,2,2,0,
+categorias,insert,1,1,1,1,0,
+categorias,update,2,2,2,2,0,
+categorias,delete,2,2,2,2,0,
+categorias_servicos,select,2,2,2,2,0,
+categorias_servicos,insert,1,1,1,1,0,
+categorias_servicos,update,2,2,2,2,0,
+categorias_servicos,delete,2,2,2,2,0,
+categorias_caixa,select,2,2,2,2,0,
+categorias_caixa,insert,1,1,1,1,0,
+categorias_caixa,update,2,2,2,2,0,
+categorias_caixa,delete,2,2,2,2,0,
+clientes,select,2,2,2,2,0,o cadastro de cliente é da empresa inteira — inclusive pro órfão
+clientes,insert,1,1,1,1,0,
+clientes,update,2,2,2,2,0,
+clientes,delete,2,2,2,2,0,
+veiculos,select,2,2,2,2,0,
+veiculos,insert,1,1,1,1,0,
+veiculos,update,2,2,2,2,0,
+veiculos,delete,2,2,2,2,0,
+pecas,select,2,2,2,2,0,
+pecas,insert,1,1,1,1,0,
+pecas,update,2,2,2,2,0,
+pecas,delete,2,2,2,2,0,
+servicos,select,2,2,2,2,0,
+servicos,insert,1,1,1,1,0,
+servicos,update,2,2,2,2,0,
+servicos,delete,2,2,2,2,0,
+fornecedores,select,2,2,2,2,0,
+fornecedores,insert,1,1,1,1,0,
+fornecedores,update,2,2,2,2,0,
+fornecedores,delete,2,2,2,2,0,
+cotacoes_pecas,select,2,2,2,2,0,
+cotacoes_pecas,insert,1,1,1,1,0,
+cotacoes_pecas,update,2,2,2,2,0,
+cotacoes_pecas,delete,2,2,2,2,0,
+
+# ---------------------------------------------------------------------------
+# DADO DE NEGÓCIO DA LOJA — o isolamento que sustenta a multi-loja
+# ---------------------------------------------------------------------------
+ordens_servico,select,2,1,1,0,0,
+ordens_servico,insert,1,1,1,0,0,
+ordens_servico,update,2,1,1,0,0,
+ordens_servico,delete,2,1,1,0,0,
+ordens_servico_itens,select,2,1,1,0,0,não tem loja_id próprio: herda pela OS
+ordens_servico_itens,insert,1,1,1,0,0,
+ordens_servico_itens,update,2,1,1,0,0,
+ordens_servico_itens,delete,2,1,1,0,0,
+caixa_movimentos,select,2,1,1,0,0,
+caixa_movimentos,insert,1,1,1,0,0,
+caixa_movimentos,update,2,1,1,0,0,
+caixa_movimentos,delete,2,1,1,0,0,
+estoque_movimentos,select,2,1,1,0,0,
+estoque_movimentos,insert,1,1,1,0,0,
+estoque_movimentos,update,2,1,1,0,0,
+estoque_movimentos,delete,2,1,1,0,0,
+contagens_estoque,select,2,1,1,0,0,
+contagens_estoque,insert,1,1,1,0,0,
+contagens_estoque,update,2,1,1,0,0,
+contagens_estoque,delete,2,1,1,0,0,
+contas_pagar,select,2,1,1,0,0,
+contas_pagar,insert,1,1,1,0,0,
+contas_pagar,update,2,1,1,0,0,
+contas_pagar,delete,2,1,1,0,0,
+contas_receber,select,2,1,1,0,0,
+contas_receber,insert,1,1,1,0,0,
+contas_receber,update,2,1,1,0,0,
+contas_receber,delete,2,1,1,0,0,
+notas_fiscais_arquivos,select,2,1,1,0,0,
+notas_fiscais_arquivos,insert,1,1,1,0,0,
+notas_fiscais_arquivos,update,2,1,1,0,0,
+notas_fiscais_arquivos,delete,2,1,1,0,0,
+pedidos_compra,select,2,1,1,0,0,
+pedidos_compra,insert,1,1,1,0,0,
+pedidos_compra,update,2,1,1,0,0,
+pedidos_compra,delete,2,1,1,0,0,
+pedidos_compra_itens,select,2,1,1,0,0,herda a loja pelo pedido
+pedidos_compra_itens,insert,1,1,1,0,0,
+pedidos_compra_itens,update,2,1,1,0,0,
+pedidos_compra_itens,delete,2,1,1,0,0,
+funcionarios,select,2,1,1,0,0,
+funcionarios,insert,1,1,1,0,0,
+funcionarios,update,2,1,1,0,0,
+funcionarios,delete,2,1,1,0,0,
+funcionario_filhos,select,2,1,1,0,0,herda a loja pelo funcionário
+funcionario_filhos,insert,1,1,1,0,0,
+funcionario_filhos,update,2,1,1,0,0,
+funcionario_filhos,delete,2,1,1,0,0,
+whatsapp_mensagens,select,2,1,1,0,0,
+whatsapp_mensagens,insert,1,1,1,0,0,
+whatsapp_mensagens,update,2,1,1,0,0,
+whatsapp_mensagens,delete,2,1,1,0,0,
+
+# ---------------------------------------------------------------------------
+# CONFIGURAÇÃO DA LOJA
+# As três de chave simples (garantia, fiscal, painel) têm linha SÓ na loja B
+# no cenário — por isso a leitura delas é 1,0,0,0,0 e não 2,1,1,0,0. O motivo
+# está no cabeçalho de cenario.sql (item 1).
+# ---------------------------------------------------------------------------
+configuracoes_juros_parcelas,select,2,1,1,0,0,
+configuracoes_juros_parcelas,insert,1,1,1,0,0,
+configuracoes_juros_parcelas,update,2,1,1,0,0,
+configuracoes_juros_parcelas,delete,2,1,1,0,0,
+configuracoes_whatsapp,select,2,1,1,0,0,
+configuracoes_whatsapp,insert,1,1,1,0,0,
+configuracoes_whatsapp,update,2,1,1,0,0,
+configuracoes_whatsapp,delete,2,1,1,0,0,
+configuracoes_garantia,select,1,0,0,0,0,linha só na loja B
+configuracoes_garantia,insert,1,1,1,0,0,
+configuracoes_garantia,update,1,0,0,0,0,
+configuracoes_garantia,delete,1,0,0,0,0,
+configuracoes_fiscais_loja,select,1,0,0,0,0,guarda o token da Focus NFe — TR-04.2 quer tirar ele daqui
+configuracoes_fiscais_loja,insert,1,1,1,0,0,
+configuracoes_fiscais_loja,update,1,0,0,0,0,
+configuracoes_fiscais_loja,delete,1,0,0,0,0,
+configuracoes_painel_inicio,select,1,0,0,0,0,
+configuracoes_painel_inicio,insert,1,1,1,0,0,
+configuracoes_painel_inicio,update,1,0,0,0,0,
+configuracoes_painel_inicio,delete,1,0,0,0,0,
+
+# ---------------------------------------------------------------------------
+# ADMINISTRAÇÃO — aqui o balconista tem que parar
+# ---------------------------------------------------------------------------
+depositos,select,2,1,1,0,0,ler é por loja...
+depositos,insert,1,1,0,0,0,...mas criar/editar/excluir é só do admin DAQUELA loja
+depositos,update,2,1,0,0,0,
+depositos,delete,2,1,0,0,0,
+lojas,select,2,2,2,2,0,todo mundo logado vê a lista de lojas (é o seletor da Sidebar)
+lojas,insert,1,1,0,0,0,
+lojas,update,2,1,0,0,0,
+lojas,delete,2,1,0,0,0,
+operadores,select,4,4,4,4,0,leitura aberta de propósito (nome e permissões) — seção 5
+operadores,insert,1,1,0,0,0,
+operadores,update,3,3,0,0,0,os 3 que dividem loja com o admin; o órfão fica de fora
+operadores,delete,3,3,0,0,0,o órfão não pode ser apagado por ninguém — é o §6 item 23
+operador_lojas,select,4,4,4,4,0,
+operador_lojas,insert,1,1,0,0,0,dar acesso de loja é ação de admin daquela loja
+operador_lojas,update,4,3,0,0,0,
+operador_lojas,delete,4,3,0,0,0,
+auditoria,select,1,1,0,0,0,só admin lê a trilha
+auditoria,insert,0,0,0,0,0,ninguém escreve pela API — só o gatilho do banco
+auditoria,update,0,0,0,0,0,trilha não se reescreve
+auditoria,delete,0,0,0,0,0,apagar é só pelo SQL Editor via expurgar_auditoria()

@@ -19,7 +19,8 @@
     "gerar-instalacao": "node scripts/gerar-instalacao-completa.mjs",
     "typecheck": "tsc -b",
     "test:fusos": "node scripts/testar-nos-dois-fusos.mjs",
-    "contraste:telas": "node scripts/varredura-contraste-dom.mjs"
+    "contraste:telas": "node scripts/varredura-contraste-dom.mjs",
+    "test:rls": "node supabase/testes-rls/rodar.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

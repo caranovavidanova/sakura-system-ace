@@ -39,6 +39,22 @@ keywords = ["eyJ"]
 
 [allowlist]
 description = "O que não é segredo, apesar de parecer"
+
+# Credencial de MENTIRA usada como corpo de prova num teste.
+#
+# O teste da máscara do diagnóstico (src/schemas/diagnostico.test.ts) precisa
+# de credenciais no formato de verdade — testar com "senha123" não provaria
+# nada, porque é justamente o formato que a máscara reconhece. Então elas
+# ficam escritas no arquivo, e a varredura as acha, com razão.
+#
+# A liberação é pelo CONTEÚDO, não pelo caminho, de propósito: só passa a
+# string que diz literalmente "não pode vazar". Assim uma credencial de
+# verdade colada nesse mesmo arquivo de teste continua sendo pega — que é o
+# contrário do que aconteceria liberando o arquivo inteiro.
+regexes = [
+  '''(?i)naopodevazar''',
+]
+
 paths = [
   # Guarda hash de integridade em base64, que às vezes parece um token.
   '''package-lock\.json''',

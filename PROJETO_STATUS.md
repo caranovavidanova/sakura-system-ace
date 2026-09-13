@@ -2239,6 +2239,27 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     valia dobrado, porque a matriz bateu 640 de 640 na primeira rodada de verdade, e "acertou
     tudo de primeira" é motivo pra desconfiar do instrumento (item 58), não pra comemorar.
 
+64. **A varredura de segredo pegou as credenciais de MENTIRA de um teste — e estava certa
+    (13/09/2026).** O teste da máscara do Diagnóstico (item 63) precisa de credenciais no
+    **formato de verdade**: testar com "senha123" não provaria nada, porque é justamente o formato
+    que a máscara reconhece. Resultado: o job "segredos" do CI ficou vermelho na `main`, com três
+    achados — a chave da Anthropic, um JWT e um token genérico, todos inventados.
+    **A correção não foi liberar o arquivo.** Liberar o caminho inteiro tiraria do radar justamente
+    o arquivo onde credencial de teste é rotina — e um dia entraria uma de verdade ali. A liberação
+    é pelo **conteúdo**: só passa a string que diz literalmente `naopodevazar`
+    (`.gitleaks.toml`, `[allowlist] regexes`). **Conferido dos dois lados**: com a liberação, uma
+    chave `sk-ant-` realista colada nesse mesmo arquivo de teste continua sendo pega.
+    **Duas coisas aprendidas rodando, que não estavam no papel:**
+    - **O gitleaks ignora segredo obviamente falso.** A primeira tentativa de provar que a
+      liberação era estreita plantou `sk-ant-api03-abcdefghij...0123456789` — e **não foi pega**,
+      não por causa da liberação, mas porque a lista de palavras de fábrica do gitleaks descarta
+      sequência óbvia. Ou seja: a prova quase deu um falso "está tudo bem". Pra provar que uma
+      varredura pega alguma coisa, o corpo de prova precisa parecer de verdade.
+    - **A varredura só roda no CI, não em `npm test`** — então este tipo de vermelho só aparece
+      depois do push. Vale rodar `gitleaks detect --no-git --source .` à mão antes de mesclar
+      qualquer coisa que escreva credencial de exemplo (o binário não é dependência do projeto;
+      baixar a versão fixada em `ci.yml` leva segundos).
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3146,6 +3167,11 @@ Quatro coisas que valem saber:
     versão** (`TR-09.2`), que é documentação na seção 9. **Publicada depois** de ela rodar as duas
     migrations, que era a ordem obrigatória da `0053` — mesma disciplina da `v0.9.30`/`0049`, da
     `v0.9.32`/`0050` e da `v0.9.33`/`0051`+`0052`. Via `workflow_dispatch`.
+
+  - `v0.9.36`: a **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (parte do `TR-08.3`) —
+    ver "Diagnóstico" nesta seção. Leva junto a matriz de RLS (`TR-07.3`), que não precisava de
+    tag. **Sem migration**: o banco dela continua na `0054`, então não havia ordem a cumprir.
+    Via `workflow_dispatch`.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e

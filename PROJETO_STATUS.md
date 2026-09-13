@@ -3723,6 +3723,77 @@ por padrão o `electron-builder` publica a release como rascunho invisível — 
 (o nome da release vem do `package.json`, não da tag/gatilho usado) — por isso o passo 1 acima é
 sempre antes de disparar o build, nunca depois.
 
+### Voltar uma versão (quando a que saiu está ruim)
+
+> **Escrito em 13/09/2026, ainda NÃO ensaiado numa release de verdade.** Ensaiar significa
+> publicar uma versão de mentira e voltar atrás dela com o computador dela de fora do processo —
+> decisão dela, e o certo é ensaiar num dia calmo, não descobrir se funciona no dia do incêndio.
+
+**A primeira coisa a entender, porque muda tudo: o `electron-updater` só anda pra frente.** Ele
+compara o número da versão instalada com o da release mais nova e só baixa se for maior
+(`allowDowngrade` não está ligado, e ligar seria pior — passaria a aceitar rebaixar sozinho).
+Ou seja: **apagar a release ruim não desfaz nada em computador que já atualizou.** Apagar só
+impede quem ainda não pegou.
+
+Por isso o procedimento tem duas metades, e a segunda é a que resolve de verdade.
+
+**Metade 1 — estancar (os computadores que ainda não atualizaram).** Apagar a release ruim
+(`releases` → a release → 🗑) **e a tag** (são coisas separadas no GitHub: `.../tags`, achar a
+tag, apagar por lá também — ver os incidentes das tags `v0.9.10` e `v0.9.12` na seção 7). Com
+ela fora, "latest" volta a apontar pra anterior e quem ainda estava atrás para de ver a
+atualização.
+
+**Metade 2 — desfazer (os computadores que já atualizaram) — "voltar pra frente".** Não existe
+rebaixar; o que existe é **publicar uma versão NOVA com o código da antiga**. Se a `v0.9.35`
+saiu ruim e a `v0.9.34` era boa:
+
+```powershell
+git checkout main
+git pull origin main
+git revert --no-commit <hash-inicial>..<hash-final>   # desfaz o que a v0.9.35 trouxe
+# ou, pra voltar a árvore inteira ao estado da boa:
+#   git checkout v0.9.34 -- .
+```
+
+Depois: subir o `package.json` pra `0.9.36`, PR, merge, e disparar o build como sempre
+(`workflow_dispatch` com `ref: "main"`). A loja recebe a `0.9.36` sozinha pelo auto-update, e
+ela é, por dentro, a `0.9.34` que funcionava. **Nunca republicar o número que já saiu** — é o
+mesmo motivo de sempre: número de versão que já circulou não se reusa.
+
+**Metade 2, caminho de emergência (uma máquina só, sem esperar build).** Baixar o instalador da
+versão boa direto pela release dela — `github.com/caranovavidanova/sakura-system-ace/releases`,
+abrir a release antiga e pegar o `.exe` — e instalar por cima. Não precisa desinstalar antes.
+**O `conexao.json` NÃO se perde**: ele mora em `%APPDATA%\Sakura System - AutoCenter Edition\`,
+fora da pasta do programa, e o desinstalador não mexe em dado de aplicativo. O `erros.log` e o
+`atualizacoes.log` moram lá também e sobrevivem junto. **Cuidado**: a partir da `v0.9.22` o
+instalador tem nome fixo (`SakuraSystem-Setup.exe`) — releases anteriores a essa têm o nome
+antigo, com o número dentro.
+
+**E o banco NÃO volta junto.** Essa é a parte que mais assusta e a mais simples de resolver:
+migration que já rodou continua rodada, e não existe "desfazer migration" neste projeto. Se a
+versão ruim trouxe migration, o código antigo vai voltar a rodar **em cima do banco novo**. Isso
+funciona sem drama desde que a migration só tenha **acrescentado** coisa — e é exatamente por
+isso que existe a regra abaixo.
+
+> ### Regra: migration nunca tira nem renomeia coluna em uso na mesma versão que passa a usar a nova
+>
+> Adotada em 13/09/2026, e é o que torna o rollback possível. Toda troca de coluna vira **duas
+> versões**:
+>
+> - **v1** — acrescenta a coluna nova e passa a escrever **nas duas**, lendo a que fizer sentido.
+>   A coluna velha continua lá, cheia e correta.
+> - **v2** — só depois de **todas as lojas atualizadas**, remove a velha.
+>
+> Entre as duas, voltar uma versão é seguro: o código antigo acha a coluna dele no lugar. Se v1
+> já tivesse removido a velha, voltar atrás significaria um app procurando uma coluna que não
+> existe mais — e o sintoma seria tela de erro no balcão, não uma mensagem clara.
+>
+> As 53 migrations até aqui já são só aditivas na prática, com uma exceção que ilustra bem o
+> ponto: a `0033` derrubou a coluna `id` das tabelas de configuração ao trocar a chave por
+> `loja_id`. Aquilo foi feito de uma vez, sem versão de transição — e é por isso que hoje
+> reexecutar a sequência inteira precisa de guarda em três migrations anteriores (seção 6, item
+> 36). Deu certo porque só existia uma loja e uma máquina; com dez lojas não daria.
+
 ## 10. Estado do Git
 
 - Repositório: `caranovavidanova/sakura-system-ace` (era um projeto antigo "Pneus Amigão" em

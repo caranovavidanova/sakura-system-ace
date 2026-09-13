@@ -9,9 +9,16 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import {
   ACAO_AUDITORIA_LABEL,
   TABELA_AUDITORIA_LABEL,
+  type AcaoAuditoria,
   type RegistroAuditoria,
 } from "@/types/auditoria";
 import type { Operador } from "@/types/operador";
+
+const CLASSE_DO_SELO: Record<AcaoAuditoria, string> = {
+  criar: "bg-emerald-50 text-emerald-800",
+  atualizar: "bg-amber-50 text-amber-800",
+  excluir: "bg-red-50 text-red-700",
+};
 
 function formatarDataHora(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR", {
@@ -28,6 +35,7 @@ export function AuditoriaPage() {
   const [operadores, setOperadores] = useState<Operador[]>([]);
   const [filtroTabela, setFiltroTabela] = useState("");
   const [filtroOperadorId, setFiltroOperadorId] = useState("");
+  const [filtroAcao, setFiltroAcao] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [detalhe, setDetalhe] = useState<RegistroAuditoria | null>(null);
@@ -53,6 +61,7 @@ export function AuditoriaPage() {
     listarAuditoria({
       tabela: filtroTabela || undefined,
       operadorId: filtroOperadorId || undefined,
+      acao: (filtroAcao || undefined) as AcaoAuditoria | undefined,
     })
       .then((registrosCarregados) => {
         if (ativo) setRegistros(registrosCarregados);
@@ -67,7 +76,7 @@ export function AuditoriaPage() {
     return () => {
       ativo = false;
     };
-  }, [filtroTabela, filtroOperadorId]);
+  }, [filtroTabela, filtroOperadorId, filtroAcao]);
 
   return (
     <div className="space-y-6">
@@ -76,7 +85,7 @@ export function AuditoriaPage() {
         <div>
           <h1 className="text-titulo font-semibold text-sakura-purple-dark">Auditoria</h1>
           <p className="text-corpo text-sakura-muted">
-            Quem editou ou excluiu o quê, e quando — só admin vê essa tela
+            Quem criou, editou ou excluiu o quê, e quando — só admin vê essa tela
           </p>
         </div>
       </header>
@@ -107,6 +116,20 @@ export function AuditoriaPage() {
           />
         </label>
         <label className="flex items-center gap-2 text-corpo">
+          <span className="text-sakura-purple-dark/80">Ação</span>
+          <Combobox
+            className="w-44"
+            opcoes={Object.entries(ACAO_AUDITORIA_LABEL).map(([valor, rotulo]) => ({
+              valor,
+              rotulo,
+            }))}
+            valor={filtroAcao}
+            onMudar={setFiltroAcao}
+            opcaoVazia="Todas"
+            placeholder="Todas"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-corpo">
           <span className="text-sakura-purple-dark/80">Operador</span>
           <Combobox
             className="w-56"
@@ -123,8 +146,8 @@ export function AuditoriaPage() {
         <p className="text-corpo text-sakura-muted">Carregando...</p>
       ) : registros.length === 0 ? (
         <p className="text-corpo text-sakura-muted">
-          Nenhum registro de auditoria ainda (só aparece depois que algo for editado ou excluído
-          nas telas cobertas).
+          Nenhum registro de auditoria ainda (só aparece depois que algo for criado, editado ou
+          excluído nas telas cobertas).
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
@@ -145,7 +168,7 @@ export function AuditoriaPage() {
                     {formatarDataHora(registro.criado_em)}
                   </td>
                   <td className="px-4 py-3 text-sakura-purple-dark">
-                    {registro.operador?.nome ?? "—"}
+                    {registro.operador_nome ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-sakura-purple-dark">
                     {TABELA_AUDITORIA_LABEL[registro.tabela] ?? registro.tabela}
@@ -153,9 +176,7 @@ export function AuditoriaPage() {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${
-                        registro.acao === "excluir"
-                          ? "bg-red-50 text-red-700"
-                          : "bg-amber-50 text-amber-800"
+                        CLASSE_DO_SELO[registro.acao]
                       }`}
                     >
                       {ACAO_AUDITORIA_LABEL[registro.acao]}
@@ -185,7 +206,7 @@ export function AuditoriaPage() {
         >
           <div className="space-y-4 text-corpo">
             <p className="text-sakura-purple-dark/80">
-              {detalhe.operador?.nome ?? "Alguém"} em {formatarDataHora(detalhe.criado_em)}
+              {detalhe.operador_nome ?? "Alguém"} em {formatarDataHora(detalhe.criado_em)}
             </p>
 
             {detalhe.acao === "excluir" ? (
@@ -195,6 +216,15 @@ export function AuditoriaPage() {
                 </h4>
                 <pre className="max-h-80 overflow-auto rounded-lg bg-black/30 p-3 text-rotulo text-sakura-purple-dark/90">
                   {JSON.stringify(detalhe.dados_antes, null, 2)}
+                </pre>
+              </div>
+            ) : detalhe.acao === "criar" ? (
+              <div>
+                <h4 className="mb-1 text-rotulo font-semibold text-sakura-purple-dark">
+                  Dados do registro criado
+                </h4>
+                <pre className="max-h-80 overflow-auto rounded-lg bg-black/30 p-3 text-rotulo text-sakura-purple-dark/90">
+                  {JSON.stringify(detalhe.dados_depois, null, 2)}
                 </pre>
               </div>
             ) : (

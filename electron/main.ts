@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
+import os from "node:os";
 import { autoUpdater } from "electron-updater";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -219,6 +220,71 @@ function logErroDaTela(mensagem: string) {
 
 ipcMain.on("log:erroDaTela", (_evento, mensagem: unknown) => {
   logErroDaTela(String(mensagem).slice(0, 4000));
+});
+
+// --- Diagnóstico (item TR-08.1 do guia de melhorias) ----------------------
+//
+// Hoje, socorrer uma loja é pedir pra pessoa do balcão achar um arquivo
+// dentro de %APPDATA% e mandar por WhatsApp. Com uma loja dá; com quatro
+// empresas, não. Estes dois handlers são o que a tela de Diagnóstico não tem
+// como descobrir sozinha: o que só o processo principal enxerga (versões do
+// Electron/Chromium/sistema, onde ficam os arquivos) e o conteúdo dos dois
+// registros em disco.
+//
+// **Nada aqui lê banco de dados nem chave de acesso.** A conexão que a tela
+// mostra sai de `SAKURA_SUPABASE_URL`, que é só o endereço — a chave nunca
+// passa por estes handlers.
+ipcMain.handle("diagnostico:info", async () => ({
+  versaoApp: app.getVersion(),
+  electron: process.versions.electron,
+  chromium: process.versions.chrome,
+  node: process.versions.node,
+  plataforma: process.platform,
+  // `os.version()` dá o nome legível ("Windows 11 Pro"); `os.release()` dá o
+  // número. Os dois juntos são o que serve pra reproduzir um problema.
+  sistema: `${osVersaoLegivel()} (${os.release()})`,
+  arquitetura: process.arch,
+  pastaDados: app.getPath("userData"),
+}));
+
+function osVersaoLegivel(): string {
+  try {
+    return os.version();
+  } catch {
+    return process.platform;
+  }
+}
+
+// Lê o FIM de um arquivo de registro. Os dois logs crescem pra sempre (o de
+// erros só quando algo quebra, o de atualização a cada abertura), então ler
+// o arquivo inteiro na memória seria pedir problema com o tempo — daí o
+// limite em bytes antes de cortar por linha.
+const MAXIMO_BYTES_DE_LOG = 512 * 1024;
+
+function lerFinalDoArquivo(caminho: string, linhas: number): string {
+  try {
+    const tamanho = fs.statSync(caminho).size;
+    const inicio = Math.max(0, tamanho - MAXIMO_BYTES_DE_LOG);
+    const descritor = fs.openSync(caminho, "r");
+    try {
+      const buffer = Buffer.alloc(tamanho - inicio);
+      fs.readSync(descritor, buffer, 0, buffer.length, inicio);
+      return buffer.toString("utf8").split("\n").slice(-linhas).join("\n");
+    } finally {
+      fs.closeSync(descritor);
+    }
+  } catch {
+    // Arquivo ainda não existe — é o caso normal de quem nunca teve erro.
+    return "";
+  }
+}
+
+ipcMain.handle("diagnostico:logs", async (_evento, linhas: unknown) => {
+  const quantas = typeof linhas === "number" && linhas > 0 ? Math.min(linhas, 2000) : 200;
+  return {
+    erros: lerFinalDoArquivo(CAMINHO_LOG_ERROS(), quantas),
+    atualizacoes: lerFinalDoArquivo(CAMINHO_LOG_ATUALIZACAO(), quantas),
+  };
 });
 
 app.whenReady().then(() => {

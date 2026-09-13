@@ -35,4 +35,11 @@ contextBridge.exposeInMainWorld("sakuraApp", {
   // reporta erro não precisa de resposta, e se o log falhar não faz sentido
   // atrapalhar quem está usando o sistema.
   registrarErro: (mensagem: string) => ipcRenderer.send("log:erroDaTela", mensagem),
+  // O que só o processo principal enxerga: versões do Electron/Chromium, o
+  // sistema operacional e onde ficam os arquivos do app. Usado pela tela de
+  // Diagnóstico (item TR-08.1) — ver os handlers em main.ts.
+  diagnostico: () => ipcRenderer.invoke("diagnostico:info"),
+  // As últimas linhas de "erros.log" e "atualizacoes.log". Sem isto, socorrer
+  // uma loja é pedir pra pessoa do balcão achar arquivo dentro de %APPDATA%.
+  lerLogs: (linhas: number) => ipcRenderer.invoke("diagnostico:logs", linhas),
 });

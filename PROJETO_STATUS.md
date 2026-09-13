@@ -3059,6 +3059,13 @@ Quatro coisas que valem saber:
     então aqui não havia ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`. Via
     `workflow_dispatch`.
 
+  - `v0.9.35`: **o começo da Etapa 4** — a auditoria passando a cobrir criação, itens de OS e
+    dado fiscal (`TR-04.9`, migration `0053`) e a função de permissão por módulo (`TR-04.1` etapa
+    1 de 3, migration `0054`). Junto, sem aparecer na tela: o procedimento de **voltar uma
+    versão** (`TR-09.2`), que é documentação na seção 9. **Publicada depois** de ela rodar as duas
+    migrations, que era a ordem obrigatória da `0053` — mesma disciplina da `v0.9.30`/`0049`, da
+    `v0.9.32`/`0050` e da `v0.9.33`/`0051`+`0052`. Via `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3545,7 +3552,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
-| 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). **Nada publicado em tag** — e as migrations `0053`/`0054` esperam ela rodar. |
+| 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. |
 
 **Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na
 seção 1, mas é aqui que costumam ser lidas): *intenção futura não é autorização pra começar agora*
@@ -3579,21 +3586,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0052` estão aplicadas no Supabase real dela; a `0053` e a `0054`
-foram criadas em 13/09/2026 e AINDA NÃO FORAM RODADAS por ela.**
-
-> **A `0053` (auditoria completa) tem ordem obrigatória: rodar ANTES de a versão nova chegar no
-> computador da loja.** Sem as colunas dela, a tela de Auditoria pediria `operador_nome`, que não
-> existiria. Mesma disciplina já cumprida com a `0049`/`v0.9.30`, a `0050`/`v0.9.32` e a
-> `0051`+`0052`/`v0.9.33`.
->
-> A `0054` (a função de permissão por módulo) **não tem ordem a cumprir** — ela só cria uma função
-> que nenhuma policy usa ainda, então rodar antes ou depois não muda nada. Vale rodar junto, pra
-> não ficar SQL pendurado.
->
-> As duas são idempotentes e foram validadas num Postgres local: a instalação inteira rodada três
-> vezes do zero, cada migration sozinha duas vezes num banco no estado `0052` com dado plantado, e
-> os dois scripts de teste passando num banco recém-instalado. As duas últimas (`0051`, estoque mínimo e bloco de pneu; `0052`, as tabelas do WhatsApp)
+**Estado hoje: `0001` a `0054` estão TODAS aplicadas no Supabase real dela — nada pendente de
+SQL.** A `0053` (auditoria completa) e a `0054` (função de permissão por módulo) foram rodadas por
+ela em 13/09/2026, **antes** da tag `v0.9.35` — a ordem que a `0053` exigia, e a mesma disciplina
+já cumprida com a `0049`/`v0.9.30`, a `0050`/`v0.9.32` e a `0051`+`0052`/`v0.9.33`. As duas últimas (`0051`, estoque mínimo e bloco de pneu; `0052`, as tabelas do WhatsApp)
 foram rodadas por ela em 12/09/2026, **antes** da tag `v0.9.33` — a ordem que elas exigiam, a
 mesma disciplina já cumprida com a `0049`/`v0.9.30` e a `0050`/`v0.9.32`.
 Histórico das anteriores: a `0048`
@@ -3924,9 +3920,9 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.34"` — publicada em 12/09/2026 (fim do dia). **Desde
-  13/09/2026 a `main` está uma leva à frente**, com DUAS migrations esperando ela rodar (`0053` e
-  `0054`) e nada publicado em tag — ver "Onde parou", no fim deste arquivo. (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
+- `package.json` em `"version": "0.9.35"` — publicada em 13/09/2026, depois de ela rodar as
+  migrations `0053` e `0054`. **`main` em dia, banco na `0054`, nada esperando tag nem SQL** —
+  ver "Onde parou", no fim deste arquivo. (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
   "Empacotamento" na seção 7, não aqui). **Quatro tags publicadas de verdade naquela sessão**
@@ -4654,11 +4650,9 @@ a que o guia trata como **pré-requisito da venda**: *"nenhuma loja de terceiro 
 antes desta etapa fechar"*. Pesa agora porque a fase 2 (as duas lojas do amigo do pai dela) está
 no horizonte. São 12 itens; saíram **dois inteiros e o primeiro terço de um terceiro**.
 
-> ## ⚠️ O QUE DEPENDE DELA, ANTES DE QUALQUER COISA
->
-> **Rodar as migrations `0053` e `0054` no SQL Editor do Supabase** — e a `0053` **antes** de
-> publicar a próxima versão, senão a tela de Auditoria quebra no computador da loja (detalhe na
-> seção 9). **Nada foi publicado em tag**: a `v0.9.34` continua sendo a última, de propósito.
+**Estado: publicado na `v0.9.35`, e o banco dela está na `0054`.** Ela rodou as duas migrations
+e mandou publicar ("rodei, se tiver q publicar algo pode publicar") — a ordem obrigatória da
+`0053` foi cumprida: SQL primeiro, tag depois. Nada esperando SQL nem tag.
 
 #### O que saiu
 
@@ -4706,9 +4700,11 @@ a máscara de segredo e a coluna-chave no primeiro, e uma função que sempre di
 nada.
 
 **O que continua sem validação, e não dá pra validar daqui**: nada disso rodou contra o Supabase
-de verdade (este ambiente não alcança `supabase.co`). Depois de rodar a `0053`, o que vale
-conferir na tela de Auditoria é se aparece o filtro **Ação** novo, se cadastrar um cliente vira
-uma linha "Criou", e se editar o preço de um item de OS aparece com o antes/depois.
+de verdade (este ambiente não alcança `supabase.co`). As migrations foram aceitas sem erro por
+ela, mas **o comportamento na tela ainda não foi visto**. Quando a `v0.9.35` chegar pelo
+auto-update, o que vale conferir em Auditoria é: se aparece o filtro **Ação** novo; se cadastrar
+um cliente vira uma linha "Criou"; e se editar o preço de um item de OS aparece com o
+antes/depois — esse último é o buraco que o item veio fechar.
 
 #### O que falta da Etapa 4 (10 dos 12)
 
@@ -4723,7 +4719,7 @@ botão de diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de um
 
 #### Estado do código
 
-`main` **uma leva à frente da `v0.9.34`**, com **duas migrations esperando ela** (`0053`, `0054`).
+`main` **em dia com a `v0.9.35`**, e o banco dela na `0054` — nada esperando tag nem SQL.
 `tsc`, lint e `npm run contraste` limpos; **482 testes** passando nos dois fusos (o número não
 mudou: o que entrou nesta leva é SQL, e os testes dele são os dois scripts que rodam num Postgres
 local, fora do `npm test`).
@@ -4734,7 +4730,11 @@ portal da prefeitura.
 
 #### Por onde uma sessão nova começa
 
-**Perguntar se é pra publicar** (a leva está pronta, e a `0053` tem que ser rodada antes) e **qual
-item entra depois**. Se ela pedir sugestão, o próximo natural é a **etapa 2 do `TR-04.1`** — mas
-ela é a que precisa de decisão dela antes, então vale apresentar a consequência (permissão errada
-deixa de esconder o menu e passa a abrir tela vazia) em vez de só começar.
+**Perguntar qual item entra** — não há nada pendente de publicação nem de SQL. Se ela pedir
+sugestão, o próximo natural é a **etapa 2 do `TR-04.1`** (aplicar as policies, tabela por tabela),
+mas ela **precisa da decisão dela antes de começar**: vale apresentar a consequência — permissão
+errada no cadastro de um operador deixa de esconder o menu e passa a abrir tela vazia, e RLS falha
+em silêncio (item 15 da seção 6) — em vez de só começar.
+
+E vale perguntar se ela já viu a Auditoria funcionando depois do auto-update (a lista logo acima),
+porque é a única parte desta leva que aparece na tela.

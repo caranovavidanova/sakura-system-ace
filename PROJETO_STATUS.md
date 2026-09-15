@@ -256,7 +256,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # também <Variacao>, o "+12% vs. mês passado" dos cartões do
 │   │                             # Início — ver item 54 da seção 6), Explicacao.tsx (o "?" que
 │   │                             # explica um número em uma frase, em portal pro <body> como o
-│   │                             # menu de ações), VersaoApp.tsx (mostra a versão do app,
+│   │                             # menu de ações), ErrorBoundary.tsx (em volta das rotas em
+│   │                             # App.tsx — erro de renderização virava janela em branco, agora
+│   │                             # vira "Alguma coisa quebrou nesta tela" com saída pro Início e
+│   │                             # pro Diagnóstico, e vai pro erros.log com a pilha de
+│   │                             # componentes), VersaoApp.tsx (mostra a versão do app,
 │   │                             # pequena, no canto inferior direito, lendo
 │   │                             # window.sakuraApp.version exposto pelo preload), Combobox.tsx
 │   │                             # (select com busca por digitação — abre mostrando a lista
@@ -286,7 +290,16 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # + datas.ts (hojeLocal()/diaLocal() — o dia no fuso de quem usa,
 │   │                             # nunca toISOString(), que é UTC; ver itens 34 e 42 da seção 6)
 │   │                             # + zip.ts (monta .zip sem biblioteca externa, usado pra baixar
-│   │                             # os XMLs de um mês de uma vez — ver "Notas Fiscais" na seção 7)
+│   │                             # os XMLs de um mês de uma vez — ver "Notas Fiscais" na seção 7,
+│   │                             # e o pacote da tela de Diagnóstico)
+│   │                             # + diagnostico.ts (coleta o que a tela de Diagnóstico mostra:
+│   │                             # as três checagens ao vivo, com tempo de cada uma, e os dois
+│   │                             # registros em disco; a parte sem efeito colateral fica em
+│   │                             # schemas/diagnostico.ts) + download.ts (salvarComoDownload,
+│   │                             # compartilhado por notasFiscais.ts e pelo Diagnóstico)
+│   │                             # + registrarErros.ts (escuta erro de tela e manda gravar no
+│   │                             # erros.log via IPC, com rota/usuário/loja/versão junto — ver
+│   │                             # item 39 da seção 6)
 │   │                             # + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
 │   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
@@ -331,6 +344,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # notas-fiscais, funcionarios, auditoria (admin-only, sem entrada
 │   │                             # em MODULOS — acesso via ícone no rodapé da Sidebar, igual
 │   │                             # Configurações, não é permissão de operador comum), login,
+│   │                             # diagnostico (só DiagnosticoPage.tsx — visível pra QUALQUER
+│   │                             # operador, ícone no rodapé da Sidebar ao lado de Configurações;
+│   │                             # ver "Diagnóstico" na seção 7),
 │   │                             # conexao (só ConexaoPage.tsx — tela de conectar ao banco da
 │   │                             # empresa, aparece no lugar do login enquanto não há conexão
 │   │                             # salva; sem permissão nem rota, é decidida em App.tsx),
@@ -430,7 +446,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # (negativo/zerado/abaixo do mínimo) e a busca da lista de
 │   │                             # Produtos, inclusive o casamento exato de código de barras;
 │   │                             # whatsapp.ts — telefone no formato do wa.me, marcadores das
-│   │                             # mensagens e os textos padrão
+│   │                             # mensagens e os textos padrão;
+│   │                             # diagnostico.ts — mascararSegredos (esconde a chave deste
+│   │                             # computador e mais cinco formatos conhecidos), o resumo pro
+│   │                             # WhatsApp (que NÃO leva linha de registro nenhuma) e o
+│   │                             # relatório do .zip, tudo função pura testada — ver
+│   │                             # "Diagnóstico" na seção 7
 │   │                             # (ex: funcionario.ts — paraValoresFormulario,
 │   │                             # paraNovoFuncionario, paraFilhosPreenchidos). Pasta nova —
 │   │                             # `funcionario.ts`, `cliente.ts`, `peca.ts` até agora (este último
@@ -549,7 +570,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── .gitleaks.toml                # regras da varredura de segredo do CI. Tem 3 regras próprias
 │                                  # além das de fábrica, porque as de fábrica deixavam passar
 │                                  # justamente `sb_secret_...` (Supabase) e `sk-ant-...`
-│                                  # (Anthropic) — testado, não suposto. Ver item 49 da seção 6
+│                                  # (Anthropic) — testado, não suposto. Ver item 49 da seção 6.
+│                                  # Tem também uma liberação POR CONTEÚDO (`[allowlist] regexes`,
+│                                  # só passa o que diz `naopodevazar`) pras credenciais de mentira
+│                                  # do teste da máscara do Diagnóstico — liberar o caminho do
+│                                  # arquivo inteiro tiraria do radar justo onde credencial de
+│                                  # exemplo é rotina. Ver item 64 da seção 6
 ├── eslint.config.js              # flat config do ESLint 9 — além das regras de hooks, tem a
 │                                  # trava contra cortar o dia de um timestamp em UTC
 │                                  # (`no-restricted-syntax`), ver item 48 da seção 6
@@ -1156,7 +1182,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    (item `TR-07.2`, ver item 62 desta seção): os cinco formulários que mexem em dinheiro são
    montados de verdade com `@testing-library/react` e exercitados a clique e digitação. O que
    continua fora é **qualquer coisa que dependa do Supabase** — nenhum teste fala com o banco, e
-   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **482 testes**,
+   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **495 testes**,
    todos passando — e, desde 11/09/2026, rodando
    nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
    UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
@@ -3171,7 +3197,9 @@ Quatro coisas que valem saber:
   - `v0.9.36`: a **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (parte do `TR-08.3`) —
     ver "Diagnóstico" nesta seção. Leva junto a matriz de RLS (`TR-07.3`), que não precisava de
     tag. **Sem migration**: o banco dela continua na `0054`, então não havia ordem a cumprir.
-    Via `workflow_dispatch`.
+    Via `workflow_dispatch` — mas só depois de consertar o CI: o job "segredos" ficou **vermelho
+    na `main`** por causa das credenciais de mentira do teste da máscara (item 64 da seção 6).
+    **`main` vermelha não se publica**, mesmo já tendo o "publica" dela.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -3659,6 +3687,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
+| 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. Etapa 4 em 5 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4042,10 +4071,9 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.35"` — publicada em 13/09/2026, depois de ela rodar as
-  migrations `0053` e `0054`. **`main` uma leva à frente (a matriz de RLS, que é ferramenta de
-  teste e não pede tag), banco na `0054`, nada esperando SQL** — ver "Onde parou", no fim deste
-  arquivo.
+- `package.json` em `"version": "0.9.36"` — publicada em 15/09/2026 (a tela de Diagnóstico).
+  **`main` em dia com a tag, banco na `0054`, nada esperando SQL nem publicação** — ver "Onde
+  parou", no fim deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -4516,7 +4544,7 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
 | **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
 | **3** — confiança nos números | 3 de 7 | **4** (ver 12/09 no fim do arquivo) |
-| **4** — antes da segunda empresa | 3 de 12 | **9** (ver 13/09 no fim do arquivo) |
+| **4** — antes da segunda empresa | 5 de 12 | **7** (ver o marco no fim do arquivo) |
 
 | **5** — escala e produto | 0 de 15 | **15** |
 
@@ -4540,7 +4568,7 @@ assunto maior que o item.
   ver item 3 de "O que ainda está frágil na parte fiscal"), fechamento de caixa do dia e travar
   comissão já paga — todos pedem migration, e os dois de constraint pedem antes uma consulta no
   Supabase real dela.
-- **Etapa 4 (12 itens) está INTEIRA por fazer, e o guia a trata como pré-requisito da venda**:
+- **Etapa 4 (12 itens, 5 feitos desde então) é tratada pelo guia como pré-requisito da venda**:
   *"Nenhuma loja de terceiro deveria entrar antes desta etapa fechar. Não por perfeccionismo:
   porque cada item aqui é uma coisa que, dando errado com dado de outra empresa, não tem conserto
   pela tela."* São RLS por módulo, backup de verdade, canal de teste antes de atualizar todas as
@@ -4768,24 +4796,47 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 13/09/2026 (fim do dia) — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 15/09/2026 — LEIA ISTO PRIMEIRO
 
-**Depois da matriz de RLS saiu mais um item da Etapa 4: `TR-08.1` — a tela de Diagnóstico**
-(mais a metade do `TR-08.3` que não pedia migration: o `ErrorBoundary` e o contexto no
-`erros.log`). Detalhe completo em "Diagnóstico", seção 7.
+**Nada pendente: sem SQL esperando, sem tag esperando.** O banco dela está na `0054` e a
+`v0.9.36` está publicada, com o instalador e o `latest.yml` confirmados na release.
 
-**Sem migration e sem tag**: é código de app, mas **não foi publicado** — a próxima tag leva isto
-junto. Banco continua na `0054`.
+**A `v0.9.36` leva a tela de Diagnóstico** (`TR-08.1`) e a metade do `TR-08.3` que não pedia
+migration — o `ErrorBoundary` e o contexto (rota, usuário, loja, versão) no `erros.log`. Detalhe
+completo em "Diagnóstico", seção 7. **Sem migration**, então não havia ordem a cumprir aqui,
+diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
+
+**Uma coisa aconteceu no caminho e vale saber**: o job "segredos" do CI ficou **vermelho na
+`main`** logo depois de a tela de Diagnóstico ser mesclada — o gitleaks pegou as credenciais de
+**mentira** do teste da máscara, e estava certo. A publicação foi segurada até o CI voltar a
+ficar verde (a liberação é **por conteúdo**, não por caminho de arquivo — item 64 da seção 6).
+**Lição que fica**: `main` vermelha não se publica, mesmo com "publica" dito.
 
 **Etapa 4: 5 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
 Function · `TR-12.1` backup · `TR-09.1` canal de teste · `TR-04.6` endurecer o Electron ·
 `TR-05.7` versão do esquema · `TR-12.2` contrato e papéis — mais as **etapas 2 e 3 do
 `TR-04.1`**, que precisam da decisão dela antes de começar.
 
-**O primeiro passo da próxima sessão é perguntar se é pra publicar** (`0.9.36` no
-`package.json`, PR, merge, `workflow_dispatch` com `ref: "main"`) — não publicar sozinho.
+**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — não há
+nada esperando publicação. Se ela pedir sugestão, ver "Por onde uma sessão nova começa", no marco
+de 13/09 logo abaixo (a resposta continua valendo, menos a parte de publicar).
 
-O que está abaixo é o marco anterior do mesmo dia.
+**O que confirmar com ela em uso real** (nada disso dá pra testar daqui):
+
+1. **A tela de Diagnóstico** — o ícone novo no rodapé do menu lateral, ao lado da engrenagem,
+   **visível pra qualquer operador** (não é só de admin, de propósito: quem liga pedindo socorro é
+   quem está no balcão). Vale ver se as três checagens passam e se o "Copiar resumo" gera um texto
+   que dá pra colar no WhatsApp.
+2. **A Auditoria ampliada** (`v0.9.35`): se aparece o filtro **Ação**; se cadastrar um cliente
+   vira uma linha "Criou"; e se editar o preço de um item de OS aparece com o antes/depois — esse
+   último é o buraco que o item veio fechar.
+
+**Estado do código**: `main` em dia com a `v0.9.36`, banco na `0054`. `tsc`, lint,
+`npm run contraste` e `npm run contraste:telas` limpos; **495 testes** passando nos dois fusos
+(eram 482 em 12/09) e a matriz de RLS batendo 640 de 640 (`npm run test:rls`, só no CI e em
+Postgres local — não roda no Windows).
+
+O que está abaixo é o marco anterior.
 
 ### Onde parou em 13/09/2026, mais cedo
 
@@ -4892,7 +4943,10 @@ auto-update, o que vale conferir em Auditoria é: se aparece o filtro **Ação**
 um cliente vira uma linha "Criou"; e se editar o preço de um item de OS aparece com o
 antes/depois — esse último é o buraco que o item veio fechar.
 
-#### O que falta da Etapa 4 (9 dos 12)
+#### O que falta da Etapa 4 (9 dos 12, na data deste marco)
+
+> Desatualizado de propósito, é registro do dia: o `TR-08.1` (diagnóstico) saiu depois, na
+> `v0.9.36`. A lista de verdade está no marco do fim do arquivo — hoje são **7**.
 
 `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge Function ·
 `TR-12.1` backup próprio e testado · `TR-09.1` canal de teste · `TR-08.1` diagnóstico ·

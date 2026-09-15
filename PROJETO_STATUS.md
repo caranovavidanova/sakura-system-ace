@@ -866,8 +866,9 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   `supabase/scripts/testar-permissao-modulo.sql` (5 perfis).
 
 - `0055` (criada em 15/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0054` — **ainda NÃO rodada
-  por ela**): cria `schema_versao`, o item `TR-05.7`. Uma linha por migration já aplicada neste
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0054` — **rodada e
+  confirmada por ela em 15/09/2026** ("Success. No rows returned"), antes da tag `v0.9.37`): cria
+  `schema_versao`, o item `TR-05.7`. Uma linha por migration já aplicada neste
   banco; o app compara o maior número daqui com o que a build dele espera e avisa, em português,
   qual arquivo falta rodar — em vez de estourar `column ... does not exist` numa tela qualquer.
   Quatro decisões que valem saber:
@@ -3258,6 +3259,13 @@ Quatro coisas que valem saber:
     na `main`** por causa das credenciais de mentira do teste da máscara (item 64 da seção 6).
     **`main` vermelha não se publica**, mesmo já tendo o "publica" dela.
 
+  - `v0.9.37`: o **aviso de banco desatualizado** (`TR-05.7`) — a faixa que diz qual migration
+    falta rodar, em vez de a tela estourar com "column does not exist"; e a versão do banco no
+    Diagnóstico. **Publicada depois** de ela rodar a migration `0055`, que era a ordem certa —
+    mesma disciplina da `v0.9.30`/`0049`, da `v0.9.32`/`0050`, da `v0.9.33`/`0051`+`0052` e da
+    `v0.9.35`/`0053`. Via `workflow_dispatch`, com instalador e `latest.yml` confirmados na
+    release.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3744,7 +3752,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
-| 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Etapa 4 em 6 de 12. |
+| 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`, rodada por ela) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Tag `v0.9.37`. Etapa 4 em 6 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -3780,10 +3788,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0054` estão aplicadas no Supabase real dela; a `0055` (`schema_versao`,
-item TR-05.7) está criada e validada aqui, mas AINDA NÃO FOI RODADA POR ELA.** Ela é a única
-pendência de SQL. Diferente das anteriores, esta não é armadilha se a ordem inverter: rodando o
-app novo antes do SQL, o próprio app mostra a faixa dizendo que falta rodar a `0055` — que é
+**Estado hoje: `0001` a `0055` estão TODAS aplicadas no Supabase real dela — nada pendente de
+SQL.** A `0055` (`schema_versao`, item TR-05.7) foi rodada por ela em 15/09/2026, **antes** da tag
+`v0.9.37`. Diferente das anteriores, esta não seria armadilha se a ordem invertesse: com o app
+novo e o SQL não rodado, o próprio app mostra a faixa dizendo que falta rodar a `0055` — que é
 justamente o que a migration existe pra fazer. Ainda assim, o certo continua sendo o SQL primeiro.
 
 A `0053` (auditoria completa) e a `0054` (função de permissão por módulo) foram rodadas por
@@ -4133,10 +4141,9 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.36"` — publicada em 15/09/2026 (a tela de Diagnóstico).
-  **A `main` está uma leva à frente da tag** (o `TR-05.7`, o aviso de banco desatualizado), e o
-  banco dela continua na `0054`: a migration `0055` e a publicação da `v0.9.37` são as duas
-  pendências — ver "Onde parou", no fim deste arquivo.
+- `package.json` em `"version": "0.9.37"` — publicada em 15/09/2026 (o aviso de banco
+  desatualizado, `TR-05.7`). **`main` em dia com a tag, banco na `0055`, nada esperando SQL nem
+  publicação** — ver "Onde parou", no fim deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -4861,14 +4868,9 @@ Se ela pedir sugestão, as duas respostas honestas são:
 
 ### ⏸ Onde parou em 15/09/2026 — LEIA ISTO PRIMEIRO
 
-**Duas coisas esperando ela, e a primeira é pré-requisito da segunda:**
-
-1. **Rodar a migration `0055`** no SQL Editor do Supabase (`supabase/migrations/0055_schema_versao.sql`).
-2. **Publicar a versão nova** (`v0.9.37`), que leva o aviso de banco desatualizado.
-
-Nada disso é urgente e nada está quebrado — a `v0.9.36` está publicada e rodando. Se a ordem
-inverter, desta vez não é armadilha: com o app novo e a `0055` ainda não rodada, o próprio app
-mostra a faixa dizendo que falta rodar a `0055`, que é exatamente o que ele foi feito pra fazer.
+**Nada pendente: sem SQL esperando, sem tag esperando.** O banco dela está na `0055` (ela rodou
+em 15/09, com "Success. No rows returned") e a **`v0.9.37`** foi publicada logo depois — a ordem
+certa —, com o instalador e o `latest.yml` confirmados na release.
 
 #### O que saiu nesta leva: `TR-05.7` — o app avisa quando o banco está atrasado
 
@@ -4914,11 +4916,16 @@ Function · `TR-12.1` backup · `TR-09.1` canal de teste · `TR-04.6` endurecer 
 `TR-12.2` contrato e papéis — mais as **etapas 2 e 3 do `TR-04.1`**, que precisam da decisão dela
 antes de começar.
 
+**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — não há
+nada esperando publicação nem SQL. Se ela pedir sugestão, ver "Por onde uma sessão nova começa",
+no marco de 13/09 mais abaixo.
+
 **O que confirmar com ela em uso real** (nada disso dá pra testar daqui):
 
-1. **A faixa do banco desatualizado** — e o jeito mais fácil de ver é justamente instalar a
-   `v0.9.37` ANTES de rodar a `0055`: a faixa tem que aparecer dizendo "rode a 0055", e sumir
-   depois que ela rodar. Se aparecer com o banco já em dia, é bug e vale o print.
+1. **Que a faixa do banco desatualizado NÃO aparece** — ela rodou a `0055` antes da tag, então o
+   banco está em dia e a faixa deve ficar invisível. Se aparecer mesmo assim, é bug e vale o
+   print. (Ela só voltaria a aparecer no dia em que uma versão nova chegar antes do SQL — que é
+   justamente pra isso que ela existe.)
 2. **A tela de Diagnóstico** (`v0.9.36`, ainda não vista por ela): o ícone no rodapé do menu
    lateral, ao lado da engrenagem, visível pra qualquer operador. Agora mostra também a versão do
    banco.
@@ -4926,8 +4933,8 @@ antes de começar.
    vira uma linha "Criou"; e se editar o preço de um item de OS aparece com o antes/depois — esse
    último é o buraco que o item veio fechar.
 
-**Estado do código**: `main` com o `TR-05.7` mesclado, uma leva à frente da `v0.9.36`; banco dela
-na `0054`, esperando a `0055`. `tsc`, lint, `npm run contraste` e `npm run contraste:telas`
+**Estado do código**: `main` em dia com a `v0.9.37`, banco dela na `0055` — nada esperando tag
+nem SQL. `tsc`, lint, `npm run contraste` e `npm run contraste:telas`
 limpos; **510 testes** passando nos dois fusos (eram 495 em 13/09) e a matriz de RLS batendo
 660 de 660 (`npm run test:rls`, só no CI e em Postgres local — não roda no Windows).
 

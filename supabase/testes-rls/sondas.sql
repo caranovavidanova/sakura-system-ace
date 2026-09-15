@@ -75,4 +75,9 @@ insert into teste_rls.sondas (tabela, insercao) values
 ('operador_lojas', $$insert into operador_lojas (operador_id, loja_id) values ('aaaaaaaa-4444-4444-4444-444444444444', '11111111-1111-1111-1111-1111111111aa')$$),
 -- A trilha não tem policy de insert pra ninguém, de propósito: só a função
 -- de gatilho grava. Esta sonda é o que prova isso a cada rodada.
-('auditoria',      $$insert into auditoria (tabela, registro_id, acao) values ('clientes', 'cccccccc-0000-0000-0000-0000000000aa', 'criar')$$);
+('auditoria',      $$insert into auditoria (tabela, registro_id, acao) values ('clientes', 'cccccccc-0000-0000-0000-0000000000aa', 'criar')$$),
+
+-- ---------- versão do esquema (ninguém escreve pela API) ------------------
+-- 900 é um número que o cenário não usa: chave duplicada aqui viraria um erro
+-- que se parece com "a RLS bloqueou", que é a confusão que este teste evita.
+('schema_versao',  $$insert into schema_versao (versao) values (900)$$);

@@ -31,6 +31,7 @@
  * saber o que está mandando, não uma promessa que o código não consegue
  * cumprir.
  */
+import type { SituacaoEsquema } from "./versaoEsquema";
 
 export interface ChecagemDiagnostico {
   nome: string;
@@ -54,6 +55,15 @@ export interface Diagnostico {
   };
   /** Só o ENDEREÇO do projeto Supabase. A chave nunca entra aqui. */
   enderecoDoBanco: string;
+  /**
+   * Em que versão está o banco desta empresa, contra a que este programa
+   * espera (item TR-05.7).
+   *
+   * É a primeira coisa a olhar quando uma tela "quebrou sozinha depois da
+   * atualização": banco atrás do programa explica erro de coluna inexistente
+   * sem que ninguém tenha feito nada errado.
+   */
+  esquema: SituacaoEsquema;
   sessao: {
     usuario: string;
     nome: string;
@@ -132,6 +142,20 @@ function dataHoraLocal(data: Date): string {
   });
 }
 
+/** "55 (em dia)" / "52 — faltam rodar 0053, 0054, 0055". */
+export function descreverEsquema(esquema: SituacaoEsquema): string {
+  switch (esquema.estado) {
+    case "em_dia":
+      return `${esquema.versaoBanco} (em dia)`;
+    case "banco_atrasado":
+      return `${esquema.versaoBanco} — o programa espera ${esquema.versaoApp}; faltam rodar ${esquema.faltando.join(", ")}`;
+    case "app_atrasado":
+      return `${esquema.versaoBanco} — à frente deste programa, que espera ${esquema.versaoApp}`;
+    default:
+      return "não foi possível perguntar ao banco";
+  }
+}
+
 function linhaDaChecagem(checagem: ChecagemDiagnostico): string {
   return `${checagem.ok ? "OK" : "FALHOU"} · ${checagem.nome} (${checagem.ms} ms) — ${checagem.detalhe}`;
 }
@@ -150,6 +174,7 @@ export function montarResumo(d: Diagnostico): string {
     `Versão do app: ${d.app.versao}`,
     `Sistema: ${d.app.sistema} · Electron ${d.app.electron} · Chromium ${d.app.chromium}`,
     `Banco: ${d.enderecoDoBanco}`,
+    `Versão do banco: ${descreverEsquema(d.esquema)}`,
     `Usuário: @${d.sessao.usuario}${d.sessao.admin ? " (admin)" : ""} · Loja: ${d.sessao.loja}`,
     `Aqui é ${dataHoraLocal(d.geradoEm)} (${d.fusoDoComputador})`,
     ...d.checagens.map(linhaDaChecagem),

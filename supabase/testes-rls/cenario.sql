@@ -47,7 +47,7 @@
 set session_replication_role = replica;
 
 truncate table
-  auditoria, whatsapp_mensagens, configuracoes_whatsapp,
+  schema_versao, auditoria, whatsapp_mensagens, configuracoes_whatsapp,
   configuracoes_juros_parcelas, configuracoes_painel_inicio,
   configuracoes_fiscais_loja, configuracoes_garantia,
   cotacoes_pecas, pedidos_compra_itens, pedidos_compra,
@@ -205,6 +205,16 @@ insert into configuracoes_fiscais_loja (loja_id, cnpj, razao_social) values
 
 insert into configuracoes_painel_inicio (loja_id, cartoes) values
   ('11111111-1111-1111-1111-1111111111bb', array['vendas_mes']);
+
+-- ---------- duas linhas de versão de esquema ------------------------------
+-- A migration 0055 planta uma linha por migration já aplicada, então esta
+-- tabela nasce com dezenas de linhas e ganharia mais uma a cada migration
+-- nova. O cenário fixa DUAS, como em toda tabela compartilhada, pra que o
+-- número no expectativas.csv signifique segurança e não "quantas migrations
+-- existem hoje" — senão o arquivo que se revisa mudaria por um motivo que
+-- não tem nada a ver com quem pode ver o quê, e é assim que se aprende a
+-- ignorar um diff.
+insert into schema_versao (versao) values (1), (2);
 
 -- ---------- uma linha de auditoria, pra a leitura distinguir admin --------
 insert into auditoria (id, tabela, registro_id, acao, operador_id, operador_nome) values

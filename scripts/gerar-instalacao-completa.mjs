@@ -31,6 +31,40 @@ export function listarMigrations(pasta = PASTA_MIGRATIONS) {
     .sort(); // os nomes começam com número de 4 dígitos, então ordem alfabética = ordem correta
 }
 
+/**
+ * A migration que criou `schema_versao` (item TR-05.7). A partir DELA, toda
+ * migration precisa registrar a própria linha — ver `migrationsSemRegistroDeVersao`.
+ */
+export const PRIMEIRA_VERSAO_REGISTRADA = 55;
+
+/**
+ * As migrations que esqueceram de registrar a própria versão em `schema_versao`.
+ *
+ * Por que isso é conferido por máquina: o app compara o maior número gravado
+ * lá com a versão que a build dele espera, e avisa quando o banco está atrás
+ * (item TR-05.7). Uma migration que não se registra faz esse aviso MENTIR —
+ * ele passa a acusar um banco em dia de estar desatualizado, e aviso que
+ * mente ensina quem usa a ignorar aviso. Esquecer é fácil; por isso vira
+ * `npm test` vermelho, e não uma linha de documentação.
+ *
+ * A 0055 é a exceção: ela cria a tabela e preenche de 1 a 55 de uma vez.
+ */
+export function migrationsSemRegistroDeVersao(pasta = PASTA_MIGRATIONS) {
+  return listarMigrations(pasta).filter((nome) => {
+    const versao = Number(nome.slice(0, 4));
+    if (!Number.isInteger(versao) || versao <= PRIMEIRA_VERSAO_REGISTRADA) return false;
+
+    const conteudo = readFileSync(join(pasta, nome), "utf8");
+    // Tolerante ao formato (quebra de linha, `values` em outra linha), exigente
+    // no que importa: tem que ser esta tabela e este número.
+    const registro = new RegExp(
+      `insert\\s+into\\s+schema_versao[\\s\\S]{0,200}?\\(\\s*${versao}\\s*\\)`,
+      "i",
+    );
+    return !registro.test(conteudo);
+  });
+}
+
 /** Monta o conteúdo do arquivo único a partir da lista de migrations. */
 export function montarInstalacaoCompleta(pasta = PASTA_MIGRATIONS) {
   const arquivos = listarMigrations(pasta);
@@ -79,6 +113,18 @@ export function montarInstalacaoCompleta(pasta = PASTA_MIGRATIONS) {
 // não quando importado pelo teste.
 if (process.argv[1]?.endsWith("gerar-instalacao-completa.mjs")) {
   mkdirSync(PASTA_SAIDA, { recursive: true });
+
+  const esquecidas = migrationsSemRegistroDeVersao();
+  if (esquecidas.length > 0) {
+    console.error(
+      "Estas migrations não registram a própria versão em schema_versao (item TR-05.7):\n" +
+        esquecidas.map((nome) => `  - ${nome}`).join("\n") +
+        "\n\nAcrescente no final de cada uma:\n" +
+        "  insert into schema_versao (versao) values (<número da migration>) on conflict do nothing;",
+    );
+    process.exit(1);
+  }
+
   const conteudo = montarInstalacaoCompleta();
   writeFileSync(ARQUIVO_SAIDA, conteudo, "utf8");
   const linhas = conteudo.split("\n").length;

@@ -7,8 +7,10 @@ import {
 } from "@/schemas/diagnostico";
 import type { Loja } from "@/types/loja";
 import type { Operador } from "@/types/operador";
+import { situacaoDoEsquema } from "@/schemas/versaoEsquema";
 import { conexaoAtual } from "./conexao";
 import { salvarComoDownload } from "./download";
+import { buscarVersaoDoBanco } from "./schemaVersao";
 import { supabase } from "./supabase";
 import { criarZip } from "./zip";
 
@@ -101,6 +103,10 @@ export async function coletarDiagnostico(
   const logs = await window.sakuraApp?.lerLogs?.(LINHAS_DE_LOG).catch(() => undefined);
 
   const checagens = await checar(enderecoDoBanco);
+  // Sem sessão isto responde `null` (a RLS exige login) e o relatório diz
+  // "não foi possível perguntar" — que é a verdade, e melhor que um número
+  // inventado num arquivo feito pra diagnosticar.
+  const versaoDoBanco = await buscarVersaoDoBanco().catch(() => null);
 
   return {
     geradoEm: new Date(),
@@ -117,6 +123,7 @@ export async function coletarDiagnostico(
       pastaDados: doProcessoPrincipal?.pastaDados ?? "—",
     },
     enderecoDoBanco: enderecoDoBanco || "(não configurado)",
+    esquema: situacaoDoEsquema(versaoDoBanco),
     sessao: {
       usuario: operador?.usuario ?? "(ninguém logado)",
       nome: operador?.nome ?? "—",

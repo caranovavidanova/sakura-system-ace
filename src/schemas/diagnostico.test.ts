@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  descreverEsquema,
   mascararSegredos,
   montarRelatorio,
   montarResumo,
@@ -29,6 +30,7 @@ function diagnosticoDeTeste(parcial: Partial<Diagnostico> = {}): Diagnostico {
       pastaDados: "C:\\Users\\Loja\\AppData\\Roaming\\Sakura System",
     },
     enderecoDoBanco: "https://exemplo.supabase.co",
+    esquema: { estado: "em_dia", versaoBanco: 55, versaoApp: 55, faltando: [] },
     sessao: { usuario: "balcao", nome: "Balconista", admin: false, loja: "Pneus Amigão" },
     checagens: [
       { nome: "Internet", ok: true, detalhe: "respondeu", ms: 120 },
@@ -150,5 +152,47 @@ describe("nomeDoArquivo", () => {
   it("carrega a data, pra dois diagnósticos não se sobrescreverem", () => {
     const nome = nomeDoArquivo(diagnosticoDeTeste());
     expect(nome).toMatch(/^diagnostico-sakura-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/);
+  });
+});
+
+describe("descreverEsquema", () => {
+  it("diz em uma linha o que fazer quando o banco está atrás", () => {
+    const texto = descreverEsquema({
+      estado: "banco_atrasado",
+      versaoBanco: 52,
+      versaoApp: 55,
+      faltando: ["0053", "0054", "0055"],
+    });
+
+    expect(texto).toContain("0053, 0054, 0055");
+  });
+
+  it("não inventa número quando não deu pra perguntar", () => {
+    // A tela de diagnóstico é justamente onde um número inventado faria o
+    // maior estrago: quem lê está tentando descobrir o que está errado.
+    const texto = descreverEsquema({
+      estado: "desconhecido",
+      versaoBanco: null,
+      versaoApp: 55,
+      faltando: [],
+    });
+
+    expect(texto).not.toMatch(/\d/);
+  });
+
+  it("entra no resumo que vai pro WhatsApp", () => {
+    const resumo = montarResumo(
+      diagnosticoDeTeste({
+        esquema: {
+          estado: "banco_atrasado",
+          versaoBanco: 54,
+          versaoApp: 55,
+          faltando: ["0055"],
+        },
+      }),
+    );
+
+    expect(resumo).toContain("Versão do banco: 54");
+    expect(resumo).toContain("0055");
   });
 });

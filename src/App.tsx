@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AreaRolavel } from "./components/AreaRolavel";
+import { AvisoVersaoBanco } from "./components/AvisoVersaoBanco";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AdminRoute, PermissaoRoute } from "./components/PermissaoRoute";
 import { Sidebar } from "./components/Sidebar";
@@ -9,6 +10,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { useLimparDataAoApagar } from "./hooks/useLimparDataAoApagar";
 import { useNaoMexerNoNumeroSemDigitar } from "./hooks/useNaoMexerNoNumeroSemDigitar";
+import { useSituacaoDoEsquema } from "./hooks/useSituacaoDoEsquema";
 import { conexaoConfigurada } from "./lib/conexao";
 import { definirContextoDeErro } from "./lib/registrarErros";
 import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
@@ -68,6 +70,9 @@ export default function App() {
   // este app — sem isso não há nem como fazer login.
   const [configurandoConexao, setConfigurandoConexao] =
     useState(!conexaoConfigurada());
+  // "O banco desta empresa já recebeu as migrations que esta versão precisa?"
+  // Só depois do login: a consulta exige sessão (item TR-05.7).
+  const situacaoDoEsquema = useSituacaoDoEsquema(Boolean(session));
 
   // Sem isto, a pilha gravada em "erros.log" não diz em que tela nem com que
   // usuário o erro aconteceu — e é justamente isso que falta pra ela
@@ -127,6 +132,7 @@ export default function App() {
       <Sidebar />
       <main className="min-h-0 flex-1">
         <AreaRolavel className="p-4">
+          <AvisoVersaoBanco situacao={situacaoDoEsquema} />
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<PaginaInicial />} />

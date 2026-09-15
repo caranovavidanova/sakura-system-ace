@@ -256,7 +256,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # também <Variacao>, o "+12% vs. mês passado" dos cartões do
 │   │                             # Início — ver item 54 da seção 6), Explicacao.tsx (o "?" que
 │   │                             # explica um número em uma frase, em portal pro <body> como o
-│   │                             # menu de ações), ErrorBoundary.tsx (em volta das rotas em
+│   │                             # menu de ações), AvisoVersaoBanco.tsx
+│                             # (a faixa "o programa foi atualizado, mas o banco desta empresa
+│                             # ainda não", com o nome do arquivo que falta rodar — aviso, nunca
+│                             # tranca), ErrorBoundary.tsx (em volta das rotas em
 │   │                             # App.tsx — erro de renderização virava janela em branco, agora
 │   │                             # vira "Alguma coisa quebrou nesta tela" com saída pro Início e
 │   │                             # pro Diagnóstico, e vai pro erros.log com a pilha de
@@ -276,6 +279,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # BotaoWhatsapp.tsx (abre a conversa no WhatsApp com a mensagem
 │   │                             # já escrita — usado em Contas a Receber, na lista de OS e em
 │   │                             # Pedidos de compra; ver "WhatsApp" na seção 7)
+│   ├── hooks/useSituacaoDoEsquema.ts  # compara a versão do banco com a que esta build espera,
+│   │                             # uma vez por abertura (TR-05.7) — alimenta a faixa de aviso
 │   ├── hooks/useEnterParaProximoCampo.ts  # Enter avança pro próximo campo em qualquer <form>
 │   │                             # do app (em vez de tentar submeter) — aplicado uma única vez,
 │   │                             # globalmente, em App.tsx + useLimparDataAoApagar.ts (nesta
@@ -297,6 +302,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # registros em disco; a parte sem efeito colateral fica em
 │   │                             # schemas/diagnostico.ts) + download.ts (salvarComoDownload,
 │   │                             # compartilhado por notasFiscais.ts e pelo Diagnóstico)
+│   │                             # + schemaVersao.ts (pergunta ao banco em que versão ele está,
+│   │                             # e sabe diferenciar "banco antigo" de "sem rede" — item TR-05.7)
 │   │                             # + registrarErros.ts (escuta erro de tela e manda gravar no
 │   │                             # erros.log via IPC, com rota/usuário/loja/versão junto — ver
 │   │                             # item 39 da seção 6)
@@ -498,7 +505,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── supabase/testes-rls/          # `npm run test:rls` — a MATRIZ DE RLS (item TR-07.3). Monta um
 │                                  # banco descartável do zero, simula cinco papéis (admin das duas
 │                                  # lojas, admin de uma, balconista só-Caixa, operador SEM loja, e
-│                                  # ninguém logado) e confere as 640 combinações de
+│                                  # ninguém logado) e confere as 660 combinações de
 │                                  # tabela × comando × papel. expectativas.csv é A PARTE QUE SE
 │                                  # REVISA — cada número é "quantas linhas este papel consegue
 │                                  # mexer", então mudança de segurança aparece no diff do PR em vez
@@ -616,6 +623,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
   substitui `null`/`undefined` (ver bug corrigido na seção 6, item 8).
 - Toda migration que se diz "idempotente" precisa dropar o nome **final** da policy/objeto antes
   de criar (não só o nome antigo que está substituindo) — ver item 13 da seção 6.
+- **Toda migration nova termina registrando a própria versão** (desde a `0055`, item TR-05.7):
+  `insert into schema_versao (versao) values (<número da migration>) on conflict do nothing;`
+  Sem essa linha o aviso de "banco desatualizado" do app **mente** — ele passa a acusar um banco
+  em dia. O `npm test` reprova quem esquecer (`scripts/gerar-instalacao-completa.test.ts`), e a
+  constante `VERSAO_ESQUEMA_ESPERADA` (`src/schemas/versaoEsquema.ts`) sobe junto.
 
 **Padrão de formulário — `react-hook-form` + `zod`, migração concluída**: decisão tomada pela
 usuária (a partir de um plano de refatoração escrito por outra IA, Gemini, fora desta sessão) de
@@ -852,6 +864,23 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   cabeçalho da migration guarda como chamar na etapa 2 — `TO authenticated` e a chamada envolvida
   em `select`, que são desempenho medido e documentado pelo Supabase, não estilo. Teste em
   `supabase/scripts/testar-permissao-modulo.sql` (5 perfis).
+
+- `0055` (criada em 15/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0054` — **ainda NÃO rodada
+  por ela**): cria `schema_versao`, o item `TR-05.7`. Uma linha por migration já aplicada neste
+  banco; o app compara o maior número daqui com o que a build dele espera e avisa, em português,
+  qual arquivo falta rodar — em vez de estourar `column ... does not exist` numa tela qualquer.
+  Quatro decisões que valem saber:
+  (a) **ninguém escreve nela pela API** — não existe policy de insert/update/delete, mesma escolha
+  da trilha de auditoria. Quem grava é a própria migration rodando no SQL Editor. Um app capaz de
+  declarar a si mesmo "em dia" não serviria de nada: bastaria o bug que ele deveria denunciar pra
+  ele mentir.
+  (b) **a leitura é aberta a qualquer um logado**, inclusive operador sem loja: a faixa precisa
+  aparecer antes de qualquer tela, e número de versão de esquema não é dado de pessoa nenhuma.
+  (c) **o backfill registra de 1 a 55 de uma vez**, assumindo o óbvio — quem chegou nesta migration
+  rodou as anteriores, porque elas rodam em ordem (e a instalação única é a ordem inteira).
+  (d) **a ordem "migration antes da tag" continua valendo, mas aqui ela deixa de ser armadilha**:
+  se a versão nova chegar primeiro, o próprio app explica o que falta, em vez de quebrar.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1114,6 +1143,10 @@ outro projeto Supabase do zero (ver seção 9).
   motivou a mensagem — conta a receber, OS, pedido —, texto e sem FK de propósito, porque aponta
   pra tabelas diferentes conforme a chave), destino, operador_id, criado_em. Registra que a
   conversa foi **aberta**, nunca que foi enviada.
+- **`schema_versao`** (migration `0055`): versao (int, PK — o número da migration), aplicada_em.
+  Uma linha por migration aplicada neste banco. Lida pelo app na abertura (`lib/schemaVersao.ts`),
+  nunca escrita por ele: só a migration grava, rodando no SQL Editor. Ver "Aviso de banco
+  desatualizado" na seção 7.
 - **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
   (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
   Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
@@ -1155,7 +1188,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
    teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
    **E esse teste já existe, desde 13/09/2026**: é a matriz de RLS (`npm run test:rls`, item
-   `TR-07.3`, item 63 desta seção), que hoje já fotografa o comportamento atual em 640 células.
+   `TR-07.3`, item 63 desta seção), que hoje já fotografa o comportamento atual em 660 células.
    Quando a etapa 2 for feita, o diff do `expectativas.csv` **é** a revisão: ele mostra, tabela
    por tabela, quem passou a enxergar o quê.
 
@@ -1182,7 +1215,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    (item `TR-07.2`, ver item 62 desta seção): os cinco formulários que mexem em dinheiro são
    montados de verdade com `@testing-library/react` e exercitados a clique e digitação. O que
    continua fora é **qualquer coisa que dependa do Supabase** — nenhum teste fala com o banco, e
-   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **495 testes**,
+   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **510 testes**,
    todos passando — e, desde 11/09/2026, rodando
    nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
    UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
@@ -1199,7 +1232,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    avulso), mas é o único jeito de pegar falha silenciosa de preload.
    **E desde 13/09/2026 a RLS também é conferida por máquina**, fora do `npm test`:
    `npm run test:rls` (item `TR-07.3`) monta um banco do zero, simula cinco papéis e confere as
-   640 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
+   660 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
    seção. Continua sem falar com o Supabase de verdade: é um Postgres local/do CI.
    **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
    o parser de XML de verdade
@@ -2898,6 +2931,28 @@ Quatro coisas que valem saber:
   **por loja** — ver seção 5). Em "Dados fiscais da loja" há também, desde 11/09/2026, o campo
   "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
   Início; em branco, vale o passo a passo de Araraquara que está no código.
+- **Aviso de banco desatualizado** (15/09/2026, item `TR-05.7`): uma faixa no topo de qualquer
+  tela quando o programa e o banco daquela empresa não estão na mesma versão. Existe porque as
+  duas coisas andam por caminhos diferentes — o auto-update chega em todas as lojas no mesmo
+  minuto, e a migration é manual, um projeto Supabase por vez. Quando saem de sincronia, o que
+  aparecia era `column ... does not exist` numa tela qualquer: erro que não diz o que houve nem o
+  que fazer, e que parece defeito de quem estava usando. Agora a faixa diz o que aconteceu e
+  **qual arquivo falta rodar** ("0055"), ou, no caminho inverso, que aquele computador é que está
+  atrasado e basta fechar e abrir. Quatro coisas que valem saber:
+  - **Aparece pra qualquer operador, não só pro admin.** Quem topa com o erro é quem está no
+    balcão; o texto diz o que está havendo e quem resolve.
+  - **Nunca bloqueia.** O sistema inteiro continua funcionando, e na maioria das telas não há
+    diferença nenhuma — é a regra do item 33 da seção 6, de que validação incerta é aviso e não
+    tranca.
+  - **Queda de rede não vira aviso.** Não dar pra perguntar e "o banco está atrás" significam
+    coisas opostas, e confundi-las deixaria o app acusando a usuária toda vez que a internet
+    oscilasse (`lib/schemaVersao.ts` separa as duas pelo código de erro).
+  - **A versão do banco também entra no Diagnóstico e no resumo do WhatsApp** — era a ponta solta
+    do `TR-08.1`, e é a primeira coisa a olhar quando uma tela "quebrou sozinha depois da
+    atualização".
+  A regra é função pura testada (`schemas/versaoEsquema.ts`), e a constante que diz o que esta
+  build espera não envelhece sozinha: um teste reprova se ela ficar atrás da pasta de migrations.
+  **Ainda não visto por ela rodando.**
 - **Diagnóstico** (13/09/2026, item `TR-08.1`): ícone no rodapé da Sidebar, **visível pra
   qualquer operador** — e isso é a decisão que importa: quem liga pedindo socorro é quem está no
   balcão com o cliente na frente, não o admin. A tela recolhe sozinha ao abrir e mostra: as três
@@ -2905,7 +2960,9 @@ Quatro coisas que valem saber:
   a atualização; o endereço do banco responde; consegue ler uma linha de `lojas`); versão do app,
   Electron/Chromium, sistema, **data/hora e fuso do computador** (é a informação que teria
   encurtado o item 34 da seção 6); endereço do banco daquela empresa, usuário logado e loja ativa;
-  e as últimas 200 linhas de `erros.log` e `atualizacoes.log`. Dois botões: **"Copiar resumo"**
+  e as últimas 200 linhas de `erros.log` e `atualizacoes.log`. **Desde 15/09/2026 mostra também a
+  versão do banco daquela empresa** contra a que o programa espera (item `TR-05.7`) — era o pedaço
+  que faltava, e é a primeira coisa a olhar quando uma tela quebra logo depois de uma atualização. Dois botões: **"Copiar resumo"**
   (texto curto pro WhatsApp) e **"Salvar arquivo para enviar"** (um `.zip`, montado pelo
   `lib/zip.ts` que já existia).
   **A promessa que é testada, não prometida**: senha, chave e token **não saem** no pacote. O
@@ -3687,7 +3744,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 03/09 | Resposta do suporte da Focus NFe destravou a **NFC-e no CNPJ do cliente empresa**; período **Anual** em Relações; **Comissões** mudou pra dentro de Funcionários; botão do calendário visível. Tag `v0.9.27`, confirmada rodando na loja. |
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
-| 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. Etapa 4 em 5 de 12. |
+| 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Etapa 4 em 6 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -3723,8 +3780,13 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0054` estão TODAS aplicadas no Supabase real dela — nada pendente de
-SQL.** A `0053` (auditoria completa) e a `0054` (função de permissão por módulo) foram rodadas por
+**Estado hoje: `0001` a `0054` estão aplicadas no Supabase real dela; a `0055` (`schema_versao`,
+item TR-05.7) está criada e validada aqui, mas AINDA NÃO FOI RODADA POR ELA.** Ela é a única
+pendência de SQL. Diferente das anteriores, esta não é armadilha se a ordem inverter: rodando o
+app novo antes do SQL, o próprio app mostra a faixa dizendo que falta rodar a `0055` — que é
+justamente o que a migration existe pra fazer. Ainda assim, o certo continua sendo o SQL primeiro.
+
+A `0053` (auditoria completa) e a `0054` (função de permissão por módulo) foram rodadas por
 ela em 13/09/2026, **antes** da tag `v0.9.35` — a ordem que a `0053` exigia, e a mesma disciplina
 já cumprida com a `0049`/`v0.9.30`, a `0050`/`v0.9.32` e a `0051`+`0052`/`v0.9.33`. As duas últimas (`0051`, estoque mínimo e bloco de pneu; `0052`, as tabelas do WhatsApp)
 foram rodadas por ela em 12/09/2026, **antes** da tag `v0.9.33` — a ordem que elas exigiam, a
@@ -3773,7 +3835,7 @@ senão o `set local` não pega e o teste roda como superusuário, que ignora RLS
 sessão que precisava validar uma migration recriava esses mesmos stubs do zero.
 
 **E toda migration que mexa em policy tem que passar na matriz de RLS** (item `TR-07.3`), que faz
-esse mesmo trabalho por conta própria e confere 640 combinações de tabela × comando × papel:
+esse mesmo trabalho por conta própria e confere 660 combinações de tabela × comando × papel:
 
 ```bash
 service postgresql start
@@ -4072,8 +4134,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.36"` — publicada em 15/09/2026 (a tela de Diagnóstico).
-  **`main` em dia com a tag, banco na `0054`, nada esperando SQL nem publicação** — ver "Onde
-  parou", no fim deste arquivo.
+  **A `main` está uma leva à frente da tag** (o `TR-05.7`, o aviso de banco desatualizado), e o
+  banco dela continua na `0054`: a migration `0055` e a publicação da `v0.9.37` são as duas
+  pendências — ver "Onde parou", no fim deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -4544,7 +4607,7 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
 | **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
 | **3** — confiança nos números | 3 de 7 | **4** (ver 12/09 no fim do arquivo) |
-| **4** — antes da segunda empresa | 5 de 12 | **7** (ver o marco no fim do arquivo) |
+| **4** — antes da segunda empresa | 6 de 12 | **6** (ver o marco no fim do arquivo) |
 
 | **5** — escala e produto | 0 de 15 | **15** |
 
@@ -4798,43 +4861,75 @@ Se ela pedir sugestão, as duas respostas honestas são:
 
 ### ⏸ Onde parou em 15/09/2026 — LEIA ISTO PRIMEIRO
 
-**Nada pendente: sem SQL esperando, sem tag esperando.** O banco dela está na `0054` e a
-`v0.9.36` está publicada, com o instalador e o `latest.yml` confirmados na release.
+**Duas coisas esperando ela, e a primeira é pré-requisito da segunda:**
 
-**A `v0.9.36` leva a tela de Diagnóstico** (`TR-08.1`) e a metade do `TR-08.3` que não pedia
-migration — o `ErrorBoundary` e o contexto (rota, usuário, loja, versão) no `erros.log`. Detalhe
-completo em "Diagnóstico", seção 7. **Sem migration**, então não havia ordem a cumprir aqui,
-diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
+1. **Rodar a migration `0055`** no SQL Editor do Supabase (`supabase/migrations/0055_schema_versao.sql`).
+2. **Publicar a versão nova** (`v0.9.37`), que leva o aviso de banco desatualizado.
 
-**Uma coisa aconteceu no caminho e vale saber**: o job "segredos" do CI ficou **vermelho na
-`main`** logo depois de a tela de Diagnóstico ser mesclada — o gitleaks pegou as credenciais de
-**mentira** do teste da máscara, e estava certo. A publicação foi segurada até o CI voltar a
-ficar verde (a liberação é **por conteúdo**, não por caminho de arquivo — item 64 da seção 6).
-**Lição que fica**: `main` vermelha não se publica, mesmo com "publica" dito.
+Nada disso é urgente e nada está quebrado — a `v0.9.36` está publicada e rodando. Se a ordem
+inverter, desta vez não é armadilha: com o app novo e a `0055` ainda não rodada, o próprio app
+mostra a faixa dizendo que falta rodar a `0055`, que é exatamente o que ele foi feito pra fazer.
 
-**Etapa 4: 5 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
+#### O que saiu nesta leva: `TR-05.7` — o app avisa quando o banco está atrasado
+
+O sexto item da Etapa 4. O problema que ele resolve é uma dor real e já vivida: o auto-update
+chega em todas as lojas no mesmo minuto, mas a migration é manual, um projeto Supabase por vez —
+e quando as duas coisas saem de sincronia (a `0046`/`0047` já ficaram "não rodadas" por um tempo),
+o que aparece é `column ... does not exist` numa tela qualquer. Erro que não diz o que houve, não
+diz o que fazer, e parece defeito de quem estava usando.
+
+Agora o banco guarda em que versão está (`schema_versao`, migration `0055`), o app compara na
+abertura e, se estiverem diferentes, uma faixa no topo diz o que aconteceu e **qual arquivo falta
+rodar**. Detalhe completo em "Aviso de banco desatualizado", seção 7. Quatro decisões que valem
+saber, todas já escritas lá: aparece pra qualquer operador (quem topa com o erro é o balcão);
+nunca bloqueia; queda de rede não vira aviso; e a versão do banco passou a entrar no Diagnóstico
+e no resumo do WhatsApp — que era a ponta solta deixada pelo `TR-08.1`.
+
+**A regra nova que vale pra sempre**: toda migration daqui pra frente termina registrando a
+própria versão (`insert into schema_versao (versao) values (N) on conflict do nothing;`). Sem
+isso o aviso mente, dizendo que um banco em dia está atrasado — então o `npm test` reprova quem
+esquecer, e essa trava foi conferida plantando o esquecimento de propósito (inclusive o engano
+mais provável, que é copiar a linha da migration anterior com o número dela).
+
+#### Como foi validado
+
+Nada disso foi só lido. Num Postgres local: a instalação inteira rodada **três vezes do zero**, a
+`0055` sozinha **duas vezes** num banco no estado `0054`, e a RLS conferida trocando de papel — o
+operador logado lê, o anônimo não vê nada, e nem insert nem delete passam (`42501`). A matriz de
+RLS subiu de 640 pra **660 células** com a tabela nova.
+
+E o caminho inteiro — consulta → regra → faixa na tela — foi exercitado **no app de verdade**,
+com o banco de mentira das ferramentas de tela, nos quatro cenários que importam: banco em dia
+(faixa não aparece), banco atrás (aparece, com o número certo), banco anterior à `0055`, sem a
+tabela (aparece), e **rede caída (não aparece)** — esse último é o que impede o app de acusar a
+usuária toda vez que a internet oscilar.
+
+**Um efeito colateral que quase passou batido**: o banco de mentira das ferramentas de tela não
+conhecia a tabela nova, então a faixa apareceria nas 54 telas do catálogo e nas imagens do site.
+O `dados-demo.mjs` passou a responder a versão **lendo a constante do próprio código**, em vez de
+copiá-la — copiar só adiaria o problema pra próxima migration.
+
+**Etapa 4: 6 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
 Function · `TR-12.1` backup · `TR-09.1` canal de teste · `TR-04.6` endurecer o Electron ·
-`TR-05.7` versão do esquema · `TR-12.2` contrato e papéis — mais as **etapas 2 e 3 do
-`TR-04.1`**, que precisam da decisão dela antes de começar.
-
-**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — não há
-nada esperando publicação. Se ela pedir sugestão, ver "Por onde uma sessão nova começa", no marco
-de 13/09 logo abaixo (a resposta continua valendo, menos a parte de publicar).
+`TR-12.2` contrato e papéis — mais as **etapas 2 e 3 do `TR-04.1`**, que precisam da decisão dela
+antes de começar.
 
 **O que confirmar com ela em uso real** (nada disso dá pra testar daqui):
 
-1. **A tela de Diagnóstico** — o ícone novo no rodapé do menu lateral, ao lado da engrenagem,
-   **visível pra qualquer operador** (não é só de admin, de propósito: quem liga pedindo socorro é
-   quem está no balcão). Vale ver se as três checagens passam e se o "Copiar resumo" gera um texto
-   que dá pra colar no WhatsApp.
-2. **A Auditoria ampliada** (`v0.9.35`): se aparece o filtro **Ação**; se cadastrar um cliente
+1. **A faixa do banco desatualizado** — e o jeito mais fácil de ver é justamente instalar a
+   `v0.9.37` ANTES de rodar a `0055`: a faixa tem que aparecer dizendo "rode a 0055", e sumir
+   depois que ela rodar. Se aparecer com o banco já em dia, é bug e vale o print.
+2. **A tela de Diagnóstico** (`v0.9.36`, ainda não vista por ela): o ícone no rodapé do menu
+   lateral, ao lado da engrenagem, visível pra qualquer operador. Agora mostra também a versão do
+   banco.
+3. **A Auditoria ampliada** (`v0.9.35`): se aparece o filtro **Ação**; se cadastrar um cliente
    vira uma linha "Criou"; e se editar o preço de um item de OS aparece com o antes/depois — esse
    último é o buraco que o item veio fechar.
 
-**Estado do código**: `main` em dia com a `v0.9.36`, banco na `0054`. `tsc`, lint,
-`npm run contraste` e `npm run contraste:telas` limpos; **495 testes** passando nos dois fusos
-(eram 482 em 12/09) e a matriz de RLS batendo 640 de 640 (`npm run test:rls`, só no CI e em
-Postgres local — não roda no Windows).
+**Estado do código**: `main` com o `TR-05.7` mesclado, uma leva à frente da `v0.9.36`; banco dela
+na `0054`, esperando a `0055`. `tsc`, lint, `npm run contraste` e `npm run contraste:telas`
+limpos; **510 testes** passando nos dois fusos (eram 495 em 13/09) e a matriz de RLS batendo
+660 de 660 (`npm run test:rls`, só no CI e em Postgres local — não roda no Windows).
 
 O que está abaixo é o marco anterior.
 

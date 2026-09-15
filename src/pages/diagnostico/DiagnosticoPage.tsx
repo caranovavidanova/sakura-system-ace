@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { baixarDiagnostico, coletarDiagnostico } from "@/lib/diagnostico";
 import { mensagemDeErro } from "@/lib/errors";
 import {
+  descreverEsquema,
   montarResumo,
   ultimasLinhas,
   type ChecagemDiagnostico,
@@ -184,6 +185,7 @@ export function DiagnosticoPage() {
               Conexão e sessão
             </h2>
             <Linha rotulo="Banco desta empresa" valor={dados.enderecoDoBanco} />
+            <Linha rotulo="Versão do banco" valor={descreverEsquema(dados.esquema)} />
             <Linha
               rotulo="Usuário logado"
               valor={`${dados.sessao.nome} (@${dados.sessao.usuario})${

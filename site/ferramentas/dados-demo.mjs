@@ -1,5 +1,8 @@
 // Dados 100% inventados pra gerar as imagens do site.
 // Nenhum cliente, placa ou CPF de verdade da loja do pai dela.
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 const LOJA = "10000000-0000-0000-0000-000000000001";
 const OP = "20000000-0000-0000-0000-000000000001";
 const OP2 = "20000000-0000-0000-0000-000000000002";
@@ -382,7 +385,21 @@ export const configGarantia = [{
     "problema causado por outra peça fora de especificação.\n\nAraraquara, {data}.",
 }];
 
+// A versão do esquema que o app espera, lida do próprio código: um banco de
+// mentira "atrasado" faria a faixa de aviso do TR-05.7 aparecer nas 54 telas
+// do catálogo e nas imagens do site. Lido em vez de copiado justamente pra
+// não ficar pra trás na próxima migration.
+const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const versaoDoEsquema = Number(
+  readFileSync(join(RAIZ, "src/schemas/versaoEsquema.ts"), "utf8").match(
+    /VERSAO_ESQUEMA_ESPERADA = (\d+)/,
+  )[1],
+);
+
+const schemaVersao = [{ versao: versaoDoEsquema, aplicada_em: dia(-30) }];
+
 export const TABELAS = {
+  schema_versao: schemaVersao,
   lojas, clientes, veiculos, pecas, servicos, depositos,
   ordens_servico: ordens,
   ordens_servico_itens: ordensItens,

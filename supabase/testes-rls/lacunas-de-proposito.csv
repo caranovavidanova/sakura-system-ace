@@ -12,3 +12,6 @@ tabela,comando,motivo
 auditoria,INSERT,só a função de gatilho (security definer) escreve na trilha
 auditoria,UPDATE,trilha é append-only: registro histórico não se reescreve
 auditoria,DELETE,apagar é só pelo SQL Editor via expurgar_auditoria()
+schema_versao,INSERT,só a migration rodando no SQL Editor registra versão
+schema_versao,UPDATE,versão aplicada é fato passado: não se reescreve
+schema_versao,DELETE,idem — apagar daqui faria o app mentir sobre o banco

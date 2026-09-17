@@ -103,6 +103,39 @@ jobs:
       - name: Contraste nas telas
         run: npm run contraste:telas
 
+  electron:
+    name: Electron de verdade (segurança e preload)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Mesmo motivo do job de contraste: o Playwright não é dependência do
+      # projeto, entra só nesta rodada. Aqui não é preciso baixar navegador
+      # nenhum (`playwright install`) — quem abre a janela é o Electron que o
+      # próprio projeto já instala.
+      - name: Playwright (só nesta rodada)
+        run: npm i --no-save playwright
+
+      - run: npm run build
+
+      # Abre o app de verdade e confere as travas de segurança do processo
+      # principal (item TR-04.6), mais a coisa que só abrindo se descobre: se
+      # o preload rodou até o fim. Ele já quebrou em silêncio uma vez, e o
+      # único sintoma foi a versão do app sumir de um canto da tela
+      # (PROJETO_STATUS.md, seção 6, item 18).
+      #
+      # `xvfb-run` porque a máquina do CI não tem tela; já vem instalado no
+      # ubuntu-latest.
+      - name: Teste no Electron real
+        run: npm run test:electron
+
   matriz-rls:
     name: Matriz de RLS
     runs-on: ubuntu-latest

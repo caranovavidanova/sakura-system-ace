@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
-import { fileURLToPath } from "node:url";
+import { app, BrowserWindow, ipcMain, Menu, session, shell } from "electron";
+import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
@@ -17,6 +18,141 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 
 let mainWindow: BrowserWindow | null = null;
+
+// --- Segurança do processo principal (item TR-04.6 do guia) ---------------
+//
+// Auditoria feita seguindo o checklist oficial de segurança do Electron.
+// Nada aqui muda o que a pessoa vê na tela: é o que impede que um problema
+// dentro de uma tela (um XSS, um texto vindo do banco que chega envenenado)
+// vire acesso à máquina, requisição autenticada pra qualquer endereço, ou
+// janela nova apontando pra fora do app.
+//
+// A regra que orienta tudo abaixo é a mesma que o `whatsapp:abrir` já usava:
+// **lista de permissão, nunca lista de proibição**. O que não está escrito
+// aqui como permitido não passa.
+
+// De onde a tela do app legitimamente carrega. Em desenvolvimento é o
+// servidor do Vite; no app instalado é o arquivo dentro da pasta `dist`.
+// `pathToFileURL` em vez de montar "file://" + caminho na mão, porque no
+// Windows o caminho é `C:\...`, que não vira URL válida por concatenação.
+// `||` e não `??`, de propósito: variável de ambiente ausente costuma
+// chegar como string VAZIA, não como `undefined`, e `??` só troca
+// null/undefined — com `??`, esta constante virava "" e o
+// `startsWith("")` lá embaixo passava a aprovar qualquer endereço, ou
+// seja, a trava existiria sem travar nada. É a armadilha já registrada na
+// seção 6, item 8, e foi o teste do Electron que a pegou aqui.
+const ORIGEM_DA_TELA = VITE_DEV_SERVER_URL || pathToFileURL(RENDERER_DIST).href;
+
+// Item 17 do checklist: validar o remetente de toda mensagem de IPC. Sem
+// isso, qualquer coisa carregada dentro da janela (um iframe, uma página que
+// tenha conseguido navegar pra fora) conversa com o processo principal como
+// se fosse a tela do app — e o processo principal é justamente quem lê
+// arquivo, abre endereço no sistema operacional e faz requisição autenticada.
+//
+// Os iframes que o app usa de verdade (garantia, recibo, DANFE) são `blob:`
+// e `about:srcdoc`, que não começam com a origem da tela — ou seja, são
+// recusados por este teste, e isso está certo: nenhum deles usa IPC.
+function remetenteEhATelaDoApp(evento: IpcMainInvokeEvent | IpcMainEvent): boolean {
+  const url = evento.senderFrame?.url;
+  return typeof url === "string" && url.startsWith(ORIGEM_DA_TELA);
+}
+
+// Registra um pedido da tela que espera resposta. Existe pra que a checagem
+// de remetente não dependa de alguém lembrar de repetí-la em cada handler —
+// esquecer em um só já bastaria pra abrir o buraco de novo.
+function aoPedidoDaTela<Resposta>(
+  canal: string,
+  tratador: (...argumentos: never[]) => Promise<Resposta> | Resposta,
+) {
+  ipcMain.handle(canal, (evento, ...argumentos) => {
+    if (!remetenteEhATelaDoApp(evento)) {
+      throw new Error(`Pedido recusado: "${canal}" só aceita chamada da tela do app.`);
+    }
+    return tratador(...(argumentos as never[]));
+  });
+}
+
+// Mesma checagem, para os avisos de mão única (`send`, sem resposta).
+function aoAvisoDaTela(canal: string, tratador: (...argumentos: never[]) => void) {
+  ipcMain.on(canal, (evento, ...argumentos) => {
+    if (!remetenteEhATelaDoApp(evento)) return;
+    tratador(...(argumentos as never[]));
+  });
+}
+
+// A política de segurança de conteúdo (CSP) da tela. Ela é declarada por
+// **cabeçalho de resposta**, e não só por `<meta>` no HTML, porque o
+// cabeçalho vale antes de o documento ser interpretado e não depende de o
+// HTML chegar inteiro.
+//
+// Três escolhas que valem entender antes de mexer:
+//
+// 1. `'unsafe-inline'` em **style-src** é obrigatório aqui, e foi medido, não
+//    suposto: sem ele o `style={{...}}` do React para de aplicar (some a
+//    barra de rolagem customizada, o menu de ações sai do lugar, os gráficos
+//    encolhem) e o `<style>` dentro do documento de garantia/recibo não vale
+//    mais. Em **script-src** ele NÃO entra — é lá que ele custaria caro, e é
+//    justamente o que faz um XSS virar execução de código.
+// 2. `connect-src` não pode ser só o banco configurado hoje: a tela de
+//    conexão testa um endereço que a pessoa acabou de digitar, e num
+//    computador recém-instalado não existe banco configurado nenhum. Por
+//    isso a permissão é "qualquer projeto Supabase" mais o endereço desta
+//    máquina (que cobre um Supabase em domínio próprio). Travar isso no host
+//    configurado repetiria o erro de deixar a pessoa do lado de fora do
+//    sistema (seção 6, item 33).
+// 3. `frame-src` precisa de `blob:` e `'self'`: é como a garantia, o recibo
+//    do cliente e o DANFE aparecem dentro do app.
+const DESTINOS_DE_REDE_DA_TELA = [
+  // Qualquer projeto Supabase hospedado — ver o ponto 2 acima.
+  "https://*.supabase.co",
+  "https://*.supabase.in",
+  // Busca de endereço por CEP (lib/viaCep.ts).
+  "https://viacep.com.br",
+  // Checagem de "este computador alcança a internet?" da tela de
+  // Diagnóstico — é o GitHub porque é de lá que a atualização vem.
+  "https://api.github.com",
+];
+
+function politicaDeSeguranca(): string {
+  const destinos = [...DESTINOS_DE_REDE_DA_TELA];
+  // O banco desta máquina, para o caso de um Supabase em domínio próprio.
+  try {
+    if (process.env.SAKURA_SUPABASE_URL) {
+      destinos.push(new URL(process.env.SAKURA_SUPABASE_URL).origin);
+    }
+  } catch {
+    // Endereço salvo inválido: a tela de conexão resolve isso, e uma CSP
+    // não é lugar de reclamar de digitação.
+  }
+  return [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    `connect-src 'self' ${destinos.join(" ")}`,
+    "frame-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ].join("; ");
+}
+
+function aplicarPoliticaDeSeguranca() {
+  // Só no app empacotado: o servidor de desenvolvimento do Vite precisa de
+  // script embutido e `eval` pro recarregamento automático, então uma CSP
+  // restritiva em `npm run dev` quebraria a ferramenta de trabalho dela sem
+  // proteger o app que vai pra loja, que é sempre o empacotado.
+  if (VITE_DEV_SERVER_URL) return;
+  session.defaultSession.webRequest.onHeadersReceived((detalhes, responder) => {
+    responder({
+      responseHeaders: {
+        ...detalhes.responseHeaders,
+        "Content-Security-Policy": [politicaDeSeguranca()],
+      },
+    });
+  });
+}
 
 // --- Conexão com o Supabase, escolhida no próprio app ---------------------
 //
@@ -72,9 +208,21 @@ aplicarConexaoNoAmbiente(carregarConexaoSalva());
 // Grava a conexão escolhida e recarrega a tela: o cliente do Supabase é
 // montado uma vez só, quando a tela carrega, então trocar de banco de dados
 // sem recarregar deixaria o app falando com o banco antigo.
-ipcMain.handle("conexao:salvar", async (_evento, conexao: ConexaoSalva) => {
-  fs.writeFileSync(CAMINHO_CONEXAO(), JSON.stringify(conexao, null, 2), "utf8");
-  aplicarConexaoNoAmbiente(conexao);
+aoPedidoDaTela("conexao:salvar", async (conexao: ConexaoSalva) => {
+  // O que chega da tela é dado de entrada, não promessa: gravar um
+  // `conexao.json` com qualquer coisa dentro deixaria o app sem conseguir
+  // abrir na vez seguinte, e o conserto seria achar o arquivo no %APPDATA%.
+  if (
+    typeof conexao?.url !== "string" ||
+    typeof conexao?.chave !== "string" ||
+    !conexao.url ||
+    !conexao.chave
+  ) {
+    throw new Error("Conexão inválida: endereço e chave precisam ser texto preenchido.");
+  }
+  const limpa: ConexaoSalva = { url: conexao.url, chave: conexao.chave };
+  fs.writeFileSync(CAMINHO_CONEXAO(), JSON.stringify(limpa, null, 2), "utf8");
+  aplicarConexaoNoAmbiente(limpa);
   mainWindow?.webContents.reload();
 });
 
@@ -108,9 +256,33 @@ interface FetchComAuthResultado {
   bytes: Uint8Array;
 }
 
-ipcMain.handle(
+// Esta ponte é uma requisição autenticada saindo da máquina da loja, então
+// ela não pode aceitar qualquer endereço: se a tela for comprometida, uma
+// ponte aberta vira um proxy que leva junto o token fiscal — o segredo que
+// **emite e cancela nota no CNPJ da loja**. Por isso a lista é de hosts
+// exatos: `startsWith` deixaria passar algo como
+// "https://api.focusnfe.com.br.dominio-de-alguem.com".
+const HOSTS_DA_FOCUS_NFE = new Set(["api.focusnfe.com.br", "homologacao.focusnfe.com.br"]);
+
+function destinoPermitidoNaPonte(url: unknown): boolean {
+  if (typeof url !== "string") return false;
+  let endereco: URL;
+  try {
+    endereco = new URL(url);
+  } catch {
+    return false;
+  }
+  return endereco.protocol === "https:" && HOSTS_DA_FOCUS_NFE.has(endereco.hostname);
+}
+
+aoPedidoDaTela(
   "http:fetchComAuth",
-  async (_evento, opcoes: FetchComAuthOpcoes): Promise<FetchComAuthResultado> => {
+  async (opcoes: FetchComAuthOpcoes): Promise<FetchComAuthResultado> => {
+    if (!destinoPermitidoNaPonte(opcoes?.url)) {
+      throw new Error(
+        "Endereço recusado: esta ponte só fala com a API da Focus NFe (api ou homologacao).",
+      );
+    }
     const resposta = await fetch(opcoes.url, {
       method: opcoes.metodo,
       headers: {
@@ -143,7 +315,7 @@ ipcMain.handle(
 //
 // Por isso a checagem é por lista de permissão, não por lista de proibição:
 // tem que ser https, tem que ser o host wa.me, e nada mais passa.
-ipcMain.handle("whatsapp:abrir", async (_evento, url: unknown): Promise<boolean> => {
+aoPedidoDaTela("whatsapp:abrir", async (url: unknown): Promise<boolean> => {
   if (typeof url !== "string") return false;
   let endereco: URL;
   try {
@@ -173,11 +345,51 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       backgroundThrottling: false,
+      // Os quatro abaixo já são o padrão do Electron 33 — foram conferidos
+      // ligados, rodando o app de verdade, antes de serem escritos aqui.
+      // Estão declarados mesmo assim por dois motivos: quem lê este arquivo
+      // não precisa ir procurar qual era o padrão da versão em uso, e uma
+      // troca de padrão numa atualização futura do Electron não muda a
+      // postura deste app sem alguém decidir.
+      //
+      // O que cada um evita, em uma linha: `contextIsolation` é o que impede
+      // a tela de alcançar o que o preload enxerga; `nodeIntegration`
+      // desligado é o que faz um XSS continuar sendo um XSS em vez de virar
+      // leitura e escrita de arquivo na máquina; `sandbox` prende o processo
+      // da tela; `webSecurity` mantém a mesma-origem valendo.
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
     },
+  });
+
+  // Nada navega pra fora do app. O menu lateral usa HashRouter (troca só o
+  // `#`, que nem passa por aqui), então o que sobraria seria um link vindo
+  // de texto cadastrado no banco levando a janela inteira pra outro site —
+  // com a barra de endereço escondida, ninguém veria que saiu do sistema.
+  // Link externo legítimo tem um caminho próprio e conferido: o
+  // `whatsapp:abrir`, que abre no navegador do computador.
+  mainWindow.webContents.on("will-navigate", (evento, url) => {
+    if (!url.startsWith(ORIGEM_DA_TELA)) {
+      evento.preventDefault();
+      logErroDaTela(`Navegação bloqueada para ${url.slice(0, 200)}`);
+    }
+  });
+
+  // E nada abre janela nova: `window.open` e `target="_blank"` viram uma
+  // janela do Electron sem barra de endereço nenhuma, que é a forma mais
+  // fácil de passar um site qualquer por "tela do sistema".
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    logErroDaTela(`Janela nova bloqueada para ${url.slice(0, 200)}`);
+    return { action: "deny" };
   });
 
   if (VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(VITE_DEV_SERVER_URL);
+    // DevTools só em desenvolvimento — no app instalado ele nunca abre
+    // sozinho, e sem a barra de menu nativa (removida logo acima) também
+    // não há atalho pra abrir sem querer no balcão.
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(RENDERER_DIST, "index.html"));
@@ -218,7 +430,7 @@ function logErroDaTela(mensagem: string) {
   }
 }
 
-ipcMain.on("log:erroDaTela", (_evento, mensagem: unknown) => {
+aoAvisoDaTela("log:erroDaTela", (mensagem: unknown) => {
   logErroDaTela(String(mensagem).slice(0, 4000));
 });
 
@@ -234,7 +446,7 @@ ipcMain.on("log:erroDaTela", (_evento, mensagem: unknown) => {
 // **Nada aqui lê banco de dados nem chave de acesso.** A conexão que a tela
 // mostra sai de `SAKURA_SUPABASE_URL`, que é só o endereço — a chave nunca
 // passa por estes handlers.
-ipcMain.handle("diagnostico:info", async () => ({
+aoPedidoDaTela("diagnostico:info", async () => ({
   versaoApp: app.getVersion(),
   electron: process.versions.electron,
   chromium: process.versions.chrome,
@@ -279,7 +491,7 @@ function lerFinalDoArquivo(caminho: string, linhas: number): string {
   }
 }
 
-ipcMain.handle("diagnostico:logs", async (_evento, linhas: unknown) => {
+aoPedidoDaTela("diagnostico:logs", async (linhas: unknown) => {
   const quantas = typeof linhas === "number" && linhas > 0 ? Math.min(linhas, 2000) : 200;
   return {
     erros: lerFinalDoArquivo(CAMINHO_LOG_ERROS(), quantas),
@@ -288,6 +500,9 @@ ipcMain.handle("diagnostico:logs", async (_evento, linhas: unknown) => {
 });
 
 app.whenReady().then(() => {
+  // Antes de abrir a janela: a política precisa estar valendo já na primeira
+  // resposta, senão o documento inicial carrega sem ela.
+  aplicarPoliticaDeSeguranca();
   createWindow();
 
   if (!VITE_DEV_SERVER_URL) {

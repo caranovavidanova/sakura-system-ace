@@ -560,6 +560,27 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── scripts/varredura-contraste.mjs # `npm run contraste` — procura combinação de fundo/letra
 │                                  # ilegível nas classes do app (sobra do tema claro antigo), ver
 │                                  # item 17 da seção 6
+├── scripts/testar-electron.mjs    # `npm run test:electron` — abre o app NO ELECTRON DE
+│                                  # VERDADE (Playwright + xvfb) e confere 22 coisas: o preload
+│                                  # rodou até o fim, as travas de segurança da janela, a CSP
+│                                  # recusando script embutido e endereço fora da lista, e — do
+│                                  # outro lado — que ela NÃO quebrou o estilo do React nem os
+│                                  # iframes de garantia/recibo/DANFE. É o único teste que pega
+│                                  # preload quebrado em silêncio (item 18 da seção 6). NÃO roda
+│                                  # no Windows dela: é checagem de CI, como a matriz de RLS
+├── scripts/ligar-fuses.mjs        # grava as "chavinhas" de segurança dentro do executável no
+│                                  # build (`build.afterPack`) — sem elas, quem tem o app
+│                                  # instalado roda o `.exe` como um Node.js comum. Ver item
+│                                  # TR-04.6 e o comentário do próprio arquivo sobre a chavinha
+│                                  # que ficou de fora de propósito (integridade do asar, que
+│                                  # exige electron-builder 26)
+├── scripts/checar-versao-electron.mjs # "o Electron deste projeto ainda recebe correção de
+│                                  # segurança?" — roda sozinho uma vez por mês
+│                                  # (.github/workflows/electron-desatualizado.yml). Reprova só
+│                                  # quando a linha em uso sai do suporte, nunca por haver
+│                                  # versão nova: aviso que aparece toda semana vira aviso
+│                                  # ignorado. **Hoje ele está vermelho de propósito** — ver
+│                                  # "Onde parou (17/09/2026)"
 ├── scripts/testar-nos-dois-fusos.mjs # `npm run test:fusos` — roda a suíte DUAS vezes, em
 │                                  # America/Sao_Paulo e em UTC. Está em .mjs porque
 │                                  # `TZ=x npm test` não funciona no PowerShell do Windows dela.
@@ -567,8 +588,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── .github/workflows/ci.yml      # CI — roda em todo push/PR as cinco checagens que antes eram
 │                                  # feitas à mão: typecheck, lint, testes nos dois fusos,
 │                                  # contraste e "o instalacao-completa.sql está em dia?". Tem mais
-│                                  # três jobs próprios: contraste nas telas, a MATRIZ DE RLS
-│                                  # (sobe um Postgres de serviço) e "segredos", que varre
+│                                  # quatro jobs próprios: contraste nas telas, a MATRIZ DE RLS
+│                                  # (sobe um Postgres de serviço), "Electron de verdade" (o
+│                                  # `npm run test:electron`) e "segredos", que varre
 │                                  # credencial e barra certificado digital versionado. NÃO builda
 │                                  # o instalador (isso é do release.yml). Ver item 48 da seção 6
 
@@ -1226,11 +1248,16 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    `110.00000000000001` em vez de `110`) — e, na varredura de 02/09/2026 (itens 42 a 45), foi
    escrevendo teste pro comportamento esperado que os bugs de desconto na NFC-e apareceram, dois
    deles em lugares que a leitura do código já tinha passado batido.
-   **Um teste de verdade fora desse padrão, nesta sessão**: a tela de conexão foi validada de ponta
+   **Um teste de verdade fora desse padrão**: a tela de conexão foi validada de ponta
    a ponta no **Electron real** (Playwright + `xvfb-run`, ver item 6 desta seção), inclusive o
    caminho de falha — e ali o sandbox ajuda em vez de atrapalhar, porque a ausência de rede pro
-   Supabase reproduz naturalmente o cenário "a checagem reprovou". Não está no `npm test` (é script
-   avulso), mas é o único jeito de pegar falha silenciosa de preload.
+   Supabase reproduz naturalmente o cenário "a checagem reprovou".
+   **Desde 17/09/2026 isso deixou de ser script avulso**: virou `npm run test:electron`
+   (`scripts/testar-electron.mjs`, 22 checagens), com job próprio no CI. Antes, cada sessão que
+   precisava abrir o Electron de verdade escrevia o seu e jogava fora no fim — ou seja, o único
+   teste capaz de pegar falha silenciosa de preload nunca sobrevivia pra pegar a falha seguinte.
+   Continua fora do `npm test` (precisa de Electron e de tela de mentira, não roda no Windows
+   dela).
    **E desde 13/09/2026 a RLS também é conferida por máquina**, fora do `npm test`:
    `npm run test:rls` (item `TR-07.3`) monta um banco do zero, simula cinco papéis e confere as
    660 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
@@ -2320,6 +2347,48 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
       qualquer coisa que escreva credencial de exemplo (o binário não é dependência do projeto;
       baixar a versão fixada em `ci.yml` leva segundos).
 
+65. **Endurecer o Electron: sete coisas que só apareceram medindo (17/09/2026, item
+    `TR-04.6`).** A auditoria de segurança do processo principal tinha, de todos os itens do guia,
+    a maior chance de quebrar o app inteiro sem ninguém ver — e quase quebrou, de um jeito
+    conhecido:
+    - **A trava que não travava: `??` no lugar de `||`, outra vez.** `ORIGEM_DA_TELA` (a origem
+      de onde a tela pode carregar, usada pra recusar navegação e pra validar quem fala por IPC)
+      nasceu com `VITE_DEV_SERVER_URL ?? ...`. Variável de ambiente ausente chega como string
+      **vazia**, e `??` só troca `null`/`undefined` — então a constante virava `""` e o
+      `startsWith("")` **aprovava qualquer endereço**. É exatamente o item 8 desta seção, sete
+      anos-luz depois, e a lição é a mesma: uma trava escrita e nunca exercitada não é uma trava.
+      Quem pegou foi o teste novo do Electron, na primeira rodada.
+    - **O instrumento mentiu duas vezes, em direções opostas.** (a) Testar a CSP com `eval()`
+      via Playwright dá "passou" sempre — o `evaluate` entra pelo canal de depuração, que **não
+      passa pela CSP**; a medição honesta é inserir um `<script>` no documento. (b) Ler os fuses
+      comparando o valor com `'1'` dá "tudo desligado" sempre — o que vem é o **código do
+      caractere** (48/49), não o dígito. Nos dois casos o número era redondo demais, que é o
+      sinal do item 58.
+    - **Desligar o `sandbox` quebra o preload inteiro, em silêncio.** Descoberto por mutação:
+      com `sandbox: false`, `window.sakuraApp` some — a ponte não existe, e o sintoma é a tela
+      funcionando "quase tudo". Ou seja, `sandbox: true` não é só endurecimento, é **requisito**
+      pro preload deste app rodar. Não mexer ali achando que é conservadorismo.
+    - **O fuse que desliga `--inspect` impede o Playwright de dirigir o app EMPACOTADO.** Não é
+      defeito: é o fuse fazendo o que promete. Consequência prática: `npm run test:electron`
+      roda sobre `electron .` (o do `node_modules`, sem fuses), e a prova de que o instalador
+      abre com as chavinhas é outra — rodar o binário e conferir que ele cria a pasta de dados e
+      sobe renderer/GPU. Quem tentar automatizar o `.exe` instalado vai esbarrar nisto.
+    - **`'unsafe-inline'` em `style-src` é obrigatório, e foi medido.** Sem ele o `style={{...}}`
+      do React para de aplicar — some a barra de rolagem customizada, o menu de ações sai do
+      lugar — e o `<style>` dentro do documento de garantia/recibo (que vai por `srcdoc`) deixa
+      de valer. Em `script-src` ele **não** entra, que é onde custaria caro.
+    - **`connect-src` não pode ser "o banco configurado".** A tela de conexão testa um endereço
+      que a pessoa acabou de digitar, e num computador recém-instalado não existe banco nenhum
+      configurado — travar ali repetiria o erro do item 33, de deixar a usuária do lado de fora.
+      A permissão é "qualquer projeto Supabase" mais o endereço desta máquina.
+    - **Um teste frouxo por uma palavra.** As checagens da ponte procuravam `/recusado/i`, e
+      **duas** mensagens diferentes têm essa palavra: a da ponte ("endereço recusado") e a da
+      validação de remetente ("pedido recusado"). Com isso, o caso em que o IPC parasse de
+      funcionar **por inteiro** ficaria verde. Corrigido procurando a frase exata e, mais
+      importante, somando uma checagem **positiva**: a tela legítima continua sendo atendida.
+    **Cada uma das 22 checagens foi conferida quebrando o código de propósito** (nove mutações,
+    todas ficaram vermelhas na checagem certa) — a mesma disciplina dos itens 53, 62 e 63.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -2980,6 +3049,34 @@ Quatro coisas que valem saber:
   **Ficou de fora, de propósito**: a trilha das últimas 20 ações do usuário (o resto do `TR-08.3`)
   e a versão do esquema do banco no diagnóstico (depende do `TR-05.7`, que pede migration).
   **Ainda não visto por ela rodando.**
+- **Segurança do app em si** (17/09/2026, item `TR-04.6`): nada disso aparece na tela — é o que
+  impede que um problema dentro de uma tela vire acesso à máquina de quem usa. Sete frentes, em
+  `electron/main.ts`:
+  - **As quatro travas da janela declaradas** (`contextIsolation`, `sandbox`, `webSecurity`
+    ligados; `nodeIntegration` desligado). Já eram o padrão do Electron 33 — foram conferidas
+    ligadas, rodando o app, antes de virarem texto; estão escritas pra que uma troca de padrão
+    numa atualização futura não mude a postura do app sem alguém decidir.
+  - **Uma política de segurança de conteúdo (CSP)**, declarada por cabeçalho. O efeito prático:
+    script embutido na página é **recusado**, e o app só consegue falar com uma lista curta de
+    endereços (o Supabase, o ViaCEP e o GitHub). Sem isso, um texto envenenado vindo do banco
+    podia mandar dado da loja pra qualquer lugar. Só no app empacotado: em `npm run dev` ela
+    atrapalharia a ferramenta de trabalho sem proteger o que vai pra loja.
+  - **A ponte da Focus NFe deixou de aceitar qualquer endereço.** Ela carrega o token que
+    **emite e cancela nota no CNPJ da loja**; agora só fala com os dois endereços da Focus NFe,
+    conferidos por host exato.
+  - **Todo pedido da tela pro processo principal é conferido** (é a tela do app mesmo que está
+    pedindo?). Vale pra salvar conexão, abrir WhatsApp, ler registro e diagnóstico.
+  - **Nada navega pra fora do app nem abre janela nova** — sem barra de endereço, uma janela
+    dessas seria indistinguível do sistema.
+  - **As "chavinhas" (fuses) gravadas no executável**: quem tem o programa instalado não
+    consegue mais rodá-lo como um Node.js comum nem acoplar depurador — que era o atalho pra ler
+    tudo que o processo principal enxerga, a conexão do banco inclusive. Gravadas no build
+    (`scripts/ligar-fuses.mjs`), e conferidas no binário empacotado.
+  - **Um teste que abre o app de verdade** (`npm run test:electron`, 22 checagens) — ver item 65
+    da seção 6 pro que só apareceu medindo.
+  **Ainda não visto por ela rodando**, e é o tipo de mudança que só se percebe se algo quebrar:
+  o que vale conferir depois do auto-update é o de sempre funcionando — abrir uma OS, buscar
+  endereço por CEP, ver a garantia, emitir uma nota e abrir o WhatsApp de uma cobrança.
 - **Auditoria**: admin-only, acesso via ícone no rodapé da Sidebar (ao lado da engrenagem de
   Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem **criou**,
   editou ou excluiu o quê e quando, com filtro por tabela, por **ação** e por operador, e um "Ver
@@ -3768,7 +3865,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
 | 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`, rodada por ela) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Tag `v0.9.37`. Etapa 4 em 6 de 12. |
-| 17/09 | `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. **Sem tag e sem migration.** Etapa 4 em 7 de 12. |
+| 17/09 | Dois itens da Etapa 4. `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. E `TR-04.6` — **endurecer o Electron**: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços dela, todo pedido da tela conferido, nada navegando pra fora, as chavinhas gravadas no executável, e um teste que abre o app de verdade (`npm run test:electron`). **Sem migration**; a leva do `TR-04.6` ficou **esperando tag**. Etapa 4 em 8 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4915,16 +5012,43 @@ da seção 8**, como pendência da fase 2.
   abre dizendo isso, e o valor do item (nas palavras do próprio guia) é ela saber que a pergunta
   existe, não ter a resposta pronta.
 
-**Etapa 4: 7 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
-Function · `TR-12.1` backup próprio e testado · `TR-09.1` canal de teste antes de atualizar todas
-as lojas · `TR-04.6` endurecer o Electron — mais as **etapas 2 e 3 do `TR-04.1`**, que são o
-trabalho grande (as policies, tabela por tabela) e **precisam da decisão dela antes de começar**.
+#### E, no mesmo dia: `TR-04.6` — endurecer o Electron
 
-**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — não há
-nada esperando publicação nem SQL. Se ela pedir sugestão, os dois próximos naturais são o
-`TR-12.1` (cópia de segurança própria e **testada** — hoje a do Supabase existe mas nunca foi
-restaurada pra valer) e o `TR-09.1` (canal de teste, pra uma tag ruim não chegar nas três lojas
-no mesmo minuto). A etapa 2 do `TR-04.1` continua sendo a maior, e continua dependendo da
+Segundo item da sessão. É uma auditoria de segurança do **programa em si** — a parte do sistema
+que roda fora da tela e tem acesso à máquina de quem usa. Não muda nada do que ela vê; o que
+muda é o tamanho do estrago possível se um dia entrar coisa envenenada pela tela.
+
+O que saiu está em "Segurança do app em si" (seção 7); o que se aprendeu, no item 65 da seção 6.
+O checklist foi percorrido item a item e **dois pontos não foram feitos como o guia pedia** — os
+dois de propósito, e é o que mais importa registrar:
+
+- **A chavinha de integridade do `app.asar` ficou de fora.** Ela é a que confere se o programa
+  instalado foi adulterado. Só funciona quando o empacotador grava o hash do asar junto no
+  executável, e o electron-builder 25 (o que este projeto usa) não faz isso — ligá-la sozinha
+  produziria um **instalador que não abre**, e o estrago apareceria na loja, depois do
+  auto-update. Fica possível ao subir o electron-builder pra 26, que é decisão dela.
+- **O Electron NÃO foi atualizado**, e este é o achado desconfortável da auditoria: o projeto
+  está na linha **33**, e as que ainda recebem correção de segurança hoje são a **42, 43 e 44**.
+  Ou seja, o Chromium que desenha as telas não recebe mais correção. Subir isso é mexer no
+  Chromium, que **já mudou comportamento de campo de formulário neste projeto** (item 41 da
+  seção 6: a mesma tela responde diferente no Chromium 130 e no 141) — então não é coisa pra
+  fazer junto com outras mudanças, às cegas, sem teste na loja. O que foi entregue no lugar é o
+  **aviso**: `npm run checar-versao-electron` roda sozinho uma vez por mês e reprova só quando a
+  linha em uso sai do suporte. **Ele está vermelho hoje, e isso está certo** — é o fato, não um
+  defeito do aviso. Ver "O que depende dela agora", logo abaixo.
+
+**Etapa 4: 8 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
+Function · `TR-12.1` backup próprio e testado · `TR-09.1` canal de teste antes de atualizar todas
+as lojas — mais as **etapas 2 e 3 do `TR-04.1`**, que são o trabalho grande (as policies, tabela
+por tabela) e **precisam da decisão dela antes de começar**.
+
+**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — mas
+desta vez há uma coisa esperando: **a `main` está uma leva à frente da `v0.9.37`** (o `TR-04.6`),
+e nada disso chega na loja sem uma tag nova. Sem migration: o banco dela continua na `0055`,
+então não há ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
+Se ela pedir sugestão de próximo item, os dois naturais são o `TR-12.1` (cópia de segurança
+própria e **testada** — hoje a do Supabase existe mas nunca foi restaurada pra valer) e o
+`TR-09.1` (canal de teste, pra uma tag ruim não chegar nas três lojas no mesmo minuto). A etapa 2 do `TR-04.1` continua sendo a maior, e continua dependendo da
 decisão dela — ver "Por onde uma sessão nova começa", no marco de 13/09 mais abaixo.
 
 **O que depende dela agora** (nada bloqueia o uso do sistema):
@@ -4935,9 +5059,16 @@ decisão dela — ver "Por onde uma sessão nova começa", no marco de 13/09 mai
 2. **Trocar as três credenciais expostas** no histórico público (CSC da SEFAZ, token do portal
    Giap, senha do portal da prefeitura) — item 50 da seção 6 explica por que a varredura
    automática **não** substitui isso.
-3. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), agora que ele já foi visto
+3. **Decidir sobre atualizar o Electron** — o programa está numa versão que **não recebe mais
+   correção de segurança** (linha 33; as atuais são 42 a 44). Não dá pra fazer por conta
+   própria: muda o Chromium que desenha as telas, e isso já mudou comportamento de campo de
+   formulário neste projeto. O caminho proposto é subir **uma linha por vez**, rodar
+   `npm run test:electron`, e publicar cada uma **sozinha**, sem outras mudanças junto — assim,
+   se algo estranhar na loja, só existe uma causa possível. É trabalho de umas quantas sessões,
+   e precisa dela testando na loja entre uma e outra.
+4. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), agora que ele já foi visto
    verde muitas vezes.
-4. **Todo mês**: cadastrar a alíquota da competência no portal da prefeitura antes da primeira
+5. **Todo mês**: cadastrar a alíquota da competência no portal da prefeitura antes da primeira
    NFS-e do mês — que agora, pelo menos, o sistema lembra.
 
 **O que confirmar com ela em uso real** (nada disso dá pra testar daqui, e nada mudou desde
@@ -4945,9 +5076,11 @@ decisão dela — ver "Por onde uma sessão nova começa", no marco de 13/09 mai
 **Diagnóstico** (`v0.9.36`, ainda não vista por ela); e a **Auditoria ampliada** (`v0.9.35` — o
 filtro Ação, a linha "Criou", e o antes/depois ao editar o preço de um item de OS).
 
-**Estado do código**: `main` em dia com a `v0.9.37`, banco dela na `0055`. `tsc`, lint e
-`npm run contraste` limpos; **510 testes** passando nos dois fusos — os mesmos de 15/09, porque
-esta leva não tocou em código nenhum.
+**Estado do código**: `main` **uma leva à frente da `v0.9.37`** (o `TR-04.6`, esperando ela
+decidir se publica) e banco dela na `0055` — nada esperando SQL. `tsc`, lint e
+`npm run contraste` limpos; **510 testes** passando nos dois fusos (o número não mudou: o que
+entrou nesta leva é o processo principal do Electron, e o teste disso é o `npm run test:electron`,
+que roda fora do `npm test` — 22 checagens, todas passando).
 
 O que está abaixo é o marco anterior.
 

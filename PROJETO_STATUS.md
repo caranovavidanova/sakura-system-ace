@@ -2432,6 +2432,11 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     publicado, que é a promessa inteira. E o primeiro teste "achou um bug" que era do próprio
     teste (o `gh` de mentira não aplicava o filtro `--jq`) — item 58 outra vez: desconfie do
     instrumento antes da tela.
+    **Desfecho, no mesmo dia**: com o desenho novo o build publicou os três arquivos em **2
+    minutos** (contra os 20+ que falhavam), e a conferência de ponta a ponta passou — baixando o
+    instalador do endereço que o app usa (`releases/latest/download/`) e comparando a impressão
+    digital com a que o `latest.yml` anuncia: **idênticas**. Canal de atualização de volta, na
+    própria `v0.9.38`.
 
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
@@ -5076,6 +5081,10 @@ enxergar. Nada foi corrompido e nenhuma loja perdeu dado; o que parou foi só a 
 automática, com cada computador seguindo normal na versão que já tinha. O conserto está no
 `release.yml` (o `electron-builder` só builda; quem publica é o `gh`, arquivo por arquivo, com o
 `latest.yml` por último) e o caso inteiro, com as lições, está no **item 66 da seção 6**.
+**Resolvido no mesmo dia, na própria `v0.9.38`**: o build novo publicou os três arquivos em 2
+minutos e a conferência de ponta a ponta passou (o instalador baixado do endereço que o app usa
+bate com a impressão digital que o `latest.yml` anuncia). **Não há nada a fazer do lado dela** —
+a atualização automática volta sozinha na próxima abertura do programa.
 
 #### O que saiu nesta leva: `TR-12.2` — contrato e papéis de LGPD
 

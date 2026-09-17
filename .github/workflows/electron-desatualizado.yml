@@ -1,0 +1,26 @@
+# Uma vez por mês, pergunta se o Electron deste projeto ainda recebe
+# correção de segurança (item TR-04.6 do guia de melhorias).
+#
+# Fica SEPARADO do ci.yml de propósito: não é checagem de código, é um
+# lembrete com data — e não deve reprovar PR nenhum nem atrapalhar o fluxo
+# de mesclar direto na main. Quando ele fica vermelho, o GitHub avisa por
+# e-mail, que é como esse tipo de aviso chega até ela.
+name: Electron desatualizado?
+
+on:
+  schedule:
+    # Dia 1 de cada mês, 12:00 UTC (9h no horário de Brasília).
+    - cron: "0 12 1 * *"
+  workflow_dispatch: {}
+
+jobs:
+  checar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Sem `npm ci`: a checagem só lê o package.json e consulta o registro
+      # público do npm — instalar tudo levaria minutos à toa.
+      - run: node scripts/checar-versao-electron.mjs

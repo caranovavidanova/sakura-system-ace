@@ -35,7 +35,84 @@ jobs:
       # cliente novo já vir apontando pro banco de dados de outra empresa.
       # Hoje cada computador escolhe a conexão na primeira abertura, e o valor
       # fica guardado só naquela máquina (ver src/lib/conexao.ts).
-      - name: Build e publica o instalador Windows
-        run: npm run electron:build -- --publish always
+      #
+      # `--publish never`: aqui só BUILDA. Quem publica é o passo seguinte, e
+      # o motivo está escrito lá.
+      - name: Build do instalador Windows
+        run: npm run electron:build -- --publish never
+
+      # A publicação é feita AQUI, com o `gh`, e não pelo publicador embutido
+      # do electron-builder. Não é preferência de estilo — é conserto de um
+      # estrago real (17/09/2026, item 66 da seção 6 do PROJETO_STATUS.md):
+      # três builds seguidas subiram o instalador inteiro e certinho, o GitHub
+      # devolveu resposta VAZIA, o publicador morreu no `JSON.parse` dessa
+      # resposta — e morreu ANTES de subir o latest.yml. Resultado: a release
+      # mais recente ficou anunciando uma versão sem o arquivo que diz ao app
+      # instalado que ela existe, e TODA loja parou de conseguir se atualizar.
+      #
+      # Aqui cada arquivo é um comando separado, com tentativa repetida e com
+      # conferência do que ficou publicado — então uma falha no instalador não
+      # tem mais como deixar o canal de atualização quebrado pela metade.
+      - name: Publicar no GitHub Releases
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          versao="$(node -p "require('./package.json').version")"
+          tag="v$versao"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "A release $tag já existe — vou completar o que faltar nela."
+          else
+            echo "Criando a release $tag."
+            gh release create "$tag" --target "$GITHUB_SHA" --title "$versao" --notes ""
+          fi
+
+          subir() {
+            caminho="$1"
+            nome="$(basename "$caminho")"
+            for tentativa in 1 2 3; do
+              if gh release upload "$tag" "$caminho" --clobber; then
+                echo "  subiu: $nome"
+                return 0
+              fi
+              echo "  tentativa $tentativa falhou em $nome"
+              sleep $(( tentativa * 30 ))
+            done
+            echo "::error::Não consegui subir $nome depois de 3 tentativas."
+            return 1
+          }
+
+          # "A subida não deu erro" e "o arquivo está publicado" não são a
+          # mesma coisa — foi justamente assim que o instalador apareceu
+          # publicado e inteiro numa build que o GitHub deu como falhada.
+          # Por isso o tamanho é conferido contra o arquivo local.
+          conferir() {
+            caminho="$1"
+            nome="$(basename "$caminho")"
+            esperado="$(stat -c%s "$caminho")"
+            publicado="$(gh release view "$tag" --json assets \
+              --jq '.assets[] | "\(.name) \(.size)"' \
+              | awk -v n="$nome" '$1 == n { print $2 }')"
+            if [ "$publicado" != "$esperado" ]; then
+              echo "::error::$nome está publicado com '${publicado:-nada}' bytes, esperado $esperado."
+              return 1
+            fi
+            echo "  conferido: $nome ($esperado bytes)"
+          }
+
+          # A ORDEM É A PARTE QUE IMPORTA. O latest.yml é o que anuncia a
+          # versão nova pro app já instalado, e ele aponta pro instalador pelo
+          # nome e pela impressão digital. Ele sobe POR ÚLTIMO, só depois do
+          # instalador estar publicado E conferido — ao contrário, toda loja
+          # seria avisada de uma versão cujo arquivo não existe.
+          subir    "release/SakuraSystem-Setup.exe"
+          conferir "release/SakuraSystem-Setup.exe"
+          subir    "release/SakuraSystem-Setup.exe.blockmap"
+          subir    "release/latest.yml"
+          conferir "release/latest.yml"
+
+          echo "Publicado em $tag:"
+          gh release view "$tag" --json assets --jq '.assets[] | "  \(.name) — \(.size) bytes"'

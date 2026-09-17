@@ -595,7 +595,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # o instalador (isso é do release.yml). Ver item 48 da seção 6
 
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
-│                                  # (NÃO embute mais a conexão do Supabase — ver seção 7)
+│                                  # (NÃO embute mais a conexão do Supabase — ver seção 7). O
+│                                  # electron-builder só BUILDA (`--publish never`); quem publica
+│                                  # é o `gh`, arquivo por arquivo, com o latest.yml POR ÚLTIMO —
+│                                  # ver item 66 da seção 6 pro estrago que motivou isso
 ├── .gitleaks.toml                # regras da varredura de segredo do CI. Tem 3 regras próprias
 │                                  # além das de fábrica, porque as de fábrica deixavam passar
 │                                  # justamente `sb_secret_...` (Supabase) e `sk-ant-...`
@@ -2389,6 +2392,47 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     **Cada uma das 22 checagens foi conferida quebrando o código de propósito** (nove mutações,
     todas ficaram vermelhas na checagem certa) — a mesma disciplina dos itens 53, 62 e 63.
 
+66. **A publicação da `v0.9.38` quebrou o canal de atualização de TODAS as lojas — e o
+    instalador estava perfeito o tempo todo (17/09/2026).** É o pior tipo de falha deste projeto:
+    ninguém dá erro, nada quebra na tela, e a consequência só apareceria no dia em que uma
+    correção urgente precisasse chegar na loja e não chegasse.
+    **O que aconteceu**: três builds seguidas subiram o instalador inteiro e íntegro (conferido
+    depois byte a byte contra o digest do próprio GitHub), o GitHub devolveu **resposta vazia** no
+    fim da subida de ~82 MB, e o publicador embutido do electron-builder morreu no `JSON.parse`
+    dessa resposta (`⨯ Unexpected end of JSON input`, `builder-util-runtime/httpExecutor.ts:206`)
+    — **antes de subir o `latest.yml`**. A release `v0.9.38` ficou publicada, marcada como "mais
+    recente", com o instalador e **sem** o arquivo que diz ao app instalado que ela existe.
+    Efeito: `releases/latest/download/latest.yml` passou a devolver **404**, e toda loja parou de
+    conseguir se atualizar — inclusive as que estavam na `v0.9.37`, que é uma versão sadia.
+    **Três coisas que valem mais que o bug:**
+    (a) **"O build falhou" e "nada foi publicado" não são a mesma coisa.** A intuição de sempre é
+    que build vermelha não deixa rastro; aqui ela deixou o rastro mais perigoso possível — meia
+    release. Ao ver uma Release falhar, **olhar o que ficou publicado** antes de concluir
+    qualquer coisa.
+    (b) **A ordem dos arquivos É a trava de segurança.** O `latest.yml` anuncia a versão; o
+    instalador é o que ela promete. Subir o anúncio antes do arquivo deixaria todas as lojas
+    tentando baixar algo que não existe — bem pior que o que aconteceu. Por acidente a ordem
+    estava certa; agora está **de propósito**, com o instalador conferido pelo tamanho publicado
+    antes de o anúncio subir.
+    (c) **Retentar não era o conserto.** Rodar de novo (foi rodado três vezes) reproduzia a mesma
+    falha, porque o defeito não é a subida — é o tratamento da resposta dela. Consertar de
+    verdade foi **tirar essa etapa do publicador do electron-builder** e fazer o `release.yml`
+    publicar arquivo por arquivo com `gh`, com tentativa repetida e conferência do que ficou lá.
+    **Duas coisas que só apareceram tentando consertar**, e que valem pra qualquer sessão futura:
+    - **Desta sessão não dá pra mexer em release nem subir arquivo por API.** As duas chamadas
+      são recusadas (`Creating, editing, or deleting releases is not permitted for this session
+      type`, e o proxy exige `Content-Type: application/json`, o que impede subir `.yml`/`.exe`).
+      Ou seja: **o conserto de uma release estragada tem que passar pelo workflow** — não adianta
+      planejar apagar, marcar como pré-lançamento ou subir o arquivo que falta na mão.
+    - **`--publish never` continua gerando o `latest.yml`** (conferido rodando um build de
+      verdade, não suposto — era a única dúvida que inviabilizaria o desenho novo).
+    **A trava é o teste, não este parágrafo**: a lógica de publicação foi exercitada com um `gh`
+    de mentira nos quatro cenários — tudo certo, instalador que não sobe, instalador que sobe
+    **truncado**, e só o `latest.yml` falhando. Nos três de falha o `latest.yml` **não** é
+    publicado, que é a promessa inteira. E o primeiro teste "achou um bug" que era do próprio
+    teste (o `gh` de mentira não aplicava o filtro `--jq`) — item 58 outra vez: desconfie do
+    instrumento antes da tela.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3372,6 +3416,14 @@ Quatro coisas que valem saber:
     `0055`, então não havia ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
     Via `workflow_dispatch`, com a `main` verde nos cinco jobs do CI — inclusive o job novo, que
     abre o app de verdade.
+    **⚠️ A publicação desta tag deu errado três vezes e deixou o canal de atualização quebrado por
+    algumas horas** — a release saiu com o instalador e **sem** o `latest.yml`, então toda loja
+    parou de conseguir se atualizar (o item 66 da seção 6 conta o caso inteiro). O instalador
+    nunca esteve corrompido. O conserto foi reescrever o passo de publicação do `release.yml`:
+    o `electron-builder` só **builda**, e quem publica é o `gh`, arquivo por arquivo, com
+    tentativa repetida e conferência — **e o `latest.yml` por último, só depois de o instalador
+    estar publicado e conferido**. A `v0.9.38` foi **completada na própria tag**, sem queimar
+    número de versão: a release já existia publicada e correta, faltava um arquivo nela.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -4152,6 +4204,25 @@ por padrão o `electron-builder` publica a release como rascunho invisível — 
 `"version"` no `package.json` faz o build atualizar a release **anterior** em vez de criar uma nova
 (o nome da release vem do `package.json`, não da tag/gatilho usado) — por isso o passo 1 acima é
 sempre antes de disparar o build, nunca depois.
+
+**Como o workflow publica, desde 17/09/2026 (mudou — e o motivo importa)**: o
+`electron-builder` roda com `--publish never`, ou seja, **só builda**. Quem publica é um passo
+separado, com o `gh`, subindo **arquivo por arquivo**, com até 3 tentativas cada e conferindo o
+tamanho do que ficou publicado — e o `latest.yml` **por último**, só depois de o instalador estar
+publicado e conferido. Antes disso, quem publicava era o publicador embutido do electron-builder,
+e ele deixou a `v0.9.38` pela metade: instalador publicado, `latest.yml` não, canal de atualização
+de todas as lojas quebrado (item 66 da seção 6). **A ordem não é detalhe de implementação, é a
+trava**: o `latest.yml` é o anúncio, o instalador é o que ele promete — anunciar antes seria pior
+que o que aconteceu. Ao mexer nesse passo, não inverter, e não juntar tudo num comando só.
+
+**Se um build de Release falhar, NÃO concluir que nada foi publicado.** Conferir o que ficou na
+release (`mcp__github__get_release_by_tag`) antes de qualquer coisa: precisa ter
+`SakuraSystem-Setup.exe` **e** `latest.yml`. Faltando o `latest.yml`, o canal de atualização está
+quebrado pra todas as lojas mesmo com a release parecendo normal na tela do GitHub — o sintoma é
+`releases/latest/download/latest.yml` devolvendo 404. O conserto é **rodar o workflow de novo na
+mesma tag** (o passo de publicação completa o que faltar numa release que já existe, sem criar
+outra e sem queimar número de versão). **Não** dá pra consertar por API de dentro de uma sessão
+do Claude Code: mexer em release e subir arquivo são as duas coisas recusadas por este ambiente.
 
 ### Voltar uma versão (quando a que saiu está ruim)
 
@@ -4996,6 +5067,15 @@ Se ela pedir sugestão, as duas respostas honestas são:
 decisão mais tarde, pode publicar", sobre a decisão do Electron logo abaixo).
 Dois itens saíram neste dia: o `TR-12.2`, que não gerou versão nova porque não mexeu numa linha
 de código, e o `TR-04.6`, que gerou a `v0.9.38`.
+
+**E um terceiro assunto, que não estava no plano: publicar a `v0.9.38` deu errado três vezes e
+quebrou o canal de atualização de todas as lojas por algumas horas.** O instalador subiu inteiro
+e íntegro nas três, mas o `latest.yml` — o arquivo que avisa o app instalado de que existe versão
+nova — nunca subiu, e a release mais recente ficou anunciando uma versão que o app não conseguia
+enxergar. Nada foi corrompido e nenhuma loja perdeu dado; o que parou foi só a atualização
+automática, com cada computador seguindo normal na versão que já tinha. O conserto está no
+`release.yml` (o `electron-builder` só builda; quem publica é o `gh`, arquivo por arquivo, com o
+`latest.yml` por último) e o caso inteiro, com as lições, está no **item 66 da seção 6**.
 
 #### O que saiu nesta leva: `TR-12.2` — contrato e papéis de LGPD
 

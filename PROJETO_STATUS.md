@@ -3715,6 +3715,21 @@ Quatro coisas que valem saber:
    7) e decidir se entra um botão de WhatsApp (hoje o contato do site é só o e-mail dela; ela não
    chegou a passar um número).
 
+10. **⚠️ PENDÊNCIA DA FASE 2 — contrato e papéis de LGPD, antes da primeira venda pra terceiro**
+    (item `TR-12.2` do guia, escrito em 17/09/2026). Não é tarefa de código, e é por isso que ela
+    não sai sozinha: **ela precisa levar isso a um advogado ou à contabilidade dela.** O texto em
+    linguagem simples, de uma página, está em **`ANTES-DA-PRIMEIRA-VENDA.md`** na raiz do
+    repositório — os seis pontos que a cláusula de tratamento de dados precisa ter e o registro
+    de operações de tratamento já rascunhado com o que é verdade hoje.
+    **Por que existe**: pela decisão de 28/08/2026, toda a infraestrutura fica nas contas dela
+    (Supabase, Anthropic, Focus NFe), então na LGPD **a loja é controladora** dos dados dos
+    clientes dela e **ela é operadora**. Enquanto quem usa é a borracharia do pai dela, isso é
+    combinado de família; na primeira loja de terceiro, vira contrato — e é o tipo de coisa que
+    ninguém resolve depois do incidente. **Não escrever contrato por ela e não afirmar nada como
+    aconselhamento jurídico** (o próprio arquivo abre dizendo isso).
+    O ponto mais fácil de esquecer, dos seis: **o que acontece quando o contrato acaba** — cópia
+    dos dados pra loja, exclusão do resto, e em quantos dias cada coisa.
+
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
@@ -3753,6 +3768,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
 | 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`, rodada por ela) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Tag `v0.9.37`. Etapa 4 em 6 de 12. |
+| 17/09 | `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. **Sem tag e sem migration.** Etapa 4 em 7 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4614,7 +4630,7 @@ tela. **Nenhum P0 do guia ficou fora do roteiro.**
 | **1** — fundação que impede erro conhecido de voltar | 5 de 5 ✅ | — |
 | **2** — o que dói hoje, no balcão | 13 de 13 ✅ | — |
 | **3** — confiança nos números | 3 de 7 | **4** (ver 12/09 no fim do arquivo) |
-| **4** — antes da segunda empresa | 6 de 12 | **6** (ver o marco no fim do arquivo) |
+| **4** — antes da segunda empresa | 7 de 12 | **5** (ver o marco mais recente, no fim do arquivo) |
 
 | **5** — escala e produto | 0 de 15 | **15** |
 
@@ -4866,7 +4882,76 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 15/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 17/09/2026 — LEIA ISTO PRIMEIRO
+
+**Nada pendente do meu lado: sem SQL esperando, sem tag esperando.** O banco dela está na `0055`
+e a **`v0.9.37`** continua sendo a última versão publicada. Esta leva **não gerou versão nova**,
+porque não mexeu numa linha de código — e isso é de propósito, não falta de trabalho.
+
+#### O que saiu nesta leva: `TR-12.2` — contrato e papéis de LGPD
+
+Ela pediu "o passo mais curto que falta na Etapa 4", e é este — o único item da etapa que não é
+código e não depende de ela rodar nada no Supabase. O que ele resolve é uma pergunta que hoje não
+tem resposta escrita: pela decisão de 28/08/2026, **toda a infraestrutura fica nas contas dela**
+(Supabase, Anthropic, Focus NFe), então na LGPD a **loja é controladora** dos dados dos clientes
+dela e **ela é operadora**. Enquanto quem usa é a borracharia do pai dela, isso é combinado de
+família; na primeira loja de terceiro, vira contrato.
+
+O texto ficou em **`ANTES-DA-PRIMEIRA-VENDA.md`**, na raiz: uma página em linguagem simples com
+as duas palavras que resolvem a conversa, os **seis pontos** que a cláusula de tratamento de
+dados precisa ter, e o **registro de operações de tratamento** já rascunhado com o que é verdade
+hoje (que dado, de quem, pra quê, onde fica, por quanto tempo). Registrado também como **item 10
+da seção 8**, como pendência da fase 2.
+
+**Três decisões que valem saber, se alguém for mexer nisso:**
+
+- **Virou arquivo no repositório, não resposta no chat**, porque o chat não sobrevive à sessão e
+  este é um assunto que só vai ser usado meses depois, na hora da venda.
+- **Nada foi prometido além do que o sistema faz.** O ponto de segurança da cláusula lista o que
+  existe de verdade — banco separado por empresa, permissão por operador, trilha de auditoria,
+  cópia de segurança automática — e nada mais. Prometer em contrato o que o código não faz é
+  pior que não ter contrato.
+- **Não escrever contrato por ela, e não afirmar nada como aconselhamento jurídico.** O arquivo
+  abre dizendo isso, e o valor do item (nas palavras do próprio guia) é ela saber que a pergunta
+  existe, não ter a resposta pronta.
+
+**Etapa 4: 7 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
+Function · `TR-12.1` backup próprio e testado · `TR-09.1` canal de teste antes de atualizar todas
+as lojas · `TR-04.6` endurecer o Electron — mais as **etapas 2 e 3 do `TR-04.1`**, que são o
+trabalho grande (as policies, tabela por tabela) e **precisam da decisão dela antes de começar**.
+
+**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — não há
+nada esperando publicação nem SQL. Se ela pedir sugestão, os dois próximos naturais são o
+`TR-12.1` (cópia de segurança própria e **testada** — hoje a do Supabase existe mas nunca foi
+restaurada pra valer) e o `TR-09.1` (canal de teste, pra uma tag ruim não chegar nas três lojas
+no mesmo minuto). A etapa 2 do `TR-04.1` continua sendo a maior, e continua dependendo da
+decisão dela — ver "Por onde uma sessão nova começa", no marco de 13/09 mais abaixo.
+
+**O que depende dela agora** (nada bloqueia o uso do sistema):
+
+1. **Levar o `ANTES-DA-PRIMEIRA-VENDA.md` a um advogado ou à contabilidade** e sair com um
+   contrato de prestação de serviço com cláusula de tratamento de dados. A hora certa é **antes**
+   da primeira loja de terceiro — a fase 2 (as duas lojas do amigo do pai dela) está no horizonte.
+2. **Trocar as três credenciais expostas** no histórico público (CSC da SEFAZ, token do portal
+   Giap, senha do portal da prefeitura) — item 50 da seção 6 explica por que a varredura
+   automática **não** substitui isso.
+3. **Marcar o CI como obrigatório pra mesclar** (Settings → Branches), agora que ele já foi visto
+   verde muitas vezes.
+4. **Todo mês**: cadastrar a alíquota da competência no portal da prefeitura antes da primeira
+   NFS-e do mês — que agora, pelo menos, o sistema lembra.
+
+**O que confirmar com ela em uso real** (nada disso dá pra testar daqui, e nada mudou desde
+15/09): que a faixa de banco desatualizado **não** aparece (o banco dela está em dia); a tela de
+**Diagnóstico** (`v0.9.36`, ainda não vista por ela); e a **Auditoria ampliada** (`v0.9.35` — o
+filtro Ação, a linha "Criou", e o antes/depois ao editar o preço de um item de OS).
+
+**Estado do código**: `main` em dia com a `v0.9.37`, banco dela na `0055`. `tsc`, lint e
+`npm run contraste` limpos; **510 testes** passando nos dois fusos — os mesmos de 15/09, porque
+esta leva não tocou em código nenhum.
+
+O que está abaixo é o marco anterior.
+
+### Onde parou em 15/09/2026 (histórico — o marco mais recente está logo acima)
 
 **Nada pendente: sem SQL esperando, sem tag esperando.** O banco dela está na `0055` (ela rodou
 em 15/09, com "Success. No rows returned") e a **`v0.9.37`** foi publicada logo depois — a ordem
@@ -4910,6 +4995,10 @@ usuária toda vez que a internet oscilar.
 conhecia a tabela nova, então a faixa apareceria nas 54 telas do catálogo e nas imagens do site.
 O `dados-demo.mjs` passou a responder a versão **lendo a constante do próprio código**, em vez de
 copiá-la — copiar só adiaria o problema pra próxima migration.
+
+> Desatualizado de propósito, é registro do dia: o `TR-12.2` (contrato e papéis) saiu em
+> 17/09/2026, então hoje são **7 de 12** e faltam cinco. A lista de verdade está no marco de
+> 17/09, logo acima.
 
 **Etapa 4: 6 de 12.** Faltam: `TR-04.3` dado de RH · `TR-04.2` token da Focus NFe na Edge
 Function · `TR-12.1` backup · `TR-09.1` canal de teste · `TR-04.6` endurecer o Electron ·

@@ -3363,6 +3363,16 @@ Quatro coisas que valem saber:
     `v0.9.35`/`0053`. Via `workflow_dispatch`, com instalador e `latest.yml` confirmados na
     release.
 
+  - `v0.9.38`: **endurecer o Electron** (`TR-04.6`) — a auditoria de segurança do processo
+    principal: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços
+    dela, todo pedido da tela conferido, nada navegando pra fora nem abrindo janela nova, e as
+    "chavinhas" (fuses) gravadas no executável. Ver "Segurança do app em si" nesta seção.
+    **É a primeira versão em que o instalador leva os fuses** — quem tem o programa na máquina
+    deixa de conseguir rodá-lo como um Node.js comum. **Sem migration**: o banco dela continua na
+    `0055`, então não havia ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
+    Via `workflow_dispatch`, com a `main` verde nos cinco jobs do CI — inclusive o job novo, que
+    abre o app de verdade.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -3865,7 +3875,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 08-11/09 | **Etapas 1 e 2 do guia de melhorias, inteiras** — CI, travas de fuso e de arquitetura, os dois itens fiscais (Ver DANFE, aviso da alíquota), acessibilidade/tipografia, cartões do Início, categoria obrigatória no caixa, e cadastrar cliente/veículo sem sair da OS. Tags `v0.9.28` a `v0.9.32`. |
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
 | 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`, rodada por ela) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Tag `v0.9.37`. Etapa 4 em 6 de 12. |
-| 17/09 | Dois itens da Etapa 4. `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. E `TR-04.6` — **endurecer o Electron**: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços dela, todo pedido da tela conferido, nada navegando pra fora, as chavinhas gravadas no executável, e um teste que abre o app de verdade (`npm run test:electron`). **Sem migration**; a leva do `TR-04.6` ficou **esperando tag**. Etapa 4 em 8 de 12. |
+| 17/09 | Dois itens da Etapa 4. `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. E `TR-04.6` — **endurecer o Electron**: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços dela, todo pedido da tela conferido, nada navegando pra fora, as chavinhas gravadas no executável, e um teste que abre o app de verdade (`npm run test:electron`). **Sem migration**; a leva do `TR-04.6` saiu na tag `v0.9.38`. Etapa 4 em 8 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4254,8 +4264,8 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.37"` — publicada em 15/09/2026 (o aviso de banco
-  desatualizado, `TR-05.7`). **`main` em dia com a tag, banco na `0055`, nada esperando SQL nem
+- `package.json` em `"version": "0.9.38"` — publicada em 17/09/2026 (endurecer o Electron,
+  `TR-04.6`). **`main` em dia com a tag, banco na `0055`, nada esperando SQL nem
   publicação** — ver "Onde parou", no fim deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
@@ -4981,9 +4991,11 @@ Se ela pedir sugestão, as duas respostas honestas são:
 
 ### ⏸ Onde parou em 17/09/2026 — LEIA ISTO PRIMEIRO
 
-**Nada pendente do meu lado: sem SQL esperando, sem tag esperando.** O banco dela está na `0055`
-e a **`v0.9.37`** continua sendo a última versão publicada. Esta leva **não gerou versão nova**,
-porque não mexeu numa linha de código — e isso é de propósito, não falta de trabalho.
+**Nada pendente: sem SQL esperando, sem tag esperando.** O banco dela está na `0055` e a
+**`v0.9.38`** é a última versão publicada — ela mandou publicar no fim da sessão ("tomamos a
+decisão mais tarde, pode publicar", sobre a decisão do Electron logo abaixo).
+Dois itens saíram neste dia: o `TR-12.2`, que não gerou versão nova porque não mexeu numa linha
+de código, e o `TR-04.6`, que gerou a `v0.9.38`.
 
 #### O que saiu nesta leva: `TR-12.2` — contrato e papéis de LGPD
 
@@ -5042,13 +5054,11 @@ Function · `TR-12.1` backup próprio e testado · `TR-09.1` canal de teste ante
 as lojas — mais as **etapas 2 e 3 do `TR-04.1`**, que são o trabalho grande (as policies, tabela
 por tabela) e **precisam da decisão dela antes de começar**.
 
-**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — mas
-desta vez há uma coisa esperando: **a `main` está uma leva à frente da `v0.9.37`** (o `TR-04.6`),
-e nada disso chega na loja sem uma tag nova. Sem migration: o banco dela continua na `0055`,
-então não há ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
-Se ela pedir sugestão de próximo item, os dois naturais são o `TR-12.1` (cópia de segurança
-própria e **testada** — hoje a do Supabase existe mas nunca foi restaurada pra valer) e o
-`TR-09.1` (canal de teste, pra uma tag ruim não chegar nas três lojas no mesmo minuto). A etapa 2 do `TR-04.1` continua sendo a maior, e continua dependendo da
+**O primeiro passo da próxima sessão é perguntar qual item do `MELHORIAS.md` entra** — não há
+nada esperando publicação nem SQL. Se ela pedir sugestão de próximo item, os dois naturais são o
+`TR-12.1` (cópia de segurança própria e **testada** — hoje a do Supabase existe mas nunca foi
+restaurada pra valer) e o `TR-09.1` (canal de teste, pra uma tag ruim não chegar nas três lojas
+no mesmo minuto). A etapa 2 do `TR-04.1` continua sendo a maior, e continua dependendo da
 decisão dela — ver "Por onde uma sessão nova começa", no marco de 13/09 mais abaixo.
 
 **O que depende dela agora** (nada bloqueia o uso do sistema):
@@ -5076,11 +5086,11 @@ decisão dela — ver "Por onde uma sessão nova começa", no marco de 13/09 mai
 **Diagnóstico** (`v0.9.36`, ainda não vista por ela); e a **Auditoria ampliada** (`v0.9.35` — o
 filtro Ação, a linha "Criou", e o antes/depois ao editar o preço de um item de OS).
 
-**Estado do código**: `main` **uma leva à frente da `v0.9.37`** (o `TR-04.6`, esperando ela
-decidir se publica) e banco dela na `0055` — nada esperando SQL. `tsc`, lint e
-`npm run contraste` limpos; **510 testes** passando nos dois fusos (o número não mudou: o que
-entrou nesta leva é o processo principal do Electron, e o teste disso é o `npm run test:electron`,
-que roda fora do `npm test` — 22 checagens, todas passando).
+**Estado do código**: `main` **em dia com a `v0.9.38`** e banco dela na `0055` — nada esperando
+tag nem SQL. `tsc`, lint e `npm run contraste` limpos; **510 testes** passando nos dois fusos (o
+número não mudou: o que entrou nesta leva é o processo principal do Electron, e o teste disso é o
+`npm run test:electron`, que roda fora do `npm test` — 22 checagens, todas passando, agora com
+job próprio no CI).
 
 O que está abaixo é o marco anterior.
 

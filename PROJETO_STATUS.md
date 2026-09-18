@@ -2488,6 +2488,34 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     respondem perguntas diferentes — e é por isso que a primeira execução de qualquer coisa
     agendada precisa ser disparada à mão e **olhada**, não deixada pro horário dela.
 
+68. **Um campo vazio se disfarçou de "bucket não existe" por três rodadas (18/09/2026).** Ainda
+    no `TR-12.1`: com o banco já sendo copiado direito, os 18 XMLs de nota fiscal falhavam
+    **todos**, sempre com a mesma resposta do Supabase — `Bucket not found` / `NoSuchBucket`.
+    A causa real era o secret `BACKUP_EMPRESAS` **não ser um JSON válido**: sem conseguir lê-lo,
+    o endereço do Supabase e a chave saíam **vazios**, e um pedido pra endereço nenhum volta
+    como "esse bucket não existe".
+    **Por que isso enganou tanto, e é o que vale guardar**: o sintoma apontava com confiança pro
+    lugar errado. O Storage do Supabase responde `Bucket not found` também pra quem **não tem
+    permissão de ver o bucket** — ele esconde a existência em vez de dizer "você não pode". Isso
+    é decisão de segurança deles, e tem o efeito colateral de mandar quem investiga caçar
+    permissão e nome de bucket, que é exatamente o que aconteceu aqui.
+    **O que resolveu não foi adivinhar melhor, foi o job dizer o que ele tinha em mãos**: o
+    papel lido de dentro da própria chave (`papel = service_role`) e a lista de buckets
+    (`buckets = notas-fiscais`). Com esses dois respondendo "certo", só sobrou o campo que
+    ninguém estava olhando. **A regra que fica**: quando uma API esconde a causa por segurança,
+    pare de interrogar a resposta e faça o chamador **declarar o que ele é e o que está usando**.
+    **Três armadilhas menores da mesma investigação:**
+    - **A caixa de editar um secret no GitHub aparece SEMPRE VAZIA** — ele nunca mostra o que
+      está guardado. Quem vê isso entende "cole aqui o que quer trocar", e colar um pedaço
+      **substitui o valor inteiro**. Foi assim que a lista virou uma chave solta. Não é
+      desatenção de quem usa: é a tela convidando ao erro.
+    - **`jq: parse error` não é mensagem pra quem não programa.** O secret é editado à mão toda
+      vez que uma empresa nova entra, então errar uma aspa é rotina, não exceção — a conferência
+      de formato, em português, roda antes de tudo.
+    - **Faltavam limites de tempo.** Sem `--max-time` no download e `timeout-minutes` no job,
+      uma conexão travada deixaria o backup pendurado até o limite de **6 horas** do GitHub: o
+      backup do dia não acontece e **nada aparece como falha**.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -5204,26 +5232,46 @@ com o `chave-do-backup.txt`, que ela gerou no PC dela (`C:\age`) e copiou pro Go
 destino do backup vazar um dia, o arquivo continua ilegível — **e se ela perder esse arquivo, as
 cópias antigas viram lixo.** Não existe recuperação; é esse o ponto.
 
-#### O que foi testado, e o que NÃO dá pra testar daqui
+#### Está rodando de verdade, e ela abriu a cópia com as próprias mãos
 
-O ciclo inteiro foi exercitado num Postgres local, não só lido: instalar o sistema pelo
+**A rodada boa saiu assim**, com tudo dentro:
+
+```
+banco.sql: 3702 linhas
+chave de pneus-amigao: papel = service_role
+buckets de pneus-amigao: notas-fiscais
+XMLs de nota fiscal: 18 de 18 baixados
+pneus-amigao-2026-09-18.age: 48K
+Todas as cópias do dia 2026-09-18 foram guardadas.
+```
+
+Antes disso, o ciclo tinha sido exercitado num Postgres local — instalar o sistema pelo
 `instalacao-completa.sql`, plantar dado, tirar a cópia **com os mesmos comandos do workflow**,
 cifrar, abrir com a chave e restaurar num banco vazio. As 13 tabelas bateram, o dado sobreviveu,
 e vieram junto 45 policies de RLS, 264 permissões e 48 funções — essa última conferência é a que
 ninguém lembra de fazer, e é a que separa "restaurou" de "restaurou com o banco aberto".
 
-As 13 checagens da retenção foram conferidas quebrando o código de propósito (§6, item 67).
+**Foram seis rodadas até essa, e as lições estão nos itens 67 e 68 da seção 6.** Vale ler as duas
+antes de mexer aqui — principalmente a **68**, porque ela é sobre um sintoma que aponta com
+confiança pro lugar errado: `Bucket not found` custou três rodadas caçando bucket e chave, quando
+a causa era o secret `BACKUP_EMPRESAS` não ser um JSON válido (com ele ilegível, o endereço e a
+chave saíam vazios).
 
-#### O que ela fez, e o que ainda depende dela
+**E a parte que o guia insiste, ela fez**: baixou a cópia do repositório privado, abriu com o
+`age.exe` e a chave dela, descompactou e conferiu — 238.896 bytes, **3.702 linhas, o mesmo número
+que o servidor tinha reportado ao gerar**. Depois limpou o descompactado, que era o passo que
+importava não esquecer (o `banco.sql` aberto é o cadastro de clientes em texto puro). Ou seja: o
+backup não está testado só por mim — está testado por quem vai precisar dele às 9 da manhã de
+uma terça.
 
-Ela montou tudo do lado dos serviços, nesta sessão: gerou a chave do `age`, criou o repositório
-privado, o token do GitHub, a conta Cloudflare com o bucket `ssace-backups`, e colou os **8
-secrets**. O passo a passo completo está na seção 9, em "Backup do banco".
+**O que sobra pra ela, uma vez por mês**: olhar se as rodadas estão verdes e abrir uma cópia.
+Cinco minutos, o roteiro está no fim do `RESTAURAR-BACKUP.md`.
 
-**O que ainda depende dela, e é a parte que o guia insiste:** fazer a **parte 1** do
-`RESTAURAR-BACKUP.md` uma vez (baixar a cópia mais recente e abrir com a chave, no PC dela). Sem
-isso, o backup está testado por mim e nunca por quem vai precisar dele às 9 da manhã de uma
-terça. E uma vez por mês: olhar se as rodadas do job estão verdes.
+#### O que ela montou do lado dos serviços
+
+Tudo nesta sessão: a chave do `age` (guardada em `C:\age` e no Google Drive), o repositório
+privado `ssace-backups`, o token do GitHub, a conta Cloudflare com o bucket `ssace-backups`, e
+os **8 secrets**. O passo a passo completo está na seção 9, em "Backup do banco".
 
 #### Etapa 4: 9 de 12
 

@@ -2459,6 +2459,35 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     digital com a que o `latest.yml` anuncia: **idênticas**. Canal de atualização de volta, na
     própria `v0.9.38`.
 
+67. **O primeiro backup de verdade falhou, e as duas causas são armadilhas de bash e de
+    empacotamento, não de lógica (18/09/2026).** O item `TR-12.1` foi testado localmente de
+    ponta a ponta antes de subir — e mesmo assim a primeira execução no GitHub falhou. Vale
+    pelas três lições:
+    - **`pg_dump` de `/usr/bin` escolhe a versão sozinho, e escolhe errado.** Ele é um atalho
+      (`pg_wrapper`) que decide qual versão chamar; com o 16 e o 17 instalados lado a lado, ele
+      pegou o **16** contra um Supabase **17.6**, e o dump morreu com `server version mismatch`.
+      A correção é chamar pelo caminho completo (`/usr/lib/postgresql/17/bin/pg_dump`), resolvido
+      na instalação. **Quando o Supabase subir pra 18, é só trocar o número no `apt-get`** — mas
+      o sintoma, se alguém esquecer, é este mesmo.
+    - **Dentro de `if ! ( ... )` o bash DESLIGA o `set -e`.** Esta é a grave, e vale muito além
+      deste workflow. O `pg_dump` falhou **duas vezes** e o script seguiu adiante: montou a
+      pasta, empacotou, cifrou. O `set -euo pipefail` estava lá, escrito, dentro do subshell — e
+      não valia nada, porque um comando cujo resultado está sendo **testado** não dispara
+      `errexit`, e isso vale pro subshell inteiro. A correção é rodar o subshell **solto** e ler
+      o `$?` depois (com `set +e` em volta). Conferido rodando os dois padrões lado a lado num
+      bash de verdade — um continua depois do erro, o outro para.
+    - **O que NÃO falhou é o que vale guardar**: a checagem de *"o dump saiu pequeno demais
+      (2 linhas) — isso não é um banco inteiro"* barrou o pacote antes de ele subir. Sem ela, o
+      backup do dia seria um arquivo **vazio, cifrado e bem-arrumado nos dois destinos**, com o
+      job verde — e a descoberta viria no dia do aperto. É o padrão deste projeto (itens 11, 15,
+      33, 46): a pergunta útil não é "isso dá erro?", é "**se isso estiver errado, alguém fica
+      sabendo?**". Toda etapa que produz um arquivo merece uma pergunta assim.
+    **Lição de método, que se repete**: testar o ciclo num Postgres local provou a *lógica*
+    (dump, cifra, restaura, confere) e não tinha como provar o *ambiente* (qual `pg_dump` o
+    runner escolhe, como o bash se comporta no `if`). Teste local e primeira rodada de verdade
+    respondem perguntas diferentes — e é por isso que a primeira execução de qualquer coisa
+    agendada precisa ser disparada à mão e **olhada**, não deixada pro horário dela.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 

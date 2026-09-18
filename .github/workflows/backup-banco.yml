@@ -177,6 +177,27 @@ jobs:
               # 3. Os XMLs das notas fiscais. O próprio banco é o índice de
               #    onde cada arquivo está — é assim que o app faz.
               if [ -n "$SUPABASE_URL" ] && [ -n "$SERVICE_KEY" ]; then
+                # Qual chave é esta, afinal? A `anon` e a `service_role` do
+                # Supabase são as duas um JWT começando com "eyJ", então é
+                # fácil colar uma no lugar da outra — e o sintoma NÃO diz isso:
+                # com a `anon`, o Storage responde "Bucket not found", porque
+                # ele esconde a existência do bucket de quem não pode vê-lo em
+                # vez de responder "sem permissão". Foi exatamente o que
+                # aconteceu na primeira rodada, e custou uma investigação.
+                # Aqui só o CAMPO `role` é lido e mostrado — nunca a chave.
+                PAPEL="$(node -e '
+                  const partes = String(process.argv[1]).split(".");
+                  if (partes.length !== 3) { console.log("formato-novo"); process.exit(0); }
+                  try { console.log(JSON.parse(Buffer.from(partes[1], "base64url")).role || "?"); }
+                  catch { console.log("?"); }
+                ' "$SERVICE_KEY")"
+                echo "chave de $EMPRESA: papel = $PAPEL"
+
+                if [ "$PAPEL" = "anon" ]; then
+                  echo "::error::A chave de $EMPRESA no secret BACKUP_EMPRESAS é a 'anon' (a pública, que o app usa), e não a 'service_role'. Com ela o Supabase não deixa ler os XMLs das notas fiscais. Troque em Settings → API Keys → service_role."
+                  exit 1
+                fi
+
                 "$PG_BIN/psql" "$CONEXAO" -Atc \
                   "select storage_path from notas_fiscais_arquivos where storage_path is not null" \
                   > "$PASTA/notas-lista.txt" || true

@@ -4181,6 +4181,69 @@ Só precisa da migration — sem Edge Function, sem secret.
    (rodapé do menu lateral, só aparece pra admin) → deve aparecer o registro na lista, com "Ver
    detalhes" mostrando o que mudou.
 
+### Backup do banco (item TR-12.1)
+
+Todo dia às 3 da manhã, o job `.github/workflows/backup-banco.yml` tira uma cópia do banco de
+**cada empresa** e guarda **em dois lugares fora do Supabase**, cifrada: o repositório privado
+`caranovavidanova/ssace-backups` (como anexo de release) e o Cloudflare R2. Ficam **30 diárias +
+a primeira de cada um dos últimos 12 meses**.
+
+**Pra que serve, se o Supabase já faz backup**: o plano Pro guarda os **últimos 7 dias**. Passando
+disso, não existe de onde voltar.
+
+**Como restaurar, e o que fazer em cada tipo de problema**: `RESTAURAR-BACKUP.md`, na raiz. A
+primeira tabela de lá manda **não** usar backup na maioria dos casos — "apaguei uma OS sem querer"
+se resolve na tela de Auditoria, em minutos.
+
+#### Os 8 secrets (Settings → Secrets and variables → Actions)
+
+| Nome | O que é |
+|---|---|
+| `BACKUP_CHAVE_PUBLICA` | a chave **pública** do `age` (`age1...`). Só fecha o cadeado |
+| `BACKUP_REPO` | `caranovavidanova/ssace-backups` |
+| `BACKUP_REPO_TOKEN` | token fine-grained do GitHub, **Contents: Read and write**, só nesse repositório, sem validade |
+| `R2_ENDPOINT` | `https://<account id>.r2.cloudflarestorage.com` (sem o nome do bucket no fim) |
+| `R2_BUCKET` | `ssace-backups` |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | do token R2 (**Object Read & Write**, só nesse bucket, TTL Forever) |
+| `BACKUP_EMPRESAS` | a lista de empresas, modelo abaixo |
+
+#### O modelo do `BACKUP_EMPRESAS`
+
+```json
+[
+  {
+    "nome": "pneus-amigao",
+    "banco": "postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase.com:5432/postgres",
+    "supabase_url": "https://<ref>.supabase.co",
+    "service_role_key": "<a chave service_role, NÃO a anon>"
+  }
+]
+```
+
+**Empresa nova = mais um bloco nessa lista.** Nada de mexer no workflow.
+
+Quatro armadilhas, todas já vividas (§6 item 67):
+
+1. **A conexão tem que ser a do "Session pooler"**, não a "Direct" (IPv6, que o runner não tem)
+   nem a "Transaction" (não aguenta o `pg_dump`). Fica em Settings → Database → Connection string.
+2. **Senha do banco só com letras e números.** Símbolo (`@`, `#`, `/`) quebra a linha de conexão, e
+   o erro que aparece depois não fala em senha. Esqueceu a senha? "Reset database password" na
+   mesma tela — **não derruba o sistema da loja**, que entra pela chave `anon`.
+3. **A `service_role` e a `anon` são as duas um JWT começando com `eyJ`.** Trocar uma pela outra
+   faz o Storage responder "Bucket not found", que aponta pro lugar errado. O job confere isso
+   sozinho e avisa.
+4. **A caixa de editar um secret no GitHub aparece SEMPRE VAZIA** — ele nunca mostra o que está
+   guardado. Editar ali é digitar tudo de novo; colar só um pedaço substitui a lista inteira. Já
+   aconteceu. Monte o texto no Bloco de Notas e cole pronto.
+
+#### Conferir de vez em quando (5 minutos por mês)
+
+1. Actions → **Backup do banco** → as últimas rodadas estão verdes?
+2. Uma vez por mês, baixar a cópia mais recente e **abrir** (parte 1 do `RESTAURAR-BACKUP.md`).
+
+Se uma rodada falhar, o GitHub manda e-mail sozinho. **E-mail de falha de backup não é spam** — é
+o único aviso que existe.
+
 ### Gerar o instalador Windows e publicar uma versão nova
 
 Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar — os apps já

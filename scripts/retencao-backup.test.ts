@@ -18,12 +18,23 @@ function arquivo(dia: string, empresa = "pneus-amigao") {
   return `${empresa}-${dia}.age`;
 }
 
-/** Os N dias seguidos terminando em `fim` (inclusive), do mais antigo pro mais novo. */
+/**
+ * Os N dias seguidos terminando em `fim` (inclusive), do mais antigo pro mais novo.
+ *
+ * As datas aqui são inventadas, de calendário — não têm nada a ver com "que
+ * dia é hoje". Por isso a conta é escrita campo a campo em UTC, de propósito,
+ * em vez de cortar um timestamp: o corte é o gesto que o lint deste projeto
+ * proíbe (§6 itens 34 e 42), e abrir exceção pra ele num teste é o começo de
+ * ele voltar no código de verdade.
+ */
 function diasSeguidos(fim: string, quantos: number) {
   const dias: string[] = [];
   const data = new Date(`${fim}T12:00:00Z`);
   for (let i = 0; i < quantos; i += 1) {
-    dias.push(data.toISOString().slice(0, 10));
+    const ano = data.getUTCFullYear();
+    const mes = String(data.getUTCMonth() + 1).padStart(2, "0");
+    const dia = String(data.getUTCDate()).padStart(2, "0");
+    dias.push(`${ano}-${mes}-${dia}`);
     data.setUTCDate(data.getUTCDate() - 1);
   }
   return dias.reverse();

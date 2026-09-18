@@ -6,7 +6,7 @@ import {
   totalItensFormulario,
   type OrdemServicoFormValues,
 } from "@/schemas/ordemServico";
-import type { Funcionario } from "@/types/funcionario";
+import type { FuncionarioPublico } from "@/types/funcionario";
 import type { TipoItemOS } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
@@ -18,7 +18,7 @@ interface ItemOSRowProps {
   setValue: UseFormSetValue<OrdemServicoFormValues>;
   pecas: Peca[];
   servicos: Servico[];
-  funcionarios: Funcionario[];
+  funcionarios: FuncionarioPublico[];
   /**
    * Saldo em estoque por peça (id da peça → saldo da loja). Chega vazio
    * enquanto a consulta de movimentações não voltou — nesse meio-tempo os

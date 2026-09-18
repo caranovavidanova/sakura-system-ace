@@ -423,6 +423,18 @@ export const TABELAS = {
   categorias_servicos: categoriasServicos,
   categorias_caixa: categoriasCaixa,
   funcionarios,
+  // A view do TR-04.3 (migration 0056): a mesma gente, só que sem salário,
+  // CPF nem família. É por ela que o seletor de técnico e de vendedor da OS
+  // lê — deixá-la de fora aqui deixaria os dois selects vazios nas telas
+  // geradas, sem nada explicando.
+  funcionarios_publico: funcionarios.map(({ id, loja_id, nome, cargo, operador_id, ativo }) => ({
+    id,
+    loja_id,
+    nome,
+    cargo,
+    operador_id,
+    ativo,
+  })),
   funcionario_filhos: funcionarios.flatMap((f) => f.filhos),
   auditoria,
   configuracoes_whatsapp: modelosWhatsapp,

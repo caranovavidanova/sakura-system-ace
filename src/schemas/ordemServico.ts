@@ -187,3 +187,48 @@ export function totaisDaOrdem(
 export function paraDisplayNumero(valor: number): string {
   return valor ? valor.toString() : "";
 }
+
+// ---------------------------------------------------------------------------
+// Costura do nome de vendedor e técnico (TR-04.3, migration 0056)
+// ---------------------------------------------------------------------------
+// Antes, os dois nomes vinham por join embutido em `funcionarios`. A tabela
+// passou a exigir a permissão do módulo, e um join embutido numa tabela
+// fechada não dá erro: devolve `null`, e o "técnico: Fulano" some da tela do
+// balconista sem nada explicando. Os nomes agora vêm da view pública, e estas
+// duas funções são o antes e o depois dessa consulta — puras, pra poderem ser
+// testadas sem banco.
+
+/** Quem precisa ser nomeado nestas ordens: vendedor da OS e técnico do item. */
+export function idsDeFuncionarios(ordens: OrdemServico[]): string[] {
+  const ids = new Set<string>();
+  for (const ordem of ordens) {
+    if (ordem.vendedor_id) ids.add(ordem.vendedor_id);
+    for (const item of ordem.itens ?? []) {
+      if (item.tecnico_id) ids.add(item.tecnico_id);
+    }
+  }
+  return [...ids];
+}
+
+/**
+ * Preenche `ordem.vendedor` e `item.tecnico` a partir do mapa de nomes.
+ *
+ * Id sem nome no mapa vira `null`, nunca um nome inventado nem um objeto com
+ * texto vazio: é o que acontece se o funcionário for de outra loja, e ali
+ * "não sei quem é" é a resposta honesta — a tela já sabe mostrar o travessão.
+ */
+export function nomearFuncionarios(
+  ordens: OrdemServico[],
+  nomes: Map<string, string>,
+): OrdemServico[] {
+  const nomear = (id: string | null) => {
+    const nome = id ? nomes.get(id) : undefined;
+    return nome ? { nome } : null;
+  };
+
+  return ordens.map((ordem) => ({
+    ...ordem,
+    vendedor: nomear(ordem.vendedor_id),
+    itens: ordem.itens?.map((item) => ({ ...item, tecnico: nomear(item.tecnico_id) })),
+  }));
+}

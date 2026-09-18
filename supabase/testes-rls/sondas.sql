@@ -17,7 +17,9 @@
 -- qualquer outro estoura a rodada em vez de virar um zero silencioso).
 --
 -- Se uma migration nova criar tabela com RLS, ela precisa de linha aqui —
--- o runner reprova quando encontra tabela sem sonda.
+-- o runner reprova quando encontra tabela sem sonda. Vale pras VIEWS também:
+-- uma view simples é auto-atualizável, então escrever por dentro dela é uma
+-- pergunta de verdade, e a matriz mede a resposta.
 -- ===================================================================
 
 create schema if not exists teste_rls;
@@ -45,6 +47,10 @@ insert into teste_rls.sondas (tabela, insercao) values
 ('depositos',             $$insert into depositos (loja_id, nome) values ('11111111-1111-1111-1111-1111111111aa', 'Depósito sonda')$$),
 ('funcionarios',          $$insert into funcionarios (loja_id, nome) values ('11111111-1111-1111-1111-1111111111aa', 'Funcionário sonda')$$),
 ('funcionario_filhos',    $$insert into funcionario_filhos (funcionario_id, nome) values ('33333333-0000-0000-0000-0000000000aa', 'Filho sonda')$$),
+-- A view do TR-04.3. Ela passa por cima da RLS (security_invoker = false), e
+-- o que impede de escrever na tabela base por dentro dela é só o `revoke` da
+-- migration 0056 — esta sonda é o que prova que o revoke está lá.
+('funcionarios_publico',  $$insert into funcionarios_publico (loja_id, nome) values ('11111111-1111-1111-1111-1111111111aa', 'Sonda pela view')$$),
 ('ordens_servico',        $$insert into ordens_servico (numero, loja_id, cliente_id) values (900, '11111111-1111-1111-1111-1111111111aa', 'cccccccc-0000-0000-0000-0000000000aa')$$),
 ('ordens_servico_itens',  $$insert into ordens_servico_itens (ordem_servico_id, tipo, descricao, quantidade) values ('44444444-0000-0000-0000-0000000000aa', 'servico', 'Item sonda', 1)$$),
 ('caixa_movimentos',      $$insert into caixa_movimentos (loja_id, tipo, valor) values ('11111111-1111-1111-1111-1111111111aa', 'entrada', 1.00)$$),

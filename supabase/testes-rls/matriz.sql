@@ -11,7 +11,7 @@
 -- (tabela × comando × papel), contendo quantas linhas aquele papel conseguiu
 -- mexer. Quem compara isso com o expectativas.csv é o rodar.mjs.
 --
--- Três decisões que valem entender antes de mexer aqui:
+-- Quatro decisões que valem entender antes de mexer aqui:
 --
 -- 1. CADA SONDA É DESFEITA. O bloco faz a conta e em seguida levanta um erro
 --    de mentira (`ZZ001`) só pra o Postgres desfazer a subtransação. É o que
@@ -28,6 +28,15 @@
 --    zero silencioso é justamente o modo de falha que este teste existe pra
 --    caçar; se a sonda em si estiver quebrada (coluna que não existe, CHECK
 --    violado), isso tem que aparecer como vermelho, não como "bloqueado".
+--
+-- 4. AS VIEWS TAMBÉM SÃO SONDADAS, e nelas a regra do item 3 se inverte.
+--    Uma view que existe pra abrir uma janela numa tabela fechada (a
+--    `funcionarios_publico` do TR-04.3) roda com os direitos do dono, e por
+--    isso NÃO reage a RLS nenhuma: o que a limita é o `where` escrito dentro
+--    dela e o GRANT de quem pode chamá-la. Então, só pra view, "permission
+--    denied" é resultado legítimo — é a tranca funcionando — e vira zero, em
+--    vez de estourar a rodada. Numa tabela continua sendo banco montado
+--    errado, como antes.
 -- ===================================================================
 
 drop table if exists teste_rls.resultado;
@@ -65,15 +74,25 @@ declare
   problema   text;
 begin
   for r_tabela in
+    -- Tabelas com RLS ligada, mais TODAS as views do schema public. A view
+    -- entra porque ela é, por construção, um caminho que não passa pela RLS:
+    -- deixá-la de fora seria medir a tranca e ignorar a janela ao lado.
     select c.relname as tabela,
-           (select a.attname
-              from pg_index i
-              join pg_attribute a
-                on a.attrelid = i.indrelid and a.attnum = i.indkey[0]
-             where i.indrelid = c.oid and i.indisprimary) as pk
+           c.relkind = 'v' as e_view,
+           coalesce(
+             (select a.attname
+                from pg_index i
+                join pg_attribute a
+                  on a.attrelid = i.indrelid and a.attnum = i.indkey[0]
+               where i.indrelid = c.oid and i.indisprimary),
+             -- View não tem chave primária: a sonda de UPDATE escreve a
+             -- primeira coluna nela mesma, que serve igual.
+             (select a.attname from pg_attribute a
+               where a.attrelid = c.oid and a.attnum = 1 and c.relkind = 'v')
+           ) as pk
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
-     where c.relkind = 'r' and c.relrowsecurity
+     where (c.relkind = 'r' and c.relrowsecurity) or c.relkind = 'v'
      order by c.relname
   loop
     if r_tabela.pk is null then
@@ -125,6 +144,9 @@ begin
             --   • "permission denied for table" — faltou GRANT. Isso NÃO é
             --     RLS; é o banco montado errado, e tem que aparecer vermelho.
             if sqlerrm like '%row-level security%' then
+              contagem := 0;
+            elsif r_tabela.e_view then
+              -- Numa view, o GRANT É a tranca (decisão 4 do cabeçalho).
               contagem := 0;
             else
               problema := sqlstate || ': ' || sqlerrm;

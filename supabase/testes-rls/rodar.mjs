@@ -232,8 +232,10 @@ try {
     obtido.set(`${tabela}|${comando}|${papel}`, { linhas, erro });
   }
 
-  // Tabela nova com RLS e sem linha no expectativas.csv: é migration que
-  // passou sem ninguém declarar quem pode o quê nela.
+  // Tabela nova com RLS (ou view nova) sem linha no expectativas.csv: é
+  // migration que passou sem ninguém declarar quem pode o quê nela. A view
+  // conta junto de propósito — ela é um caminho que NÃO passa pela RLS, e
+  // portanto o que mais merece estar declarado por escrito.
   for (const tabela of [...tabelasVistas].sort()) {
     for (const comando of COMANDOS) {
       if (!esperado.has(`${tabela}|${comando}|admin_ab`)) {
@@ -302,7 +304,7 @@ try {
 
   if (saida === 0) {
     console.log(
-      `\n✓ Matriz de RLS conferida: ${tabelasVistas.size} tabelas × ${COMANDOS.length} comandos × ` +
+      `\n✓ Matriz de RLS conferida: ${tabelasVistas.size} tabelas e views × ${COMANDOS.length} comandos × ` +
         `${PAPEIS.length} papéis = ${esperado.size} células, todas como o expectativas.csv declara.`,
     );
     console.log("✓ Nenhum comando ficou sem policy (fora as lacunas declaradas).");

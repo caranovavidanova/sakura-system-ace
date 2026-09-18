@@ -3,6 +3,7 @@ import { criarMovimentoCaixa } from "./caixa";
 import { criarContaReceber } from "./contasReceber";
 import { buscarDepositoPadraoId } from "./depositos";
 import { arredondarCentavo, somar } from "@/schemas/dinheiro";
+import { idsDeFuncionarios, nomearFuncionarios } from "@/schemas/ordemServico";
 import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
 import type {
   ItemOS,
@@ -18,12 +19,17 @@ export interface PagamentoOrdem {
   valor: number;
 }
 
+// Os nomes de vendedor e técnico NÃO vêm mais por join embutido aqui.
+// Desde a migration 0056 (TR-04.3), `funcionarios` só responde a quem tem o
+// módulo — e um join embutido devolveria `null` calado pro balconista,
+// apagando o "técnico: Fulano" da OS e do documento de garantia dele. Os
+// nomes passam a vir da view `funcionarios_publico`, numa consulta à parte
+// que é costurada em `nomearFuncionarios()` logo abaixo.
 const SELECT_ORDEM =
   "*, cliente:clientes(nome), veiculo:veiculos(placa, marca, modelo, cor, tipo), " +
-  "vendedor:funcionarios!ordens_servico_vendedor_id_fkey(nome), " +
   "criado_por:operadores!ordens_servico_criado_por_id_fkey(nome), " +
   "atualizado_por:operadores!ordens_servico_atualizado_por_id_fkey(nome), " +
-  "itens:ordens_servico_itens(*, tecnico:funcionarios(nome))";
+  "itens:ordens_servico_itens(*)";
 
 export async function listarOrdens(lojaId: string): Promise<OrdemServico[]> {
   const { data, error } = await supabase
@@ -33,7 +39,26 @@ export async function listarOrdens(lojaId: string): Promise<OrdemServico[]> {
     .order("data_abertura", { ascending: false });
 
   if (error) throw error;
-  return data as unknown as OrdemServico[];
+  const ordens = data as unknown as OrdemServico[];
+  return nomearFuncionarios(ordens, await buscarNomesDeFuncionarios(ordens));
+}
+
+// Busca o nome de cada funcionário citado nestas ordens, e só deles. Devolve
+// um mapa vazio quando não há ninguém a procurar, pra não gastar uma consulta
+// numa loja que ainda não preenche técnico nem vendedor.
+async function buscarNomesDeFuncionarios(
+  ordens: OrdemServico[],
+): Promise<Map<string, string>> {
+  const ids = idsDeFuncionarios(ordens);
+  if (ids.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from("funcionarios_publico")
+    .select("id, nome")
+    .in("id", ids);
+
+  if (error) throw error;
+  return new Map((data as { id: string; nome: string }[]).map((f) => [f.id, f.nome]));
 }
 
 async function inserirItens(

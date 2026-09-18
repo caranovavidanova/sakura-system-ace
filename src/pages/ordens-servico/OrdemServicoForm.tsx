@@ -14,7 +14,7 @@ import {
   type OrdemServicoFormValues,
 } from "@/schemas/ordemServico";
 import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
-import type { Funcionario } from "@/types/funcionario";
+import type { FuncionarioPublico } from "@/types/funcionario";
 import type {
   ItemOS,
   NovaOrdemServico,
@@ -35,7 +35,7 @@ interface OrdemServicoFormProps {
   clientes: Cliente[];
   pecas: Peca[];
   servicos: Servico[];
-  funcionarios: Funcionario[];
+  funcionarios: FuncionarioPublico[];
   funcionarioAtualId: string;
   /** OS já existentes da loja — usadas só pra saber o KM da última passagem do carro. */
   ordens: OrdemServico[];

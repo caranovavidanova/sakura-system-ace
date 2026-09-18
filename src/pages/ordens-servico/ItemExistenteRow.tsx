@@ -11,7 +11,7 @@ import {
   totalItensFormulario,
   type ItemFormValues,
 } from "@/schemas/ordemServico";
-import type { Funcionario } from "@/types/funcionario";
+import type { FuncionarioPublico } from "@/types/funcionario";
 import type { ItemOS, PatchItemOS, TipoItemOS } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
@@ -21,7 +21,7 @@ interface ItemExistenteRowProps {
   podeEditar: boolean;
   pecas: Peca[];
   servicos: Servico[];
-  funcionarios: Funcionario[];
+  funcionarios: FuncionarioPublico[];
   onSalvar: (item: ItemOS, patch: PatchItemOS) => Promise<void>;
 }
 

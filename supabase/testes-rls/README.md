@@ -25,7 +25,7 @@ do "alguém lembrar".
 | **`lacunas-de-proposito.csv`** | As tabelas que, de propósito, não têm policy pra algum comando. Entrar nesta lista é dizer por escrito "é assim mesmo". |
 | `cenario.sql` | O cenário fixo: duas lojas da mesma empresa, cinco papéis, dado de negócio nas duas. |
 | `sondas.sql` | A menor inserção válida de cada tabela — o "consigo escrever aqui?" de cada papel. |
-| `matriz.sql` | O motor: roda as 660 sondas e anota o resultado. |
+| `matriz.sql` | O motor: roda as 680 sondas e anota o resultado. |
 | `rodar.mjs` | Monta o banco descartável, compara com o esperado, imprime o que não bateu. |
 
 ## Como ler o `expectativas.csv`
@@ -37,9 +37,25 @@ repetem e se leem sozinhos:
 2,1,1,0,0   tabela DA LOJA: o dono vê as duas, quem é da loja A vê a dele,
             órfão e deslogado não veem nada
 2,2,2,2,0   tabela COMPARTILHADA: qualquer um logado mexe em tudo
+2,1,0,0,0   tabela DA LOJA que também exige a permissão do módulo — o
+            balconista só-Caixa cai fora (é o caso de `funcionarios`)
 1,1,0,0,0   só admin
 0,0,0,0,0   ninguém, nem o dono: só o banco escreve ali
 ```
+
+## As views entram na matriz, e são o caso mais importante
+
+Uma view como `funcionarios_publico` existe justamente pra abrir uma janela
+numa tabela fechada — então ela roda com os direitos do dono e **não reage a
+RLS nenhuma**. O que a limita é o `where` escrito dentro dela e o `grant` de
+quem pode chamá-la, e as duas coisas são fáceis de perder numa migration
+futura sem nada avisar.
+
+Foi medido: tirando só o `revoke` da migration 0056, a matriz acusa **11
+células** — inclusive `sem_login` conseguindo *inserir* na tabela base por
+dentro da view. Por isso a view é sondada nos quatro comandos, como qualquer
+tabela, e `permission denied` nela conta como zero (nela, o `grant` É a
+tranca; numa tabela continua sendo banco montado errado).
 
 ## Quando ficar vermelho
 

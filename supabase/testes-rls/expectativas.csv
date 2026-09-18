@@ -115,14 +115,30 @@ pedidos_compra_itens,select,2,1,1,0,0,herda a loja pelo pedido
 pedidos_compra_itens,insert,1,1,1,0,0,
 pedidos_compra_itens,update,2,1,1,0,0,
 pedidos_compra_itens,delete,2,1,1,0,0,
-funcionarios,select,2,1,1,0,0,
-funcionarios,insert,1,1,1,0,0,
-funcionarios,update,2,1,1,0,0,
-funcionarios,delete,2,1,1,0,0,
-funcionario_filhos,select,2,1,1,0,0,herda a loja pelo funcionário
-funcionario_filhos,insert,1,1,1,0,0,
-funcionario_filhos,update,2,1,1,0,0,
-funcionario_filhos,delete,2,1,1,0,0,
+#
+# TR-04.3 (migration 0056): dado de RH exige o módulo "Funcionários", e não
+# só acesso à loja. É por isso que o balconista zerou nas oito linhas abaixo
+# — ele tem `caixa`, não tem `funcionarios`. A janela que sobrou pra ele é a
+# view logo adiante, e ela é a razão de o seletor de técnico da OS continuar
+# funcionando no balcão.
+funcionarios,select,2,1,0,0,0,só com o módulo Funcionários
+funcionarios,insert,1,1,0,0,0,
+funcionarios,update,2,1,0,0,0,
+funcionarios,delete,2,1,0,0,0,
+funcionario_filhos,select,2,1,0,0,0,dado de criança: nem janela pública tem
+funcionario_filhos,insert,1,1,0,0,0,
+funcionario_filhos,update,2,1,0,0,0,
+funcionario_filhos,delete,2,1,0,0,0,
+#
+# A view do TR-04.3. Ela NÃO reage a RLS (roda com os direitos do dono), então
+# o 2,1,1 da leitura é o `where operador_tem_acesso_loja()` escrito dentro
+# dela — e o 1 do balconista é a promessa de que ele ainda monta uma OS. As
+# três linhas de escrita zeradas são o `revoke`: a view é auto-atualizável, e
+# sem ele daria pra escrever na tabela base por dentro dela.
+funcionarios_publico,select,2,1,1,0,0,só nome e cargo — nada de salário ou CPF
+funcionarios_publico,insert,0,0,0,0,0,só leitura: o revoke da 0056
+funcionarios_publico,update,0,0,0,0,0,
+funcionarios_publico,delete,0,0,0,0,0,
 whatsapp_mensagens,select,2,1,1,0,0,
 whatsapp_mensagens,insert,1,1,1,0,0,
 whatsapp_mensagens,update,2,1,1,0,0,

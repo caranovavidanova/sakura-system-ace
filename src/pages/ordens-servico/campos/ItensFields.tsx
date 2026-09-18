@@ -1,7 +1,7 @@
 import type { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
 import { itemFormVazio, type OrdemServicoFormValues } from "@/schemas/ordemServico";
-import type { Funcionario } from "@/types/funcionario";
+import type { FuncionarioPublico } from "@/types/funcionario";
 import type { ItemOS, PatchItemOS } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
@@ -35,7 +35,7 @@ export function ItensFields({
   onEditarItem: (item: ItemOS, patch: PatchItemOS) => Promise<void>;
   pecas: Peca[];
   servicos: Servico[];
-  funcionarios: Funcionario[];
+  funcionarios: FuncionarioPublico[];
   saldoPorPeca: Map<string, number>;
   saldoCarregado: boolean;
 }) {

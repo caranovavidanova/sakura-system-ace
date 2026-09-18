@@ -8,13 +8,23 @@ export interface FuncionarioFilho {
 
 export type NovoFuncionarioFilho = Pick<FuncionarioFilho, "nome" | "data_nascimento">;
 
-export interface Funcionario {
+// A "janela pública" do cadastro (view funcionarios_publico, migration 0056):
+// o que qualquer operador com acesso à loja enxerga, tenha ou não o módulo
+// Funcionários. É o bastante pra escolher técnico e vendedor numa OS — e é
+// deliberadamente o teto do que a view entrega. Acrescentar campo aqui sem
+// acrescentar na view faz a tela ler `undefined` em silêncio.
+export interface FuncionarioPublico {
   id: string;
   loja_id: string | null;
   nome: string;
   cargo: string | null;
   operador_id: string | null;
   ativo: boolean;
+}
+
+// O cadastro inteiro — salário, CPF, RG, CNH, família. Só quem tem o módulo
+// alcança isto, e a partir da 0056 é o BANCO que garante, não a tela.
+export interface Funcionario extends FuncionarioPublico {
   criado_em: string;
   operador?: { usuario: string } | null;
 

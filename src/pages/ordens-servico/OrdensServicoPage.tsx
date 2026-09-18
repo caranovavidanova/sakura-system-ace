@@ -18,7 +18,7 @@ import {
 } from "@/lib/modelosWhatsapp";
 import { preencherModelo } from "@/schemas/whatsapp";
 import { calcularSaldoPorPeca, listarMovimentos } from "@/lib/estoque";
-import { listarFuncionarios } from "@/lib/funcionarios";
+import { listarFuncionariosPublico } from "@/lib/funcionarios";
 import {
   adicionarItensOrdem,
   atualizarOrdem,
@@ -36,7 +36,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
 import type { JurosParcela } from "@/types/configuracao";
 import type { MovimentoEstoque } from "@/types/estoque";
-import type { Funcionario } from "@/types/funcionario";
+import type { FuncionarioPublico } from "@/types/funcionario";
 import type {
   ItemOS,
   NovaOrdemServico,
@@ -92,7 +92,7 @@ export function OrdensServicoPage() {
   const [modelosWhatsapp, setModelosWhatsapp] = useState<Record<string, string>>({});
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [funcionarios, setFuncionarios] = useState<FuncionarioPublico[]>([]);
   const [jurosParcelas, setJurosParcelas] = useState<JurosParcela[]>([]);
   const [notasPorOrdem, setNotasPorOrdem] = useState<Map<string, NotaFiscalArquivo[]>>(
     () => new Map(),
@@ -172,7 +172,7 @@ export function OrdensServicoPage() {
         listarClientes(),
         listarPecas(),
         listarServicos(),
-        listarFuncionarios(lojaAtual.id),
+        listarFuncionariosPublico(lojaAtual.id),
         listarJurosParcelas(lojaAtual.id),
         listarModelosWhatsapp(lojaAtual.id),
       ]);

@@ -3,7 +3,7 @@ import { Combobox } from "@/components/Combobox";
 import { avisoKmMenor, ultimoKmConhecido } from "@/schemas/avisosOrdemServico";
 import type { OrdemServicoFormValues } from "@/schemas/ordemServico";
 import type { Cliente } from "@/types/cliente";
-import type { Funcionario } from "@/types/funcionario";
+import type { FuncionarioPublico } from "@/types/funcionario";
 import type { OrdemServico } from "@/types/os";
 import { Campo, inputClasse } from "./FormCompartilhado";
 
@@ -24,7 +24,7 @@ export function DetalhesFields({
   setValue: UseFormSetValue<OrdemServicoFormValues>;
   errors: FieldErrors<OrdemServicoFormValues>;
   clientes: Cliente[];
-  funcionarios: Funcionario[];
+  funcionarios: FuncionarioPublico[];
   /** Ordens já existentes da loja — só pra saber o KM da última passagem. */
   ordens: OrdemServico[];
   /** A OS aberta na tela, quando é edição: não serve de referência pra ela mesma. */

@@ -309,7 +309,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # item 39 da seção 6)
 │   │                             # + um arquivo por entidade (clientes.ts, pecas.ts,
 │   │                             # servicos.ts, estoque.ts, ordensServico.ts, caixa.ts,
-│   │                             # operadores.ts, funcionarios.ts, notasFiscais.ts, auth.ts,
+│   │                             # operadores.ts, funcionarios.ts (duas listas: `listarFuncionarios`
+│                             # lê a tabela e exige o módulo; `listarFuncionariosPublico` lê a
+│                             # view `funcionarios_publico`, que é o que os seletores da OS usam
+│                             # — ver TR-04.3 na seção 5), notasFiscais.ts, auth.ts,
 │   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
 │   │                             # contagens.ts, garantias.ts, contasPagar.ts, lojas.ts, depositos.ts
 │   │                             # (locais físicos de estoque dentro de uma loja — mesmo padrão CRUD
@@ -490,7 +493,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # instalacao-completa.sql e estouram com "FALHOU: ..." se algo
 │                                  # quebrar — o primeiro prova, entre outras coisas, que o token
 │                                  # da Focus NFe sai mascarado na trilha de auditoria; o segundo,
-│                                  # que um balconista só-Caixa é recusado em "clientes". NUNCA
+│                                  # que um balconista só-Caixa é recusado em "clientes"; e
+│                                  # testar-rh-permissao.sql prova as DUAS metades do TR-04.3 —
+│                                  # que o balconista não alcança salário/CPF/filhos, e que
+│                                  # mesmo assim ainda monta uma OS pela view pública. NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql
  (apaga dados de negócio de teste,
@@ -505,8 +511,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── supabase/testes-rls/          # `npm run test:rls` — a MATRIZ DE RLS (item TR-07.3). Monta um
 │                                  # banco descartável do zero, simula cinco papéis (admin das duas
 │                                  # lojas, admin de uma, balconista só-Caixa, operador SEM loja, e
-│                                  # ninguém logado) e confere as 660 combinações de
-│                                  # tabela × comando × papel. expectativas.csv é A PARTE QUE SE
+│                                  # ninguém logado) e confere as 680 combinações de
+│                                  # tabela × comando × papel — a view do TR-04.3 entra junto, e
+│                                  # é o caso que mais importa, porque view não reage a RLS.
+│                                  # expectativas.csv é A PARTE QUE SE
 │                                  # REVISA — cada número é "quantas linhas este papel consegue
 │                                  # mexer", então mudança de segurança aparece no diff do PR em vez
 │                                  # de sumir dentro de uma migration; lacunas-de-proposito.csv
@@ -928,6 +936,30 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   rodou as anteriores, porque elas rodam em ordem (e a instalação única é a ordem inteira).
   (d) **a ordem "migration antes da tag" continua valendo, mas aqui ela deixa de ser armadilha**:
   se a versão nova chegar primeiro, o próprio app explica o que falta, em vez de quebrar.
+- `0056` (criada em 18/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0055` **com dado
+  plantado** — **ainda NÃO rodada por ela**): dado de RH só pra quem tem o módulo. É o item
+  `TR-04.3`, e é a **primeira tabela da etapa 2 do `TR-04.1`** — ou seja, a primeira vez que a
+  função `operador_tem_permissao()` da `0054` é usada por uma policy de verdade.
+  `funcionarios` e `funcionario_filhos` passam a exigir a permissão `funcionarios` nos quatro
+  comandos, e nasce a view `funcionarios_publico` com a janela que o resto do sistema precisa
+  (id, loja_id, nome, cargo, operador_id, ativo). Quatro decisões que valem saber:
+  (a) **a receita do guia está errada, e medi antes de seguir** — o item pede a view com
+  `security_invoker = true`, e nessa configuração ela obedece à RLS da tabela base, devolvendo
+  **zero** linha justamente pra quem ela existe pra atender. Só `security_invoker = false`
+  atravessa. A consequência é a regra da migration: **como a view passa por cima da RLS, o
+  filtro de loja tem que estar escrito dentro dela** — sem o `where operador_tem_acesso_loja()`,
+  ela entrega o cadastro de todas as lojas da empresa pra qualquer um.
+  (b) **o `revoke` não é zelo, é a tranca** — a view é simples, logo **auto-atualizável**, e sem
+  revogar insert/update/delete daria pra escrever na tabela base por dentro dela, passando por
+  cima das policies. Medido: tirando só essa linha, a matriz de RLS acusa 11 células, inclusive
+  o **anônimo** conseguindo inserir.
+  (c) **quatro policies separadas, não uma `for all`** — policy é permissiva, então uma `for all`
+  sobrevivente daria `select` a quem a policy nova quer barrar.
+  (d) **o gatilho que espelha operador → funcionário (0019) continua funcionando**, porque é
+  `security definer`: criar operador não passou a exigir o módulo Funcionários.
+  Teste repetível em `supabase/scripts/testar-rh-permissao.sql` (11 checagens, as duas metades —
+  o que o balconista não alcança **e** o que ele ainda consegue fazer).
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1118,8 +1150,19 @@ outro projeto Supabase do zero (ver seção 9).
   família/filiação (pai, mae, naturalidade, sexo, conjuge_nome, conjuge_nascimento,
   data_casamento, conjuge_telefone, conjuge_celular). **Dados de saúde ficaram de fora** por
   escolha explícita (dado sensível, cuidado de LGPD).
+  **Desde a migration `0056` a tabela exige a permissão `funcionarios` no banco**, não só na
+  tela — quem não tem o módulo lê ZERO linha aqui. O que o resto do sistema usa passa pela view
+  abaixo.
+- **`funcionarios_publico`** (VIEW, migration `0056`): id, loja_id, nome, cargo, operador_id,
+  ativo — a "janela pública" de `funcionarios`, pra qualquer operador com acesso à loja. É por
+  ela que os seletores de técnico e vendedor da OS leem, e é ela que dá o nome do técnico na
+  lista de OS e no documento de garantia. **Roda com os direitos do dono, então não reage a RLS
+  nenhuma**: o isolamento por loja é o `where` de dentro dela, e só `select` é concedido (ver o
+  item `0056` acima pro porquê de cada uma das duas coisas).
 - **`funcionario_filhos`**: id, funcionario_id (FK, `on delete cascade`), nome, data_nascimento
   (opcional), criado_em. `FuncionarioForm.tsx` salva a lista inteira de uma vez (substitui tudo).
+  Desde a `0056` exige a permissão `funcionarios`, e **não tem janela pública nenhuma** — nome e
+  nascimento de criança não servem pra tela nenhuma fora do módulo.
 - **`contagens_estoque`**: id, loja_id (FK lojas), deposito_id (FK depositos — a contagem física é
   sempre de um depósito específico), peca_id (FK), quantidade_contada,
   saldo_sistema, diferenca, observacao, operador_id (FK operadores), criado_em. Ao salvar com
@@ -1226,18 +1269,25 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    dá pra exportar o cadastro de clientes inteiro (e o de TODAS as lojas da mesma empresa, já que
    `clientes` e `pecas` são compartilhados) sem deixar rastro, porque a auditoria registra
    escrita, nunca leitura.
-   **A etapa 1 de 3 saiu em 13/09/2026** (item `TR-04.1`, migration `0054`): existe a função
-   `operador_tem_permissao(modulo)`, no mesmo padrão de `operador_atual_e_admin()`. **Nenhuma
-   policy usa ela ainda** — a etapa 2 (aplicar nas policies, uma tabela por vez) é mudança de
-   arquitetura de segurança e o guia manda alinhar com ela antes, então não foi feita por conta
-   própria. **O que ela precisa saber antes de aprovar a etapa 2**: a partir dela, permissão
+   **A etapa 1 de 3 saiu em 13/09/2026** (item `TR-04.1`, migration `0054`): a função
+   `operador_tem_permissao(modulo)`, no mesmo padrão de `operador_atual_e_admin()`.
+   **A etapa 2 COMEÇOU em 18/09/2026, por uma tabela só** (migration `0056`, item `TR-04.3`):
+   `funcionarios` e `funcionario_filhos` são as primeiras a exigir a permissão no banco. As
+   outras **continuam como sempre foram** — o parágrafo acima segue valendo pra clientes,
+   peças, caixa e o resto.
+   **O que ela precisa saber antes de aprovar as próximas tabelas**: a partir daí, permissão
    errada no cadastro de um operador deixa de ser "o menu some" e passa a ser "a tela abre
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
    teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
    **E esse teste já existe, desde 13/09/2026**: é a matriz de RLS (`npm run test:rls`, item
-   `TR-07.3`, item 63 desta seção), que hoje já fotografa o comportamento atual em 660 células.
-   Quando a etapa 2 for feita, o diff do `expectativas.csv` **é** a revisão: ele mostra, tabela
-   por tabela, quem passou a enxergar o quê.
+   `TR-07.3`, item 63 desta seção), hoje em 680 células. O diff do `expectativas.csv` **é** a
+   revisão: na `0056` ele mostra, em números, o balconista saindo de 1 pra 0 nas oito linhas de
+   RH e entrando com 1 na view pública — ou seja, o que ele perdeu e o que ele manteve, lado a
+   lado.
+   **A lição de desenho que a primeira tabela deixou** (item 69 desta seção): fechar uma tabela
+   raramente é só fechar. `funcionarios` tinha uma parte pública de verdade (o nome do técnico
+   numa OS), e foi preciso abrir uma janela no mesmo movimento — as próximas tabelas merecem a
+   mesma pergunta antes de começar: *o que aqui dentro é público, e quem depende disso hoje?*
 
 2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). **Redefinir senha de
    operador esquecida** já está implementado (Configurações → Operadores → "Redefinir senha",
@@ -1284,7 +1334,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    dela).
    **E desde 13/09/2026 a RLS também é conferida por máquina**, fora do `npm test`:
    `npm run test:rls` (item `TR-07.3`) monta um banco do zero, simula cinco papéis e confere as
-   660 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
+   680 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
    seção. Continua sem falar com o Supabase de verdade: é um Postgres local/do CI.
    **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
    o parser de XML de verdade
@@ -2516,6 +2566,38 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
       uma conexão travada deixaria o backup pendurado até o limite de **6 horas** do GitHub: o
       backup do dia não acontece e **nada aparece como falha**.
 
+69. **Fechar uma tabela é também abrir uma janela — e a receita do guia pra isso estava errada
+    (18/09/2026, item `TR-04.3`).** Foi a primeira tabela da etapa 2 do `TR-04.1`, e quatro
+    coisas apareceram que valem pras próximas:
+    - **A view que o guia manda usar não funciona.** Ele pede `security_invoker = true`.
+      Medido num Postgres 16, com a tabela base fechada pro invocador: essa view devolve
+      **zero** linha, porque ela obedece à RLS da base — exatamente o que se queria contornar.
+      Só `security_invoker = false` atravessa. É o item 53 desta seção outra vez: o guia é um
+      bom cardápio, mas quando ele dá uma receita técnica, medir vem antes de aplicar. E o
+      experimento custou dois minutos, contra um desenho inteiro construído errado.
+    - **A view que atravessa a RLS vira dois buracos novos, e os dois são silenciosos.**
+      (a) Sem o `where` de loja escrito **dentro** dela, ela entrega o cadastro de todas as
+      lojas da empresa. (b) Uma view simples é **auto-atualizável**: sem revogar
+      insert/update/delete, dá pra escrever na tabela base por dentro dela, passando por cima
+      das policies. Medido: tirando só o `revoke`, a matriz acusa 11 células — inclusive
+      `sem_login`, o **anônimo**, conseguindo inserir. Nenhum dos dois dá erro em lugar nenhum.
+    - **`join` embutido em tabela fechada não dá erro: devolve `null`.** A lista de OS trazia o
+      nome do técnico por `tecnico:funcionarios(nome)`. Fechar a tabela teria apagado o
+      "técnico: Fulano" da tela e do documento de garantia **do balconista**, calado, sem nada
+      indicando o motivo — e o item existe justamente pra não atrapalhar quem monta OS. Os
+      nomes passaram a vir de uma consulta à view, costurada em `schemas/ordemServico.ts`
+      (função pura, testada). **Repontar o `join` pra view seria mais curto** e provavelmente
+      funcionaria — PostgREST costuma inferir relação através de view —, mas isso não dá pra
+      testar daqui, e é o item 33 desta seção: onde não se pode medir, escolher o caminho que
+      não depende de acertar.
+    - **O teste precisa medir as duas metades, ou ele passa pelo motivo errado.** Uma policy
+      que barrasse *todo mundo* passaria num teste que só confere "o balconista não vê". Por
+      isso `supabase/scripts/testar-rh-permissao.sql` confere também que quem TEM o módulo
+      continua lendo salário e filhos, e que o balconista ainda enxerga a lista pra montar OS.
+      As cinco mutações (tirar a permissão da policy, tirar o `where` da view, tirar o
+      `revoke`, deixar o salário escapar pra view, e trancar demais) foram rodadas de propósito
+      e ficaram vermelhas na checagem certa.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -2940,6 +3022,16 @@ Quatro coisas que valem saber:
   gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente. E
   **"Comissões"** (02/09/2026, pedido do pai dela; morava em Relações até 03/09/2026, quando ela
   pediu pra mover pra cá).
+  - **Desde 18/09/2026 o módulo é protegido pelo BANCO, não só pela tela** (item `TR-04.3`,
+    migration `0056`). Antes, "esconder" era literal: a tela não mostrava, mas qualquer
+    operador logado podia pedir a tabela inteira pela API — salário, CPF, RG, CNH, filiação,
+    nome do cônjuge e dos filhos — com a chave que está no computador dele. Agora o banco
+    recusa. **Nada muda pra quem tem o módulo**, e nada muda pra quem monta OS: nome e cargo
+    continuam saindo pela view `funcionarios_publico` (ver seção 5), que é o que alimenta os
+    seletores de técnico e vendedor e o "técnico: Fulano" na OS e na garantia.
+    **O que muda, e vale saber**: a partir daqui, tirar a permissão "Funcionários" de alguém
+    não esconde só o menu — a tela abre **vazia** se ela for alcançada por outro caminho. É o
+    preço de proteger de verdade, e vale pras próximas tabelas da série (item 1 da seção 6).
   - **A página virou orquestrador de abas** (mesmo padrão de Fornecedores/Caixa): a lista + o
     formulário saíram pra `FuncionariosSection.tsx`, e `ComissoesSection.tsx` mudou de pasta junto.
     Os dados que só a aba Comissões usa (OS, peças, serviços, contas a receber — 4 consultas) só
@@ -4011,6 +4103,8 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 12/09 | Fecha a Etapa 2 (estoque mínimo, campos fiscais explicados, WhatsApp, auditoria de contraste — tag `v0.9.33`) e saem **3 dos 7 itens da Etapa 3**: borda dos campos, correções de rateio, teste-ouro da nota e teste de tela nos formulários de dinheiro. Tag `v0.9.34`, **sem migration**. |
 | 15/09 | A **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (metade do `TR-08.3`) — o que o operador do balcão manda quando liga pedindo socorro, sem senha nem chave dentro. Tag `v0.9.36`, **sem migration**. E, na mesma data, o **`TR-05.7`**: o banco passa a dizer em que versão está (migration `0055`, rodada por ela) e o app avisa em português qual arquivo falta rodar, em vez de estourar "column does not exist" numa tela qualquer. Tag `v0.9.37`. Etapa 4 em 6 de 12. |
 | 17/09 | Dois itens da Etapa 4. `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. E `TR-04.6` — **endurecer o Electron**: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços dela, todo pedido da tela conferido, nada navegando pra fora, as chavinhas gravadas no executável, e um teste que abre o app de verdade (`npm run test:electron`). **Sem migration**; a leva do `TR-04.6` saiu na tag `v0.9.38`. Etapa 4 em 8 de 12. |
+| 18/09 (manhã) | `TR-12.1` — o **backup próprio do banco**, cifrado e em dois lugares fora do Supabase, rodando todo dia às 3h. Ela abriu uma cópia com as próprias mãos pra conferir. Não mexe no app, então **sem tag**. Etapa 4 em 9 de 12. |
+| 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4046,8 +4140,13 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0055` estão TODAS aplicadas no Supabase real dela — nada pendente de
-SQL.** A `0055` (`schema_versao`, item TR-05.7) foi rodada por ela em 15/09/2026, **antes** da tag
+**Estado hoje: `0001` a `0055` estão aplicadas no Supabase real dela. A `0056` (dado de RH só
+com o módulo, item TR-04.3) foi criada em 18/09/2026 e AINDA NÃO FOI RODADA — é o que está
+pendente.** Diferente das anteriores, esta pode ser rodada antes de a versão nova chegar sem
+risco nenhum: o app velho continua funcionando igual, porque quem usa o módulo é admin ou tem a
+permissão. O que não pode é o contrário (a versão nova antes da migration), porque a tela de OS
+passaria a procurar uma view que ainda não existe. Ou seja: migration primeiro, tag depois.
+Histórico: A `0055` (`schema_versao`, item TR-05.7) foi rodada por ela em 15/09/2026, **antes** da tag
 `v0.9.37`. Diferente das anteriores, esta não seria armadilha se a ordem invertesse: com o app
 novo e o SQL não rodado, o próprio app mostra a faixa dizendo que falta rodar a `0055` — que é
 justamente o que a migration existe pra fazer. Ainda assim, o certo continua sendo o SQL primeiro.
@@ -4101,7 +4200,7 @@ senão o `set local` não pega e o teste roda como superusuário, que ignora RLS
 sessão que precisava validar uma migration recriava esses mesmos stubs do zero.
 
 **E toda migration que mexa em policy tem que passar na matriz de RLS** (item `TR-07.3`), que faz
-esse mesmo trabalho por conta própria e confere 660 combinações de tabela × comando × papel:
+esse mesmo trabalho por conta própria e confere 680 combinações de tabela × comando × papel:
 
 ```bash
 service postgresql start
@@ -4482,8 +4581,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.38"` — publicada em 17/09/2026 (endurecer o Electron,
-  `TR-04.6`). **`main` em dia com a tag, banco na `0055`, nada esperando SQL nem
-  publicação** — ver "Onde parou", no fim deste arquivo.
+  `TR-04.6`). **A `main` está uma leva à frente da tag** (o `TR-04.3`, de 18/09/2026), e essa
+  leva **depende da migration `0056`, que ela ainda não rodou** — ver "Onde parou", no fim
+  deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -5206,7 +5306,98 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 18/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 18/09/2026, fim do dia — LEIA ISTO PRIMEIRO
+
+**Saiu o `TR-04.3` — dado de RH só pra quem tem o módulo.** Décimo item da Etapa 4; faltam
+dois. **Tem migration nova (`0056`) e ela ainda NÃO foi rodada** — ver "O que depende dela",
+logo abaixo. **Sem tag ainda**: a `v0.9.38` continua sendo a última versão publicada, e o app
+da loja continua nela.
+
+#### O problema que isso resolve, em uma frase
+
+`funcionarios` guarda salário, comissão, CPF, RG, CNH, filiação e nome do cônjuge, e
+`funcionario_filhos` guarda nome e nascimento de criança. A **tela** escondia tudo isso de quem
+não tem a permissão "Funcionários"; o **banco** não escondia nada — qualquer operador logado
+podia pedir a tabela inteira pela API, com a chave que está no computador dele. Salário de
+colega circulando na loja é briga na hora; CPF e filiação é dado de terceiro sob a LGPD. Agora
+o banco recusa.
+
+#### O que NÃO mudou, de propósito
+
+Todo mundo que abre uma OS precisa escolher técnico e vendedor, e precisa ver o nome do técnico
+num item já lançado — **inclusive o balconista que não tem o módulo**. Então `nome` continua
+público: ele sai por uma view nova (`funcionarios_publico`), que entrega id, nome, cargo e mais
+nada. Uma trava que também impedisse o balconista de abrir OS não seria segurança, seria
+sistema quebrado — e é por isso que o teste confere as duas metades.
+
+#### Três coisas que só apareceram medindo
+
+O detalhe está no item 69 da seção 6; em uma linha cada:
+
+- **A receita do guia estava errada.** Ele manda usar a view com `security_invoker = true`, e
+  medido num Postgres: nessa configuração ela devolve **zero** linha, porque obedece à RLS da
+  tabela base. O experimento custou dois minutos e evitou um desenho inteiro construído errado.
+- **A view que atravessa a RLS abre dois buracos silenciosos.** Sem o filtro de loja escrito
+  dentro dela, entrega o cadastro de todas as lojas; e sem o `revoke`, dá pra **escrever** na
+  tabela base por dentro dela. Medido: tirando só o `revoke`, a matriz de RLS acusa 11 células
+  — inclusive o **anônimo** conseguindo inserir.
+- **`join` embutido em tabela fechada não dá erro, devolve `null`.** A lista de OS trazia o
+  nome do técnico assim; fechar a tabela teria apagado o "técnico: Fulano" da tela e da
+  garantia do balconista, calado. Os nomes passaram a vir da view, costurados no app.
+
+#### Como foi conferido
+
+- Num Postgres local: instalação inteira rodada **três vezes do zero**, a `0056` sozinha duas
+  vezes num banco no estado `0055` com dado plantado.
+- `supabase/scripts/testar-rh-permissao.sql` — 11 checagens, as duas metades. **Cada uma foi
+  conferida quebrando o código de propósito**: cinco mutações (tirar a permissão da policy,
+  tirar o filtro de loja da view, tirar o `revoke`, deixar o salário escapar pra view, e
+  trancar demais) ficaram vermelhas na checagem certa.
+- A **matriz de RLS** passou a sondar views também — 680 células, e a view do TR-04.3 é o caso
+  que mais importa, porque view não reage a RLS. Duas mutações foram rodadas contra ela e
+  acusaram as células certas.
+- As **54 telas** do catálogo geradas de novo sem nenhuma falha, e as duas que importam foram
+  olhadas: o Vendedor da OS continua vindo preenchido e o "técnico: Anderson Lima" continua
+  aparecendo no Fechamento.
+- `tsc`, lint, `npm run contraste` limpos; **529 testes** passando nos dois fusos.
+
+#### O que depende dela agora
+
+1. **Rodar a migration `0056` no SQL Editor** — é a única coisa que bloqueia. Sem ela, nada
+   muda (o sistema segue funcionando exatamente como hoje); com ela, a proteção entra.
+   **A ordem aqui é a inversa do costume**: a migration pode ser rodada **antes** da versão
+   nova sem risco — o app velho só lê a tabela, e quem usa o módulo é admin ou tem a permissão,
+   então continua enxergando tudo. O que **não** pode é a versão nova chegar sem a migration:
+   aí a tela de OS procuraria uma view que ainda não existe. Ou seja: **migration primeiro,
+   tag depois**, como sempre.
+2. **Decidir se publica a tag `v0.9.39`** depois de rodar a migration. Não publiquei sozinho.
+3. Continua valendo o de sempre: **trocar as três credenciais expostas** no histórico público,
+   **marcar o CI como obrigatório pra mesclar**, **decidir sobre atualizar o Electron** (a
+   linha 33 não recebe mais correção de segurança), e **cadastrar a alíquota da competência**
+   no portal da prefeitura todo mês.
+
+#### O que confirmar em uso real, depois que a versão nova chegar
+
+Nada disso dá pra testar daqui.
+
+1. **Abrir uma OS e conferir que o seletor de técnico e o de vendedor continuam preenchidos**,
+   e que o "técnico: Fulano" aparece num item já lançado. É a metade da promessa que pode
+   quebrar sem ninguém perceber.
+2. **A tela de Funcionários continua completa** pra ela (é admin, então nada muda).
+3. Se quiser ver a trava funcionando: criar um operador de teste **sem** a permissão
+   Funcionários e conferir que ele monta OS normalmente.
+
+#### Etapa 4: 10 de 12
+
+Faltam `TR-04.2` (token da Focus NFe na Edge Function) e `TR-09.1` (canal de teste antes de
+atualizar todas as lojas) — mais as **etapas 2 e 3 do `TR-04.1`**, que agora deixaram de ser
+teóricas: a `0056` é a primeira tabela, e o caminho pras outras está aberto e medido. Pela
+ordem de esforço que a última sessão combinou, **o próximo é o `TR-09.1`** (`E2`), e o
+`TR-04.2` (`E3`) fecha a etapa. Vale confirmar com ela antes de começar.
+
+O que está abaixo é o marco anterior.
+
+### Onde parou em 18/09/2026, de manhã (histórico — o marco mais recente está logo acima)
 
 **Saiu o `TR-12.1` — o backup próprio do banco.** Nono item da Etapa 4; faltam três.
 Nada disso é versão nova do app: não mexe numa linha do que roda na loja, então **não houve
@@ -5273,7 +5464,7 @@ Tudo nesta sessão: a chave do `age` (guardada em `C:\age` e no Google Drive), o
 privado `ssace-backups`, o token do GitHub, a conta Cloudflare com o bucket `ssace-backups`, e
 os **8 secrets**. O passo a passo completo está na seção 9, em "Backup do banco".
 
-#### Etapa 4: 9 de 12
+#### Etapa 4: 9 de 12 (na data deste marco — o `TR-04.3` saiu no mesmo dia, ver acima)
 
 Faltam `TR-04.3` (dado de RH), `TR-04.2` (token da Focus NFe na Edge Function) e `TR-09.1`
 (canal de teste antes de atualizar todas as lojas) — mais as **etapas 2 e 3 do `TR-04.1`**, que

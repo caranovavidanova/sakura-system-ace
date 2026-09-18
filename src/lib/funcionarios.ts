@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type {
   Funcionario,
+  FuncionarioPublico,
   NovoFuncionario,
   NovoFuncionarioFilho,
 } from "@/types/funcionario";
@@ -8,6 +9,25 @@ import type {
 const SELECT_FUNCIONARIO =
   "*, operador:operadores(usuario), filhos:funcionario_filhos(*)";
 
+// A lista que as telas fora do módulo usam (seletor de técnico e de vendedor
+// na OS). Vem da view `funcionarios_publico` (migration 0056), que entrega
+// nome e cargo pra qualquer operador com acesso à loja — sem salário, CPF nem
+// nada do resto. Ler a tabela base aqui devolveria ZERO linha pra quem não
+// tem o módulo, e o seletor da OS chegaria vazio no balcão.
+export async function listarFuncionariosPublico(
+  lojaId: string,
+): Promise<FuncionarioPublico[]> {
+  const { data, error } = await supabase
+    .from("funcionarios_publico")
+    .select("id, loja_id, nome, cargo, operador_id, ativo")
+    .eq("loja_id", lojaId)
+    .order("nome", { ascending: true });
+
+  if (error) throw error;
+  return data as FuncionarioPublico[];
+}
+
+// O cadastro inteiro, pro módulo Funcionários. Exige a permissão no banco.
 export async function listarFuncionarios(lojaId: string): Promise<Funcionario[]> {
   const { data, error } = await supabase
     .from("funcionarios")

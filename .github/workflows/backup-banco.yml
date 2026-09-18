@@ -182,21 +182,42 @@ jobs:
                   > "$PASTA/notas-lista.txt" || true
 
                 QUANTAS=0
+                PEDIDOS=0
                 while IFS= read -r CAMINHO; do
                   [ -z "$CAMINHO" ] && continue
+                  PEDIDOS=$((PEDIDOS + 1))
                   DESTINO="$PASTA/notas/$(echo "$CAMINHO" | tr '/' '_')"
-                  if curl -fsSL \
-                      -H "Authorization: Bearer $SERVICE_KEY" \
-                      -H "apikey: $SERVICE_KEY" \
-                      --get --data-urlencode "x=1" \
-                      "$SUPABASE_URL/storage/v1/object/notas-fiscais/$CAMINHO" \
-                      -o "$DESTINO" 2>/dev/null; then
+
+                  # O código HTTP é lido e MOSTRADO quando dá errado. A versão
+                  # anterior usava `curl -f ... 2>/dev/null`, que engolia o
+                  # motivo: a primeira rodada de verdade falhou nos 18 arquivos
+                  # sem dizer por quê, e "adivinhar a causa duas vezes" é o
+                  # erro que este projeto já registrou (§6 item 33).
+                  CODIGO="$(curl -sSL -o "$DESTINO" -w '%{http_code}' \
+                    -H "Authorization: Bearer $SERVICE_KEY" \
+                    -H "apikey: $SERVICE_KEY" \
+                    "$SUPABASE_URL/storage/v1/object/notas-fiscais/$CAMINHO" || echo "000")"
+
+                  if [ "$CODIGO" = "200" ]; then
                     QUANTAS=$((QUANTAS + 1))
                   else
-                    echo "::warning::Não consegui baixar o XML $CAMINHO de $EMPRESA."
+                    # A resposta de erro do Supabase é um JSON curto e NÃO traz
+                    # a chave dentro — dá pra mostrar.
+                    MOTIVO="$(head -c 200 "$DESTINO" 2>/dev/null | tr -d '\n')"
+                    echo "::warning::XML $CAMINHO: HTTP $CODIGO — $MOTIVO"
+                    rm -f "$DESTINO"
                   fi
                 done < "$PASTA/notas-lista.txt"
-                echo "XMLs de nota fiscal baixados: $QUANTAS"
+                echo "XMLs de nota fiscal: $QUANTAS de $PEDIDOS baixados"
+
+                # Um ou outro falhando é aviso; TODOS falhando é defeito de
+                # configuração (chave errada, bucket renomeado), e aí a cópia
+                # sai sem os documentos que a lei manda guardar 5 anos. Isso
+                # não pode passar como sucesso.
+                if [ "$PEDIDOS" -gt 0 ] && [ "$QUANTAS" = 0 ]; then
+                  echo "::error::Nenhum dos $PEDIDOS XMLs de nota fiscal de $EMPRESA pôde ser baixado — a cópia sairia sem eles."
+                  exit 1
+                fi
               else
                 echo "::warning::$EMPRESA está sem supabase_url/service_role_key — os XMLs das notas fiscais NÃO entraram nesta cópia."
               fi

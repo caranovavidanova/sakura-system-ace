@@ -1,0 +1,240 @@
+name: Backup do banco
+
+# Uma cópia de segurança própria do banco de cada empresa, todo dia, guardada
+# em dois lugares fora do Supabase e cifrada (item TR-12.1 do guia).
+#
+# POR QUE ISTO EXISTE, se o Supabase já faz backup:
+# o plano Pro guarda os ÚLTIMOS 7 DIAS. Parece bastante até o dia em que o
+# problema é descoberto na segunda semana — uma tabela corrompida por um bug,
+# um `delete` sem `where` rodado no SQL Editor, uma loja que só percebeu a
+# falta no fim do mês. Passando de 7 dias, não existe mais de onde voltar.
+# Aqui são 30 diárias + 12 mensais, e ficam em lugar nenhum do Supabase: se a
+# conta dele for suspensa ou o projeto apagado por engano, a cópia sobrevive.
+#
+# O QUE VAI DENTRO DE CADA CÓPIA:
+#   - o banco inteiro da empresa (schema public: cliente, OS, caixa, estoque…)
+#   - os logins (auth.users), sem os quais o banco restaurado não deixa
+#     ninguém entrar — `operadores.id` aponta pra lá
+#   - os XMLs das notas fiscais, que NÃO ficam no banco e são o documento que
+#     a lei manda guardar por 5 anos. Um "backup do banco" que os deixasse de
+#     fora seria um backup que mente.
+#
+# A CHAVE QUE ABRE OS ARQUIVOS NÃO ESTÁ AQUI. O GitHub só tem a chave pública
+# (`BACKUP_CHAVE_PUBLICA`), que fecha o cadeado. Abrir só com o
+# `chave-do-backup.txt`, que existe fora daqui. Ou seja: mesmo que o
+# repositório de backups ou a conta da Cloudflare vazem um dia, o arquivo
+# continua ilegível.
+#
+# COMO ACRESCENTAR UMA EMPRESA NOVA: editar só o secret BACKUP_EMPRESAS,
+# acrescentando um bloco. Nada de mexer neste arquivo.
+#
+# COMO RESTAURAR: RESTAURAR-BACKUP.md, na raiz do repositório.
+
+on:
+  schedule:
+    # 06:00 UTC = 03:00 em Brasília. De madrugada de propósito: se o dump
+    # pesar no banco, que pese na hora em que a loja está fechada.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+# Duas rodadas ao mesmo tempo iriam disputar o mesmo nome de arquivo do dia.
+concurrency:
+  group: backup-banco
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar o pg_dump e o age
+        run: |
+          set -euo pipefail
+
+          # O pg_dump precisa ser da mesma versão OU MAIS NOVO que o servidor,
+          # senão ele se recusa a rodar. O Ubuntu do runner traz o 16 e o
+          # Supabase já roda 17 em projeto novo — por isso o repositório
+          # oficial do Postgres, em vez do que vem de fábrica.
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17 age
+
+          pg_dump --version
+          age --version
+
+      - name: Tirar, cifrar e guardar as cópias
+        env:
+          BACKUP_EMPRESAS: ${{ secrets.BACKUP_EMPRESAS }}
+          BACKUP_CHAVE_PUBLICA: ${{ secrets.BACKUP_CHAVE_PUBLICA }}
+          GH_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+          GH_REPO: ${{ secrets.BACKUP_REPO }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          # O aws-cli novo manda uma soma de verificação que o R2 nem sempre
+          # aceita; estas duas linhas mandam só quando for mesmo necessário.
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          # Sem `set -x` em lugar nenhum deste passo: as linhas de conexão
+          # trazem a senha do banco dentro delas.
+          set -euo pipefail
+
+          if [ -z "${BACKUP_EMPRESAS:-}" ]; then
+            echo "::error::O secret BACKUP_EMPRESAS está vazio. Sem ele não há o que copiar."
+            exit 1
+          fi
+          if [ -z "${BACKUP_CHAVE_PUBLICA:-}" ]; then
+            echo "::error::O secret BACKUP_CHAVE_PUBLICA está vazio — sem ele o backup sairia sem cadeado, e isso não pode acontecer em silêncio."
+            exit 1
+          fi
+
+          DIA="$(date -u +%Y-%m-%d)"
+          FALHOU=0
+
+          # Ao menos um destino precisa estar configurado.
+          TEM_GITHUB=0; [ -n "${GH_REPO:-}" ] && [ -n "${GH_TOKEN:-}" ] && TEM_GITHUB=1
+          TEM_R2=0; [ -n "${R2_ENDPOINT:-}" ] && [ -n "${R2_BUCKET:-}" ] && TEM_R2=1
+          if [ "$TEM_GITHUB" = 0 ] && [ "$TEM_R2" = 0 ]; then
+            echo "::error::Nenhum destino configurado. Faltam os secrets do repositório privado e/ou do R2."
+            exit 1
+          fi
+          [ "$TEM_GITHUB" = 1 ] || echo "::warning::Sem os secrets do repositório privado — hoje o backup vai pra um lugar só."
+          [ "$TEM_R2" = 1 ] || echo "::warning::Sem os secrets do R2 — hoje o backup vai pra um lugar só."
+
+          TOTAL="$(echo "$BACKUP_EMPRESAS" | jq 'length')"
+          echo "Empresas a copiar: $TOTAL"
+
+          for i in $(seq 0 $((TOTAL - 1))); do
+            EMPRESA="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].nome")"
+            CONEXAO="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].banco")"
+            SUPABASE_URL="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].supabase_url // empty")"
+            SERVICE_KEY="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].service_role_key // empty")"
+
+            # Escondem o valor de qualquer saída, inclusive de um erro do
+            # pg_dump que devolvesse a linha de conexão inteira.
+            echo "::add-mask::$CONEXAO"
+            [ -n "$SERVICE_KEY" ] && echo "::add-mask::$SERVICE_KEY"
+
+            echo "::group::$EMPRESA"
+
+            if ! (
+              set -euo pipefail
+              PASTA="copia/$EMPRESA"
+              rm -rf "$PASTA" && mkdir -p "$PASTA/notas"
+
+              # 1. Os logins. Vêm PRIMEIRO no arquivo de propósito: a tabela
+              #    `operadores` aponta pra `auth.users`, então restaurar na
+              #    ordem contrária esbarraria na chave estrangeira.
+              echo "-- logins (auth.users)" > "$PASTA/banco.sql"
+              pg_dump "$CONEXAO" --data-only --no-owner \
+                --table=auth.users --table=auth.identities >> "$PASTA/banco.sql"
+
+              # 2. O banco da loja: estrutura e dados. As permissões (GRANT)
+              #    vão junto de propósito — sem elas a RLS não protege nada
+              #    depois de restaurado.
+              echo "-- banco da loja (schema public)" >> "$PASTA/banco.sql"
+              pg_dump "$CONEXAO" --schema=public --no-owner >> "$PASTA/banco.sql"
+
+              LINHAS="$(wc -l < "$PASTA/banco.sql")"
+              echo "banco.sql: $LINHAS linhas"
+              if [ "$LINHAS" -lt 100 ]; then
+                echo "::error::O dump de $EMPRESA saiu pequeno demais ($LINHAS linhas) — isso não é um banco inteiro."
+                exit 1
+              fi
+
+              # 3. Os XMLs das notas fiscais. O próprio banco é o índice de
+              #    onde cada arquivo está — é assim que o app faz.
+              if [ -n "$SUPABASE_URL" ] && [ -n "$SERVICE_KEY" ]; then
+                psql "$CONEXAO" -Atc \
+                  "select storage_path from notas_fiscais_arquivos where storage_path is not null" \
+                  > "$PASTA/notas-lista.txt" || true
+
+                QUANTAS=0
+                while IFS= read -r CAMINHO; do
+                  [ -z "$CAMINHO" ] && continue
+                  DESTINO="$PASTA/notas/$(echo "$CAMINHO" | tr '/' '_')"
+                  if curl -fsSL \
+                      -H "Authorization: Bearer $SERVICE_KEY" \
+                      -H "apikey: $SERVICE_KEY" \
+                      --get --data-urlencode "x=1" \
+                      "$SUPABASE_URL/storage/v1/object/notas-fiscais/$CAMINHO" \
+                      -o "$DESTINO" 2>/dev/null; then
+                    QUANTAS=$((QUANTAS + 1))
+                  else
+                    echo "::warning::Não consegui baixar o XML $CAMINHO de $EMPRESA."
+                  fi
+                done < "$PASTA/notas-lista.txt"
+                echo "XMLs de nota fiscal baixados: $QUANTAS"
+              else
+                echo "::warning::$EMPRESA está sem supabase_url/service_role_key — os XMLs das notas fiscais NÃO entraram nesta cópia."
+              fi
+
+              # 4. Um pacote só, fechado com a chave pública.
+              ARQUIVO="$EMPRESA-$DIA.age"
+              tar -czf - -C "copia" "$EMPRESA" | age -r "$BACKUP_CHAVE_PUBLICA" -o "$ARQUIVO"
+              echo "$ARQUIVO: $(du -h "$ARQUIVO" | cut -f1)"
+
+              # 5. Destino 1 — repositório privado, como anexo de uma release.
+              #    Anexo e não commit: arquivo binário dentro do Git ficaria no
+              #    histórico pra sempre, e o repositório só cresceria.
+              if [ "$TEM_GITHUB" = 1 ]; then
+                TAG="backup-$EMPRESA"
+                gh release view "$TAG" > /dev/null 2>&1 || \
+                  gh release create "$TAG" \
+                    --title "Cópias de segurança — $EMPRESA" \
+                    --notes "Arquivos cifrados. Abrir com o age e o chave-do-backup.txt. Ver RESTAURAR-BACKUP.md no repositório do sistema."
+                gh release upload "$TAG" "$ARQUIVO" --clobber
+
+                gh release view "$TAG" --json assets -q '.assets[].name' \
+                  | node scripts/retencao-backup.mjs > apagar.txt
+                while IFS= read -r VELHO; do
+                  [ -z "$VELHO" ] && continue
+                  echo "apagando do GitHub: $VELHO"
+                  gh release delete-asset "$TAG" "$VELHO" -y
+                done < apagar.txt
+              fi
+
+              # 6. Destino 2 — Cloudflare R2, em outro fornecedor.
+              if [ "$TEM_R2" = 1 ]; then
+                aws s3 cp "$ARQUIVO" "s3://$R2_BUCKET/$EMPRESA/$ARQUIVO" \
+                  --endpoint-url "$R2_ENDPOINT" --only-show-errors
+
+                aws s3 ls "s3://$R2_BUCKET/$EMPRESA/" --endpoint-url "$R2_ENDPOINT" \
+                  | awk '{print $4}' | node scripts/retencao-backup.mjs > apagar-r2.txt
+                while IFS= read -r VELHO; do
+                  [ -z "$VELHO" ] && continue
+                  echo "apagando do R2: $VELHO"
+                  aws s3 rm "s3://$R2_BUCKET/$EMPRESA/$VELHO" \
+                    --endpoint-url "$R2_ENDPOINT" --only-show-errors
+                done < apagar-r2.txt
+              fi
+
+              # Nada de arquivo de banco sobrando no disco do runner.
+              rm -rf "$PASTA" "$ARQUIVO"
+            ); then
+              echo "::error::A cópia de $EMPRESA falhou."
+              FALHOU=1
+            fi
+
+            echo "::endgroup::"
+          done
+
+          if [ "$FALHOU" = 1 ]; then
+            echo "::error::Pelo menos uma empresa ficou sem cópia hoje."
+            exit 1
+          fi
+          echo "Todas as cópias do dia $DIA foram guardadas."

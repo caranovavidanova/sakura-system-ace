@@ -48,6 +48,10 @@ permissions:
 jobs:
   backup:
     runs-on: ubuntu-latest
+    # Um backup que não terminou em 20 minutos não vai terminar. Sem este
+    # limite, o padrão do GitHub são 6 HORAS — tempo suficiente pro backup do
+    # dia não acontecer sem que nada apareça como falha.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -198,6 +202,23 @@ jobs:
                   exit 1
                 fi
 
+                # Quais buckets existem mesmo? O Storage responde
+                # "Bucket not found" tanto pra bucket inexistente quanto pra
+                # bucket que a chave não pode ver — dois problemas bem
+                # diferentes, com a mesma cara. Listar separa os dois, e de
+                # quebra mostra o nome de verdade se alguém renomear.
+                BUCKETS="$(curl -sS --connect-timeout 15 --max-time 30 \
+                  -H "Authorization: Bearer $SERVICE_KEY" \
+                  -H "apikey: $SERVICE_KEY" \
+                  "$SUPABASE_URL/storage/v1/bucket" \
+                  | jq -r 'if type == "array" then .[].name else "erro: " + tostring end' 2>/dev/null || echo "?")"
+                echo "buckets de $EMPRESA: $(echo "$BUCKETS" | tr '\n' ' ')"
+
+                if ! echo "$BUCKETS" | grep -qx "notas-fiscais"; then
+                  echo "::error::O bucket 'notas-fiscais' não aparece em $EMPRESA. O que existe: $(echo "$BUCKETS" | tr '\n' ' ')"
+                  exit 1
+                fi
+
                 "$PG_BIN/psql" "$CONEXAO" -Atc \
                   "select storage_path from notas_fiscais_arquivos where storage_path is not null" \
                   > "$PASTA/notas-lista.txt" || true
@@ -214,7 +235,12 @@ jobs:
                   # motivo: a primeira rodada de verdade falhou nos 18 arquivos
                   # sem dizer por quê, e "adivinhar a causa duas vezes" é o
                   # erro que este projeto já registrou (§6 item 33).
+                  # --max-time não é detalhe: sem ele, UMA conexão travada
+                  # deixa o job pendurado até o limite de 6 horas do GitHub, e
+                  # o backup do dia simplesmente não acontece — sem erro, sem
+                  # aviso, só um job que nunca termina.
                   CODIGO="$(curl -sSL -o "$DESTINO" -w '%{http_code}' \
+                    --connect-timeout 15 --max-time 120 --retry 2 \
                     -H "Authorization: Bearer $SERVICE_KEY" \
                     -H "apikey: $SERVICE_KEY" \
                     "$SUPABASE_URL/storage/v1/object/notas-fiscais/$CAMINHO" || echo "000")"

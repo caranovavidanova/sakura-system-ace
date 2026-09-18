@@ -70,7 +70,17 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17 age
 
-          pg_dump --version
+          # O `pg_dump` de /usr/bin é um atalho que escolhe a versão sozinho —
+          # e escolhe ERRADO: na primeira rodada de verdade ele pegou o 16
+          # mesmo com o 17 instalado, e o dump morreu com "server version
+          # mismatch" contra um Supabase 17.6. Por isso o caminho completo da
+          # versão mais nova instalada, decidido aqui e usado no passo
+          # seguinte. Quando o Supabase subir pra 18, é só trocar o número do
+          # `apt-get install` acima.
+          PG_BIN="$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -1)"
+          echo "PG_BIN=$PG_BIN" >> "$GITHUB_ENV"
+
+          "$PG_BIN/pg_dump" --version
           age --version
 
       - name: Tirar, cifrar e guardar as cópias
@@ -131,7 +141,15 @@ jobs:
 
             echo "::group::$EMPRESA"
 
-            if ! (
+            # O subshell roda SOLTO, e o resultado é lido depois — não dentro
+            # de um `if`. Isso NÃO é estilo: dentro de `if ! ( ... )` o bash
+            # DESLIGA o `set -e`, então um comando que falhasse no meio não
+            # interrompia o resto. Foi o que aconteceu na primeira rodada de
+            # verdade: o pg_dump morreu por versão errada e o script seguiu
+            # adiante, montando o pacote com um arquivo de 2 linhas dentro.
+            # Testado num bash de verdade, não suposto.
+            set +e
+            (
               set -euo pipefail
               PASTA="copia/$EMPRESA"
               rm -rf "$PASTA" && mkdir -p "$PASTA/notas"
@@ -140,14 +158,14 @@ jobs:
               #    `operadores` aponta pra `auth.users`, então restaurar na
               #    ordem contrária esbarraria na chave estrangeira.
               echo "-- logins (auth.users)" > "$PASTA/banco.sql"
-              pg_dump "$CONEXAO" --data-only --no-owner \
+              "$PG_BIN/pg_dump" "$CONEXAO" --data-only --no-owner \
                 --table=auth.users --table=auth.identities >> "$PASTA/banco.sql"
 
               # 2. O banco da loja: estrutura e dados. As permissões (GRANT)
               #    vão junto de propósito — sem elas a RLS não protege nada
               #    depois de restaurado.
               echo "-- banco da loja (schema public)" >> "$PASTA/banco.sql"
-              pg_dump "$CONEXAO" --schema=public --no-owner >> "$PASTA/banco.sql"
+              "$PG_BIN/pg_dump" "$CONEXAO" --schema=public --no-owner >> "$PASTA/banco.sql"
 
               LINHAS="$(wc -l < "$PASTA/banco.sql")"
               echo "banco.sql: $LINHAS linhas"
@@ -159,7 +177,7 @@ jobs:
               # 3. Os XMLs das notas fiscais. O próprio banco é o índice de
               #    onde cada arquivo está — é assim que o app faz.
               if [ -n "$SUPABASE_URL" ] && [ -n "$SERVICE_KEY" ]; then
-                psql "$CONEXAO" -Atc \
+                "$PG_BIN/psql" "$CONEXAO" -Atc \
                   "select storage_path from notas_fiscais_arquivos where storage_path is not null" \
                   > "$PASTA/notas-lista.txt" || true
 
@@ -225,7 +243,11 @@ jobs:
 
               # Nada de arquivo de banco sobrando no disco do runner.
               rm -rf "$PASTA" "$ARQUIVO"
-            ); then
+            )
+            RESULTADO=$?
+            set -e
+
+            if [ "$RESULTADO" != 0 ]; then
               echo "::error::A cópia de $EMPRESA falhou."
               FALHOU=1
             fi

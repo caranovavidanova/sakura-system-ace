@@ -594,6 +594,27 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # credencial e barra certificado digital versionado. NÃO builda
 │                                  # o instalador (isso é do release.yml). Ver item 48 da seção 6
 
+├── .github/workflows/backup-banco.yml # o backup próprio do banco (item TR-12.1), todo dia
+│                                  # às 03:00 de Brasília. Tira a cópia de CADA empresa listada
+│                                  # no secret BACKUP_EMPRESAS, cifra com a chave pública do age
+│                                  # e guarda em DOIS lugares fora do Supabase: um repositório
+│                                  # privado (anexo de release) e o Cloudflare R2. Dentro de cada
+│                                  # cópia: o schema public COM as permissões, auth.users (senão
+│                                  # ninguém entra no banco restaurado) e os XMLs das notas
+│                                  # fiscais, que não ficam no banco. A chave que ABRE não está
+│                                  # no GitHub. Empresa nova entra editando só o secret.
+│                                  # Ver RESTAURAR-BACKUP.md e a seção 9
+├── scripts/retencao-backup.mjs   # a regra de qual cópia fica e qual vai embora (30 diárias + a
+│                                  # primeira de cada um dos últimos 12 meses), com teste. É
+│                                  # "guarde as N mais recentes", NUNCA "apague o que tem mais de
+│                                  # N dias" — se o job parar dois meses e voltar, a regra por
+│                                  # idade apagaria o acervo inteiro de uma vez. E nome que ela
+│                                  # não entende nunca é apagado
+├── RESTAURAR-BACKUP.md           # "deu problema no banco — e agora?", em uma página e em
+│                                  # linguagem simples. A primeira tabela manda NÃO usar backup
+│                                  # na maioria dos casos: "apaguei uma OS sem querer" se resolve
+│                                  # na Auditoria, em minutos. Restaurar num caso que não pedia
+│                                  # transforma problema pequeno em problema grande
 ├── .github/workflows/release.yml # builda + publica o instalador Windows no GitHub Releases quando uma tag "v*" é enviada
 │                                  # (NÃO embute mais a conexão do Supabase — ver seção 7). O
 │                                  # electron-builder só BUILDA (`--publish never`); quem publica
@@ -5065,7 +5086,68 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 17/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 18/09/2026 — LEIA ISTO PRIMEIRO
+
+**Saiu o `TR-12.1` — o backup próprio do banco.** Nono item da Etapa 4; faltam três.
+Nada disso é versão nova do app: não mexe numa linha do que roda na loja, então **não houve
+tag** e o computador dela continua na `v0.9.38`. O banco continua na `0055`.
+
+#### O que existe agora
+
+Todo dia às 3 da manhã um robô do GitHub tira uma cópia do banco de **cada empresa** e guarda
+**em dois lugares fora do Supabase**: o repositório privado `caranovavidanova/ssace-backups`
+(como anexo de release) e o Cloudflare R2. Ficam **30 diárias + a primeira de cada um dos
+últimos 12 meses**.
+
+**Por que isso, se o Supabase já faz backup:** o plano Pro guarda os **últimos 7 dias**. Parece
+bastante até o problema ser descoberto na segunda semana — e aí não existe mais de onde voltar.
+
+**O que vai dentro de cada cópia, e por quê:** o `schema public` inteiro **com as permissões**
+(sem elas o banco volta com os dados certos e sem as travas de segurança, e nada denuncia isso);
+`auth.users`, primeiro no arquivo (`operadores.id` aponta pra lá); e **os XMLs das notas
+fiscais**, que não ficam no banco e são o documento que a lei manda guardar 5 anos.
+
+**A chave que abre não está no GitHub.** Lá só existe a pública, que fecha o cadeado. Abrir é só
+com o `chave-do-backup.txt`, que ela gerou no PC dela (`C:\age`) e copiou pro Google Drive. Se o
+destino do backup vazar um dia, o arquivo continua ilegível — **e se ela perder esse arquivo, as
+cópias antigas viram lixo.** Não existe recuperação; é esse o ponto.
+
+#### O que foi testado, e o que NÃO dá pra testar daqui
+
+O ciclo inteiro foi exercitado num Postgres local, não só lido: instalar o sistema pelo
+`instalacao-completa.sql`, plantar dado, tirar a cópia **com os mesmos comandos do workflow**,
+cifrar, abrir com a chave e restaurar num banco vazio. As 13 tabelas bateram, o dado sobreviveu,
+e vieram junto 45 policies de RLS, 264 permissões e 48 funções — essa última conferência é a que
+ninguém lembra de fazer, e é a que separa "restaurou" de "restaurou com o banco aberto".
+
+As 13 checagens da retenção foram conferidas quebrando o código de propósito (§6, item 67).
+
+#### O que ela fez, e o que ainda depende dela
+
+Ela montou tudo do lado dos serviços, nesta sessão: gerou a chave do `age`, criou o repositório
+privado, o token do GitHub, a conta Cloudflare com o bucket `ssace-backups`, e colou os **8
+secrets**. O passo a passo completo está na seção 9, em "Backup do banco".
+
+**O que ainda depende dela, e é a parte que o guia insiste:** fazer a **parte 1** do
+`RESTAURAR-BACKUP.md` uma vez (baixar a cópia mais recente e abrir com a chave, no PC dela). Sem
+isso, o backup está testado por mim e nunca por quem vai precisar dele às 9 da manhã de uma
+terça. E uma vez por mês: olhar se as rodadas do job estão verdes.
+
+#### Etapa 4: 9 de 12
+
+Faltam `TR-04.3` (dado de RH), `TR-04.2` (token da Focus NFe na Edge Function) e `TR-09.1`
+(canal de teste antes de atualizar todas as lojas) — mais as **etapas 2 e 3 do `TR-04.1`**, que
+precisam da decisão dela antes de começar.
+
+**A ordem combinada nesta sessão é do mais simples pro mais complexo**, pelo esforço que o
+próprio guia marca: `TR-12.1` (feito) → `TR-04.3` (`E1`) → `TR-09.1` (`E2`) → `TR-04.2` (`E3`).
+Então **o próximo é o `TR-04.3`** — tirar salário, CPF, RG e CNH de funcionário do alcance de
+quem não tem o módulo. Vale confirmar com ela antes de começar, porque ele é, na prática, a
+primeira tabela da etapa 2 do `TR-04.1`.
+
+O que está abaixo é o marco anterior.
+
+### Onde parou em 17/09/2026 (histórico — o marco mais recente está logo acima)
 
 **Nada pendente: sem SQL esperando, sem tag esperando.** O banco dela está na `0055` e a
 **`v0.9.38`** é a última versão publicada — ela mandou publicar no fim da sessão ("tomamos a

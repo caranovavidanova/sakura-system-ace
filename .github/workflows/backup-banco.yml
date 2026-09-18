@@ -129,8 +129,28 @@ jobs:
           [ "$TEM_GITHUB" = 1 ] || echo "::warning::Sem os secrets do repositório privado — hoje o backup vai pra um lugar só."
           [ "$TEM_R2" = 1 ] || echo "::warning::Sem os secrets do R2 — hoje o backup vai pra um lugar só."
 
+          # O BACKUP_EMPRESAS é editado à mão, e um colchete ou uma aspa a
+          # menos transforma o erro num `jq: parse error` que não diz nada pra
+          # quem não programa. A conferência acontece aqui, com a explicação
+          # em português — e antes de qualquer coisa começar.
+          if ! echo "$BACKUP_EMPRESAS" | jq -e 'type == "array"' > /dev/null 2>&1; then
+            echo "::error::O secret BACKUP_EMPRESAS não está no formato certo. Ele precisa ser a LISTA inteira, começando com [ e terminando com ], com um bloco { ... } por empresa — não só a chave ou só um pedaço. O modelo está no PROJETO_STATUS.md, seção 9, em 'Backup do banco'."
+            exit 1
+          fi
+
           TOTAL="$(echo "$BACKUP_EMPRESAS" | jq 'length')"
           echo "Empresas a copiar: $TOTAL"
+
+          # Cada empresa precisa dos dois campos essenciais; sem eles o erro
+          # apareceria bem lá na frente, como "conexão vazia".
+          for i in $(seq 0 $((TOTAL - 1))); do
+            for CAMPO in nome banco; do
+              if [ -z "$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].$CAMPO // empty")" ]; then
+                echo "::error::A empresa de número $((i + 1)) no BACKUP_EMPRESAS está sem o campo \"$CAMPO\"."
+                exit 1
+              fi
+            done
+          done
 
           for i in $(seq 0 $((TOTAL - 1))); do
             EMPRESA="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].nome")"

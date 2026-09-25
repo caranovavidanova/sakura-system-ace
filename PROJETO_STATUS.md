@@ -989,7 +989,9 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   o que o balconista não alcança **e** o que ele ainda consegue fazer).
 - `0057` (criada em 25/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0056` **com um token
-  plantado** — **ainda NÃO rodada por ela**): o cofre do token da Focus NFe, item `TR-04.2`,
+  plantado** — **rodada e confirmada por ela em 25/09/2026** ("Success. No rows returned"),
+  junto com a Edge Function `focus-nfe` publicada, **antes** da tag `v0.9.41`): o cofre do
+  token da Focus NFe, item `TR-04.2`,
   **parte 1 de 2**. Cria `segredos_fiscais_loja` (loja_id, focus_nfe_token, atualizado_em) **sem
   policy nenhuma** — nenhum operador lê nem escreve, nem admin; só a service role, que existe
   apenas dentro das Edge Functions — e **copia sozinha** o token que já está em
@@ -3448,8 +3450,8 @@ Quatro coisas que valem saber:
   **Ainda não visto por ela rodando**, e é o tipo de mudança que só se percebe se algo quebrar:
   o que vale conferir depois do auto-update é o de sempre funcionando — abrir uma OS, buscar
   endereço por CEP, ver a garantia, emitir uma nota e abrir o WhatsApp de uma cobrança.
-- **Token da Focus NFe e o porteiro** (25/09/2026, item `TR-04.2`, **parte 1 de 2** — ainda não
-  publicado): o token que emite e cancela nota no CNPJ da loja **não chega mais no computador de
+- **Token da Focus NFe e o porteiro** (25/09/2026, item `TR-04.2`, **parte 1 de 2** — a `0057`
+  rodada e a Edge Function `focus-nfe` publicada por ela no mesmo dia; o app sai na `v0.9.41`): o token que emite e cancela nota no CNPJ da loja **não chega mais no computador de
   ninguém**. Ele mora num cofre do banco que nenhum operador lê, e quem fala com a Focus NFe é o
   **porteiro** — a Edge Function `focus-nfe`, no Supabase de cada empresa. Pra quem usa, nada
   muda: emitir, reabrir o PDF e cancelar continuam nos mesmos botões, e a nota que sai é
@@ -4344,10 +4346,15 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0056` estão aplicadas no Supabase real dela; a `0057` (o cofre do
-token da Focus NFe, item TR-04.2) está ESPERANDO ela rodar** — e, junto, publicar a Edge Function
-`focus-nfe`. As duas coisas vêm ANTES da versão nova: passo a passo em "Ativar o porteiro da
-Focus NFe", logo abaixo nesta seção.
+**Estado hoje: `0001` a `0057` estão TODAS aplicadas no Supabase real dela — nada pendente de
+SQL.** A `0057` (o cofre do token da Focus NFe, item TR-04.2) foi rodada por ela em 25/09/2026, e
+a Edge Function `focus-nfe` publicada no mesmo dia — as duas **antes** da tag `v0.9.41`, que era a
+ordem obrigatória (a versão nova só emite nota pelo porteiro).
+**Pegadinha que apareceu rodando a `0057`**: a primeira colagem chegou **cortada na linha 100**
+(de 196) e o Postgres recusou com `unterminated dollar-quoted string` — nada foi aplicado, porque
+erro de sintaxe barra o comando inteiro. A causa foi copiar da pré-visualização do arquivo na
+conversa, que mostra só o começo. **Pra migration ou Edge Function longa, mandar o link
+`raw.githubusercontent.com/...` e pedir pra ela conferir a última linha antes do Run.**
 Histórico: A `0056` (dado de RH só com o módulo, item TR-04.3) foi rodada por ela em 25/09/2026,
 **antes** da tag `v0.9.39` — a ordem que essa migration exigia, porque a tela de OS passa a ler
 uma view que só existe depois dela. (O contrário, a migration antes da versão nova, era seguro:
@@ -4874,9 +4881,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.40"` — publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
-  canal de teste). **A `main` está UMA leva à frente da tag** — o `TR-04.2` (o porteiro da Focus
-  NFe) —, que espera ela rodar a migration `0057` e publicar a Edge Function `focus-nfe` ANTES de
-  virar a `v0.9.41`. Banco na `0056`. Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
+  canal de teste). **Subindo pra `0.9.41`** — o `TR-04.2` (o porteiro da Focus NFe); ela já
+  rodou a `0057` e publicou a Edge Function `focus-nfe`, que era o que precisava vir antes.
+  Banco na `0057`. Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
@@ -5609,12 +5616,11 @@ escolheu, entre as opções, o **jeito recomendado**: um porteiro no Supabase qu
 nota que o programa monta (sem reescrever a montagem), o token guardado **por loja numa tabela
 só de escrita** (não num secret da função), e em **duas versões**.
 
-**Estado: mesclado na `main`, NÃO publicado.** E aqui a ordem é obrigatória — se a versão nova
-chegar na loja antes, a emissão de nota para:
-1. ela roda a migration `0057` no SQL Editor (copia o token sozinha);
-2. ela publica a Edge Function `focus-nfe` pelo painel ("Via Editor", nome antes do Deploy);
-3. só então sai a `v0.9.41` — e, como nenhum computador está no canal de teste ainda, **perguntar
-   se é pra liberar junto** ou se ela marca as duas máquinas como Teste antes.
+**Estado: os dois passos dela já foram feitos** — a `0057` rodada (depois de uma primeira colagem
+cortada, ver a pegadinha na seção 9) e a Edge Function `focus-nfe` publicada, as duas em
+25/09/2026. **A `v0.9.41` sai logo depois**, como pré-lançamento. Como nenhum computador está no
+canal de teste ainda, ela só chega em alguém quando for **liberada** — e liberar é decisão dela
+(ou marcar as duas máquinas como Teste antes).
 O passo a passo pra ela está na seção 9, "Ativar o porteiro da Focus NFe".
 **Não publicar nem liberar sem ela pedir.**
 
@@ -5665,7 +5671,8 @@ completa com ela**.
 
 #### O que depende dela agora
 
-1. Os três passos acima, na ordem.
+1. ~~Rodar a `0057` e publicar o porteiro~~ — feito em 25/09/2026. Falta decidir sobre liberar a
+   `v0.9.41` (ou marcar as máquinas como Teste).
 2. Depois de a versão chegar: emitir uma nota e cancelar uma — e avisar, pra sair a parte 2.
 3. Marcar as duas máquinas como Teste (pendência do `TR-09.1`, sem pressa).
 4. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como

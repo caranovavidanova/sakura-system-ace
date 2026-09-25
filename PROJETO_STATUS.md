@@ -1039,7 +1039,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   com nove mutações — inclusive uma policy de leitura plantada no cofre, que a matriz de RLS
   também pega.
 - `0058` (criada em 25/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero — **ainda NÃO rodada por ela**): o **fechamento de caixa do dia**, item
+  vezes do zero — **rodada em 25/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação): o **fechamento de caixa do dia**, item
   `TR-06.4`. Cria `fechamentos_caixa` (uma linha por loja por dia: troco, esperado em espécie,
   contado, diferença, os totais de cada forma de pagamento), semeia as categorias de caixa
   "Quebra de caixa" (saída) e "Sobra de caixa" (entrada), e as funções `fechar_caixa()` e
@@ -1061,7 +1061,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   e `mov.forma_pagamento <> 'dinheiro'` com forma NULA dá nulo, e a checagem passava calada
   (virou `is distinct from`).
 - `0059` (criada em 25/09/2026, mesma validação: instalação inteira três vezes do zero e a
-  migration sozinha duas vezes num banco no estado `0058` — **ainda NÃO rodada por ela**): a
+  migration sozinha duas vezes num banco no estado `0058` — **rodada em 25/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação): a
   **comissão paga**, item `TL-46.1`. Cria `comissoes_fechamentos` — um registro por funcionário
   por período, com o retrato das OS (`snapshot`). Leitura e registro exigem o módulo
   **Funcionários** no banco (é onde a aba Comissões mora, e `funcionarios` já exige o mesmo desde
@@ -1071,7 +1071,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   de novo uma migration idempotente sobre um banco que já tem a tabela **não aplica mudança de
   tabela** (`create table if not exists` pula), então "tirar a unique" e "trocar o `on delete`"
   só foram de fato testadas derrubando a tabela antes.
-- `0060` (criada em 25/09/2026 — **ainda NÃO rodada por ela**): as **travas de dado impossível**,
+- `0060` (criada em 25/09/2026 — **rodada em 25/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação, **sem nenhum aviso**: as 17 travas foram
+  criadas no banco da Pneus Amigão): as **travas de dado impossível**,
   item `TR-05.1`. São 17 `check` com nome `ck_<tabela>_<regra>`: preço e desconto de item de OS
   (o desconto nunca maior que a própria linha), preços/custo/garantia/ICMS de peça, preço e custo
   de serviço, valor de conta a pagar/receber, preço e quantidade recebida de pedido de compra,
@@ -3317,8 +3318,8 @@ Quatro coisas que valem saber:
     quem usa, comissão é assunto de funcionário. Consequência de permissão: quem enxerga
     Funcionários passa a enxergar comissão. Sem novidade de verdade — o cadastro de funcionário já
     mostra salário e a porcentagem de comissão de cada um.
-  - **Comissão paga fica registrada e congelada (25/09/2026, item `TL-46.1` — depende da
-    migration `0059`, ainda não rodada)**. O problema: a comissão é sempre recalculada a partir
+  - **Comissão paga fica registrada e congelada (25/09/2026, item `TL-46.1` — migration `0059`,
+    já rodada; chega na loja com a próxima versão)**. O problema: a comissão é sempre recalculada a partir
     das OS, e desde a `v0.9.28` dá pra corrigir o valor de um item de OS já lançado — uma
     correção numa OS antiga mudava, calada, uma comissão já paga. Agora cada linha tem
     **"Registrar pagamento"** (valor pago, data, observação), que grava junto um **retrato das
@@ -3365,8 +3366,8 @@ Quatro coisas que valem saber:
   da seção 6): conta o custo de cada OS uma vez só mesmo com pagamento dividido, inclui o custo do
   serviço (não só o da peça) e desconta as saídas lançadas à mão. A coluna "Lucro" da tabela
   reparte o lucro da OS entre os lançamentos dela, então a coluna fecha com o total.
-  **Aba "Fechamento" (25/09/2026, item `TR-06.4` — depende da migration `0058`, ainda não
-  rodada)**: no fim do dia, conta-se o dinheiro da gaveta e o sistema compara com o que ele
+  **Aba "Fechamento" (25/09/2026, item `TR-06.4` — migration `0058`, já rodada; chega na loja
+  com a próxima versão)**: no fim do dia, conta-se o dinheiro da gaveta e o sistema compara com o que ele
   esperava — **troco que estava na gaveta ao abrir + entradas em dinheiro − saídas em
   dinheiro**. Pix e cartão aparecem à parte, "confira com o extrato", porque não passam pela
   gaveta. Seis coisas que valem saber:
@@ -4477,8 +4478,10 @@ Quatro coisas que valem saber:
 
 11. ✅ **Botão "Atualizar o banco de todas as empresas" — CONSTRUÍDO em 25/09/2026** (planejado
     na mesma data, construído na sessão seguinte, quando ela disse "pode fazer com força, sem
-    pedir permissão"). **Ainda não rodado de verdade** — a primeira rodada é dela, em modo
-    `ensaiar`, e o passo a passo está na seção 9, em "Atualizar o banco de todas as empresas".
+    pedir permissão"). **Rodado de verdade pela primeira vez no mesmo dia, e funcionou**: ela
+    ensaiou (Pneus Amigão em `0057`, faltando `0058`/`0059`/`0060`, "✅ passaria") e depois
+    aplicou ("✅ atualizado", ficou em `0060`), sem nenhum aviso de migration. O passo a passo
+    está na seção 9, em "Atualizar o banco de todas as empresas".
     **O problema**: cada empresa tem o próprio projeto Supabase, e migration era colada à mão no
     SQL Editor de cada um. Com 3 bancos, cada migration nova vira 3 colagens — e esquecer um banco
     só aparece como a faixa de "banco desatualizado" (seção 7) naquela empresa.
@@ -4561,6 +4564,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
 | 25/09 (noite) | `TR-04.2`, **parte 1 de 2** — o token da Focus NFe sai do computador: vai pra um cofre no banco (migration `0057`) e quem usa é o **porteiro**, a Edge Function `focus-nfe`, que confere quem pede e o CNPJ da nota antes de repassar. Ela rodou a `0057` e publicou a função; saiu na **`v0.9.41`**, **publicada e liberada** a pedido dela. Etapa 4 em 12 de 12 começados. |
 | 25/09 (fim da noite) | A **apresentação comercial** em slides (pronta pra ela mandar ao pai) e o **"Importar por foto" desligado**, sem tag, a pedido dela. E conversa de fase 2: cenário de 2 empresas novas (uma com 2 lojas), **preço em aberto** (o pai sugeriu R$ 250/loja), cuidados de contrato, e o plano do **botão de atualizar todos os bancos** (item 11 da seção 8). Computador dela marcado como Teste. |
+| 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`). **Sem tag.** Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4597,12 +4601,13 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**⚠️ Atualização de 25/09/2026 (fim do dia): existem migrations NOVAS ainda não rodadas** — a
-lista e a ordem estão no marco "LEIA ISTO PRIMEIRO" mais recente, no fim do arquivo. O jeito
-novo de rodar é o botão "Atualizar o banco de todas as empresas" (seção 9), primeiro em modo
-`ensaiar`.
+**Estado hoje: `0001` a `0060` estão TODAS aplicadas no Supabase real dela.** As três últimas
+(`0058` fechamento de caixa, `0059` comissão paga, `0060` travas de dado) foram as primeiras a
+entrar **pelo botão "Atualizar o banco de todas as empresas"** (seção 9), em 25/09/2026 — ensaio
+e depois aplicação, sem colar nada no SQL Editor. É esse o jeito de rodar migration daqui pra
+frente.
 
-**Estado até a `0057`: `0001` a `0057` estão TODAS aplicadas no Supabase real dela.** A `0057` (o cofre do token da Focus NFe, item TR-04.2) foi rodada por ela em 25/09/2026, e
+**Estado até a `0057`:** A `0057` (o cofre do token da Focus NFe, item TR-04.2) foi rodada por ela em 25/09/2026, e
 a Edge Function `focus-nfe` publicada no mesmo dia — as duas **antes** da tag `v0.9.41`, que era a
 ordem obrigatória (a versão nova só emite nota pelo porteiro).
 **Pegadinha que apareceu rodando a `0057`**: a primeira colagem chegou **cortada na linha 100**
@@ -5178,7 +5183,8 @@ isso que existe a regra abaixo.
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026** — todas as lojas recebem na próxima abertura do programa. Banco na
   `0057`. **Desde a última leva de 25/09/2026 a `main` está à frente da `v0.9.41`** (PRs 297 a
-  300, mais o "Importar por foto" desligado) e há **três migrations pendentes** (`0058`–`0060`).
+  300, mais o "Importar por foto" desligado). O banco dela já está na **`0060`** (rodada pelo
+  botão), então a próxima tag não tem ordem a cumprir.
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -5907,27 +5913,26 @@ Se ela pedir sugestão, as duas respostas honestas são:
 ### ⏸ Onde parou em 25/09/2026, última leva — LEIA ISTO PRIMEIRO
 
 **Ela disse "pode fazer com força, sem pedir permissão" e depois "continua" — e saíram cinco
-coisas, todas mescladas na `main`, NENHUMA publicada.** A `main` está à frente da `v0.9.41` com
+coisas, todas mescladas na `main`, NENHUMA publicada. As três migrations delas JÁ ESTÃO RODADAS
+(banco na `0060`)** — então a próxima tag é só decidir e publicar, sem SQL antes. A `main` está à frente da `v0.9.41` com
 tudo isto **mais** o "Importar por foto" desligado do marco logo abaixo. Nenhuma tag foi criada
 (não publicar sem ela pedir).
 
-#### ⚠️ O primeiro passo, antes de qualquer tag: rodar as migrations 0058, 0059 e 0060
+#### ✅ As migrations 0058, 0059 e 0060 já foram rodadas — pelo botão novo
 
-O banco dela está na `0057`. As três migrations novas **ainda não foram rodadas em banco
-nenhum**. A ordem obrigatória de sempre vale: **primeiro o banco, depois a versão nova**. Sem
-elas, a versão nova mostra a faixa "o banco desta empresa ainda não foi atualizado" e as abas
-novas (Fechamento, pagamento de comissão) falham ao gravar — o resto funciona normal.
+No mesmo dia, ela rodou o botão "Atualizar o banco de todas as empresas" (item 11 da seção 8)
+pela primeira vez de verdade: **ensaio** (Pneus Amigão em `0057`, faltando as três, "✅
+passaria") e depois **aplicação** ("✅ atualizado", ficou em `0060`). **Nenhum aviso** apareceu,
+o que quer dizer que as 17 travas da `0060` foram todas criadas — o banco dela não tinha nenhum
+dado que elas recusariam.
 
-**O jeito recomendado é o botão novo** (item 11 da seção 8, passo a passo na seção 9,
-"Atualizar o banco de todas as empresas"): Actions → "Atualizar o banco de todas as empresas" →
-modo **`ensaiar`** → olhar a tabela → rodar de novo em **`aplicar`**. **É a primeira rodada de
-verdade do botão**, então: ensaiar primeiro, sempre, e mandar o print se aparecer qualquer ❌.
+**Consequência**: a ordem "primeiro o banco, depois a versão" já está cumprida. O primeiro passo
+agora é **perguntar se é pra publicar** (e se é pra liberar junto — a loja do pai dela ainda não
+está no canal de teste). Não publicar sozinho.
 
-**O que olhar no resultado da `0060`**: ela mostra uma linha por trava. "criada" ou "já existia"
-é o normal. **"NÃO criada — N linha(s) fora da regra"** quer dizer que o banco dela já tem dado
-que a trava recusaria (ex.: uma peça com preço negativo) — **nada foi alterado**, a trava só
-ficou pra depois. Nesse caso, mandar o print: o que fazer com o dado é decisão dela. Depois de
-corrigido, colar a `0060` de novo no SQL Editor (o botão não reroda migration já registrada).
+**Se um dia uma trava sair "NÃO criada"** (numa empresa nova, por exemplo): o botão mostra o
+aviso na tabela, nada é alterado, e o que fazer com o dado é decisão dela. Depois de corrigido,
+colar a `0060` de novo no SQL Editor daquele banco (o botão não reroda migration já registrada).
 
 #### O que saiu (PRs 297 a 300)
 
@@ -5947,7 +5952,7 @@ produção — item 3 de "O que ainda está frágil na parte fiscal", seção 8.
 Receita emite CNPJ com letras desde julho de 2026 — item 6 da mesma lista. Depende de perguntar
 à Focus NFe o formato. **Pesa na fase 2**: loja aberta de julho pra cá já nasce com CNPJ assim.
 
-#### O que confirmar em uso real, depois das migrations e da versão nova
+#### O que confirmar em uso real, depois da versão nova
 
 Nada disto dá pra testar daqui (o sandbox não alcança o Supabase de verdade):
 1. **Caixa → Fechamento**: contar a gaveta de um dia, fechar, ver a "Quebra/Sobra de caixa" no
@@ -5959,15 +5964,15 @@ Nada disto dá pra testar daqui (o sandbox não alcança o Supabase de verdade):
 
 #### Estado do código
 
-`main` com tudo acima, banco dela na `0057` (**três migrations pendentes**), última tag `v0.9.41`.
+`main` com tudo acima, banco dela na **`0060`** (nada de SQL pendente), última tag `v0.9.41`.
 `tsc`, lint e `npm run contraste` limpos; **677 testes** nos dois fusos (eram 612); matriz de RLS
 em **740 células**; os **7 testes de migration** passando no CI, cada um num banco limpo.
 
 #### Pendências (a lista do marco abaixo, atualizada)
 
-- **Dela, na ordem**: rodar `0058`–`0060` pelo botão (ensaiar → aplicar) → decidir se publica
-  (a versão leva também o "Importar por foto" desligado) → emitir e cancelar uma nota pelo
-  porteiro (libera a parte 2 do `TR-04.2`).
+- **Dela, na ordem**: ~~rodar `0058`–`0060` pelo botão~~ (feito, 25/09/2026) → decidir se
+  publica (a versão leva também o "Importar por foto" desligado) → emitir e cancelar uma nota
+  pelo porteiro (libera a parte 2 do `TR-04.2`).
 - **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
 - **Continua valendo do marco abaixo**: valor da fase 2, marcar o computador da loja como Teste,
   trocar as três credenciais expostas, o contrato com a cláusula de dados, a pergunta do CSOSN

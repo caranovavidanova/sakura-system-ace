@@ -1029,6 +1029,28 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   Teste repetível em `supabase/scripts/testar-porteiro-focus-nfe.sql` (17 checagens), conferido
   com nove mutações — inclusive uma policy de leitura plantada no cofre, que a matriz de RLS
   também pega.
+- `0058` (criada em 25/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero — **ainda NÃO rodada por ela**): o **fechamento de caixa do dia**, item
+  `TR-06.4`. Cria `fechamentos_caixa` (uma linha por loja por dia: troco, esperado em espécie,
+  contado, diferença, os totais de cada forma de pagamento), semeia as categorias de caixa
+  "Quebra de caixa" (saída) e "Sobra de caixa" (entrada), e as funções `fechar_caixa()` e
+  `desfazer_fechamento_caixa()`. Quatro decisões que valem saber:
+  (a) **fechar é uma função, não dois inserts do app** — o lançamento da diferença e o registro
+  do fechamento entram na mesma transação; feito em dois pedidos, uma falha no meio deixaria uma
+  "quebra de caixa" órfã. A função é `security invoker`: a RLS das duas tabelas vale como se o
+  operador tivesse feito cada insert;
+  (b) **ninguém altera um fechamento** (sem policy de update, declarado na matriz de RLS);
+  (c) **desfazer é só de admin da loja** — se quem fecha pudesse desfazer, bastaria fechar com
+  falta, desfazer e fechar de novo "certo". Desfazer apaga o lançamento da diferença junto, e a
+  auditoria guarda os dois lados;
+  (d) **fechar e ler exigem o módulo Caixa no banco** — a etapa 2 do `TR-04.1` aplicada desde o
+  nascimento, que em tabela nova não tem comportamento antigo pra quebrar.
+  Teste repetível em `supabase/scripts/testar-fechamento-caixa.sql` (9 blocos), conferido com
+  seis mutações — e duas delas **passaram na primeira versão do teste**, o que vale guardar:
+  o `returning` de dentro da função também passa pela policy de LEITURA, então tirar a
+  permissão só da policy de INSERT não era pego (o teste agora insere direto, sem `returning`);
+  e `mov.forma_pagamento <> 'dinheiro'` com forma NULA dá nulo, e a checagem passava calada
+  (virou `is distinct from`).
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1264,6 +1286,13 @@ outro projeto Supabase do zero (ver seção 9).
   nenhuma, de propósito**: nem o admin lê. Quem lê é o porteiro (Edge Function `focus-nfe`, com a
   service role); quem escreve é `definir_token_focus_nfe()`. **Não criar policy de select aqui** —
   seria transformar o cofre de volta numa coluna comum. A matriz de RLS reprova se aparecer uma.
+- **`fechamentos_caixa`** (migration `0058`): id, loja_id, data (date — o dia fechado),
+  fundo_troco, saldo_sistema (o esperado em espécie, **congelado** no fechamento),
+  valor_contado, diferenca (contado − esperado, conferida por `check`), totais_por_forma
+  (jsonb), observacao, caixa_movimento_id (a "Quebra/Sobra de caixa" gerada), operador_id,
+  criado_em. Único por (loja_id, data). **Gravado só por `fechar_caixa()`**; sem update;
+  delete só de admin da loja, por `desfazer_fechamento_caixa()`. A conta do esperado é de
+  `src/schemas/fechamentoCaixa.ts`, não do banco.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único **globalmente**, não por
   loja), nome, admin (bool), permissoes (`text[]` com as chaves de `MODULOS` em
   `src/types/operador.ts`), ativo, deve_trocar_senha (bool, default `false` — migration `0038`;
@@ -3240,6 +3269,27 @@ Quatro coisas que valem saber:
   da seção 6): conta o custo de cada OS uma vez só mesmo com pagamento dividido, inclui o custo do
   serviço (não só o da peça) e desconta as saídas lançadas à mão. A coluna "Lucro" da tabela
   reparte o lucro da OS entre os lançamentos dela, então a coluna fecha com o total.
+  **Aba "Fechamento" (25/09/2026, item `TR-06.4` — depende da migration `0058`, ainda não
+  rodada)**: no fim do dia, conta-se o dinheiro da gaveta e o sistema compara com o que ele
+  esperava — **troco que estava na gaveta ao abrir + entradas em dinheiro − saídas em
+  dinheiro**. Pix e cartão aparecem à parte, "confira com o extrato", porque não passam pela
+  gaveta. Seis coisas que valem saber:
+  - **A diferença nunca some**: faltou vira uma Saída "Quebra de caixa", sobrou vira uma Entrada
+    "Sobra de caixa", as duas em dinheiro — o espelho da Contagem de Estoque gerando ajuste. Por
+    ser em dinheiro, depois de fechado o esperado passa a bater com o contado sozinho.
+  - **O troco vem sugerido** com o do último fechamento — loja costuma deixar sempre o mesmo.
+  - **Lançamento sem forma de pagamento não entra na conta** (não dá pra saber se saiu da
+    gaveta), e a tela mostra à parte: "se foram em dinheiro, a diferença provavelmente vem daí".
+  - **Dá pra fechar um dia que passou** (fechou só na manhã seguinte): a quebra cai às 23:59
+    daquele dia, no fuso de quem usa — senão cairia no dia errado.
+  - **Lançar depois de fechado não é proibido** (aviso, nunca tranca): o lançamento manual pede
+    confirmação, e no Diário tudo que entrou depois do fechamento — manual ou OS faturada —
+    aparece com a etiqueta "depois do fechamento". No próprio fechamento, uma faixa lista esses
+    lançamentos.
+  - **Desfazer é só de admin** (o botão nem aparece pra quem não é), e o histórico embaixo
+    soma as diferenças dos últimos dias — a resposta pra "está faltando dinheiro no caixa?".
+  As contas ficam em `src/schemas/fechamentoCaixa.ts`, com teste (inclusive de propriedade:
+  o esperado fecha no centavo e só depende das linhas em dinheiro). **Não vista por ela ainda.**
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
   já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
@@ -4431,8 +4481,12 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0057` estão TODAS aplicadas no Supabase real dela — nada pendente de
-SQL.** A `0057` (o cofre do token da Focus NFe, item TR-04.2) foi rodada por ela em 25/09/2026, e
+**⚠️ Atualização de 25/09/2026 (fim do dia): existem migrations NOVAS ainda não rodadas** — a
+lista e a ordem estão no marco "LEIA ISTO PRIMEIRO" mais recente, no fim do arquivo. O jeito
+novo de rodar é o botão "Atualizar o banco de todas as empresas" (seção 9), primeiro em modo
+`ensaiar`.
+
+**Estado até a `0057`: `0001` a `0057` estão TODAS aplicadas no Supabase real dela.** A `0057` (o cofre do token da Focus NFe, item TR-04.2) foi rodada por ela em 25/09/2026, e
 a Edge Function `focus-nfe` publicada no mesmo dia — as duas **antes** da tag `v0.9.41`, que era a
 ordem obrigatória (a versão nova só emite nota pelo porteiro).
 **Pegadinha que apareceu rodando a `0057`**: a primeira colagem chegou **cortada na linha 100**

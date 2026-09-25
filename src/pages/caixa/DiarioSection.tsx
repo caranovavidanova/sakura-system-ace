@@ -6,6 +6,8 @@ import {
   resumirMovimentos,
 } from "@/schemas/metricasCaixa";
 import { Valor } from "@/components/Valor";
+import { lancamentosDepoisDoFechamento } from "@/schemas/fechamentoCaixa";
+import type { FechamentoCaixa } from "@/types/fechamentoCaixa";
 import { nomeOrdem } from "@/types/os";
 import type { CategoriaCaixa } from "@/types/categoriaCaixa";
 import type { MovimentoCaixa, NovoMovimentoCaixa } from "@/types/caixa";
@@ -18,6 +20,7 @@ interface DiarioSectionProps {
   pecas: Peca[];
   servicos: Servico[];
   categorias: CategoriaCaixa[];
+  fechamentos?: FechamentoCaixa[];
   onSalvar: (movimento: NovoMovimentoCaixa) => Promise<void>;
 }
 
@@ -34,6 +37,7 @@ export function DiarioSection({
   pecas,
   servicos,
   categorias,
+  fechamentos = [],
   onSalvar,
 }: DiarioSectionProps) {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -78,6 +82,12 @@ export function DiarioSection({
   );
 
   const totalLucro = resumo.lucro;
+
+  const fechamentoDoDia = fechamentos.find((f) => f.data === dataFiltro) ?? null;
+  const idsDepoisDoFechamento = useMemo(
+    () => new Set(lancamentosDepoisDoFechamento(movimentosDoDia, fechamentoDoDia).map((m) => m.id)),
+    [movimentosDoDia, fechamentoDoDia],
+  );
 
   return (
     <div className="space-y-6">
@@ -186,6 +196,14 @@ export function DiarioSection({
                           ? nomeOrdem(m.ordem_servico.numero)
                           : "OS"
                         : m.categoria?.nome || m.descricao || "Lançamento manual"}
+                      {idsDepoisDoFechamento.has(m.id) && (
+                        <span
+                          className="ml-2 whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-meta text-amber-800"
+                          title="Entrou depois de o caixa do dia ser fechado — não estava na gaveta quando ela foi contada."
+                        >
+                          depois do fechamento
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">{m.ordem_servico?.cliente?.nome ?? "—"}</td>
                     <td className="px-4 py-3">{m.forma_pagamento || "—"}</td>

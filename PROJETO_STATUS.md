@@ -5645,16 +5645,21 @@ duas etapas, as duas pedidas por ela:
 slides, **sem preço**, **sem citar a Pneus Amigão pelo nome** (vira "uma autocenter em
 operação") e **sem citar o "Importar por foto"**.
 
-**Falta dela**: o contato do último slide está como `[Nome do contato] · [WhatsApp] · [e-mail]`
-— ela não disse se o contato é o dela ou o do pai.
+**Pra que serve, nas palavras dela**: *"é só pra eu salvar e enviar pros compradores"*. Ou seja, o
+deck vai sair do claude.ai — ela baixa (PDF ou PowerPoint) ou compartilha o link pelo Share.
+
+**Falta dela, ANTES de mandar pra alguém**: o contato do último slide ("encerramento") ainda está
+como `[Nome do contato] · [WhatsApp] · [e-mail]` — ela não disse se é o contato dela ou o do pai.
+Se o deck sair assim, o comprador recebe os colchetes. Ela pode editar direto no deck ou pedir.
 
 **As telas dos slides são do app de verdade, com os dados de exemplo** (a loja inventada "Auto
 Center Modelo"). Duas pegadinhas das ferramentas de tela que apareceram fotografando, e valem pra
 qualquer foto futura: (a) o banco de mentira **não filtra** as notas fiscais por OS, então o
 fechamento de uma OS mostra "Ver DANFE" repetido — é dado de exemplo, não bug do app; (b) o Caixa
-Diário de **hoje** sai com lucro igual à venda e sem cliente, então não serve de vitrine. As fotos
-foram tiradas chamando `percorrerTelas` com um recorte (`clip`) por tela, num script que ficou
-fora do repositório.
+Diário de **hoje** sai com lucro igual à venda e sem cliente, então não serve de vitrine.
+**Refazer as fotos** (se a tela mudar): `apresentacao/fotografar-telas-dos-slides.mjs`, com o
+`.env` de mentira e o vite das ferramentas no ar — o uso está no topo do arquivo. Depois é subir
+as fotos novas pro deck e trocar o `src` das imagens.
 
 #### "Importar por foto/PDF" desligado
 
@@ -5662,11 +5667,17 @@ Pedido dela junto com a apresentação: o crédito da IA existe, mas ela quer o 
 por enquanto e decidir depois. O botão sumiu da tela; o código ficou todo (ver o módulo Estoque,
 seção 7, pra como religar). A cena dele saiu da lista de telas, que agora tem **53**, não 54.
 
-**Não foi publicado em versão nenhuma** — enquanto não sair uma tag, o botão continua aparecendo
-nos computadores das lojas. Sem migration. **Perguntar a ela antes de publicar**, e lembrar que
-publicar e liberar são dois passos (seção 9).
+**Não foi publicado em versão nenhuma, por decisão dela** (*"não é pra publicar"*, 25/09/2026) —
+enquanto não sair uma tag, o botão continua aparecendo nos computadores das lojas. Sem migration.
+**Não publicar sozinho**: quando ela voltar, perguntar, e lembrar que publicar e liberar são dois
+passos (seção 9). A `main` está **uma leva à frente da `v0.9.41`** só por isso.
 
-Conferido: `tsc`, lint, os 612 testes e as 53 telas percorridas sem falha.
+Conferido: `tsc`, lint, os 612 testes, as 53 telas percorridas sem falha, e a CI da `main` verde
+depois do merge (inclusive o job de contraste nas telas, que era o que a cena tirada podia
+quebrar).
+
+**Por onde a próxima sessão começa**: ela disse *"continuamos isso em breve"*. Os dois pontos em
+aberto são o contato do último slide e se/quando publicar o "Importar por foto" desligado.
 
 ### Onde parou em 25/09/2026, à noite (histórico — o marco mais recente está logo acima)
 

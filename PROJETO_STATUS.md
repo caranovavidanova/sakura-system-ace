@@ -3973,6 +3973,15 @@ Quatro coisas que valem saber:
     digital do instalador, liberou e confirmou de fora que o GitHub responde `v0.9.41` pra todas
     as lojas. Ou seja: **o primeiro teste real do porteiro acontece na loja.**
 
+  - `v0.9.42`: a leva de "pode fazer com força" — **fechamento de caixa do dia** (`TR-06.4`),
+    **comissão paga congelada** (`TL-46.1`), **travas de dado impossível** com a frase em
+    português (`TR-05.1`) e o **"Importar por foto" desligado**. **Publicada e liberada em
+    25/09/2026, a pedido dela** (opção "publicar e já liberar"), **depois** de as migrations
+    `0058`–`0060` entrarem pelo botão novo — a ordem cumprida. O Release publicou os três arquivos
+    com o `latest.yml` por último; o Liberar conferiu e liberou; e a conferência de fora baixou
+    `latest.yml` e instalador do endereço "mais recente" que o app usa: `version: 0.9.42`, e a
+    impressão digital sha512 do instalador baixado **idêntica** à anunciada.
+
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
   "Liberar versão para todas as lojas" (ver seção 9). Uma versão publicada e nunca liberada fica
@@ -4564,7 +4573,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
 | 25/09 (noite) | `TR-04.2`, **parte 1 de 2** — o token da Focus NFe sai do computador: vai pra um cofre no banco (migration `0057`) e quem usa é o **porteiro**, a Edge Function `focus-nfe`, que confere quem pede e o CNPJ da nota antes de repassar. Ela rodou a `0057` e publicou a função; saiu na **`v0.9.41`**, **publicada e liberada** a pedido dela. Etapa 4 em 12 de 12 começados. |
 | 25/09 (fim da noite) | A **apresentação comercial** em slides (pronta pra ela mandar ao pai) e o **"Importar por foto" desligado**, sem tag, a pedido dela. E conversa de fase 2: cenário de 2 empresas novas (uma com 2 lojas), **preço em aberto** (o pai sugeriu R$ 250/loja), cuidados de contrato, e o plano do **botão de atualizar todos os bancos** (item 11 da seção 8). Computador dela marcado como Teste. |
-| 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`). **Sem tag.** Etapa 3 em 6 de 7. |
+| 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`), e tudo saiu na **`v0.9.42`**, publicada e liberada. Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -5179,12 +5188,11 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.41"`. A `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
+- `package.json` em `"version": "0.9.42"`. A `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
-  liberada em 25/09/2026** — todas as lojas recebem na próxima abertura do programa. Banco na
-  `0057`. **Desde a última leva de 25/09/2026 a `main` está à frente da `v0.9.41`** (PRs 297 a
-  300, mais o "Importar por foto" desligado). O banco dela já está na **`0060`** (rodada pelo
-  botão), então a próxima tag não tem ordem a cumprir.
+  liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
+  "Importar por foto" desligado) foi publicada E liberada no mesmo dia**, depois de o banco ir pra
+  **`0060`** pelo botão novo. `main` em dia com a `v0.9.42`.
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -5913,8 +5921,9 @@ Se ela pedir sugestão, as duas respostas honestas são:
 ### ⏸ Onde parou em 25/09/2026, última leva — LEIA ISTO PRIMEIRO
 
 **Ela disse "pode fazer com força, sem pedir permissão" e depois "continua" — e saíram cinco
-coisas, todas mescladas na `main`, NENHUMA publicada. As três migrations delas JÁ ESTÃO RODADAS
-(banco na `0060`)** — então a próxima tag é só decidir e publicar, sem SQL antes. A `main` está à frente da `v0.9.41` com
+coisas. As três migrations entraram pelo botão novo (banco na `0060`) e tudo saiu na `v0.9.42`,
+PUBLICADA E LIBERADA pra todas as lojas em 25/09/2026, a pedido dela** ("2" — publicar e já
+liberar). Nada pendente: sem SQL, sem tag esperando. A `main` está à frente da `v0.9.41` com
 tudo isto **mais** o "Importar por foto" desligado do marco logo abaixo. Nenhuma tag foi criada
 (não publicar sem ela pedir).
 
@@ -5926,9 +5935,9 @@ passaria") e depois **aplicação** ("✅ atualizado", ficou em `0060`). **Nenhu
 o que quer dizer que as 17 travas da `0060` foram todas criadas — o banco dela não tinha nenhum
 dado que elas recusariam.
 
-**Consequência**: a ordem "primeiro o banco, depois a versão" já está cumprida. O primeiro passo
-agora é **perguntar se é pra publicar** (e se é pra liberar junto — a loja do pai dela ainda não
-está no canal de teste). Não publicar sozinho.
+**Consequência**: a ordem "primeiro o banco, depois a versão" foi cumprida, e a `v0.9.42` saiu
+publicada e liberada logo depois — conferida de fora: o endereço "mais recente" responde
+`0.9.42`, e o instalador baixado tem a mesma impressão digital que o `latest.yml` anuncia.
 
 **Se um dia uma trava sair "NÃO criada"** (numa empresa nova, por exemplo): o botão mostra o
 aviso na tabela, nada é alterado, e o que fazer com o dado é decisão dela. Depois de corrigido,
@@ -5964,15 +5973,15 @@ Nada disto dá pra testar daqui (o sandbox não alcança o Supabase de verdade):
 
 #### Estado do código
 
-`main` com tudo acima, banco dela na **`0060`** (nada de SQL pendente), última tag `v0.9.41`.
+`main` em dia com a **`v0.9.42`** (publicada e liberada), banco dela na **`0060`** — nada pendente.
 `tsc`, lint e `npm run contraste` limpos; **677 testes** nos dois fusos (eram 612); matriz de RLS
 em **740 células**; os **7 testes de migration** passando no CI, cada um num banco limpo.
 
 #### Pendências (a lista do marco abaixo, atualizada)
 
-- **Dela, na ordem**: ~~rodar `0058`–`0060` pelo botão~~ (feito, 25/09/2026) → decidir se
-  publica (a versão leva também o "Importar por foto" desligado) → emitir e cancelar uma nota
-  pelo porteiro (libera a parte 2 do `TR-04.2`).
+- **Dela**: ~~rodar `0058`–`0060` pelo botão~~ e ~~publicar~~ (os dois feitos, 25/09/2026, na
+  `v0.9.42`) → **conferir na loja** o que está em "O que confirmar em uso real", logo acima →
+  emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
 - **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
 - **Continua valendo do marco abaixo**: valor da fase 2, marcar o computador da loja como Teste,
   trocar as três credenciais expostas, o contrato com a cláusula de dados, a pergunta do CSOSN

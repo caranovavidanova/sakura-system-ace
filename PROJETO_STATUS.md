@@ -3794,8 +3794,10 @@ Quatro coisas que valem saber:
     `focus-nfe` e o cofre da migration `0057`. Ver "Token da Focus NFe e o porteiro" nesta seção.
     **Publicada depois** de ela rodar a `0057` e publicar a Edge Function, que era a ordem
     obrigatória (esta versão só emite nota pelo porteiro). Via `workflow_dispatch`, em
-    25/09/2026, **como pré-lançamento e NÃO liberada**: é a primeira versão a ficar de verdade
-    no canal de teste, e liberar é decisão dela.
+    25/09/2026, como pré-lançamento — e **liberada logo em seguida, a pedido dela** ("libera
+    direto"), sem passar por nenhum computador no canal de teste. O Liberar conferiu a impressão
+    digital do instalador, liberou e confirmou de fora que o GitHub responde `v0.9.41` pra todas
+    as lojas. Ou seja: **o primeiro teste real do porteiro acontece na loja.**
 
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
@@ -4316,7 +4318,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 18/09 (manhã) | `TR-12.1` — o **backup próprio do banco**, cifrado e em dois lugares fora do Supabase, rodando todo dia às 3h. Ela abriu uma cópia com as próprias mãos pra conferir. Não mexe no app, então **sem tag**. Etapa 4 em 9 de 12. |
 | 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
-| 25/09 (noite) | `TR-04.2`, **parte 1 de 2** — o token da Focus NFe sai do computador: vai pra um cofre no banco (migration `0057`) e quem usa é o **porteiro**, a Edge Function `focus-nfe`, que confere quem pede e o CNPJ da nota antes de repassar. Ela rodou a `0057` e publicou a função; saiu na **`v0.9.41`**, no canal de teste, **não liberada**. Etapa 4 em 12 de 12 começados. |
+| 25/09 (noite) | `TR-04.2`, **parte 1 de 2** — o token da Focus NFe sai do computador: vai pra um cofre no banco (migration `0057`) e quem usa é o **porteiro**, a Edge Function `focus-nfe`, que confere quem pede e o CNPJ da nota antes de repassar. Ela rodou a `0057` e publicou a função; saiu na **`v0.9.41`**, **publicada e liberada** a pedido dela. Etapa 4 em 12 de 12 começados. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4888,9 +4890,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.41"`. A `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
-  canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada em
-  25/09/2026 como pré-lançamento e NÃO foi liberada** — então as lojas continuam na `v0.9.40`
-  até ela liberar. Banco na `0057`. Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
+  canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
+  liberada em 25/09/2026** — todas as lojas recebem na próxima abertura do programa. Banco na
+  `0057`. Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
@@ -5623,15 +5625,15 @@ escolheu, entre as opções, o **jeito recomendado**: um porteiro no Supabase qu
 nota que o programa monta (sem reescrever a montagem), o token guardado **por loja numa tabela
 só de escrita** (não num secret da função), e em **duas versões**.
 
-**Estado: publicado como `v0.9.41` no canal de teste, NÃO liberado.** Os dois passos dela vieram
+**Estado: `v0.9.41` publicada E LIBERADA pra todas as lojas** (ela pediu "libera direto"). Os dois passos dela vieram
 antes, como tinha que ser — a `0057` rodada (depois de uma primeira colagem cortada, ver a
 pegadinha na seção 9) e a Edge Function `focus-nfe` publicada, as duas em 25/09/2026. A release
 saiu inteira (instalador, `.blockmap` e `latest.yml` por último), marcada como pré-lançamento.
-**Como nenhum computador está no canal de teste, ninguém recebe a `v0.9.41` ainda** — as lojas
-seguem na `v0.9.40`, que continua emitindo pelo caminho antigo (a coluna velha ainda tem o token).
-**A recomendação dada a ela**: marcar primeiro **só o computador dela** como Teste (a seção já
-existe na `v0.9.40`), testar ali uma emissão e um cancelamento, e só então liberar. Liberar sem
-testar também funciona, mas aí o primeiro teste do porteiro acontece na loja.
+A recomendação dada a ela era marcar antes só o computador dela como Teste e testar ali; ela
+preferiu liberar direto, então **o primeiro teste real do porteiro acontece na loja**. Se a
+emissão falhar lá, a mensagem na tela diz o motivo (ver "Se aparecer..." em "Ativar o porteiro
+da Focus NFe", seção 9); se for grave, voltar = rodar o Liberar com `v0.9.40`, que ainda emite
+pela coluna antiga — é exatamente por isso que a parte 2 espera.
 O passo a passo pra ela está na seção 9, "Ativar o porteiro da Focus NFe".
 **Não publicar nem liberar sem ela pedir.**
 
@@ -5682,8 +5684,8 @@ completa com ela**.
 
 #### O que depende dela agora
 
-1. ~~Rodar a `0057` e publicar o porteiro~~ e ~~publicar a `v0.9.41`~~ — feitos em 25/09/2026.
-   **Falta decidir** entre marcar o computador dela como Teste (recomendado) ou liberar direto.
+1. ~~Rodar a `0057`, publicar o porteiro, publicar e liberar a `v0.9.41`~~ — tudo feito em
+   25/09/2026.
 2. Depois de a versão chegar: emitir uma nota e cancelar uma — e avisar, pra sair a parte 2.
 3. Marcar as duas máquinas como Teste (pendência do `TR-09.1`, sem pressa).
 4. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como

@@ -660,6 +660,14 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── scripts/liberar-versao.mjs    # confere a release (inteira? anúncio bate com o instalador,
 │                                  # pela impressão digital?) ANTES de liberar, e confere de fora
 │                                  # DEPOIS. Voltar atrás = liberar a versão boa anterior. Com teste
+├── .github/workflows/atualizar-bancos.yml # "Atualizar o banco de todas as empresas" — só
+│                                  # na mão, modos ensaiar/aplicar. Lê o BACKUP_EMPRESAS. Chama:
+├── scripts/atualizar-bancos.mjs  # a lógica (o que falta em cada banco, ensaio que desfaz,
+│                                  # aplicação uma migration por transação, trava de tempo de
+│                                  # 15s). Teste com psql de mentira ao lado, e
+│                                  # atualizar-bancos.integracao.mjs contra Postgres de verdade
+│                                  # (`npm run test:atualizar-bancos`, só no CI/Linux). Ver
+│                                  # item 11 da seção 8
 ├── .gitleaks.toml                # regras da varredura de segredo do CI. Tem 3 regras próprias
 │                                  # além das de fábrica, porque as de fábrica deixavam passar
 │                                  # justamente `sb_secret_...` (Supabase) e `sk-ant-...`
@@ -4301,67 +4309,47 @@ Quatro coisas que valem saber:
     O ponto mais fácil de esquecer, dos seis: **o que acontece quando o contrato acaba** — cópia
     dos dados pra loja, exclusão do resto, e em quantos dias cada coisa.
 
-11. **Botão "Atualizar os bancos das empresas" — PLANEJADO em 25/09/2026, não construído.**
-    Ela pediu pra planejar e deixar registrado, **pra fazer depois**. **Momento certo: antes de
-    instalar a primeira empresa nova** — com um banco só, o botão não economiza nada; ele passa a
-    valer no segundo. A próxima migration prevista (a `0058`, parte 2 do `TR-04.2`) pode ser o
-    primeiro uso real, mesmo ainda com um banco só.
-    **O problema**: cada empresa tem o próprio projeto Supabase, e migration é colada à mão no SQL
-    Editor de cada um. No cenário usado pra planejar (o pai dela + uma empresa com 2 lojas + uma com
-    1 loja = **3 bancos**), cada migration nova vira 3 colagens — e esquecer um banco só aparece
-    como a faixa de "banco desatualizado" (seção 7) naquela empresa.
-    **O desenho (a recomendação que ela aceitou como direção)**:
-    - Workflow novo `.github/workflows/atualizar-bancos.yml`, **só `workflow_dispatch`**, no mesmo
-      estilo do "Liberar versão". Nunca roda sozinho: a regra "migration antes da tag" continua
-      valendo, e quem decide a hora é ela.
-    - **Reaproveita o secret `BACKUP_EMPRESAS`** (os campos `nome` e `banco`). Nenhum secret novo,
-      e empresa nova que entra no backup entra no botão junto. A senha ali já é a principal do
-      banco, a mesma que o backup usa todo dia — o GitHub não passa a guardar nada novo.
-    - Pra cada banco: `select max(versao) from schema_versao` (tabela da `0055`). Sem a tabela,
-      **recusa** e explica — banco anterior à `0055` se resolve à mão. Pendentes = as migrations
-      do repositório com número maior, em **ordem numérica**.
-    - **Dois modos**: `ensaiar` (o padrão) roda as pendentes de verdade **dentro de uma transação
-      e desfaz no fim** (`begin` → arquivos → `rollback`) — então diz não só o que cada banco
-      receberia, mas **se passaria**, pegando inclusive o erro que depende do dado daquela loja
-      (uma constraint nova que a loja X já viola, por exemplo). E `aplicar`, com cada migration na
-      **própria transação** (`psql --single-transaction -v ON_ERROR_STOP=1`): se falhar, aquele
-      banco fica exatamente como estava. Como toda migration termina gravando a própria versão em
-      `schema_versao`, a versão só é registrada se a migration inteira passou. Conferido em
-      25/09/2026: nenhuma das 57 migrations tem `concurrently`, `begin`/`commit` próprios ou outro
-      comando que não caiba numa transação.
-    - **Ordem das empresas**: a primeira da lista (Pneus Amigão) vai primeiro, como canário, e o
-      robô **para no primeiro erro, em qualquer banco**. O resumo (`$GITHUB_STEP_SUMMARY`, em
-      português) diz em que versão cada banco ficou. Rodar de novo depois de consertar aplica só o
-      que falta.
-    - **Depois de aplicar, confere de fora** que todo banco chegou na maior migration do
-      repositório — a mesma disciplina do Release e do Liberar.
-    - A lógica que dá pra testar sem banco (quais são as pendentes, ordem, formato do secret, o
-      texto do resumo) mora em `scripts/atualizar-bancos.mjs`, com teste ao lado — o padrão de
-      `scripts/liberar-versao.mjs` e `scripts/retencao-backup.mjs`. O workflow só chama.
-    - **`concurrency` no mesmo grupo do backup** (`backup-banco`), pra os dois nunca mexerem no
-      mesmo banco ao mesmo tempo.
-    **Armadilhas já pagas no backup que valem aqui igual** (itens 67 e 68 da seção 6): chamar o
-    `psql` pelo caminho completo da versão 17 (`/usr/lib/postgresql/17/bin/psql`, o de `/usr/bin`
-    escolhe a versão sozinho); **nunca `if ! ( ... )`** em bash, que desliga o `set -e`;
-    `timeout-minutes` no job e `connect_timeout` na conexão; e nunca imprimir a linha de conexão
-    (tem senha dentro — `::add-mask::`).
-    **Por que não os outros caminhos** (apresentados a ela e descartados): a CLI do Supabase
-    (`supabase db push`) tem um histórico próprio de migrations que não conhece as 57 já rodadas,
-    e seria preciso "ensinar" isso em cada banco; um script no computador dela exigiria a senha dos
-    bancos no PC e o Postgres instalado no Windows; e o **app se atualizar sozinho ao abrir** é
-    proibido — exigiria a senha principal do banco dentro do instalador, em cada computador de
-    cada loja.
-    **Como testar antes de subir**: três bancos num Postgres local em versões diferentes (ex.:
-    `0055`, `0056`, `0057`), duas migrations de mentira, e um banco com dado que faz uma delas
-    falhar. Mutações que precisam ficar vermelhas: tirar a transação (banco pela metade), `ensaiar`
-    que grava de verdade (`schema_versao` muda), banco sem `schema_versao` aceito, e ordem
-    alfabética no lugar da numérica. **O Supabase de verdade não dá pra testar daqui** — a
-    primeira rodada real é em modo `ensaiar`.
-    **Ao construir, atualizar junto**: a seção 9 (um "Atualizar o banco de todas as empresas" com
-    o passo a passo de clicar) e o `INSTALAR-LOJA-NOVA.md` (empresa nova no `BACKUP_EMPRESAS` já
-    entra no botão). **Ideia pra depois, não pedida**: o Release conferir, antes de publicar, que
-    nenhum banco está atrás da última migration.
-    Tamanho: uma sessão.
+11. ✅ **Botão "Atualizar o banco de todas as empresas" — CONSTRUÍDO em 25/09/2026** (planejado
+    na mesma data, construído na sessão seguinte, quando ela disse "pode fazer com força, sem
+    pedir permissão"). **Ainda não rodado de verdade** — a primeira rodada é dela, em modo
+    `ensaiar`, e o passo a passo está na seção 9, em "Atualizar o banco de todas as empresas".
+    **O problema**: cada empresa tem o próprio projeto Supabase, e migration era colada à mão no
+    SQL Editor de cada um. Com 3 bancos, cada migration nova vira 3 colagens — e esquecer um banco
+    só aparece como a faixa de "banco desatualizado" (seção 7) naquela empresa.
+    **Como ficou** (`.github/workflows/atualizar-bancos.yml` + `scripts/atualizar-bancos.mjs`):
+    - **Só roda na mão**, a partir da `main`. Reaproveita o secret **`BACKUP_EMPRESAS`** (os campos
+      `nome` e `banco`) — nenhum secret novo, e empresa que entra no backup entra no botão junto.
+    - Pra cada banco, lê `max(versao)` de `schema_versao` (tabela da `0055`); **sem a tabela,
+      recusa e explica**. Pendentes = as migrations do repositório com número maior, em **ordem
+      numérica** (nunca alfabética).
+    - **`ensaiar`** (o padrão): roda as pendentes de verdade numa transação e **desfaz** — pega
+      até o erro que só existe por causa do dado daquela loja. **`aplicar`**: ensaia em TODOS
+      primeiro e, se qualquer ensaio falhar, **não aplica em nenhum**; passando, aplica banco por
+      banco na ordem da lista (Pneus Amigão primeiro, como canário), **cada migration na própria
+      transação**, e **para no primeiro erro**. No fim, **confere de novo** a versão de cada banco.
+    - **Trava de tempo de 15s** (`lock_timeout`) em toda migration: se a tabela estiver ocupada
+      pela loja, a migration desiste em 15 segundos em vez de ficar esperando — esperar é o que
+      congela a tela da loja, porque toda consulta nova entra na fila atrás do `alter table`.
+    - Recusa rodar se achar banco **mais novo** que o código (sinal de branch antiga).
+    - `concurrency` no mesmo grupo do backup: os dois nunca mexem no mesmo banco ao mesmo tempo.
+    - O resultado sai em português, numa tabela, na página da própria rodada — e os avisos que
+      uma migration quiser mostrar (`raise notice`) aparecem lá também.
+    **Como foi conferido**: 19 testes com `psql` de mentira (`scripts/atualizar-bancos.test.ts`)
+    e um teste contra **Postgres de verdade** (`npm run test:atualizar-bancos`, 22 conferências,
+    roda no CI junto da matriz de RLS): três bancos montados com as migrations **reais** em
+    versões diferentes, um com dado que faz a migration de teste falhar, um anterior à `0055`, e
+    uma "loja" segurando a tabela de clientes. **Quatro mutações** ficaram vermelhas: ensaio que
+    grava, aplicação sem transação, aplicar mesmo com ensaio ruim, e sem trava de tempo. A última
+    **passou no teste de integração na primeira versão** (o ensaio esbarrava na trava antes e
+    escondia a da aplicação) — foi preciso uma conferência a mais, direto no script de aplicação.
+    **O que NÃO dá pra conferir daqui**: o Supabase de verdade. A primeira rodada real tem que
+    ser em modo `ensaiar`.
+    **Por que não os outros caminhos** (descartados no planejamento): a CLI do Supabase tem um
+    histórico próprio que não conhece as migrations já rodadas; um script no PC dela exigiria a
+    senha dos bancos e o Postgres no Windows; e o **app se atualizar sozinho ao abrir** é
+    proibido — exigiria a senha principal do banco dentro do instalador, em cada computador.
+    **Ideia pra depois, não pedida**: o Release conferir, antes de publicar, que nenhum banco
+    está atrás da última migration.
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -4719,6 +4707,36 @@ Quatro armadilhas, todas já vividas (§6 item 67):
 
 Se uma rodada falhar, o GitHub manda e-mail sozinho. **E-mail de falha de backup não é spam** — é
 o único aviso que existe.
+
+### Atualizar o banco de todas as empresas
+
+Um botão no GitHub que roda, no banco de **cada empresa**, as migrations que ainda faltam — no
+lugar de colar cada arquivo no SQL Editor de cada projeto Supabase. Usa a mesma lista do backup
+(o secret `BACKUP_EMPRESAS`), então empresa que está no backup está aqui também.
+
+**Pra rodar** (uns 2 minutos, pelo navegador):
+1. `github.com/caranovavidanova/sakura-system-ace` → aba **Actions**.
+2. Na lista da esquerda: **"Atualizar o banco de todas as empresas"**.
+3. **"Run workflow"** → no campo "modo", deixe **`ensaiar`** → botão verde **"Run workflow"**.
+4. Espere a bolinha ficar verde e clique nela: aparece uma tabela com cada empresa, em que
+   versão o banco está, o que falta e se passaria. **O ensaio não muda nada** — ele roda e desfaz.
+5. Estando tudo "✅ passaria": rode de novo, agora com o modo **`aplicar`**. No fim a tabela
+   mostra em que versão cada banco ficou.
+
+**Se aparecer ❌**:
+- **"não tem a tabela schema_versao"** → aquele banco está antes da `0055`. Rode à mão no SQL
+  Editor dele, em ordem, as migrations que faltam até a `0055`. Daí em diante o botão cuida.
+- **"parou na 00NN: ..."** → aquela migration não passa naquele banco, quase sempre por causa de
+  algum dado dele. Nada foi mudado em banco nenhum. Mande o print — é conversa, não é pra forçar.
+- **"lock timeout"** → a tabela estava ocupada pela loja naquele instante. Nada mudou; rode de
+  novo mais tarde (de noite é o melhor horário).
+- **"MAIS NOVO que a última migration deste código"** → o botão foi rodado de uma branch que não
+  é a `main`. Em "Use workflow from", escolha `main`.
+- **Empresa que não aparece na tabela** → falta o bloco dela no `BACKUP_EMPRESAS`.
+
+**A ordem de sempre continua valendo**: primeiro o banco (este botão), depois a versão nova do
+programa. E **aplicar só depois de ensaiar** — o `aplicar` ensaia sozinho de novo antes de mexer,
+mas ver a tabela do ensaio antes é o que dá tempo de perguntar.
 
 ### Gerar o instalador Windows e publicar uma versão nova
 

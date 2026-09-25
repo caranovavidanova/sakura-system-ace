@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarComissoesPagas } from "@/lib/comissoesFechamentos";
 import { listarContasReceber } from "@/lib/contasReceber";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarFuncionarios } from "@/lib/funcionarios";
@@ -8,6 +9,7 @@ import { listarOrdens } from "@/lib/ordensServico";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import type { ComissaoFechamento } from "@/types/comissaoFechamento";
 import type { ContaReceber } from "@/types/contaReceber";
 import type { Funcionario } from "@/types/funcionario";
 import type { OrdemServico } from "@/types/os";
@@ -19,7 +21,7 @@ import { FuncionariosSection } from "./FuncionariosSection";
 type Aba = "cadastro" | "comissoes";
 
 export function FuncionariosPage() {
-  const { lojaAtual } = useAuth();
+  const { lojaAtual, operador } = useAuth();
   const [aba, setAba] = useState<Aba>("cadastro");
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -36,6 +38,20 @@ export function FuncionariosPage() {
     contasReceber: ContaReceber[];
   } | null>(null);
   const [carregandoComissoes, setCarregandoComissoes] = useState(false);
+  const [pagamentos, setPagamentos] = useState<ComissaoFechamento[]>([]);
+
+  // À parte, e sem derrubar a aba: num banco que ainda não recebeu a
+  // migration 0059, a tabela não existe — a comissão continua calculando e a
+  // faixa de "banco desatualizado" explica o resto.
+  async function carregarPagamentos() {
+    if (!isSupabaseConfigured || !lojaAtual) return;
+    try {
+      setPagamentos(await listarComissoesPagas(lojaAtual.id));
+    } catch (err) {
+      console.error("Erro ao carregar pagamentos de comissão:", err);
+      setPagamentos([]);
+    }
+  }
 
   async function carregar() {
     if (!isSupabaseConfigured || !lojaAtual) {
@@ -73,6 +89,7 @@ export function FuncionariosPage() {
           listarContasReceber(lojaAtual.id),
         ]);
         setDadosComissoes({ ordens, pecas, servicos, contasReceber });
+        await carregarPagamentos();
       } catch (err) {
         console.error("Erro ao carregar comissões:", err);
         setErro(mensagemDeErro(err));
@@ -138,6 +155,11 @@ export function FuncionariosPage() {
           servicos={dadosComissoes.servicos}
           funcionarios={funcionarios}
           contasReceber={dadosComissoes.contasReceber}
+          lojaId={lojaAtual?.id ?? ""}
+          nomeLoja={lojaAtual?.nome ?? ""}
+          pagamentos={pagamentos}
+          podeDesfazer={operador?.admin === true}
+          onPagamentosMudaram={carregarPagamentos}
         />
       )}
     </div>

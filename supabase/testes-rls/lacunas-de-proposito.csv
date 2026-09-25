@@ -20,3 +20,4 @@ segredos_fiscais_loja,INSERT,gravar é só pela função definir_token_focus_nfe
 segredos_fiscais_loja,UPDATE,idem — trocar o token é pela função
 segredos_fiscais_loja,DELETE,o segredo sai junto com a loja (on delete cascade)
 fechamentos_caixa,UPDATE,um fechamento de caixa não se altera — desfaz (só admin) e fecha de novo (TR-06.4)
+comissoes_fechamentos,UPDATE,um pagamento de comissão registrado não se altera — admin desfaz e registra de novo (TL-46.1)

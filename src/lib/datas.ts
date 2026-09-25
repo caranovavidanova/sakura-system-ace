@@ -33,3 +33,15 @@ export function primeiroDiaDoMesLocal(): string {
   const hoje = new Date();
   return diaLocal(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
 }
+
+/**
+ * "YYYY-MM-DD" de uma coluna `date` → "DD/MM/YYYY", sem passar por `Date`.
+ *
+ * Só pra dia de calendário (vencimento, período, data de pagamento). Passar
+ * por `new Date("2026-09-01")` leria a string como meia-noite em UTC, e no
+ * Brasil isso vira 31/08 — o mesmo erro de fuso dos itens 34 e 42 da seção 6.
+ */
+export function diaBrasileiro(dia: string): string {
+  const [ano, mes, d] = dia.split("-");
+  return `${d}/${mes}/${ano}`;
+}

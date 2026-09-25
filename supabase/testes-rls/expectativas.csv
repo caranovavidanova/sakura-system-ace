@@ -129,6 +129,10 @@ funcionarios,select,2,1,0,0,0,só com o módulo Funcionários
 funcionarios,insert,1,1,0,0,0,
 funcionarios,update,2,1,0,0,0,
 funcionarios,delete,2,1,0,0,0,
+comissoes_fechamentos,select,2,1,0,0,0,comissão paga (TL-46.1): mora em Funcionários, exige o mesmo módulo
+comissoes_fechamentos,insert,1,1,0,0,0,
+comissoes_fechamentos,update,0,0,0,0,0,um pagamento registrado não se altera
+comissoes_fechamentos,delete,2,1,0,0,0,desfazer é só de admin da loja
 funcionario_filhos,select,2,1,0,0,0,dado de criança: nem janela pública tem
 funcionario_filhos,insert,1,1,0,0,0,
 funcionario_filhos,update,2,1,0,0,0,

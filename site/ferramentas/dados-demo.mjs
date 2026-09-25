@@ -413,6 +413,23 @@ const fechamentosCaixa = [
   operador_id: OP, criado_em: dia(f.d), operador: { nome: "Marcos Andrade" },
 }));
 
+// Um pagamento de comissão registrado no mês passado (TL-46.1, migration
+// 0059) — a aba Comissões mostra o histórico e o recibo a partir dele.
+const primeiroDoMesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+const ultimoDoMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+const comissoesPagas = [{
+  id: "cp-1", loja_id: LOJA, funcionario_id: "f1", funcionario_nome: "Anderson Lima",
+  periodo_inicio: primeiroDoMesPassado.toLocaleDateString("sv-SE"),
+  periodo_fim: ultimoDoMesPassado.toLocaleDateString("sv-SE"),
+  percentual: 10, valor_calculado: 486.3, valor_pago: 486.3,
+  data_pagamento: diaCurto(-20), observacao: null,
+  snapshot: [
+    { ordemId: "os-hist-3", numero: 121, papel: "tecnico", comissao: 212.1 },
+    { ordemId: "os-hist-7", numero: 125, papel: "tecnico", comissao: 274.2 },
+  ],
+  operador_id: OP, criado_em: dia(-20),
+}];
+
 export const TABELAS = {
   schema_versao: schemaVersao,
   lojas, clientes, veiculos, pecas, servicos, depositos,
@@ -420,6 +437,7 @@ export const TABELAS = {
   ordens_servico_itens: ordensItens,
   caixa_movimentos: caixa,
   fechamentos_caixa: fechamentosCaixa,
+  comissoes_fechamentos: comissoesPagas,
   contas_pagar: contasPagar,
   contas_receber: contasReceber,
   estoque_movimentos: estoque,

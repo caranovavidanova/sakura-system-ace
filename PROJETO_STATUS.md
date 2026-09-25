@@ -134,8 +134,8 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    do pai, **uma empresa com 2 lojas (o amigo) e uma empresa com 1 loja** — ou seja 3 bancos no
    Supabase, 4 lojas e 4 CNPJs. **O valor NÃO está decidido**: o pai sugeriu R$ 250 por loja, e
    ela pediu pra ele dizer ao amigo que ela ainda está decidindo. O que o app precisa, a conta de
-   custo e os cuidados de contrato estão no marco "LEIA ISTO PRIMEIRO" de 25/09/2026, perto do fim
-   do arquivo.
+   custo e os cuidados de contrato estão no marco "Onde parou em 25/09/2026, fim da noite", perto
+   do fim do arquivo (subseção "Fase 2").
 3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema**
    — essa fase **já envolve estados diferentes** (não fica só em Araraquara/SP como as fases
    anteriores) — o que pode importar pra emissão fiscal (regras de ICMS/ISS variam por
@@ -506,7 +506,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # permissões que o Supabase dá sozinho, pra validar migrations e
 │                                  # testar RLS num Postgres local — NUNCA rodar no Supabase real) +
 │                                  # testar-auditoria.sql e testar-permissao-modulo.sql (TESTE, não
-│                                  # instalação: rodam num Postgres local depois da
+│                                  # instalação — desde 25/09/2026 TODOS os testar-*.sql rodam
+│                                  # sozinhos no CI, `npm run test:sql`; à mão: rodam num Postgres local depois da
 │                                  # instalacao-completa.sql e estouram com "FALHOU: ..." se algo
 │                                  # quebrar — o primeiro prova, entre outras coisas, que o token
 │                                  # da Focus NFe sai mascarado na trilha de auditoria; o segundo,
@@ -617,6 +618,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # versão nova: aviso que aparece toda semana vira aviso
 │                                  # ignorado. **Hoje ele está vermelho de propósito** — ver
 │                                  # "Onde parou (17/09/2026)"
+├── scripts/testar-sql.mjs         # `npm run test:sql` — roda cada supabase/scripts/testar-*.sql
+│                                  # num banco limpo (cópia de um modelo com a instalação completa)
+│                                  # e exige "TODAS AS CHECAGENS PASSARAM". Script novo entra
+│                                  # sozinho; script que não diz a frase reprova. Só CI/Linux
 ├── scripts/testar-nos-dois-fusos.mjs # `npm run test:fusos` — roda a suíte DUAS vezes, em
 │                                  # America/Sao_Paulo e em UTC. Está em .mjs porque
 │                                  # `TZ=x npm test` não funciona no PowerShell do Windows dela.
@@ -625,7 +630,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # feitas à mão: typecheck, lint, testes nos dois fusos,
 │                                  # contraste e "o instalacao-completa.sql está em dia?". Tem mais
 │                                  # quatro jobs próprios: contraste nas telas, a MATRIZ DE RLS
-│                                  # (sobe um Postgres de serviço), "Electron de verdade" (o
+│                                  # (sobe um Postgres de serviço, e no mesmo banco roda o botão de
+│                                  # atualizar bancos e os testes de cada migration), "Electron de verdade" (o
 │                                  # `npm run test:electron`) e "segredos", que varre
 │                                  # credencial e barra certificado digital versionado. NÃO builda
 │                                  # o instalador (isso é do release.yml). Ver item 48 da seção 6
@@ -4674,6 +4680,15 @@ Ela monta um banco descartável do zero e o apaga no fim; no CI roda sozinha, nu
 de serviço. **No Windows não roda** (precisa de Postgres e `psql` instalados) — não é problema, é
 suíte de CI. Ver `supabase/testes-rls/README.md`.
 
+**E a migration que promete alguma coisa ganha um `supabase/scripts/testar-*.sql`**, que roda
+sozinho no CI desde 25/09/2026 (`npm run test:sql`, mesmo Postgres). Duas regras pro script novo:
+terminar com `raise notice 'TODAS AS CHECAGENS PASSARAM'` (sem a frase, o runner reprova — teste
+que não tem como dizer que passou não prova nada) e testar as **duas metades**, o que a migration
+recusa e o que ela ainda precisa deixar passar. Até então esses scripts só rodavam à mão, pela
+sessão que escreveu a migration — uma migration nova que quebrasse a promessa de uma antiga
+passaria calada. Conferido plantando uma policy de leitura no cofre da Focus NFe: o teste do
+porteiro ficou vermelho, e os outros seis, verdes.
+
 
 ### Reconciliação das migrations `0038`-`0040` (já concluída no Supabase real dela)
 
@@ -5162,7 +5177,9 @@ isso que existe a regra abaixo.
 - `package.json` em `"version": "0.9.41"`. A `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026** — todas as lojas recebem na próxima abertura do programa. Banco na
-  `0057`. Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
+  `0057`. **Desde a última leva de 25/09/2026 a `main` está à frente da `v0.9.41`** (PRs 297 a
+  301, mais o "Importar por foto" desligado) e há **três migrations pendentes** (`0058`–`0060`).
+  Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
@@ -5887,7 +5904,81 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 25/09/2026, fim da noite — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 25/09/2026, última leva — LEIA ISTO PRIMEIRO
+
+**Ela disse "pode fazer com força, sem pedir permissão" e depois "continua" — e saíram cinco
+coisas, todas mescladas na `main`, NENHUMA publicada.** A `main` está à frente da `v0.9.41` com
+tudo isto **mais** o "Importar por foto" desligado do marco logo abaixo. Nenhuma tag foi criada
+(não publicar sem ela pedir).
+
+#### ⚠️ O primeiro passo, antes de qualquer tag: rodar as migrations 0058, 0059 e 0060
+
+O banco dela está na `0057`. As três migrations novas **ainda não foram rodadas em banco
+nenhum**. A ordem obrigatória de sempre vale: **primeiro o banco, depois a versão nova**. Sem
+elas, a versão nova mostra a faixa "o banco desta empresa ainda não foi atualizado" e as abas
+novas (Fechamento, pagamento de comissão) falham ao gravar — o resto funciona normal.
+
+**O jeito recomendado é o botão novo** (item 11 da seção 8, passo a passo na seção 9,
+"Atualizar o banco de todas as empresas"): Actions → "Atualizar o banco de todas as empresas" →
+modo **`ensaiar`** → olhar a tabela → rodar de novo em **`aplicar`**. **É a primeira rodada de
+verdade do botão**, então: ensaiar primeiro, sempre, e mandar o print se aparecer qualquer ❌.
+
+**O que olhar no resultado da `0060`**: ela mostra uma linha por trava. "criada" ou "já existia"
+é o normal. **"NÃO criada — N linha(s) fora da regra"** quer dizer que o banco dela já tem dado
+que a trava recusaria (ex.: uma peça com preço negativo) — **nada foi alterado**, a trava só
+ficou pra depois. Nesse caso, mandar o print: o que fazer com o dado é decisão dela. Depois de
+corrigido, colar a `0060` de novo no SQL Editor (o botão não reroda migration já registrada).
+
+#### O que saiu (PRs 297 a 301)
+
+| PR | O que é | Migration |
+|---|---|---|
+| 297 | **Botão "Atualizar o banco de todas as empresas"** (item 11 da seção 8) — ensaia desfazendo, aplica uma migration por transação, trava de tempo de 15s | — |
+| 298 | **Fechamento de caixa do dia** (`TR-06.4`) — aba Fechamento no Caixa, quebra/sobra viram lançamento, desfazer só de admin | `0058` |
+| 299 | **Comissão paga registrada e congelada** (`TL-46.1`) — retrato das OS, aviso quando uma OS paga é editada depois, recibo | `0059` |
+| 300 | **Travas de dado impossível** (`TR-05.1`) — 17 `check`, cada um só criado se o dado deixar; frase em português pra cada | `0060` |
+| 301 | **Os testes de cada migration rodando no CI** (`npm run test:sql`) — antes, só à mão | — |
+
+**Etapa 3 do guia: 6 de 7.** O que sobrou é o `TR-05.2` (uma nota por OS por tipo), **adiado
+com motivo**: o índice sozinho recusaria gravar o XML de uma nota que já vale na SEFAZ. O desenho
+certo (linha "processando" antes de enviar) mexe no porteiro, que ainda não foi exercitado em
+produção — item 3 de "O que ainda está frágil na parte fiscal", seção 8.
+
+**Um achado novo, registrado e não mexido**: o código fiscal só entende CNPJ de dígitos, e a
+Receita emite CNPJ com letras desde julho de 2026 — item 6 da mesma lista. Depende de perguntar
+à Focus NFe o formato. **Pesa na fase 2**: loja aberta de julho pra cá já nasce com CNPJ assim.
+
+#### O que confirmar em uso real, depois das migrations e da versão nova
+
+Nada disto dá pra testar daqui (o sandbox não alcança o Supabase de verdade):
+1. **Caixa → Fechamento**: contar a gaveta de um dia, fechar, ver a "Quebra/Sobra de caixa" no
+   Diário, e (como admin) desfazer.
+2. **Funcionários → Comissões → "Registrar pagamento"**: registrar, abrir o recibo, e conferir
+   que o período pago mostra "✓ R$ X em dd/mm".
+3. **Uma trava**: tentar dar num item de OS um desconto maior que o item — a tela tem que
+   explicar em português, sem gravar nada.
+
+#### Estado do código
+
+`main` com tudo acima, banco dela na `0057` (**três migrations pendentes**), última tag `v0.9.41`.
+`tsc`, lint e `npm run contraste` limpos; **677 testes** nos dois fusos (eram 612); matriz de RLS
+em **740 células**; os **7 testes de migration** passando no CI, cada um num banco limpo.
+
+#### Pendências (a lista do marco abaixo, atualizada)
+
+- **Dela, na ordem**: rodar `0058`–`0060` pelo botão (ensaiar → aplicar) → decidir se publica
+  (a versão leva também o "Importar por foto" desligado) → emitir e cancelar uma nota pelo
+  porteiro (libera a parte 2 do `TR-04.2`).
+- **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
+- **Continua valendo do marco abaixo**: valor da fase 2, marcar o computador da loja como Teste,
+  trocar as três credenciais expostas, o contrato com a cláusula de dados, a pergunta do CSOSN
+  500, a decisão sobre o Electron e marcar o CI como obrigatório.
+- **Nova pergunta pra Focus NFe**: o formato do CNPJ alfanumérico na API.
+- **O que dá pra fazer sem ela, daqui**: praticamente nada que valha — o resto da Etapa 4 (RLS
+  por módulo nas outras tabelas, parte 2 do porteiro) depende de decisão ou de teste real dela,
+  e a Etapa 5 é da fase 3.
+
+### Onde parou em 25/09/2026, fim da noite (histórico — o marco mais recente está logo acima)
 
 **A apresentação comercial em slides saiu (pronta pra ela mandar ao pai), o "Importar por foto"
 foi desligado, e a fase 2 ganhou cenário, conta de preço e plano — sem valor decidido ainda.** O

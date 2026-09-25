@@ -3379,8 +3379,12 @@ Quatro coisas que valem saber:
     build: é a mesma release, só sem a marca de pré-lançamento.
   - **Aparece no Diagnóstico e no resumo do WhatsApp**, junto da versão — loja no canal de teste
     pode estar numa versão que as outras ainda não receberam.
-  **Publicado e liberado na `v0.9.40`** (25/09/2026). O que ainda não foi visto rodando é a
-  seção nova em Configurações, e nenhum computador foi marcado como Teste ainda.
+  **Publicado e liberado na `v0.9.40`** (25/09/2026). **O computador DELA foi marcado como
+  Teste em 25/09/2026** (ela mandou print: "Teste (escolha atual)") — a seção nova foi vista
+  funcionando. **Falta o da loja do pai dela** ("faço no da loja quando der"; se a loja tiver
+  mais de um computador, marcar todos, pra loja inteira ficar na mesma versão).
+  **Consequência pra quem publica**: até a loja ser marcada, uma versão publicada e não liberada
+  chega **só no computador dela** — a loja só recebe depois do Liberar.
 - **Aviso de banco desatualizado** (15/09/2026, item `TR-05.7`): uma faixa no topo de qualquer
   tela quando o programa e o banco daquela empresa não estão na mesma versão. Existe porque as
   duas coisas andam por caminhos diferentes — o auto-update chega em todas as lojas no mesmo
@@ -5715,9 +5719,10 @@ e o rodapé à direita.
 
 **O deck só promete o que é verdade HOJE** (conferido slide a slide em 25/09/2026, versão 27).
 Duas frases foram suavizadas por isso: no slide 14, "Atualizações automáticas" dizia "já testadas
-em operação", mas nenhum computador está no canal de teste e a `v0.9.41` foi liberada direto —
-virou "sem reinstalar nada". **Quando ela marcar os dois computadores como Teste e passar a
-publicar → esperar → liberar, a frase forte pode voltar** (e as anotações do slide junto). No
+em operação", mas nenhum computador estava no canal de teste e a `v0.9.41` foi liberada direto —
+virou "sem reinstalar nada". **Quando os dois computadores estiverem como Teste (o dela já está,
+desde 25/09/2026; falta o da loja) e ela passar a publicar → esperar → liberar, a frase forte pode
+voltar** (e as anotações do slide junto) — ela pediu pra ser avisada/lembrada disso. No
 slide 16, a habilitação fiscal "leva alguns dias" virou "pode levar algumas semanas", que foi o
 que aconteceu na loja do pai dela. E o quadro "Sem contratos paralelos" (slide 14) só vale
 enquanto a Focus NFe, o Supabase e o resto continuarem na conta dela (decisão de 28/08/2026,
@@ -5840,7 +5845,8 @@ completa com ela**.
 1. ~~Rodar a `0057`, publicar o porteiro, publicar e liberar a `v0.9.41`~~ — tudo feito em
    25/09/2026.
 2. Depois de a versão chegar: emitir uma nota e cancelar uma — e avisar, pra sair a parte 2.
-3. Marcar as duas máquinas como Teste (pendência do `TR-09.1`, sem pressa).
+3. Marcar as duas máquinas como Teste (pendência do `TR-09.1`, sem pressa) — **a dela foi
+   marcada em 25/09/2026; falta a da loja do pai dela**.
 4. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como
    obrigatório pra mesclar, decidir sobre atualizar o Electron, e a alíquota mensal no portal.
 
@@ -5902,8 +5908,10 @@ comporta como sempre, só que cada versão precisa ser liberada pra chegar. Pass
 em que a primeira loja de outra empresa for instalada.
 
 **E uma consequência que vale lembrar em toda sessão daqui pra frente**: enquanto as duas
-máquinas não estiverem em Teste, **publicar sem liberar não entrega a versão pra ninguém**. Se
-ela pedir "publica", perguntar se é pra liberar junto — ou marcar as máquinas antes.
+máquinas não estiverem em Teste, **publicar sem liberar não entrega a versão pra loja**. Desde
+25/09/2026 o computador dela está em Teste, então uma versão publicada chega nele; a loja do pai
+dela só recebe depois do Liberar, até ser marcada também. Se ela pedir "publica", perguntar se é
+pra liberar junto — ou marcar a máquina da loja antes.
 
 #### Como foi conferido
 

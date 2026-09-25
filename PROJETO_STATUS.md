@@ -226,6 +226,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Preço no site (28/08/2026) | Mostrar **o que está incluído, sem valor fechado** — escolha dela, entre "sem preço nenhum" e "preço na cara" | O R$350/loja foi calculado pras 3 primeiras lojas (fase 2), não é preço de tabela; e a venda é pra conhecidos do pai dela, onde o valor pode variar caso a caso |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
 | Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
+| Token da Focus NFe (25/09/2026, item TR-04.2) | Mora num **cofre** (`segredos_fiscais_loja`, sem policy nenhuma) e quem usa é o **porteiro** — a Edge Function `focus-nfe`, que confere quem pede e só **repassa** a nota que o programa montou. A tela só sabe SE a loja tem token; trocar é só de escrita | O token emite e cancela nota no CNPJ da loja e ia até o computador de todo operador. **Tabela, e não secret da função** como o guia sugeria: secret é um por projeto Supabase (uma empresa), e duas lojas em CNPJs diferentes precisam de dois tokens. **Repassar, e não remontar a nota lá**: remontar seria a sexta vez de uma conta de dinheiro divergindo entre dois lugares. Escolha dela entre as opções, 25/09/2026. Ver item 71 da seção 6 |
 | Gerenciamento de formulário | `react-hook-form` + `zod` — **migração concluída**, todo formulário do app já está nesse padrão | Pedido da usuária, baseado num plano de refatoração de outra IA (Gemini) — decisão explícita de que é o padrão geral, não um teste isolado. Ver "Padrão de formulário" na seção 4 |
 
 ## 4. Estrutura de pastas
@@ -329,7 +330,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # garantiaTexto.ts + garantiaDocumento.ts (HTML da garantia) +
 │   │                             # notaFiscalXml.ts (recibo HTML "versão para o cliente" a partir
 │   │                             # do XML) + focusNfe.ts (integração com o Focus NFe — emissão
-│   │                             # de NFC-e/NFS-e, ver seção 8 item 1) + corVeiculo.ts (nome de cor em
+│   │                             # de NFC-e/NFS-e, ver seção 8 item 1; MONTA a nota aqui e pede
+│   │                             # ao porteiro `focus-nfe` pra repassar — desde o TR-04.2 não
+│   │                             # vê token nenhum) + corVeiculo.ts (nome de cor em
 │   │                             # português → hex aproximado) + origemMercadoria.ts (lista de
 │   │                             # códigos de origem da mercadoria, 0 a 8) + iaNotaFiscal.ts
 │   │                             # (chama a Edge Function de leitura de nota fiscal por foto) +
@@ -503,7 +506,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # que um balconista só-Caixa é recusado em "clientes"; e
 │                                  # testar-rh-permissao.sql prova as DUAS metades do TR-04.3 —
 │                                  # que o balconista não alcança salário/CPF/filhos, e que
-│                                  # mesmo assim ainda monta uma OS pela view pública. NUNCA
+│                                  # mesmo assim ainda monta uma OS pela view pública; e
+│                                  # testar-porteiro-focus-nfe.sql prova o cofre do TR-04.2 —
+│                                  # ninguém lê o token, só admin da loja grava, e a regra de
+│                                  # quem emite/cancela bate com a da tela. NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql
  (apaga dados de negócio de teste,
@@ -518,7 +524,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── supabase/testes-rls/          # `npm run test:rls` — a MATRIZ DE RLS (item TR-07.3). Monta um
 │                                  # banco descartável do zero, simula cinco papéis (admin das duas
 │                                  # lojas, admin de uma, balconista só-Caixa, operador SEM loja, e
-│                                  # ninguém logado) e confere as 680 combinações de
+│                                  # ninguém logado) e confere as 700 combinações de
 │                                  # tabela × comando × papel — a view do TR-04.3 entra junto, e
 │                                  # é o caso que mais importa, porque view não reage a RLS.
 │                                  # expectativas.csv é A PARTE QUE SE
@@ -537,7 +543,13 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # redefinir-senha-operador/index.ts (nesta sessão): admin gera
 │                                  # senha temporária pra outro operador — usa a service role key
 │                                  # (só o Supabase injeta sozinha, sem secret manual pra
-│                                  # configurar), ver "Login e permissões" na seção 7.
+│                                  # configurar), ver "Login e permissões" na seção 7; e
+│                                  # focus-nfe/index.ts (TR-04.2): o PORTEIRO da Focus NFe —
+│                                  # guarda o uso do token, confere quem pede (permissão, CNPJ
+│                                  # da nota, nota registrada antes de cancelar) e só repassa o
+│                                  # que o programa montou. Sem `import` nenhum, de propósito:
+│                                  # o mesmo arquivo roda no Supabase e no Vitest
+│                                  # (index.test.ts, 36 testes com um fetch de mentira).
 ├── site/                         # site de apresentação (HTML/CSS puros, SEM etapa de build —
 │                                  # de propósito: uma página só não justifica um segundo
 │                                  # node_modules, e assim não atrapalha build/teste do app).
@@ -975,6 +987,32 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   `security definer`: criar operador não passou a exigir o módulo Funcionários.
   Teste repetível em `supabase/scripts/testar-rh-permissao.sql` (11 checagens, as duas metades —
   o que o balconista não alcança **e** o que ele ainda consegue fazer).
+- `0057` (criada em 25/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0056` **com um token
+  plantado** — **ainda NÃO rodada por ela**): o cofre do token da Focus NFe, item `TR-04.2`,
+  **parte 1 de 2**. Cria `segredos_fiscais_loja` (loja_id, focus_nfe_token, atualizado_em) **sem
+  policy nenhuma** — nenhum operador lê nem escreve, nem admin; só a service role, que existe
+  apenas dentro das Edge Functions — e **copia sozinha** o token que já está em
+  `configuracoes_fiscais_loja`, então ninguém precisa colar de novo. Mais três funções:
+  `definir_token_focus_nfe()` (só admin da loja grava; não devolve nada),
+  `loja_tem_token_focus_nfe()` (a tela só pergunta "tem?") e `pode_usar_focus_nfe()` (a regra do
+  porteiro, igual à da tela: emitir/consultar/baixar pra quem tem OS ou Notas Fiscais, cancelar só
+  pra quem tem Notas Fiscais). Quatro decisões que valem saber:
+  (a) **a coluna antiga NÃO sai aqui**, pela regra de "Voltar uma versão" (seção 9): se a versão
+  do porteiro sair ruim e for preciso voltar pra `v0.9.40`, aquela versão lê o token da coluna
+  antiga, e emitir nota não pode parar por causa de um rollback. **A proteção de verdade chega
+  com a parte 2**, que limpa a coluna — só depois de uma nota emitida e uma cancelada pelo
+  porteiro. Até lá o token continua legível pela API, como sempre foi;
+  (b) **a cópia é `on conflict do nothing`**: rodar de novo depois de o admin trocar o token pelo
+  cofre não passa o antigo por cima do novo (testado);
+  (c) **o `revoke ... from public, anon` das três funções é a tranca** — sem ele, `security
+  definer` + a permissão padrão do Postgres deixariam quem não está logado perguntar;
+  (d) **o cofre é auditado e o token sai `***`** — a máscara da `0053` é por nome de coluna, e a
+  coluna se chama `focus_nfe_token` de propósito. Na tela de Auditoria aparece como "Token da
+  Focus NFe": quem trocou e quando, sem o valor.
+  Teste repetível em `supabase/scripts/testar-porteiro-focus-nfe.sql` (17 checagens), conferido
+  com nove mutações — inclusive uma policy de leitura plantada no cofre, que a matriz de RLS
+  também pega.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1194,11 +1232,19 @@ outro projeto Supabase do zero (ver seção 9).
   "Multi-loja" acima).
 - **`configuracoes_fiscais_loja`**: 1 linha **por loja** (`loja_id` é a PK) com cnpj, razao_social,
   nome_fantasia, inscricao_estadual, inscricao_municipal, regime_tributario, endereço da loja,
-  telefone, email, focus_nfe_token, focus_nfe_ambiente (`homologacao`/`producao`). Reaproveitada
+  telefone, email, focus_nfe_ambiente (`homologacao`/`producao`) e `focus_nfe_token` — **que o
+  app não lê mais desde o TR-04.2** (o token vive em `segredos_fiscais_loja`; esta coluna é só a
+  cópia antiga guardada pra uma volta de versão, e a parte 2 do item a limpa). Por isso
+  `buscarConfiguracaoFiscal()` lista as colunas uma a uma, **nunca `select("*")`**. Reaproveitada
   pelo cabeçalho do documento de garantia. Desde a migration `0049` guarda também
   `competencia_aliquota_confirmada` e `aliquota_passo_a_passo`, do lembrete mensal da alíquota
   (ver "Aviso da alíquota do mês" na seção 7) — a primeira **não** é escrita pela tela de
   Configurações, só pelo botão "Já cadastrei" e pela NFS-e autorizada.
+- **`segredos_fiscais_loja`** (migration `0057`): loja_id (PK, `on delete cascade` — sai junto
+  com a loja), focus_nfe_token, atualizado_em. O cofre do token da Focus NFe. **Sem policy
+  nenhuma, de propósito**: nem o admin lê. Quem lê é o porteiro (Edge Function `focus-nfe`, com a
+  service role); quem escreve é `definir_token_focus_nfe()`. **Não criar policy de select aqui** —
+  seria transformar o cofre de volta numa coluna comum. A matriz de RLS reprova se aparecer uma.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único **globalmente**, não por
   loja), nome, admin (bool), permissoes (`text[]` com as chaves de `MODULOS` em
   `src/types/operador.ts`), ativo, deve_trocar_senha (bool, default `false` — migration `0038`;
@@ -1270,7 +1316,8 @@ recalcula sozinho o status do pedido (`parcial` até todo item bater a quantidad
 `recebido`).
 
 **Fora do Postgres** (Supabase Storage): bucket `notas-fiscais` (XMLs enviados manualmente).
-**Fora do Postgres/Storage** (Edge Function): `ler-notas-fiscais`, ver seção 4 — não tem tabela
+**Fora do Postgres/Storage** (Edge Functions): `focus-nfe` (o porteiro do TR-04.2 — usa o token
+de `segredos_fiscais_loja` e não guarda nada) e `ler-notas-fiscais`, ver seção 4 — esta não tem tabela
 própria, o resultado só passa pela tela de revisão em memória antes de salvar em `pecas`.
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
@@ -1295,7 +1342,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
    teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
    **E esse teste já existe, desde 13/09/2026**: é a matriz de RLS (`npm run test:rls`, item
-   `TR-07.3`, item 63 desta seção), hoje em 680 células. O diff do `expectativas.csv` **é** a
+   `TR-07.3`, item 63 desta seção), hoje em 700 células. O diff do `expectativas.csv` **é** a
    revisão: na `0056` ele mostra, em números, o balconista saindo de 1 pra 0 nas oito linhas de
    RH e entrando com 1 na view pública — ou seja, o que ele perdeu e o que ele manteve, lado a
    lado.
@@ -1327,7 +1374,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    (item `TR-07.2`, ver item 62 desta seção): os cinco formulários que mexem em dinheiro são
    montados de verdade com `@testing-library/react` e exercitados a clique e digitação. O que
    continua fora é **qualquer coisa que dependa do Supabase** — nenhum teste fala com o banco, e
-   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **510 testes**,
+   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **612 testes**,
    todos passando — e, desde 11/09/2026, rodando
    nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
    UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
@@ -1349,7 +1396,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    dela).
    **E desde 13/09/2026 a RLS também é conferida por máquina**, fora do `npm test`:
    `npm run test:rls` (item `TR-07.3`) monta um banco do zero, simula cinco papéis e confere as
-   680 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
+   700 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
    seção. Continua sem falar com o Supabase de verdade: é um Postgres local/do CI.
    **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
    o parser de XML de verdade
@@ -2642,6 +2689,42 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     pode ser uma versão **ainda em teste** — a loja nova começaria justamente onde não devia.
     Agora ele aponta pro endereço da versão liberada.
 
+71. **O token da Focus NFe saiu do computador — e a parte difícil não foi esconder, foi não
+    virar outra coisa (25/09/2026, item `TR-04.2`).** O token emite e cancela nota no CNPJ da
+    loja, e ia inteiro pra memória de todo computador, balconista incluído. Agora mora num cofre
+    que ninguém lê (`segredos_fiscais_loja`, migration `0057`) e quem usa é o **porteiro**, a Edge
+    Function `focus-nfe`. Cinco coisas que valem saber antes de mexer aqui:
+    - **O porteiro repassa, não remonta.** A nota continua sendo montada no programa
+      (`montarCorpoNFCe`/`montarCorpoNFSe`, com o teste-ouro, que passou sem mudar um byte).
+      Remontar dentro da Edge Function seria a sexta vez deste projeto de uma conta de dinheiro
+      morando em dois lugares (itens 35, 40, 44, 49 e 60) — e aqui o preço seria nota recusada.
+      O que o porteiro faz é só conferir: permissão (como o operador), **CNPJ da nota igual ao da
+      loja**, nota registrada por esta loja antes de cancelar, e o ambiente vindo do cadastro, não
+      do pedido. A conferência do CNPJ parece zelo hoje e é o que torna seguro o "token
+      compartilhado" do item 6 da seção 8: com uma conta só na Focus NFe, sem ela um operador
+      poderia emitir em nome de outra empresa cliente.
+    - **Baixar o PDF/XML não aceita endereço de quem pede.** O porteiro consulta a nota e segue o
+      caminho que a PRÓPRIA Focus NFe devolveu. Se aceitasse o caminho do pedido, ele viraria um
+      jeito de chamar qualquer endereço da API com o token junto — `/v2/empresas`, por exemplo,
+      que num token de conta principal cria e altera empresa.
+    - **O `select("*")` teria desfeito tudo em silêncio.** A coluna antiga continua existindo até
+      a parte 2 (pra uma volta de versão funcionar), então `buscarConfiguracaoFiscal()` com
+      asterisco traria o token de volta pra memória do computador — sem erro, sem aviso, e com a
+      tela funcionando perfeitamente. Por isso a lista de colunas é escrita uma a uma.
+    - **`supabase.functions.invoke` devolve texto quando a resposta não é JSON** — um PDF viria
+      corrompido. Por isso o porteiro sempre responde JSON, com o arquivo em base64. Pesa uns 30%
+      a mais num arquivo que é pequeno, e evita escrever um cliente HTTP à parte.
+    - **O teste do "segredo não sai" passou na primeira versão com um vazamento plantado.** Ele
+      cobria seis caminhos, e um token escrito de propósito na mensagem de "loja sem CNPJ" passou
+      batido — só uma das nove mutações sobreviveu, e foi justo a do segredo. Ampliado pra passar
+      por **todo** caminho de recusa: mensagem de erro montada com o valor errado é exatamente
+      como segredo costuma vazar. É a lição do item 53 outra vez, no lugar onde ela mais custaria.
+    **O que ficou pra parte 2, e por quê**: limpar a coluna antiga (migration `0058`) e tirar a
+    ponte `http:fetchComAuth` do Electron, que ficou sem uso (ela não tem mais token nenhum pra
+    carregar, mas ponte sem uso é superfície à toa). As duas só depois de ela emitir **e**
+    cancelar uma nota de verdade pelo porteiro — até lá, voltar pra `v0.9.40` precisa continuar
+    emitindo nota.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3349,7 +3432,9 @@ Quatro coisas que valem saber:
     atrapalharia a ferramenta de trabalho sem proteger o que vai pra loja.
   - **A ponte da Focus NFe deixou de aceitar qualquer endereço.** Ela carrega o token que
     **emite e cancela nota no CNPJ da loja**; agora só fala com os dois endereços da Focus NFe,
-    conferidos por host exato.
+    conferidos por host exato. **Desde o `TR-04.2` (25/09/2026) a tela não usa mais essa ponte**
+    — quem fala com a Focus NFe é o porteiro, no Supabase (ver "Token da Focus NFe" logo
+    abaixo). Ela continua existindo até a parte 2 do item, e sai junto com a coluna antiga.
   - **Todo pedido da tela pro processo principal é conferido** (é a tela do app mesmo que está
     pedindo?). Vale pra salvar conexão, abrir WhatsApp, ler registro e diagnóstico.
   - **Nada navega pra fora do app nem abre janela nova** — sem barra de endereço, uma janela
@@ -3363,6 +3448,24 @@ Quatro coisas que valem saber:
   **Ainda não visto por ela rodando**, e é o tipo de mudança que só se percebe se algo quebrar:
   o que vale conferir depois do auto-update é o de sempre funcionando — abrir uma OS, buscar
   endereço por CEP, ver a garantia, emitir uma nota e abrir o WhatsApp de uma cobrança.
+- **Token da Focus NFe e o porteiro** (25/09/2026, item `TR-04.2`, **parte 1 de 2** — ainda não
+  publicado): o token que emite e cancela nota no CNPJ da loja **não chega mais no computador de
+  ninguém**. Ele mora num cofre do banco que nenhum operador lê, e quem fala com a Focus NFe é o
+  **porteiro** — a Edge Function `focus-nfe`, no Supabase de cada empresa. Pra quem usa, nada
+  muda: emitir, reabrir o PDF e cancelar continuam nos mesmos botões, e a nota que sai é
+  idêntica (o teste-ouro passou sem mudar um byte). O que muda:
+  - **Configurações → Dados fiscais**: o token não aparece mais. A tela diz "✓ Já existe um token
+    cadastrado", e o campo serve só pra **trocar** — em branco, mantém o atual. Não dá pra apagar
+    o token pela tela (não foi pedido, e sem token a emissão para).
+  - **O porteiro confere antes de repassar**: quem pede tem o módulo (emitir/reabrir: Ordens de
+    Serviço ou Notas Fiscais; cancelar: só Notas Fiscais — a mesma regra que a tela já seguia);
+    o CNPJ da nota é o da loja; a nota a cancelar foi emitida por esta loja; e o PDF/XML é buscado
+    no endereço que a própria Focus NFe devolveu, nunca num que o pedido escolheu.
+  - **Mensagens novas que podem aparecer**: "falta publicar o porteiro" (a Edge Function não foi
+    publicada naquele Supabase), "você não tem permissão..." e "essa nota não é desta loja".
+  **A ordem de subir isso importa** — ver "Ativar o porteiro da Focus NFe" na seção 9. E a
+  proteção só fica completa com a **parte 2**, que limpa a cópia antiga do token que ficou na
+  tabela de configurações (item 71 da seção 6).
 - **Auditoria**: admin-only, acesso via ícone no rodapé da Sidebar (ao lado da engrenagem de
   Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem **criou**,
   editou ou excluiu o quê e quando, com filtro por tabela, por **ação** e por operador, e um "Ver
@@ -4055,6 +4158,13 @@ Quatro coisas que valem saber:
    - Assinatura Claude Pro da própria usuária (ferramenta de desenvolvimento, custo fixo que não
      escala com número de lojas — a fração por loja vai encolher conforme mais lojas entrarem):
      ≈ R$110,00 (faixa R$100-120).
+   > **Atualização (25/09/2026, `TR-04.2`)**: a Edge Function que este parágrafo pedia **existe** —
+   > é o porteiro `focus-nfe` —, e ela já confere o CNPJ de cada nota contra o da loja, que é o
+   > que torna seguro usar um token só pra várias empresas. O token continua **um por loja** no
+   > cofre (`segredos_fiscais_loja`); unificar a conta vira **colar o mesmo token em cada loja**,
+   > sem código novo. Falta só a decisão comercial (e confirmar com a Focus NFe que um token da
+   > conta emite pra todos os CNPJs cadastrados nela).
+
    **Pré-requisito de código, ainda não construído**: pra esse número (Focus NFe consolidado numa
    conta só, invisível pro dono da loja) funcionar de verdade, falta trocar a arquitetura de
    "token por loja" (hoje, cada loja guarda o próprio token em `configuracoes_fiscais_loja`,
@@ -4197,6 +4307,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 18/09 (manhã) | `TR-12.1` — o **backup próprio do banco**, cifrado e em dois lugares fora do Supabase, rodando todo dia às 3h. Ela abriu uma cópia com as próprias mãos pra conferir. Não mexe no app, então **sem tag**. Etapa 4 em 9 de 12. |
 | 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
+| 25/09 (noite) | `TR-04.2`, **parte 1 de 2** — o token da Focus NFe sai do computador: vai pra um cofre no banco (migration `0057`) e quem usa é o **porteiro**, a Edge Function `focus-nfe`, que confere quem pede e o CNPJ da nota antes de repassar. **Mesclado, não publicado**: espera ela rodar a `0057` e publicar a função. Etapa 4 em 12 de 12 começados. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4233,8 +4344,11 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0056` estão TODAS aplicadas no Supabase real dela — nada pendente de
-SQL.** A `0056` (dado de RH só com o módulo, item TR-04.3) foi rodada por ela em 25/09/2026,
+**Estado hoje: `0001` a `0056` estão aplicadas no Supabase real dela; a `0057` (o cofre do
+token da Focus NFe, item TR-04.2) está ESPERANDO ela rodar** — e, junto, publicar a Edge Function
+`focus-nfe`. As duas coisas vêm ANTES da versão nova: passo a passo em "Ativar o porteiro da
+Focus NFe", logo abaixo nesta seção.
+Histórico: A `0056` (dado de RH só com o módulo, item TR-04.3) foi rodada por ela em 25/09/2026,
 **antes** da tag `v0.9.39` — a ordem que essa migration exigia, porque a tela de OS passa a ler
 uma view que só existe depois dela. (O contrário, a migration antes da versão nova, era seguro:
 o app velho continuava funcionando igual.)
@@ -4292,7 +4406,7 @@ senão o `set local` não pega e o teste roda como superusuário, que ignora RLS
 sessão que precisava validar uma migration recriava esses mesmos stubs do zero.
 
 **E toda migration que mexa em policy tem que passar na matriz de RLS** (item `TR-07.3`), que faz
-esse mesmo trabalho por conta própria e confere 680 combinações de tabela × comando × papel:
+esse mesmo trabalho por conta própria e confere 700 combinações de tabela × comando × papel:
 
 ```bash
 service postgresql start
@@ -4399,6 +4513,45 @@ Só precisa da migration — sem Edge Function, sem secret.
    Operador, excluir um Fornecedor) → clique no ícone novo ao lado da engrenagem de Configurações
    (rodapé do menu lateral, só aparece pra admin) → deve aparecer o registro na lista, com "Ver
    detalhes" mostrando o que mudou.
+
+### Ativar o porteiro da Focus NFe (item TR-04.2)
+
+O token da Focus NFe deixa de ir pro computador de cada operador: passa a morar num cofre do
+banco, e quem usa é um "porteiro" no Supabase. **São três passos, e a ordem importa** — se a
+versão nova do programa chegar na loja antes dos dois primeiros, a emissão de nota para (com uma
+mensagem dizendo o que falta, mas para).
+
+1. **Rodar a migration** (2 minutos): SQL Editor do Supabase → New query → colar todo o conteúdo
+   de `supabase/migrations/0057_cofre_token_focus_nfe.sql` → **Run**. Tem que aparecer
+   "Success. No rows returned". **Ela copia sozinha o token que já está cadastrado** — ninguém
+   precisa colar de novo.
+2. **Publicar o porteiro** (3 minutos): **Edge Functions** → **Deploy a new function** →
+   **Via Editor** → digitar `focus-nfe` **no campo do nome ANTES de clicar em Deploy** (a mesma
+   pegadinha das outras duas: renomear depois não muda o endereço) → apagar o exemplo, colar todo
+   o conteúdo de `supabase/functions/focus-nfe/index.ts` → **Deploy function**.
+   **Não precisa de secret nenhum** — o token vem do cofre, e as chaves do Supabase ele recebe
+   sozinho.
+3. **Só depois disso, a versão nova** (`v0.9.41`). Como nenhum computador está marcado como Teste
+   ainda, ela precisa ser **publicada e liberada** — ou, melhor, marcar antes o computador dela e
+   o da Pneus Amigão como Teste (Configurações → "Atualizações deste computador").
+
+**Como conferir que deu certo**, já na versão nova:
+- Configurações → Dados fiscais da loja: aparece "✓ Já existe um token cadastrado", e o campo do
+  token está vazio. É o certo.
+- Emitir uma nota numa OS de verdade, e reabrir o PDF dela em Notas Fiscais → "Ver DANFE".
+
+**Se aparecer...**
+- "falta publicar o porteiro" → o passo 2 não foi feito (ou o nome saiu diferente de `focus-nfe`).
+- "Token do Focus NFe não configurado" → o passo 1 não foi feito, ou a loja nunca teve token: cole
+  em Configurações → Dados fiscais.
+- "Você não tem permissão..." → aquele operador não tem o módulo Ordens de Serviço nem Notas
+  Fiscais (pra cancelar, precisa de Notas Fiscais).
+
+**Depois — a parte 2 (ainda não feita).** Até aqui, a cópia antiga do token continua na tabela de
+configurações, legível como sempre foi: é o que deixa voltar pra `v0.9.40` sem parar a emissão, se
+a versão nova sair ruim. A parte 2 é uma migration que apaga essa cópia, e ela só deve ser feita
+**depois de uma nota emitida e uma nota cancelada de verdade pelo porteiro** — a prova de que o
+caminho novo funciona nos dois sentidos.
 
 ### Backup do banco (item TR-12.1)
 
@@ -4721,8 +4874,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.40"` — publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
-  canal de teste). **`main` em dia com a tag, banco na `0056`, nada esperando SQL nem
-  publicação** — ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
+  canal de teste). **A `main` está UMA leva à frente da tag** — o `TR-04.2` (o porteiro da Focus
+  NFe) —, que espera ela rodar a migration `0057` e publicar a Edge Function `focus-nfe` ANTES de
+  virar a `v0.9.41`. Banco na `0056`. Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
@@ -5447,7 +5601,85 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 25/09/2026, à tarde — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 25/09/2026, à noite — LEIA ISTO PRIMEIRO
+
+**Saiu o `TR-04.2`, parte 1 de 2 — o token da Focus NFe deixou de ir pro computador de cada
+operador.** Último item da Etapa 4 que faltava começar. Ela disse "continua pro próximo passo", e
+escolheu, entre as opções, o **jeito recomendado**: um porteiro no Supabase que só **repassa** a
+nota que o programa monta (sem reescrever a montagem), o token guardado **por loja numa tabela
+só de escrita** (não num secret da função), e em **duas versões**.
+
+**Estado: mesclado na `main`, NÃO publicado.** E aqui a ordem é obrigatória — se a versão nova
+chegar na loja antes, a emissão de nota para:
+1. ela roda a migration `0057` no SQL Editor (copia o token sozinha);
+2. ela publica a Edge Function `focus-nfe` pelo painel ("Via Editor", nome antes do Deploy);
+3. só então sai a `v0.9.41` — e, como nenhum computador está no canal de teste ainda, **perguntar
+   se é pra liberar junto** ou se ela marca as duas máquinas como Teste antes.
+O passo a passo pra ela está na seção 9, "Ativar o porteiro da Focus NFe".
+**Não publicar nem liberar sem ela pedir.**
+
+#### O problema, em uma frase
+
+O token emite e cancela nota no CNPJ da loja, e qualquer operador logado — balconista incluído —
+conseguia ler pela API, com a chave que está no computador dele. Nas mãos erradas ele não vaza
+dado: produz nota falsa ou cancela nota verdadeira.
+
+#### Como ficou, em uma linha cada
+
+- **Cofre**: `segredos_fiscais_loja`, sem policy nenhuma — nem o admin lê. Só admin da loja
+  **grava**, por `definir_token_focus_nfe()`; a tela só pergunta "tem token?".
+- **Porteiro**: `supabase/functions/focus-nfe/index.ts`. Confere permissão (como o operador),
+  **CNPJ da nota igual ao da loja**, nota registrada antes de cancelar, e segue só o endereço de
+  arquivo que a própria Focus NFe devolveu. O ambiente vem do cadastro, não do pedido.
+- **Programa**: `lib/focusNfe.ts` monta a nota como sempre (teste-ouro passou sem mudar um byte) e
+  pede ao porteiro. `buscarConfiguracaoFiscal()` lista as colunas uma a uma — um `select("*")`
+  traria de volta a cópia antiga do token (item 71 da seção 6).
+- **Configurações → Dados fiscais**: "✓ Já existe um token cadastrado" e um campo só pra trocar.
+
+#### Como foi conferido
+
+- Num Postgres local: instalação completa **três vezes do zero**; a `0057` **duas vezes** num banco
+  no estado `0056` com token plantado (copiou certo, e a segunda passada não passou por cima de um
+  token trocado depois).
+- `supabase/scripts/testar-porteiro-focus-nfe.sql`, 17 checagens, e **nove mutações** — cada uma
+  ficou vermelha no ponto certo (inclusive a policy de leitura plantada no cofre).
+- **Matriz de RLS**: 700 células, com o cofre e as quatro lacunas declaradas.
+- **O porteiro no Vitest**, com um `fetch` de mentira no lugar do Supabase e da Focus NFe: 36
+  testes, **nove mutações**. Uma sobreviveu na primeira rodada — justo o token vazando numa
+  mensagem de erro —, e o teste foi ampliado até pegar (item 71 da seção 6).
+- **O caminho do programa até o porteiro**: 11 testes, cinco mutações.
+- `tsc`, lint, contraste; **612 testes** nos dois fusos; `test:electron` (27); as 54 telas do
+  catálogo geradas sem falha, e a de Dados fiscais olhada.
+
+**O que NÃO dá pra conferir daqui**: o porteiro rodando no Supabase de verdade e falando com a
+Focus NFe de verdade — este ambiente não alcança nenhum dos dois. A primeira emissão depois dos
+três passos é o teste real, e é por isso que a parte 2 espera por ela.
+
+#### A parte 2 (não feita, e com condição)
+
+Uma migration `0058` que apaga a cópia antiga do token em `configuracoes_fiscais_loja`, e a
+retirada da ponte `http:fetchComAuth` do Electron (ficou sem uso). **Só depois de ela emitir uma
+nota E cancelar uma nota de verdade pelo porteiro** — até lá, voltar pra `v0.9.40` precisa
+continuar emitindo. Até a parte 2, o token segue legível na coluna antiga: **a proteção só fica
+completa com ela**.
+
+#### O que depende dela agora
+
+1. Os três passos acima, na ordem.
+2. Depois de a versão chegar: emitir uma nota e cancelar uma — e avisar, pra sair a parte 2.
+3. Marcar as duas máquinas como Teste (pendência do `TR-09.1`, sem pressa).
+4. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como
+   obrigatório pra mesclar, decidir sobre atualizar o Electron, e a alíquota mensal no portal.
+
+#### Etapa 4: 12 de 12 começados
+
+Todos os itens da etapa já saíram pelo menos em parte. Fecham de vez com a **parte 2 do
+`TR-04.2`** (depende da emissão real acima) e as **etapas 2 e 3 do `TR-04.1`** nas tabelas que
+sobraram (a `0056` fez só RH) — essas precisam de decisão dela antes de começar, tabela por tabela.
+
+O que está abaixo é o marco anterior.
+
+### Onde parou em 25/09/2026, à tarde (histórico — o marco mais recente está logo acima)
 
 **Saiu o `TR-09.1` — canal de teste antes de atualizar todas as lojas.** Décimo primeiro item da
 Etapa 4; falta um (o `TR-04.2`, mais as etapas 2 e 3 do `TR-04.1`). Ela disse "continuar", e este

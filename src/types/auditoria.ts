@@ -33,6 +33,8 @@ export const TABELA_AUDITORIA_LABEL: Record<string, string> = {
   lojas: "Lojas",
   notas_fiscais_arquivos: "Notas Fiscais",
   configuracoes_fiscais_loja: "Dados fiscais da loja",
+  // O token sai mascarado ("***") na trilha — o que fica é quem trocou e quando.
+  segredos_fiscais_loja: "Token da Focus NFe",
   configuracoes_juros_parcelas: "Juros de parcelamento",
   operador_lojas: "Acesso de operador a loja",
 };

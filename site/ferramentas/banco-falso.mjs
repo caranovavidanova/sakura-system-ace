@@ -1,4 +1,4 @@
-import { TABELAS, SESSAO } from "./dados-demo.mjs";
+import { FUNCOES, TABELAS, SESSAO } from "./dados-demo.mjs";
 
 // Responde as chamadas ao Supabase com os dados inventados de dados-demo.mjs,
 // pra conseguir abrir o app de verdade num navegador sem tocar no banco de
@@ -26,6 +26,17 @@ export async function instalarBancoFalso(contexto) {
     }
     if (caminho.startsWith("/auth/v1/logout")) {
       return rota.fulfill({ status: 204, body: "" });
+    }
+
+    // --- funções do banco (supabase.rpc) ---
+    if (caminho.startsWith("/rest/v1/rpc/")) {
+      const funcao = caminho.replace("/rest/v1/rpc/", "");
+      if (!(funcao in FUNCOES)) faltando.add(`rpc/${funcao}`);
+      return rota.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(FUNCOES[funcao] ?? null),
+      });
     }
 
     // --- dados (PostgREST) ---

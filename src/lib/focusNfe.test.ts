@@ -21,7 +21,7 @@ function configuracaoFiscal(sobrescrever: Partial<ConfiguracaoFiscalLoja> = {}):
     uf: "SP",
     telefone: null,
     email: null,
-    focus_nfe_token: "token-teste",
+    focus_nfe_configurado: true,
     focus_nfe_ambiente: "homologacao",
     codigo_municipio: "3503208",
     item_lista_servico: "14.01",

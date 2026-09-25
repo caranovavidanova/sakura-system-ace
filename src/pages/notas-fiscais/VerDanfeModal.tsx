@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { useAuth } from "@/contexts/AuthContext";
-import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { buscarDanfeEmitida } from "@/lib/notasFiscais";
 import { nomeArquivoDanfe } from "@/schemas/danfe";
@@ -17,7 +15,6 @@ interface VerDanfeModalProps {
 // PDF só existia dentro da janela de emissão: fechou, acabou, e a única
 // saída era entrar no painel da Focus NFe.
 export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
-  const { lojaAtual } = useAuth();
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -28,22 +25,12 @@ export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
     let urlCriada: string | null = null;
 
     async function carregar() {
-      if (!lojaAtual) return;
       setCarregando(true);
       setErro("");
       try {
-        const configuracaoFiscal = await buscarConfiguracaoFiscal(lojaAtual.id);
-        if (!configuracaoFiscal?.focus_nfe_token) {
-          throw new Error(
-            "Token do Focus NFe não configurado — cadastre em Configurações → Dados fiscais " +
-              "da loja.",
-          );
-        }
-        const pdf = await buscarDanfeEmitida(
-          arquivo,
-          configuracaoFiscal.focus_nfe_token,
-          configuracaoFiscal.focus_nfe_ambiente,
-        );
+        // Quem confere o token, a loja e a permissão é o porteiro (TR-04.2):
+        // se faltar alguma coisa, a mensagem dele já diz o quê.
+        const pdf = await buscarDanfeEmitida(arquivo);
         if (!ativo) return;
         urlCriada = URL.createObjectURL(pdf);
         setPdfUrl(urlCriada);
@@ -61,7 +48,7 @@ export function VerDanfeModal({ arquivo, onFechar }: VerDanfeModalProps) {
       if (urlCriada) URL.revokeObjectURL(urlCriada);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [arquivo.id, lojaAtual?.id]);
+  }, [arquivo.id]);
 
   function handleImprimir() {
     iframeRef.current?.contentWindow?.print();

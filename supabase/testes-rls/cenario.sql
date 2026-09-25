@@ -29,8 +29,9 @@
 --
 -- Três decisões que parecem estranhas e não são:
 --
---   1. `configuracoes_garantia`, `configuracoes_fiscais_loja` e
---      `configuracoes_painel_inicio` têm linha só na loja B, de propósito.
+--   1. `configuracoes_garantia`, `configuracoes_fiscais_loja`,
+--      `configuracoes_painel_inicio` e `segredos_fiscais_loja` têm linha só
+--      na loja B, de propósito.
 --      A chave primária delas é o `loja_id` sozinho, então, com a loja A já
 --      ocupada, a sonda de INSERT bateria na chave duplicada — e um erro de
 --      chave se pareceria com "a RLS bloqueou", que é justamente a confusão
@@ -49,7 +50,7 @@ set session_replication_role = replica;
 truncate table
   schema_versao, auditoria, whatsapp_mensagens, configuracoes_whatsapp,
   configuracoes_juros_parcelas, configuracoes_painel_inicio,
-  configuracoes_fiscais_loja, configuracoes_garantia,
+  configuracoes_fiscais_loja, configuracoes_garantia, segredos_fiscais_loja,
   cotacoes_pecas, pedidos_compra_itens, pedidos_compra,
   notas_fiscais_arquivos, contas_receber, contas_pagar,
   contagens_estoque, estoque_movimentos, caixa_movimentos,
@@ -194,7 +195,7 @@ insert into configuracoes_whatsapp (loja_id, chave, texto) values
   ('11111111-1111-1111-1111-1111111111aa', 'cobranca', 'Texto da loja A'),
   ('11111111-1111-1111-1111-1111111111bb', 'cobranca', 'Texto da loja B');
 
--- E estas três têm o `loja_id` como chave primária inteira: recebem linha SÓ
+-- E estas quatro têm o `loja_id` como chave primária inteira: recebem linha SÓ
 -- na loja B, pra deixar a loja A livre pra sonda de INSERT (ver o item 1 do
 -- cabeçalho). É por isso que a leitura delas na matriz é "1,0,0,0,0".
 insert into configuracoes_garantia (loja_id, texto) values
@@ -205,6 +206,12 @@ insert into configuracoes_fiscais_loja (loja_id, cnpj, razao_social) values
 
 insert into configuracoes_painel_inicio (loja_id, cartoes) values
   ('11111111-1111-1111-1111-1111111111bb', array['vendas_mes']);
+
+-- O cofre do token da Focus NFe (TR-04.2). Tem linha na loja B pra que o
+-- "0" do dono na leitura queira dizer "a tabela recusou", e não "estava
+-- vazia" — o dono tem acesso à loja B em toda outra tabela da matriz.
+insert into segredos_fiscais_loja (loja_id, focus_nfe_token) values
+  ('11111111-1111-1111-1111-1111111111bb', 'token-de-mentira-naopodevazar');
 
 -- ---------- duas linhas de versão de esquema ------------------------------
 -- A migration 0055 planta uma linha por migration já aplicada, então esta

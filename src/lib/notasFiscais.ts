@@ -1,6 +1,6 @@
 import { primeiroDiaDoMesLocal } from "./datas";
 import {
-  baixarArquivoFocusNfe,
+  baixarArquivoNota,
   cancelarNFCe,
   cancelarNFSe,
   consultarNFCe,
@@ -11,7 +11,6 @@ import { supabase } from "./supabase";
 import { salvarComoDownload } from "./download";
 import { criarZip, type ArquivoParaZip } from "./zip";
 import { motivoDanfeIndisponivel } from "@/schemas/danfe";
-import type { AmbienteFocusNfe } from "@/types/configuracao";
 import type { RespostaFocusNfe } from "@/types/focusNfe";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 
@@ -95,8 +94,12 @@ interface SalvarArquivoEmitidoParams {
   ordemServicoId: string;
   operadorId: string;
   lojaId: string;
-  token: string;
-  ambiente: AmbienteFocusNfe;
+}
+
+// Na tabela a NFC-e aparece como "nfe" (a aba de Notas Fiscais é "NFe"); na
+// Focus NFe, e portanto no porteiro, ela é "nfce".
+function tipoNaFocusNfe(tipo: TipoNotaFiscal): "nfce" | "nfse" {
+  return tipo === "nfe" ? "nfce" : "nfse";
 }
 
 // Depois de uma emissão automática autorizada (via emitirNFCe/emitirNFSe),
@@ -109,10 +112,8 @@ export async function salvarArquivoEmitido({
   ordemServicoId,
   operadorId,
   lojaId,
-  token,
-  ambiente,
 }: SalvarArquivoEmitidoParams): Promise<void> {
-  if (!resposta.caminho_xml_nota_fiscal) {
+  if (!resposta.caminho_xml_nota_fiscal || !resposta.ref) {
     throw new Error(
       "A nota foi autorizada, mas a Focus NFe não devolveu o caminho do XML — não deu pra " +
         "guardar o arquivo. Consulte a nota direto no painel do Focus NFe.",
@@ -127,7 +128,7 @@ export async function salvarArquivoEmitido({
   const nomeArquivo = `${tipo}-${resposta.numero ?? resposta.ref ?? "sem-numero"}.xml`;
   const caminho = `${tipo}/${competencia.slice(0, 7)}/${crypto.randomUUID()}-${nomeArquivo}`;
 
-  const xml = await baixarArquivoFocusNfe(resposta.caminho_xml_nota_fiscal, token, ambiente);
+  const xml = await baixarArquivoNota(lojaId, tipoNaFocusNfe(tipo), resposta.ref, "xml");
   const { error: erroUpload } = await supabase.storage
     .from("notas-fiscais")
     .upload(caminho, xml, { contentType: "application/xml" });
@@ -162,8 +163,6 @@ export async function salvarArquivoEmitido({
 export async function cancelarArquivoEmitido(
   arquivo: NotaFiscalArquivo,
   justificativa: string,
-  token: string,
-  ambiente: AmbienteFocusNfe,
 ): Promise<void> {
   if (arquivo.origem !== "automatica" || !arquivo.focus_nfe_ref) {
     throw new FocusNfeError(
@@ -174,8 +173,8 @@ export async function cancelarArquivoEmitido(
 
   const resposta =
     arquivo.tipo === "nfe"
-      ? await cancelarNFCe(arquivo.focus_nfe_ref, justificativa, token, ambiente)
-      : await cancelarNFSe(arquivo.focus_nfe_ref, justificativa, token, ambiente);
+      ? await cancelarNFCe(arquivo.focus_nfe_ref, justificativa, arquivo.loja_id)
+      : await cancelarNFSe(arquivo.focus_nfe_ref, justificativa, arquivo.loja_id);
 
   // A Focus NFe pode responder HTTP 200 com um cancelamento recusado pela
   // SEFAZ/prefeitura (ex: prazo de cancelamento vencido) — mesmo cuidado já
@@ -269,19 +268,15 @@ export async function excluirArquivo(arquivo: NotaFiscalArquivo): Promise<void> 
 // guardar por 5 anos) — ele é pedido de volta pra Focus NFe pela
 // `focus_nfe_ref` gravada na emissão. É o que permite reimprimir a nota
 // quando o cliente volta e pede de novo, sem entrar no painel da Focus NFe.
-export async function buscarDanfeEmitida(
-  arquivo: NotaFiscalArquivo,
-  token: string,
-  ambiente: AmbienteFocusNfe,
-): Promise<Blob> {
+export async function buscarDanfeEmitida(arquivo: NotaFiscalArquivo): Promise<Blob> {
   const motivo = motivoDanfeIndisponivel(arquivo);
   if (motivo) throw new FocusNfeError(motivo);
 
   const ref = arquivo.focus_nfe_ref as string;
   const resposta =
     arquivo.tipo === "nfe"
-      ? await consultarNFCe(ref, token, ambiente)
-      : await consultarNFSe(ref, token, ambiente);
+      ? await consultarNFCe(ref, arquivo.loja_id)
+      : await consultarNFSe(ref, arquivo.loja_id);
 
   // NFS-e de algumas prefeituras não tem PDF pra baixar (o documento oficial
   // fica no portal do município) — não é erro, é como aquele município
@@ -294,5 +289,5 @@ export async function buscarDanfeEmitida(
     );
   }
 
-  return baixarArquivoFocusNfe(resposta.caminho_danfe, token, ambiente);
+  return baixarArquivoNota(arquivo.loja_id, tipoNaFocusNfe(arquivo.tipo), ref, "danfe");
 }

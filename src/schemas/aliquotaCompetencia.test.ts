@@ -25,7 +25,7 @@ function config(campos: Partial<ConfiguracaoFiscalLoja> = {}): ConfiguracaoFisca
     uf: null,
     telefone: null,
     email: null,
-    focus_nfe_token: "token-da-loja",
+    focus_nfe_configurado: true,
     focus_nfe_ambiente: "producao",
     codigo_municipio: "3503208",
     item_lista_servico: "14.01",
@@ -65,7 +65,7 @@ describe("lojaEmiteNfse", () => {
   });
 
   it("loja sem token não emite — e não deve ser lembrada todo mês", () => {
-    expect(lojaEmiteNfse(config({ focus_nfe_token: null }))).toBe(false);
+    expect(lojaEmiteNfse(config({ focus_nfe_configurado: false }))).toBe(false);
   });
 
   it("loja sem inscrição municipal não emite nota de serviço", () => {
@@ -106,7 +106,7 @@ describe("avisoAliquotaCompetencia", () => {
   });
 
   it("não enche quem não emite nota de serviço", () => {
-    const aviso = avisoAliquotaCompetencia(config({ focus_nfe_token: null }), setembro);
+    const aviso = avisoAliquotaCompetencia(config({ focus_nfe_configurado: false }), setembro);
     expect(aviso.precisa).toBe(false);
   });
 

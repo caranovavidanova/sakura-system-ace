@@ -7,7 +7,7 @@ import { AvisoAliquotaCompetencia } from "@/components/AvisoAliquotaCompetencia"
 import { avisoAliquotaCompetencia } from "@/schemas/aliquotaCompetencia";
 import { mensagemDeErro } from "@/lib/errors";
 import {
-  baixarArquivoFocusNfe,
+  baixarArquivoNota,
   emitirNFCe,
   emitirNFSe,
   FocusNfeError,
@@ -207,8 +207,6 @@ export function EmitirNotaFiscalModal({
         ordemServicoId: ordem.id,
         operadorId: operador.id,
         lojaId: lojaAtual.id,
-        token: configuracaoFiscal.focus_nfe_token as string,
-        ambiente: configuracaoFiscal.focus_nfe_ambiente,
       });
 
       setResultado(resposta);
@@ -225,13 +223,14 @@ export function EmitirNotaFiscalModal({
         }
       }
 
-      if (resposta.caminho_danfe && configuracaoFiscal.focus_nfe_token) {
+      if (resposta.caminho_danfe && resposta.ref) {
         setCarregandoPreview(true);
         try {
-          const blob = await baixarArquivoFocusNfe(
-            resposta.caminho_danfe,
-            configuracaoFiscal.focus_nfe_token,
-            configuracaoFiscal.focus_nfe_ambiente,
+          const blob = await baixarArquivoNota(
+            configuracaoFiscal.loja_id,
+            tipoNota === "NFC-e" ? "nfce" : "nfse",
+            resposta.ref,
+            "danfe",
           );
           setDanfeUrl(URL.createObjectURL(blob));
         } catch (erroPreviewCapturado) {
@@ -265,7 +264,7 @@ export function EmitirNotaFiscalModal({
     link.click();
   }
 
-  const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_token);
+  const focusNfeConfigurado = Boolean(configuracaoFiscal?.focus_nfe_configurado);
   const avisoAliquota = avisoAliquotaCompetencia(configuracaoFiscal);
 
   return (

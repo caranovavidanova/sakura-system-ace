@@ -28,7 +28,14 @@ export interface ConfiguracaoFiscalLoja {
   uf: string | null;
   telefone: string | null;
   email: string | null;
-  focus_nfe_token: string | null;
+  // O token da Focus NFe NÃO vem mais pra cá (item TR-04.2): ele mora no
+  // cofre `segredos_fiscais_loja`, que nenhum operador lê, e quem usa é o
+  // porteiro (Edge Function focus-nfe). A tela só fica sabendo SE a loja tem
+  // token — é o que diz `focus_nfe_configurado`, que não é coluna da tabela,
+  // é a resposta de `loja_tem_token_focus_nfe()`. Trocar o token é por
+  // `definirTokenFocusNfe()` (lib/configuracoes.ts): dá pra escrever, nunca
+  // ler de volta.
+  focus_nfe_configurado: boolean;
   focus_nfe_ambiente: AmbienteFocusNfe;
   // Usados só na emissão de NFS-e (serviço) — NFC-e (peça) não precisa de
   // nenhum destes. codigo_municipio é o código IBGE da cidade da loja;

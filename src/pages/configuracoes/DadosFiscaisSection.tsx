@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { salvarConfiguracaoFiscal, type DadosFiscaisEditaveis } from "@/lib/configuracoes";
+import {
+  definirTokenFocusNfe,
+  salvarConfiguracaoFiscal,
+  type DadosFiscaisEditaveis,
+} from "@/lib/configuracoes";
 import { PASSO_A_PASSO_ALIQUOTA_PADRAO } from "@/schemas/aliquotaCompetencia";
 import { mensagemDeErro } from "@/lib/errors";
 import { buscarEnderecoPorCep } from "@/lib/viaCep";
@@ -34,7 +38,6 @@ function valorInicial(configuracao: ConfiguracaoFiscalLoja | null): FormularioFi
     uf: configuracao?.uf ?? "",
     telefone: configuracao?.telefone ?? "",
     email: configuracao?.email ?? "",
-    focus_nfe_token: configuracao?.focus_nfe_token ?? "",
     focus_nfe_ambiente: configuracao?.focus_nfe_ambiente ?? "homologacao",
     codigo_municipio: configuracao?.codigo_municipio ?? "",
     item_lista_servico: configuracao?.item_lista_servico ?? "14.01",
@@ -57,6 +60,11 @@ export function DadosFiscaisSection({
   onSalvo,
 }: DadosFiscaisSectionProps) {
   const [valores, setValores] = useState<FormularioFiscal>(() => valorInicial(configuracao));
+  // O token nunca volta do banco pra cá (TR-04.2): este campo começa sempre
+  // vazio, e só é gravado se alguém colar um token novo. Em branco, o que já
+  // está no cofre continua valendo.
+  const [novoToken, setNovoToken] = useState("");
+  const tokenCadastrado = Boolean(configuracao?.focus_nfe_configurado);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
@@ -98,13 +106,16 @@ export function DadosFiscaisSection({
         uf: valores.uf || null,
         telefone: valores.telefone || null,
         email: valores.email || null,
-        focus_nfe_token: valores.focus_nfe_token || null,
         codigo_municipio: valores.codigo_municipio || null,
         item_lista_servico: valores.item_lista_servico || null,
         codigo_tributario_municipio: valores.codigo_tributario_municipio || null,
         codigo_cnae: valores.codigo_cnae || null,
         aliquota_passo_a_passo: valores.aliquota_passo_a_passo || null,
       });
+      if (novoToken.trim()) {
+        await definirTokenFocusNfe(lojaId, novoToken.trim());
+        setNovoToken("");
+      }
       await onSalvo();
       setSalvo(true);
     } catch (err) {
@@ -261,13 +272,20 @@ export function DadosFiscaisSection({
           Cole aqui o token de acesso quando assinar um plano no Focus NFe. Use o ambiente de
           homologação pra testar sem gerar nota de verdade.
         </p>
+        <p className="mt-2 text-rotulo text-sakura-muted">
+          {tokenCadastrado
+            ? "✓ Já existe um token cadastrado. Ele não aparece aqui de propósito — o token emite e cancela nota no CNPJ da loja, então fica guardado num lugar que nenhum computador lê. Pra trocar, cole o novo e salve; em branco, o atual continua valendo."
+            : "Nenhum token cadastrado ainda. Depois de salvo, ele não aparece mais aqui — de propósito."}
+        </p>
         <div className="mt-3 grid grid-cols-3 gap-3">
           <label className="col-span-2 flex flex-col gap-1 text-rotulo text-sakura-purple-dark/90">
-            Token de acesso
+            {tokenCadastrado ? "Trocar o token" : "Token de acesso"}
             <input
               type="password"
-              value={valores.focus_nfe_token ?? ""}
-              onChange={(e) => set("focus_nfe_token", e.target.value)}
+              value={novoToken}
+              onChange={(e) => setNovoToken(e.target.value)}
+              placeholder={tokenCadastrado ? "Em branco, mantém o atual" : ""}
+              autoComplete="off"
               className={campoClasse}
             />
           </label>

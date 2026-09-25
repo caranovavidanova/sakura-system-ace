@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
-import { useAuth } from "@/contexts/AuthContext";
-import { buscarConfiguracaoFiscal } from "@/lib/configuracoes";
 import { mensagemDeErro } from "@/lib/errors";
 import { cancelarArquivoEmitido } from "@/lib/notasFiscais";
 import type { NotaFiscalArquivo } from "@/types/notaFiscal";
@@ -18,28 +16,17 @@ interface CancelarNotaModalProps {
 const TAMANHO_MINIMO_JUSTIFICATIVA = 15;
 
 export function CancelarNotaModal({ arquivo, onFechar, onCancelado }: CancelarNotaModalProps) {
-  const { lojaAtual } = useAuth();
   const [justificativa, setJustificativa] = useState("");
   const [cancelando, setCancelando] = useState(false);
   const [erro, setErro] = useState("");
 
   async function handleConfirmar() {
-    if (!lojaAtual) return;
     setErro("");
     setCancelando(true);
     try {
-      const configuracaoFiscal = await buscarConfiguracaoFiscal(lojaAtual.id);
-      if (!configuracaoFiscal?.focus_nfe_token) {
-        throw new Error(
-          "Token do Focus NFe não configurado — cadastre em Configurações → Dados fiscais da loja.",
-        );
-      }
-      await cancelarArquivoEmitido(
-        arquivo,
-        justificativa.trim(),
-        configuracaoFiscal.focus_nfe_token,
-        configuracaoFiscal.focus_nfe_ambiente,
-      );
+      // O porteiro (TR-04.2) confere se esta loja emitiu a nota e se quem
+      // pede tem o módulo Notas Fiscais — a tela não precisa mais do token.
+      await cancelarArquivoEmitido(arquivo, justificativa.trim());
       onCancelado();
       onFechar();
     } catch (err) {

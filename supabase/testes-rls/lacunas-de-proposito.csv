@@ -15,3 +15,7 @@ auditoria,DELETE,apagar é só pelo SQL Editor via expurgar_auditoria()
 schema_versao,INSERT,só a migration rodando no SQL Editor registra versão
 schema_versao,UPDATE,versão aplicada é fato passado: não se reescreve
 schema_versao,DELETE,idem — apagar daqui faria o app mentir sobre o banco
+segredos_fiscais_loja,SELECT,o cofre do token da Focus NFe — só a service role do porteiro lê (TR-04.2)
+segredos_fiscais_loja,INSERT,gravar é só pela função definir_token_focus_nfe()
+segredos_fiscais_loja,UPDATE,idem — trocar o token é pela função
+segredos_fiscais_loja,DELETE,o segredo sai junto com a loja (on delete cascade)

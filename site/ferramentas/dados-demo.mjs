@@ -367,7 +367,7 @@ export const configuracoesFiscais = [{
   nome_fantasia: "Auto Center Modelo", inscricao_estadual: "111.222.333.444", inscricao_municipal: "30012345",
   regime_tributario: "simples_nacional", cep: "14801-000", rua: "Av. Bento de Abreu", numero: "1500",
   bairro: "Vila Melhado", cidade: "Araraquara", uf: "SP", telefone: "(16) 3333-0000", email: "contato@exemplo.com.br",
-  focus_nfe_token: "••••••••••••••••••••••••", focus_nfe_ambiente: "producao",
+  focus_nfe_ambiente: "producao",
   codigo_municipio: "3503208", item_lista_servico: "14.01", aliquota_iss: 3, codigo_tributario_municipio: "452000100",
   codigo_cnae: "4520001",
 }];
@@ -440,6 +440,15 @@ export const TABELAS = {
   configuracoes_whatsapp: modelosWhatsapp,
   whatsapp_mensagens: whatsappMensagens,
 };
+// As funções do banco que o app chama por `supabase.rpc(...)`. Sem resposta
+// aqui, a pergunta "esta loja tem token da Focus NFe?" (TR-04.2) voltaria
+// vazia — e as telas geradas mostrariam a emissão de nota como "token não
+// configurado", e o aviso da alíquota sumiria do Início, sem nada explicando.
+export const FUNCOES = {
+  loja_tem_token_focus_nfe: true,
+  definir_token_focus_nfe: null,
+};
+
 export const SESSAO = {
   access_token: "demo-access-token", token_type: "bearer", expires_in: 3600,
   expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: "demo-refresh-token",

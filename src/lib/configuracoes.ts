@@ -52,17 +52,79 @@ export async function salvarTextoGarantia(lojaId: string, texto: string): Promis
   if (error) throw error;
 }
 
+// As colunas que a tela lê, uma por uma — e NUNCA `select("*")`: até a
+// parte 2 do TR-04.2, a tabela ainda carrega uma cópia antiga do token da
+// Focus NFe (`focus_nfe_token`), guardada só pra uma volta de versão
+// funcionar. Um `*` traria o token de volta pra memória do computador, que é
+// exatamente o que o item existe pra acabar.
+const COLUNAS_FISCAIS = [
+  "loja_id",
+  "cnpj",
+  "razao_social",
+  "nome_fantasia",
+  "inscricao_estadual",
+  "inscricao_municipal",
+  "regime_tributario",
+  "cep",
+  "rua",
+  "numero",
+  "bairro",
+  "cidade",
+  "uf",
+  "telefone",
+  "email",
+  "focus_nfe_ambiente",
+  "codigo_municipio",
+  "item_lista_servico",
+  "aliquota_iss",
+  "codigo_tributario_municipio",
+  "codigo_cnae",
+  "competencia_aliquota_confirmada",
+  "aliquota_passo_a_passo",
+  "atualizado_em",
+].join(",");
+
 export async function buscarConfiguracaoFiscal(
   lojaId: string,
 ): Promise<ConfiguracaoFiscalLoja | null> {
-  const { data, error } = await supabase
-    .from("configuracoes_fiscais_loja")
-    .select("*")
-    .eq("loja_id", lojaId)
-    .maybeSingle();
+  const [{ data, error }, configurado] = await Promise.all([
+    supabase
+      .from("configuracoes_fiscais_loja")
+      .select(COLUNAS_FISCAIS)
+      .eq("loja_id", lojaId)
+      .maybeSingle(),
+    lojaTemTokenFocusNfe(lojaId),
+  ]);
 
   if (error) throw error;
-  return data as ConfiguracaoFiscalLoja | null;
+  if (!data) return null;
+  const linha = data as unknown as Omit<ConfiguracaoFiscalLoja, "focus_nfe_configurado">;
+  return { ...linha, focus_nfe_configurado: configurado };
+}
+
+// "Esta loja tem token da Focus NFe?" — sem ver o token. Se a pergunta
+// falhar (banco ainda sem a migration 0057, ou sem rede), a resposta é
+// "não": quem cuida de avisar do banco atrasado é a faixa de versão do
+// esquema, e esta leitura alimenta telas que não podem quebrar por causa
+// disso (a garantia usa o cabeçalho fiscal da loja).
+export async function lojaTemTokenFocusNfe(lojaId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("loja_tem_token_focus_nfe", { p_loja_id: lojaId });
+  if (error) {
+    console.error("Não deu pra saber se a loja tem token da Focus NFe:", error);
+    return false;
+  }
+  return data === true;
+}
+
+// Grava (ou troca) o token da Focus NFe no cofre. Só admin da loja — quem
+// confere é o banco, não esta tela. Não existe o caminho de volta: nenhuma
+// função devolve o token pra cá.
+export async function definirTokenFocusNfe(lojaId: string, token: string): Promise<void> {
+  const { error } = await supabase.rpc("definir_token_focus_nfe", {
+    p_loja_id: lojaId,
+    p_token: token,
+  });
+  if (error) throw error;
 }
 
 export async function buscarConfiguracaoPainelInicio(
@@ -96,7 +158,7 @@ export async function salvarConfiguracaoPainelInicio(
 // computador do lado.
 export type DadosFiscaisEditaveis = Omit<
   ConfiguracaoFiscalLoja,
-  "loja_id" | "atualizado_em" | "competencia_aliquota_confirmada"
+  "loja_id" | "atualizado_em" | "competencia_aliquota_confirmada" | "focus_nfe_configurado"
 >;
 
 export async function salvarConfiguracaoFiscal(

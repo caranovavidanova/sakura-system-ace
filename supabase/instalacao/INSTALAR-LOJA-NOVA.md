@@ -190,13 +190,26 @@ em portal de governo e códigos que só a contabilidade dele pode confirmar.
 O passo a passo completo está em **`PROJETO_STATUS.md`, seção 8, item 1**, no bloco
 "Playbook de habilitação fiscal por loja nova".
 
+Quando essa etapa chegar, a parte do **sistema** são dois passos, e levam 5 minutos:
+
+1. **Publicar o porteiro da Focus NFe** — no projeto Supabase da loja: **Edge Functions** →
+   **Deploy a new function** → **Via Editor** → digite o nome `focus-nfe` **antes** de clicar em
+   Deploy → apague o exemplo, cole todo o conteúdo de `supabase/functions/focus-nfe/index.ts` →
+   **Deploy function**. **Não precisa de secret nenhum.** É ele que guarda e usa o token: sem ele,
+   a emissão de nota avisa "falta publicar o porteiro".
+2. **Colar o token** em Configurações → **Dados fiscais da loja** → "Token de acesso" → Salvar.
+   Depois de salvo ele **não aparece mais** na tela — de propósito: o token emite e cancela nota
+   no CNPJ da loja, e fica guardado num lugar que nenhum computador lê. Pra trocar, cole o novo.
+
 ---
 
 ## Depois de entregue
 
 - **Backup**: já é automático (Parte 1, passo 2). Vale conferir uma vez que está aparecendo.
-- **Atualização**: quando você publica uma versão nova, ela chega **sozinha em todas as lojas**.
-  Por isso: teste antes no seu computador, e evite publicar em dia de movimento.
+- **Atualização**: uma versão nova chega primeiro só nos computadores marcados como **Teste**
+  (Configurações → "Atualizações deste computador"), e nas outras lojas só depois que você rodar o
+  "Liberar versão para todas as lojas" (`PROJETO_STATUS.md`, seção 9). Computador de loja nova
+  fica no canal **Normal** — não precisa mexer.
 - **Suporte**: hoje é por WhatsApp com print. Peça sempre o número da versão, que aparece no canto
   inferior direito de qualquer tela.
 
@@ -209,4 +222,5 @@ O passo a passo completo está em **`PROJETO_STATUS.md`, seção 8, item 1**, no
 | Login aceito mas não entra | "Confirm email" ligado (passo 4) |
 | Tela de conexão pedindo os dados de novo | Normal em computador novo — é uma vez por PC |
 | "Importar por foto" com erro de crédito | Crédito da Anthropic acabou — recarregue em Billing |
+| Emitir nota diz "falta publicar o porteiro" | A Edge Function `focus-nfe` não foi publicada (Parte 5) |
 | Botão que "não faz nada", sem erro | Quase sempre é RLS sem policy pra aquela ação (`PROJETO_STATUS.md`, seção 6, item 15) |

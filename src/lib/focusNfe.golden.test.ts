@@ -146,7 +146,7 @@ const configuracaoFiscal: ConfiguracaoFiscalLoja = {
   uf: "SP",
   telefone: "(16) 3333-0000",
   email: "loja@exemplo.com.br",
-  focus_nfe_token: "token-de-mentira",
+  focus_nfe_configurado: true,
   focus_nfe_ambiente: "homologacao",
   codigo_municipio: "3503208",
   item_lista_servico: "14.01",

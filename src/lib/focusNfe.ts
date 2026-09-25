@@ -1,6 +1,8 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { hojeLocal } from "./datas";
+import { supabase } from "./supabase";
 import { arredondarCentavo as arredondar } from "@/schemas/dinheiro";
-import type { AmbienteFocusNfe, ConfiguracaoFiscalLoja } from "@/types/configuracao";
+import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
 import type {
   FormaPagamentoNFCe,
@@ -20,11 +22,6 @@ import type { Peca } from "@/types/peca";
 // uma emissão de teste real (o formato da resposta da NFS-e, em especial,
 // ainda não foi confirmado — só o da NFC-e).
 
-const BASE_URL_POR_AMBIENTE: Record<AmbienteFocusNfe, string> = {
-  homologacao: "https://homologacao.focusnfe.com.br",
-  producao: "https://api.focusnfe.com.br",
-};
-
 export class FocusNfeError extends Error {
   constructor(
     message: string,
@@ -36,79 +33,110 @@ export class FocusNfeError extends Error {
   }
 }
 
-// A API do Focus NFe é feita pra ser chamada de servidor pra servidor, sem
-// CORS liberado — um fetch() direto na tela do app (Chromium/renderer) é
-// bloqueado sempre com "Failed to fetch", antes mesmo de qualquer resposta
-// chegar. Por isso a chamada de verdade acontece no processo principal do
-// Electron (Node.js, sem essa restrição), repassada aqui via IPC — ver o
-// handler "http:fetchComAuth" em electron/main.ts.
-function requererPonteElectron(): NonNullable<Window["sakuraApp"]> {
-  if (typeof window === "undefined" || !window.sakuraApp) {
+// ---------------------------------------------------------------------------
+// O caminho até a Focus NFe passa pelo PORTEIRO (item TR-04.2).
+//
+// Até a v0.9.40 este arquivo chamava a Focus NFe direto, pela ponte do
+// Electron, com o token lido do banco — ou seja, o token que emite e cancela
+// nota no CNPJ da loja ficava na memória de todo computador, balconista
+// incluído. Agora quem tem o token é a Edge Function `focus-nfe`
+// (supabase/functions/focus-nfe/index.ts): este arquivo manda "emita esta
+// nota pela loja X" e ela confere quem pede antes de repassar.
+//
+// O que NÃO mudou: a nota continua sendo montada aqui (montarCorpoNFCe /
+// montarCorpoNFSe, com o teste-ouro), e o porteiro só repassa. E a resposta
+// da Focus NFe chega do mesmo jeito que chegava — o porteiro devolve o
+// código e o corpo dela dentro de um envelope.
+// ---------------------------------------------------------------------------
+
+type TipoNotaPorteiro = "nfce" | "nfse";
+
+type PedidoPorteiro =
+  | { acao: "emitir"; tipo: TipoNotaPorteiro; ref: string; corpo: unknown }
+  | { acao: "consultar"; tipo: TipoNotaPorteiro; ref: string }
+  | { acao: "cancelar"; tipo: TipoNotaPorteiro; ref: string; justificativa: string }
+  | { acao: "baixar"; tipo: TipoNotaPorteiro; ref: string; arquivo: "xml" | "danfe" };
+
+interface EnvelopePorteiro {
+  ok: boolean;
+  status: number;
+  dados?: unknown;
+  tipo_conteudo?: string;
+  conteudo_base64?: string | null;
+}
+
+// Quando o porteiro RECUSA (em vez de repassar), o corpo é { erro, motivo }.
+// `motivo` é o que o código confere; `erro` é a frase pra pessoa ler.
+export function motivoDaRecusa(erro: unknown): string | null {
+  if (!(erro instanceof FocusNfeError)) return null;
+  const corpo = erro.corpo as { motivo?: unknown } | null | undefined;
+  return typeof corpo?.motivo === "string" ? corpo.motivo : null;
+}
+
+async function pedirAoPorteiro(lojaId: string, pedido: PedidoPorteiro): Promise<EnvelopePorteiro> {
+  const { data, error } = await supabase.functions.invoke("focus-nfe", {
+    body: { loja_id: lojaId, ...pedido },
+  });
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const resposta = error.context as Response;
+      const corpo = (await resposta.json().catch(() => null)) as { erro?: string } | null;
+      if (corpo?.erro) throw new FocusNfeError(corpo.erro, resposta.status, corpo);
+      // Sem o corpo do porteiro, um 404 quer dizer que a função nem existe
+      // neste Supabase — é o passo de publicar o porteiro que faltou (seção
+      // 9 do PROJETO_STATUS.md, "Ativar o porteiro da Focus NFe").
+      if (resposta.status === 404) {
+        throw new FocusNfeError(
+          "A emissão de nota ainda não foi ativada neste banco: falta publicar o porteiro da " +
+            "Focus NFe (a função focus-nfe) no Supabase. Avise quem cuida do sistema.",
+          404,
+        );
+      }
+      throw new FocusNfeError(
+        `O porteiro da Focus NFe respondeu com erro ${resposta.status}.`,
+        resposta.status,
+      );
+    }
     throw new FocusNfeError(
-      "Emissão de nota fiscal só funciona dentro do aplicativo Sakura System instalado — não " +
-        "funciona rodando fora do Electron.",
+      "Não consegui falar com o servidor para emitir a nota. Confira a internet e tente de novo.",
     );
   }
-  return window.sakuraApp;
+  return data as EnvelopePorteiro;
 }
 
-interface ChamarFocusNfeOpcoes {
-  metodo: "GET" | "POST" | "PUT" | "DELETE";
-  caminho: string;
-  token: string;
-  ambiente: AmbienteFocusNfe;
-  corpo?: unknown;
-}
-
-export async function chamarFocusNfe<T>({
-  metodo,
-  caminho,
-  token,
-  ambiente,
-  corpo,
-}: ChamarFocusNfeOpcoes): Promise<T> {
-  const url = `${BASE_URL_POR_AMBIENTE[ambiente]}${caminho}`;
-
-  const resposta = await requererPonteElectron().fetchComAuth({ url, metodo, token, corpo });
-
-  let dados: unknown = null;
-  try {
-    dados = JSON.parse(new TextDecoder("utf-8").decode(resposta.bytes));
-  } catch {
-    dados = null;
-  }
-
-  if (!resposta.ok) {
+async function chamarFocusNfe<T>(lojaId: string, pedido: PedidoPorteiro): Promise<T> {
+  const envelope = await pedirAoPorteiro(lojaId, pedido);
+  const dados = envelope.dados ?? null;
+  if (!envelope.ok) {
     throw new FocusNfeError(
       (dados as { mensagem?: string } | null)?.mensagem ??
-        `Focus NFe retornou erro ${resposta.status}`,
-      resposta.status,
+        `Focus NFe retornou erro ${envelope.status}`,
+      envelope.status,
       dados,
     );
   }
-
   return dados as T;
 }
 
-// Baixa um arquivo hospedado pela própria Focus NFe (XML ou DANFE, pelos
-// caminhos que vêm em RespostaFocusNfe.caminho_xml_nota_fiscal/caminho_danfe)
-// — mesma ponte via IPC das outras chamadas.
-export async function baixarArquivoFocusNfe(
-  caminho: string,
-  token: string,
-  ambiente: AmbienteFocusNfe,
+// Baixa o XML ou o PDF (DANFE) de uma nota. Quem escolhe o endereço do
+// arquivo é o porteiro, pela resposta da própria Focus NFe — aqui só se diz
+// qual nota e qual arquivo.
+export async function baixarArquivoNota(
+  lojaId: string,
+  tipo: TipoNotaPorteiro,
+  ref: string,
+  arquivo: "xml" | "danfe",
 ): Promise<Blob> {
-  const url = caminho.startsWith("http") ? caminho : `${BASE_URL_POR_AMBIENTE[ambiente]}${caminho}`;
-  const resposta = await requererPonteElectron().fetchComAuth({ url, metodo: "GET", token });
-  if (!resposta.ok) {
+  const envelope = await pedirAoPorteiro(lojaId, { acao: "baixar", tipo, ref, arquivo });
+  if (!envelope.ok || !envelope.conteudo_base64) {
     throw new FocusNfeError(
-      `Não foi possível baixar o arquivo da nota (HTTP ${resposta.status})`,
-      resposta.status,
+      `Não foi possível baixar o arquivo da nota (HTTP ${envelope.status})`,
+      envelope.status,
     );
   }
-  return new Blob([resposta.bytes] as BlobPart[], {
-    type: resposta.contentType || "application/octet-stream",
-  });
+  const bytes = Uint8Array.from(atob(envelope.conteudo_base64), (c) => c.charCodeAt(0));
+  return new Blob([bytes], { type: envelope.tipo_conteudo || "application/octet-stream" });
 }
 
 function aguardar(ms: number): Promise<void> {
@@ -337,61 +365,40 @@ export function montarCorpoNFCe({
   };
 }
 
+const MENSAGEM_SEM_TOKEN =
+  "Token do Focus NFe não configurado — cadastre em Configurações → Dados fiscais da loja.";
+
 export async function emitirNFCe(dados: DadosEmissaoNFCe): Promise<RespostaFocusNfe> {
   const { configuracaoFiscal, ordem } = dados;
-  if (!configuracaoFiscal.focus_nfe_token) {
-    throw new FocusNfeError(
-      "Token do Focus NFe não configurado — cadastre em Configurações → Dados fiscais da loja.",
-    );
-  }
+  if (!configuracaoFiscal.focus_nfe_configurado) throw new FocusNfeError(MENSAGEM_SEM_TOKEN);
 
+  const lojaId = configuracaoFiscal.loja_id;
   const ref = montarRefNota(ordem.numero, "nfce");
   const corpo = montarCorpoNFCe(dados);
 
-  await chamarFocusNfe<RespostaFocusNfe>({
-    metodo: "POST",
-    caminho: `/v2/nfce?ref=${ref}`,
-    token: configuracaoFiscal.focus_nfe_token,
-    ambiente: configuracaoFiscal.focus_nfe_ambiente,
-    corpo,
-  });
+  await chamarFocusNfe<RespostaFocusNfe>(lojaId, { acao: "emitir", tipo: "nfce", ref, corpo });
 
-  return aguardarAutorizacao(
-    () =>
-      consultarNFCe(
-        ref,
-        configuracaoFiscal.focus_nfe_token as string,
-        configuracaoFiscal.focus_nfe_ambiente,
-      ),
-    ref,
-  );
+  const resposta = await aguardarAutorizacao(() => consultarNFCe(ref, lojaId), ref);
+  // A `ref` é o único jeito de achar a nota depois (reabrir o PDF, cancelar),
+  // e ela é daqui, não da Focus NFe: garante que ela vá junto mesmo se a
+  // resposta não a repetir.
+  return { ...resposta, ref: resposta.ref ?? ref };
 }
 
-export async function consultarNFCe(
-  ref: string,
-  token: string,
-  ambiente: AmbienteFocusNfe,
-): Promise<RespostaFocusNfe> {
-  return chamarFocusNfe<RespostaFocusNfe>({
-    metodo: "GET",
-    caminho: `/v2/nfce/${ref}`,
-    token,
-    ambiente,
-  });
+export async function consultarNFCe(ref: string, lojaId: string): Promise<RespostaFocusNfe> {
+  return chamarFocusNfe<RespostaFocusNfe>(lojaId, { acao: "consultar", tipo: "nfce", ref });
 }
 
 export async function cancelarNFCe(
   ref: string,
   justificativa: string,
-  token: string,
-  ambiente: AmbienteFocusNfe,
+  lojaId: string,
 ): Promise<RespostaFocusNfe> {
-  return chamarFocusNfe<RespostaFocusNfe>({
-    metodo: "DELETE",
-    caminho: `/v2/nfce/${ref}`,
-    token,
-    ambiente,
-    corpo: { justificativa },
+  return chamarFocusNfe<RespostaFocusNfe>(lojaId, {
+    acao: "cancelar",
+    tipo: "nfce",
+    ref,
+    justificativa,
   });
 }
 
@@ -458,11 +465,7 @@ export function montarCorpoNFSe({
 
 export async function emitirNFSe(dados: DadosEmissaoNFSe): Promise<RespostaFocusNfe> {
   const { configuracaoFiscal, ordem } = dados;
-  if (!configuracaoFiscal.focus_nfe_token) {
-    throw new FocusNfeError(
-      "Token do Focus NFe não configurado — cadastre em Configurações → Dados fiscais da loja.",
-    );
-  }
+  if (!configuracaoFiscal.focus_nfe_configurado) throw new FocusNfeError(MENSAGEM_SEM_TOKEN);
   if (!configuracaoFiscal.codigo_municipio) {
     throw new FocusNfeError(
       "Código do município da loja não configurado — cadastre em Configurações → Dados " +
@@ -485,52 +488,29 @@ export async function emitirNFSe(dados: DadosEmissaoNFSe): Promise<RespostaFocus
     );
   }
 
+  const lojaId = configuracaoFiscal.loja_id;
   const ref = montarRefNota(ordem.numero, "nfse");
   const corpo = montarCorpoNFSe(dados);
 
-  await chamarFocusNfe<RespostaFocusNfe>({
-    metodo: "POST",
-    caminho: `/v2/nfse?ref=${ref}`,
-    token: configuracaoFiscal.focus_nfe_token,
-    ambiente: configuracaoFiscal.focus_nfe_ambiente,
-    corpo,
-  });
+  await chamarFocusNfe<RespostaFocusNfe>(lojaId, { acao: "emitir", tipo: "nfse", ref, corpo });
 
-  return aguardarAutorizacao(
-    () =>
-      consultarNFSe(
-        ref,
-        configuracaoFiscal.focus_nfe_token as string,
-        configuracaoFiscal.focus_nfe_ambiente,
-      ),
-    ref,
-  );
+  const resposta = await aguardarAutorizacao(() => consultarNFSe(ref, lojaId), ref);
+  return { ...resposta, ref: resposta.ref ?? ref };
 }
 
-export async function consultarNFSe(
-  ref: string,
-  token: string,
-  ambiente: AmbienteFocusNfe,
-): Promise<RespostaFocusNfe> {
-  return chamarFocusNfe<RespostaFocusNfe>({
-    metodo: "GET",
-    caminho: `/v2/nfse/${ref}`,
-    token,
-    ambiente,
-  });
+export async function consultarNFSe(ref: string, lojaId: string): Promise<RespostaFocusNfe> {
+  return chamarFocusNfe<RespostaFocusNfe>(lojaId, { acao: "consultar", tipo: "nfse", ref });
 }
 
 export async function cancelarNFSe(
   ref: string,
   justificativa: string,
-  token: string,
-  ambiente: AmbienteFocusNfe,
+  lojaId: string,
 ): Promise<RespostaFocusNfe> {
-  return chamarFocusNfe<RespostaFocusNfe>({
-    metodo: "DELETE",
-    caminho: `/v2/nfse/${ref}`,
-    token,
-    ambiente,
-    corpo: { justificativa },
+  return chamarFocusNfe<RespostaFocusNfe>(lojaId, {
+    acao: "cancelar",
+    tipo: "nfse",
+    ref,
+    justificativa,
   });
 }

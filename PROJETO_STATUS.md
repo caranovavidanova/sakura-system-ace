@@ -5708,7 +5708,10 @@ duas etapas, as duas pedidas por ela:
 
 **As quatro regras dela pra esse material, e valem pra qualquer versão futura**: formal, em
 slides, **sem preço**, **sem citar a Pneus Amigão pelo nome** (vira "uma autocenter em
-operação") e **sem citar o "Importar por foto"**.
+operação") e **sem citar o "Importar por foto"**. E uma quinta, de 25/09/2026: **sem a flor de
+cerejeira** na capa e no encerramento — ela tirou de propósito. Os dois slides foram refeitos
+sem ela (versão 26 do deck): texto alinhado à esquerda na margem de 128px, como os outros slides,
+e o rodapé à direita.
 
 **Pra que serve, nas palavras dela**: *"é só pra eu salvar e enviar pros compradores"*. Ou seja, o
 deck vai sair do claude.ai — ela baixa (PDF ou PowerPoint) ou compartilha o link pelo Share.

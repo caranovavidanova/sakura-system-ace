@@ -22,6 +22,7 @@
     "contraste:telas": "node scripts/varredura-contraste-dom.mjs",
     "test:rls": "node supabase/testes-rls/rodar.mjs",
     "test:atualizar-bancos": "node scripts/atualizar-bancos.integracao.mjs",
+    "test:sql": "node scripts/testar-sql.mjs",
     "test:electron": "xvfb-run -a node scripts/testar-electron.mjs",
     "checar-versao-electron": "node scripts/checar-versao-electron.mjs"
   },

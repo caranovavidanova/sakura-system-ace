@@ -17,6 +17,10 @@
 --
 -- Cada checagem estoura com `raise exception` se falhar. Terminou sem erro e
 -- imprimindo "TODAS AS CHECAGENS PASSARAM", passou.
+--
+-- TODOS os testar-*.sql de uma vez, cada um num banco limpo, é
+-- `npm run test:sql` (scripts/testar-sql.mjs) — e é assim que eles rodam no
+-- CI. O passo a passo acima continua valendo pra rodar um só, à mão.
 
 do $$
 declare

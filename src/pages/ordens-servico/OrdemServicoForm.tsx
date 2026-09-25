@@ -9,6 +9,7 @@ import {
   ordemServicoFormSchema,
   paraCamposComuns,
   paraItensValidos,
+  problemaDoItem,
   paraValoresFormulario,
   totaisDaOrdem,
   type OrdemServicoFormValues,
@@ -152,6 +153,13 @@ export function OrdemServicoForm({
     setErro(null);
     const camposComuns = paraCamposComuns(valores);
     const itensValidos = paraItensValidos(valores.itens);
+    // Antes de gravar, e não depois: o banco recusaria o item (travas da
+    // migration 0060), mas aí a OS nova já teria sido criada sem ele.
+    const itemRuim = itensValidos.find((item) => problemaDoItem(item));
+    if (itemRuim) {
+      setErro(`Item "${itemRuim.descricao}": ${problemaDoItem(itemRuim)}`);
+      return;
+    }
     try {
       if (ordemExistente) {
         await onSalvarEdicao(ordemExistente.id, camposComuns, itensValidos);

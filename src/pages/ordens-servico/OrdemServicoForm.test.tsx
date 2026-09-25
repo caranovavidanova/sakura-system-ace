@@ -266,6 +266,22 @@ describe("OrdemServicoForm — os avisos avisam, e não trancam", () => {
   });
 });
 
+describe("OrdemServicoForm — item impossível (as travas da migration 0060)", () => {
+  it("desconto maior que o item não chega no banco, e diz qual item e por quê", async () => {
+    // O banco recusaria o item — mas a OS nova já teria sido criada sem ele.
+    // Por isso a conferência é ANTES de gravar, e com a frase do problema.
+    const { user, onSalvarNova } = montar();
+    await escolherNoCombobox(user, "Selecione o cliente", "Maria da Silva");
+    await escolherNoCombobox(user, "Selecione a peça", "PNEU 175/70 R14"); // 400,00
+
+    await user.type(screen.getByLabelText(/Desconto/), "500");
+    await salvar(user);
+
+    expect(onSalvarNova).not.toHaveBeenCalled();
+    expect(screen.getByText(/Item "PNEU 175\/70 R14": O desconto não pode ser maior/)).toBeInTheDocument();
+  });
+});
+
 describe("OrdemServicoForm — cliente e veículo", () => {
   it("não salva sem cliente", async () => {
     const { user, onSalvarNova } = montar();

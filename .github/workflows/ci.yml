@@ -187,6 +187,15 @@ jobs:
       - name: Botão de atualizar os bancos
         run: npm run test:atualizar-bancos
 
+      # E, no mesmo Postgres, os testes de cada migration
+      # (supabase/scripts/testar-*.sql): a auditoria mascarar o token, o
+      # porteiro não deixar ler o cofre, o balconista não alcançar salário,
+      # o fechamento de caixa não gravar pela metade, as travas de dado.
+      # Até aqui só rodavam à mão — uma migration nova que quebrasse a
+      # promessa de uma antiga passaria calada. Script novo entra sozinho.
+      - name: Testes de cada migration
+        run: npm run test:sql
+
   segredos:
     name: Varredura de segredo
     runs-on: ubuntu-latest

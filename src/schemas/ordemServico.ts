@@ -95,6 +95,27 @@ export function paraItensValidos(itens: ItemFormValues[]): NovoItemOS[] {
     }));
 }
 
+/**
+ * O que torna um item de OS impossível: preço ou desconto negativo, ou
+ * desconto maior que a própria linha (que deixaria a linha negativa e
+ * derrubaria a nota fiscal — §6 item 60). É a MESMA regra das travas
+ * `ck_ordens_servico_itens_*` do banco (migration 0060): aqui ela só avisa
+ * antes, em português, em vez de o banco recusar depois.
+ *
+ * @returns a frase do problema, ou `null` se o item está bom
+ */
+export function problemaDoItem(
+  item: Pick<NovoItemOS, "quantidade" | "preco_unitario" | "desconto">,
+): string | null {
+  if (item.preco_unitario < 0) return "O preço não pode ser negativo.";
+  if (item.desconto < 0) return "O desconto não pode ser negativo.";
+  const linha = item.quantidade * item.preco_unitario;
+  if (item.desconto > Math.max(linha, 0) + 1e-9) {
+    return "O desconto não pode ser maior que o valor do item (quantidade × preço).";
+  }
+  return null;
+}
+
 // Corrigir um item já lançado usa um formulário próprio, de um item só
 // (`ItemExistenteRow`), fora do formulário grande da OS. A diferença é que
 // aqui não dá pra "descartar linha vazia" como `paraItensValidos` faz: se
@@ -108,6 +129,14 @@ export const itemExistenteFormSchema = itemFormSchema
   .refine((item) => paraNumero(item.quantidade) > 0, {
     message: "A quantidade precisa ser maior que zero.",
     path: ["quantidade"],
+  })
+  .superRefine((item, ctx) => {
+    const problema = problemaDoItem({
+      quantidade: paraNumero(item.quantidade),
+      preco_unitario: paraNumero(item.preco_unitario),
+      desconto: paraNumero(item.desconto),
+    });
+    if (problema) ctx.addIssue({ code: "custom", message: problema, path: ["desconto"] });
   });
 
 export function paraValoresItemExistente(item: ItemOS): ItemFormValues {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  problemaDoItem,
   idsDeFuncionarios,
   itemFormVazio,
   nomearFuncionarios,
@@ -166,5 +167,21 @@ describe("nomearFuncionarios", () => {
     expect(ordem.numero).toBe(original.numero);
     expect(ordem.itens?.[0].preco_unitario).toBe(10);
     expect(ordem.itens).toHaveLength(1);
+  });
+});
+
+describe("problemaDoItem", () => {
+  it("aceita o item comum, o de graça e o desconto que zera a linha", () => {
+    expect(problemaDoItem({ quantidade: 2, preco_unitario: 150, desconto: 30 })).toBeNull();
+    expect(problemaDoItem({ quantidade: 1, preco_unitario: 0, desconto: 0 })).toBeNull();
+    expect(problemaDoItem({ quantidade: 2, preco_unitario: 10, desconto: 20 })).toBeNull();
+    // 0.1 × 3 dá 0.30000000000000004 em ponto flutuante — não pode virar "desconto maior"
+    expect(problemaDoItem({ quantidade: 3, preco_unitario: 0.1, desconto: 0.3 })).toBeNull();
+  });
+
+  it("recusa preço negativo, desconto negativo e desconto maior que a linha", () => {
+    expect(problemaDoItem({ quantidade: 1, preco_unitario: -1, desconto: 0 })).toMatch(/preço/);
+    expect(problemaDoItem({ quantidade: 1, preco_unitario: 10, desconto: -1 })).toMatch(/negativo/);
+    expect(problemaDoItem({ quantidade: 1, preco_unitario: 10, desconto: 10.01 })).toMatch(/maior que o valor do item/);
   });
 });

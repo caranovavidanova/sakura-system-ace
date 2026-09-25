@@ -207,9 +207,9 @@ export function ItemExistenteRow({
         </label>
       </div>
 
-      {(errors.descricao || errors.quantidade) && (
+      {(errors.descricao || errors.quantidade || errors.desconto) && (
         <p className="text-rotulo text-red-400">
-          {errors.descricao?.message ?? errors.quantidade?.message}
+          {errors.descricao?.message ?? errors.quantidade?.message ?? errors.desconto?.message}
         </p>
       )}
       {erro && <p className="text-rotulo text-red-400">{erro}</p>}

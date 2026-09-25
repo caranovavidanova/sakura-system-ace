@@ -5178,7 +5178,7 @@ isso que existe a regra abaixo.
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026** — todas as lojas recebem na próxima abertura do programa. Banco na
   `0057`. **Desde a última leva de 25/09/2026 a `main` está à frente da `v0.9.41`** (PRs 297 a
-  301, mais o "Importar por foto" desligado) e há **três migrations pendentes** (`0058`–`0060`).
+  300, mais o "Importar por foto" desligado) e há **três migrations pendentes** (`0058`–`0060`).
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -5929,15 +5929,14 @@ que a trava recusaria (ex.: uma peça com preço negativo) — **nada foi altera
 ficou pra depois. Nesse caso, mandar o print: o que fazer com o dado é decisão dela. Depois de
 corrigido, colar a `0060` de novo no SQL Editor (o botão não reroda migration já registrada).
 
-#### O que saiu (PRs 297 a 301)
+#### O que saiu (PRs 297 a 300)
 
 | PR | O que é | Migration |
 |---|---|---|
 | 297 | **Botão "Atualizar o banco de todas as empresas"** (item 11 da seção 8) — ensaia desfazendo, aplica uma migration por transação, trava de tempo de 15s | — |
 | 298 | **Fechamento de caixa do dia** (`TR-06.4`) — aba Fechamento no Caixa, quebra/sobra viram lançamento, desfazer só de admin | `0058` |
 | 299 | **Comissão paga registrada e congelada** (`TL-46.1`) — retrato das OS, aviso quando uma OS paga é editada depois, recibo | `0059` |
-| 300 | **Travas de dado impossível** (`TR-05.1`) — 17 `check`, cada um só criado se o dado deixar; frase em português pra cada | `0060` |
-| 301 | **Os testes de cada migration rodando no CI** (`npm run test:sql`) — antes, só à mão | — |
+| 300 | **Travas de dado impossível** (`TR-05.1`) — 17 `check`, cada um só criado se o dado deixar; frase em português pra cada. **E os testes de cada migration rodando no CI** (`npm run test:sql`) — antes, só à mão | `0060` |
 
 **Etapa 3 do guia: 6 de 7.** O que sobrou é o `TR-05.2` (uma nota por OS por tipo), **adiado
 com motivo**: o índice sozinho recusaria gravar o XML de uma nota que já vale na SEFAZ. O desenho

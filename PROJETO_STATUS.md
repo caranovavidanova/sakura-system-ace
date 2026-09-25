@@ -938,7 +938,8 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   se a versão nova chegar primeiro, o próprio app explica o que falta, em vez de quebrar.
 - `0056` (criada em 18/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0055` **com dado
-  plantado** — **ainda NÃO rodada por ela**): dado de RH só pra quem tem o módulo. É o item
+  plantado** — **rodada e confirmada por ela em 25/09/2026** ("Success. No rows returned"),
+  antes da tag `v0.9.39`): dado de RH só pra quem tem o módulo. É o item
   `TR-04.3`, e é a **primeira tabela da etapa 2 do `TR-04.1`** — ou seja, a primeira vez que a
   função `operador_tem_permissao()` da `0054` é usada por uma policy de verdade.
   `funcionarios` e `funcionario_filhos` passam a exigir a permissão `funcionarios` nos quatro
@@ -3600,6 +3601,15 @@ Quatro coisas que valem saber:
     estar publicado e conferido**. A `v0.9.38` foi **completada na própria tag**, sem queimar
     número de versão: a release já existia publicada e correta, faltava um arquivo nela.
 
+  - `v0.9.39`: **dado de RH só pra quem tem o módulo** (`TR-04.3`, migration `0056`) — salário,
+    comissão, CPF, RG, CNH e família deixam de ser escondidos só pela tela e passam a ser
+    recusados pelo banco, sem tirar do balconista nome e cargo, que é o que ele precisa pra
+    montar uma OS. Ver "Funcionários" nesta seção. **Publicada depois** de ela rodar a `0056`
+    em 25/09/2026 — a ordem obrigatória aqui, porque a tela de OS passa a ler a view
+    `funcionarios_publico`. Mesma disciplina da `v0.9.30`/`0049`, da `v0.9.32`/`0050`, da
+    `v0.9.33`/`0051`+`0052`, da `v0.9.35`/`0053` e da `v0.9.37`/`0055`. Via
+    `workflow_dispatch`.
+
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
   numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
@@ -4105,6 +4115,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 17/09 | Dois itens da Etapa 4. `TR-12.2` — **contrato e papéis de LGPD** (`ANTES-DA-PRIMEIRA-VENDA.md`), registrado como pendência da fase 2: não é código, é uma tarde dela com advogado ou contabilidade. E `TR-04.6` — **endurecer o Electron**: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços dela, todo pedido da tela conferido, nada navegando pra fora, as chavinhas gravadas no executável, e um teste que abre o app de verdade (`npm run test:electron`). **Sem migration**; a leva do `TR-04.6` saiu na tag `v0.9.38`. Etapa 4 em 8 de 12. |
 | 18/09 (manhã) | `TR-12.1` — o **backup próprio do banco**, cifrado e em dois lugares fora do Supabase, rodando todo dia às 3h. Ela abriu uma cópia com as próprias mãos pra conferir. Não mexe no app, então **sem tag**. Etapa 4 em 9 de 12. |
 | 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
+| 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4140,12 +4151,11 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0055` estão aplicadas no Supabase real dela. A `0056` (dado de RH só
-com o módulo, item TR-04.3) foi criada em 18/09/2026 e AINDA NÃO FOI RODADA — é o que está
-pendente.** Diferente das anteriores, esta pode ser rodada antes de a versão nova chegar sem
-risco nenhum: o app velho continua funcionando igual, porque quem usa o módulo é admin ou tem a
-permissão. O que não pode é o contrário (a versão nova antes da migration), porque a tela de OS
-passaria a procurar uma view que ainda não existe. Ou seja: migration primeiro, tag depois.
+**Estado hoje: `0001` a `0056` estão TODAS aplicadas no Supabase real dela — nada pendente de
+SQL.** A `0056` (dado de RH só com o módulo, item TR-04.3) foi rodada por ela em 25/09/2026,
+**antes** da tag `v0.9.39` — a ordem que essa migration exigia, porque a tela de OS passa a ler
+uma view que só existe depois dela. (O contrário, a migration antes da versão nova, era seguro:
+o app velho continuava funcionando igual.)
 Histórico: A `0055` (`schema_versao`, item TR-05.7) foi rodada por ela em 15/09/2026, **antes** da tag
 `v0.9.37`. Diferente das anteriores, esta não seria armadilha se a ordem invertesse: com o app
 novo e o SQL não rodado, o próprio app mostra a faixa dizendo que falta rodar a `0055` — que é
@@ -4580,10 +4590,9 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.38"` — publicada em 17/09/2026 (endurecer o Electron,
-  `TR-04.6`). **A `main` está uma leva à frente da tag** (o `TR-04.3`, de 18/09/2026), e essa
-  leva **depende da migration `0056`, que ela ainda não rodou** — ver "Onde parou", no fim
-  deste arquivo.
+- `package.json` em `"version": "0.9.39"` — publicada em 25/09/2026 (o `TR-04.3`, dado de RH
+  só com o módulo). **`main` em dia com a tag, banco na `0056`, nada esperando SQL nem
+  publicação** — ver "Onde parou", no fim deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -5306,12 +5315,13 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 18/09/2026, fim do dia — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 18-25/09/2026 — LEIA ISTO PRIMEIRO
 
 **Saiu o `TR-04.3` — dado de RH só pra quem tem o módulo.** Décimo item da Etapa 4; faltam
-dois. **Tem migration nova (`0056`) e ela ainda NÃO foi rodada** — ver "O que depende dela",
-logo abaixo. **Sem tag ainda**: a `v0.9.38` continua sendo a última versão publicada, e o app
-da loja continua nela.
+dois. **Nada pendente: sem SQL esperando, sem tag esperando.** O código foi escrito em
+18/09/2026 e ficou parado esperando o SQL; em **25/09/2026** ela rodou a migration `0056`
+("Success. No rows returned") e a **`v0.9.39`** foi publicada logo depois — nessa ordem, que
+era a obrigatória aqui.
 
 #### O problema que isso resolve, em uma frase
 
@@ -5361,20 +5371,21 @@ O detalhe está no item 69 da seção 6; em uma linha cada:
   aparecendo no Fechamento.
 - `tsc`, lint, `npm run contraste` limpos; **529 testes** passando nos dois fusos.
 
+#### A ordem que essa leva exigia (cumprida em 25/09/2026)
+
+A migration **antes** da tag, como sempre — e aqui por um motivo específico: a tela de OS passa
+a ler a view `funcionarios_publico`, que só existe depois da `0056`. Com a versão nova chegando
+primeiro, o seletor de técnico e vendedor procuraria uma view inexistente.
+**O contrário era seguro**, e é o que dava folga: rodar a migration antes não mudava nada pra
+quem estava usando o app velho, porque quem usa o módulo Funcionários é admin ou tem a
+permissão.
+
 #### O que depende dela agora
 
-1. **Rodar a migration `0056` no SQL Editor** — é a única coisa que bloqueia. Sem ela, nada
-   muda (o sistema segue funcionando exatamente como hoje); com ela, a proteção entra.
-   **A ordem aqui é a inversa do costume**: a migration pode ser rodada **antes** da versão
-   nova sem risco — o app velho só lê a tabela, e quem usa o módulo é admin ou tem a permissão,
-   então continua enxergando tudo. O que **não** pode é a versão nova chegar sem a migration:
-   aí a tela de OS procuraria uma view que ainda não existe. Ou seja: **migration primeiro,
-   tag depois**, como sempre.
-2. **Decidir se publica a tag `v0.9.39`** depois de rodar a migration. Não publiquei sozinho.
-3. Continua valendo o de sempre: **trocar as três credenciais expostas** no histórico público,
-   **marcar o CI como obrigatório pra mesclar**, **decidir sobre atualizar o Electron** (a
-   linha 33 não recebe mais correção de segurança), e **cadastrar a alíquota da competência**
-   no portal da prefeitura todo mês.
+Nada desta leva. Continua valendo o de sempre, nenhum deles bloqueando o uso do sistema:
+**trocar as três credenciais expostas** no histórico público, **marcar o CI como obrigatório
+pra mesclar**, **decidir sobre atualizar o Electron** (a linha 33 não recebe mais correção de
+segurança), e **cadastrar a alíquota da competência** no portal da prefeitura todo mês.
 
 #### O que confirmar em uso real, depois que a versão nova chegar
 

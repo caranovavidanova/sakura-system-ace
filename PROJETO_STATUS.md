@@ -221,6 +221,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Plano do Supabase por empresa cliente (28/08/2026, corrigido em 10/09/2026) | **Pro desde a primeira venda** — mas a cobrança é **por organização, não por empresa**: US$25 cobre a organização com o 1º projeto, e cada projeto a mais custa a partir de US$10/mês | O plano grátis não guarda cópia de segurança automática — perder o dado de uma loja de terceiro seria muito pior que esse custo. **Os dois pontos que estavam "não confirmados" foram confirmados em 10/09/2026**: o grátis permite no máximo **2 projetos ativos por organização** e **pausa o projeto sozinho depois de 1 semana** sem uso. **Correção importante da conta antiga**: o "~R$145/mês por empresa" registrado aqui antes estava errado — 4 empresas numa organização só custam US$25 + 3×US$10 = US$55 (~R$280), não 4×US$145. Ver "Onde tudo parou (10/09/2026)" |
 | Instalação de empresa nova | Um arquivo SQL único (`supabase/instalacao/instalacao-completa.sql`, gerado por `npm run gerar-instalacao`) + o checklist `supabase/instalacao/INSTALAR-LOJA-NOVA.md` | Colar as ~47 migrations uma por uma era o maior risco operacional da venda: pular uma ou trocar a ordem não dá erro na hora, só quebra depois na tela do app. Ver itens 36 e 37 da seção 6 |
 | Site de apresentação (28/08/2026) | Pasta `site/` no próprio repositório, **HTML/CSS puros sem build**, publicado na Vercel com Root Directory = `site` | Uma página só não justifica um segundo `node_modules`; sem build não há risco de quebrar o build/teste do app, e a usuária consegue editar um texto sem rodar nada. Reaproveita a conexão da Vercel que já existia no repositório e só atrapalhava (check falhando nos PRs) |
+| Canal de atualização (25/09/2026, item TR-09.1) | Toda versão nasce no GitHub como **pré-lançamento** (canal de teste) e só chega nas outras lojas quando ela roda o workflow **"Liberar versão para todas as lojas"**. Cada computador escolhe o canal em Configurações → "Atualizações deste computador" (padrão: normal) | Publicar atualizava todas as lojas no mesmo minuto — com lojas de terceiros, uma versão ruim vira vários telefonemas. Usa o mecanismo que o `electron-updater` já tem pro GitHub (`allowPrerelease`), em vez do "copiar `latest.yml` entre canais" que o guia sugeria e que não funciona com o provedor GitHub. Ver "Liberar uma versão para todas as lojas" na seção 9 |
 | Nome do arquivo do instalador (28/08/2026) | Fixo: `SakuraSystem-Setup.exe` (`build.artifactName` no `package.json`), sem o número da versão | Permite ao site apontar pra um endereço permanente (`/releases/latest/download/SakuraSystem-Setup.exe`) que sempre entrega a última versão, sem editar o site a cada lançamento. Seguro pro auto-update: o `latest.yml` guarda o nome do arquivo, então a próxima versão já aponta sozinha pro nome novo |
 | Preço no site (28/08/2026) | Mostrar **o que está incluído, sem valor fechado** — escolha dela, entre "sem preço nenhum" e "preço na cara" | O R$350/loja foi calculado pras 3 primeiras lojas (fase 2), não é preço de tabela; e a venda é pra conhecidos do pai dela, onde o valor pode variar caso a caso |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
@@ -409,7 +410,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                   # CategoriasServicoSection.tsx, TextoGarantiaSection.tsx,
 │   │                   # ModelosWhatsappSection.tsx (os textos que o sistema abre no WhatsApp),
 │   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
-│   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora); LojasSection.tsx
+│   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora);
+│   │                   # AtualizacoesComputadorSection.tsx (a exceção: NÃO mora no banco — é o
+│   │                   # canal de atualização DESTE computador, item TR-09.1); LojasSection.tsx
 │   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
 │   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas)
 │   │   funcionarios/   # FuncionariosPage.tsx (orquestrador de abas Cadastro/Comissões) +
@@ -455,6 +458,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # estoque.ts — o que o saldo de uma peça está dizendo
 │   │                             # (negativo/zerado/abaixo do mínimo) e a busca da lista de
 │   │                             # Produtos, inclusive o casamento exato de código de barras;
+│   │                             # canalAtualizacao.ts — por qual canal este computador
+│   │                             # recebe versão nova e como isso vira `allowPrerelease`; o
+│   │                             # teste roda o GitHubProvider DE VERDADE do electron-updater
+│   │                             # contra um GitHub de mentira (item TR-09.1);
 │   │                             # whatsapp.ts — telefone no formato do wa.me, marcadores das
 │   │                             # mensagens e os textos padrão;
 │   │                             # diagnostico.ts — mascararSegredos (esconde a chave deste
@@ -627,7 +634,14 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # (NÃO embute mais a conexão do Supabase — ver seção 7). O
 │                                  # electron-builder só BUILDA (`--publish never`); quem publica
 │                                  # é o `gh`, arquivo por arquivo, com o latest.yml POR ÚLTIMO —
-│                                  # ver item 66 da seção 6 pro estrago que motivou isso
+│                                  # ver item 66 da seção 6 pro estrago que motivou isso.
+│                                  # Desde o TR-09.1 a release nasce como PRÉ-LANÇAMENTO: só o
+│                                  # canal de teste recebe, até ela rodar o workflow abaixo
+├── .github/workflows/liberar-versao.yml # "Liberar versão para todas as lojas" — só roda na
+│                                  # mão, com a versão digitada. Chama o script abaixo
+├── scripts/liberar-versao.mjs    # confere a release (inteira? anúncio bate com o instalador,
+│                                  # pela impressão digital?) ANTES de liberar, e confere de fora
+│                                  # DEPOIS. Voltar atrás = liberar a versão boa anterior. Com teste
 ├── .gitleaks.toml                # regras da varredura de segredo do CI. Tem 3 regras próprias
 │                                  # além das de fábrica, porque as de fábrica deixavam passar
 │                                  # justamente `sb_secret_...` (Supabase) e `sk-ant-...`
@@ -2599,6 +2613,35 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
       `revoke`, deixar o salário escapar pra view, e trancar demais) foram rodadas de propósito
       e ficaram vermelhas na checagem certa.
 
+70. **Canal de teste: o nome óbvio da API era a armadilha, e a receita do guia não servia pro
+    GitHub (25/09/2026, item `TR-09.1`).** Três coisas que só apareceram lendo e rodando o código
+    da própria biblioteca, que é o que o guia pedia ("confira na documentação atual, a API já
+    mudou entre versões maiores"):
+    - **`autoUpdater.channel = "..."` liga `allowDowngrade` sozinho** no `electron-updater` 6 —
+      está escrito no setter, em `AppUpdater.js`. Ou seja, o jeito com cara de certo de dizer
+      "este computador é do canal de teste" faria o computador **aceitar instalar uma versão mais
+      velha por cima da atual**, numa loja, sem ninguém ter pedido. Por isso o canal vira só
+      `allowPrerelease`, e um teste reprova quem escrever `autoUpdater.channel =` no `main.ts`.
+    - **A receita do guia ("copiar o `latest.yml` do canal beta pro estável") não funciona com o
+      provedor GitHub.** Com ele, os dois canais olham pra MESMA release — a que o GitHub chama
+      de "mais recente" — e só mudam o nome do arquivo que procuram lá dentro. Uma release sem
+      `latest.yml` (só com `beta.yml`) não seria "ainda não liberada": seria **erro** no
+      computador de toda loja normal, a cada abertura. O mecanismo que já existe é a marca de
+      **pré-lançamento** do próprio GitHub: o endereço "mais recente" nunca responde uma release
+      marcada assim, e com `allowPrerelease` ligado a biblioteca lê o feed e pega a primeira.
+      Conferido rodando o `GitHubProvider` instalado contra um GitHub de mentira
+      (`src/schemas/canalAtualizacao.test.ts`) — se uma atualização da biblioteca mudar a regra,
+      é ali que fica vermelho, não numa loja.
+    - **Fora do instalador, a biblioteca pula a busca sem emitir evento nenhum** — então a linha
+      "Procurando atualização" nunca aparece no teste do Electron, e a primeira versão da checagem
+      falhou por isso, não por defeito do app. O canal passou a ser registrado no momento em que é
+      configurado (`Abrindo no canal de atualização: ...`), o que também é o certo pra loja: se a
+      busca falhar antes de começar, "em que canal este computador estava?" continua respondido.
+    **E o que o teste pegou de brinde no checklist de instalação**: ele mandava baixar "o
+    instalador mais recente" da página de Releases. Com o canal de teste, o topo daquela página
+    pode ser uma versão **ainda em teste** — a loja nova começaria justamente onde não devia.
+    Agora ele aponta pro endereço da versão liberada.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3220,7 +3263,29 @@ Quatro coisas que valem saber:
   garantia, **Mensagens de WhatsApp**, Dados fiscais da loja, Cartões do Início (essas últimas 4, junto com Juros, agora são
   **por loja** — ver seção 5). Em "Dados fiscais da loja" há também, desde 11/09/2026, o campo
   "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
-  Início; em branco, vale o passo a passo de Araraquara que está no código.
+  Início; em branco, vale o passo a passo de Araraquara que está no código. E, no fim, desde
+  25/09/2026, **"Atualizações deste computador"** — a única seção que não mora no banco (ver
+  "Canal de atualização" logo abaixo).
+- **Canal de atualização** (25/09/2026, item `TR-09.1`): até aqui, publicar uma versão atualizava
+  **todas** as lojas no mesmo minuto. Agora são dois canais:
+  - **Teste** — recebe toda versão nova assim que ela sai. É pra ser o computador dela e o da
+    Pneus Amigão: quem usa todo dia e consegue dizer "quebrou" antes de chegar em mais ninguém.
+  - **Normal** (o padrão) — só recebe a versão depois que ela for **liberada** pelo workflow
+    "Liberar versão para todas as lojas". É todo o resto, e é como um computador novo nasce.
+  Quatro coisas que valem saber:
+  - **A escolha é por computador**, em Configurações → "Atualizações deste computador" (só
+    admin), e fica num arquivo próprio, `atualizacao.json`, na pasta de dados do app — **não**
+    dentro do `conexao.json` como o guia sugeria, porque aquele arquivo é regravado inteiro a
+    cada vez que alguém salva a conexão, e é ele que decide se a loja consegue entrar.
+    Vale a partir da próxima vez que o programa abrir.
+  - **Sair do canal de teste nunca rebaixa o computador**: ele fica na versão que já tem até as
+    lojas liberadas passarem dela. (`allowDowngrade` fica desligado de propósito — item 70 da
+    seção 6 conta a armadilha que quase religava ele.)
+  - **O número da versão é o mesmo nos dois canais** (nada de `0.9.40-beta`), e liberar não refaz
+    build: é a mesma release, só sem a marca de pré-lançamento.
+  - **Aparece no Diagnóstico e no resumo do WhatsApp**, junto da versão — loja no canal de teste
+    pode estar numa versão que as outras ainda não receberam.
+  **Ainda não visto por ela rodando** — e ainda não foi publicado.
 - **Aviso de banco desatualizado** (15/09/2026, item `TR-05.7`): uma faixa no topo de qualquer
   tela quando o programa e o banco daquela empresa não estão na mesma versão. Existe porque as
   duas coisas andam por caminhos diferentes — o auto-update chega em todas as lojas no mesmo
@@ -3609,6 +3674,12 @@ Quatro coisas que valem saber:
     `funcionarios_publico`. Mesma disciplina da `v0.9.30`/`0049`, da `v0.9.32`/`0050`, da
     `v0.9.33`/`0051`+`0052`, da `v0.9.35`/`0053` e da `v0.9.37`/`0055`. Via
     `workflow_dispatch`.
+
+  **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
+  lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
+  "Liberar versão para todas as lojas" (ver seção 9). Uma versão publicada e nunca liberada fica
+  parada no teste pra sempre — e a loja nova que baixa o instalador pelo site também recebe a
+  **liberada**, não a mais nova.
 
   **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
   última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
@@ -4116,6 +4187,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 18/09 (manhã) | `TR-12.1` — o **backup próprio do banco**, cifrado e em dois lugares fora do Supabase, rodando todo dia às 3h. Ela abriu uma cópia com as próprias mãos pra conferir. Não mexe no app, então **sem tag**. Etapa 4 em 9 de 12. |
 | 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
+| 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration; mesclado, ainda sem tag.** Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4383,8 +4455,9 @@ o único aviso que existe.
 
 ### Gerar o instalador Windows e publicar uma versão nova
 
-Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar — os apps já
-instalados se atualizam sozinhos quando sai uma versão nova.
+Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar. **Desde o
+`TR-09.1`, publicar põe a versão só no canal de teste** — as outras lojas recebem quando ela for
+liberada (ver "Liberar uma versão para todas as lojas", logo abaixo).
 
 **Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/sakura-system-ace` →
 Settings → Actions → General → "Workflow permissions" → "Read and write permissions".
@@ -4408,7 +4481,12 @@ seguidas, sem ela tocar no terminal nem na tela do GitHub nenhuma vez):
    `workflow_id: "release.yml"`, `ref: "main"`. Isso cria a tag/release sozinho (com o nome vindo
    do `"version"` do `package.json`, `v` na frente) e já builda em cima do commit certo.
 3. Conferir com `mcp__github__get_release_by_tag` (`tag: "vX.Y.Z"`) até `assets` aparecer com o
-   `.exe` e o `latest.yml` — leva uns 5-10 minutos.
+   `.exe` e o `latest.yml` — leva uns 5-10 minutos. A release aparece com `prerelease: true`:
+   **é o certo**, é o canal de teste.
+4. Quando for pra todas as lojas: rodar o **Liberar** (seção logo abaixo) — por API é
+   `mcp__github__actions_run_trigger` com `workflow_id: "liberar-versao.yml"`, `ref: "main"` e
+   `inputs: { "versao": "vX.Y.Z" }`. **Não liberar sem ela pedir**: decidir que uma versão já
+   rodou o bastante no teste é justamente a decisão que o canal existe pra devolver a ela.
 
 **Por que esse é o jeito preferido agora, e não `git tag` + `git push`**: numa sessão do Claude
 Code na nuvem (não é a máquina da usuária), `git push` de uma **tag** é bloqueado com erro 403 —
@@ -4479,6 +4557,43 @@ mesma tag** (o passo de publicação completa o que faltar numa release que já 
 outra e sem queimar número de versão). **Não** dá pra consertar por API de dentro de uma sessão
 do Claude Code: mexer em release e subir arquivo são as duas coisas recusadas por este ambiente.
 
+### Liberar uma versão para todas as lojas (item TR-09.1)
+
+Toda versão nova nasce no **canal de teste**: só os computadores marcados como teste a recebem
+sozinhos. As outras lojas continuam na versão anterior até você **liberar**. Liberar não refaz
+nada — é a mesma versão, o mesmo instalador; só muda quem pode receber.
+
+**Quem fica em qual canal** (Configurações → "Atualizações deste computador", só admin):
+- **Teste**: o seu computador e o da Pneus Amigão.
+- **Normal**: todo o resto. Computador novo já nasce assim — não precisa mexer.
+
+**Pra liberar** (uns 2 minutos, pelo navegador — não precisa de terminal):
+1. Abra `github.com/caranovavidanova/sakura-system-ace` → aba **Actions**.
+2. Na lista da esquerda, clique em **"Liberar versão para todas as lojas"**.
+3. À direita, clique em **"Run workflow"**, escreva a versão (ex: `v0.9.40`) e clique no botão
+   verde **"Run workflow"**.
+4. Espere a bolinha ficar verde (1 a 3 minutos). Clicando nela, aparece "✅ v0.9.40 liberada
+   para todas as lojas". As lojas recebem na próxima vez que abrirem o programa.
+
+**Se ficar vermelho, nada foi liberado** (a não ser que a mensagem diga o contrário). Antes de
+mexer em qualquer coisa ele confere que a versão está inteira — tem o instalador, tem o
+`latest.yml`, e a impressão digital de um bate com a que o outro promete. É exatamente o que teria
+barrado o estrago da `v0.9.38` (item 66 da seção 6). A mensagem diz o que faltou; quase sempre o
+conserto é rodar o workflow **Release** de novo naquela versão e depois liberar de novo.
+
+**Quando liberar**: quando a versão tiver rodado uns dias nos computadores de teste sem ninguém
+reclamar. Se for correção urgente pra todo mundo, dá pra publicar e liberar em seguida — só que
+aí o canal de teste não protegeu nada, e vale saber disso.
+
+**Voltar atrás é o mesmo botão**: rode o Liberar com a versão **boa anterior**. Ela volta a ser a
+versão de todas as lojas, e as mais novas voltam pro teste. Isso impede que a versão ruim chegue
+em mais alguém — mas quem já tinha atualizado fica nela (o atualizador nunca instala versão mais
+velha); pra esses, o conserto é uma versão nova, ver "Voltar uma versão" logo abaixo.
+
+**Uma versão pode ficar no teste pra sempre**, e está tudo bem: se a `v0.9.41` saiu com problema
+e a `v0.9.42` corrige, libera-se direto a `v0.9.42`. As lojas normais pulam da liberada anterior
+pra ela.
+
 ### Voltar uma versão (quando a que saiu está ruim)
 
 > **Escrito em 13/09/2026, ainda NÃO ensaiado numa release de verdade.** Ensaiar significa
@@ -4493,11 +4608,16 @@ impede quem ainda não pegou.
 
 Por isso o procedimento tem duas metades, e a segunda é a que resolve de verdade.
 
-**Metade 1 — estancar (os computadores que ainda não atualizaram).** Apagar a release ruim
-(`releases` → a release → 🗑) **e a tag** (são coisas separadas no GitHub: `.../tags`, achar a
-tag, apagar por lá também — ver os incidentes das tags `v0.9.10` e `v0.9.12` na seção 7). Com
-ela fora, "latest" volta a apontar pra anterior e quem ainda estava atrás para de ver a
-atualização.
+**Metade 1 — estancar (os computadores que ainda não atualizaram).** Desde o `TR-09.1` (25/09/2026)
+isto quase sempre já está feito sozinho: versão nova nasce no **canal de teste**, então uma versão
+ruim normalmente só chegou no computador dela e no da Pneus Amigão — é pra isso que o canal
+existe. Se ela chegou a ser **liberada**, o caminho é rodar o **Liberar com a versão boa
+anterior** (seção logo acima): ela volta a ser a de todas as lojas, e a ruim volta pro teste.
+
+Apagar a release ruim (`releases` → a release → 🗑) **e a tag** (são coisas separadas no GitHub:
+`.../tags`, achar a tag, apagar por lá também — ver os incidentes das tags `v0.9.10` e `v0.9.12`
+na seção 7) continua existindo, e é o que tira a versão ruim **também do canal de teste**. Só
+que apaga o registro dela, então fica pro caso de a versão ser perigosa de verdade.
 
 **Metade 2 — desfazer (os computadores que já atualizaram) — "voltar pra frente".** Não existe
 rebaixar; o que existe é **publicar uma versão NOVA com o código da antiga**. Se a `v0.9.35`
@@ -4591,8 +4711,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.39"` — publicada em 25/09/2026 (o `TR-04.3`, dado de RH
-  só com o módulo). **`main` em dia com a tag, banco na `0056`, nada esperando SQL nem
-  publicação** — ver "Onde parou", no fim deste arquivo.
+  só com o módulo). **`main` UMA leva à frente da tag** (o `TR-09.1`, canal de teste, sem
+  migration), banco na `0056`. A próxima tag tem uma ordem própria — ver o marco "LEIA ISTO
+  PRIMEIRO" perto do fim deste arquivo.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -5315,7 +5436,95 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 18-25/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 25/09/2026, à tarde — LEIA ISTO PRIMEIRO
+
+**Saiu o `TR-09.1` — canal de teste antes de atualizar todas as lojas.** Décimo primeiro item da
+Etapa 4; falta um (o `TR-04.2`, mais as etapas 2 e 3 do `TR-04.1`). Ela disse "continuar", e este
+era o próximo da ordem combinada (do mais simples pro mais complexo).
+
+**Estado: mesclado na `main`, NÃO publicado.** Sem migration nenhuma — o banco dela continua na
+`0056`, nada de SQL pendente. O primeiro passo da próxima sessão é **perguntar se é pra publicar**,
+e a publicação desta versão tem uma pegadinha (logo abaixo).
+
+#### O problema que isso resolve, em uma frase
+
+Até aqui, publicar uma versão atualizava **todas** as lojas no mesmo minuto. Com uma loja só, isso
+é ótimo; com as lojas do amigo do pai dela entrando, uma versão ruim vira vários telefonemas ao
+mesmo tempo, em loja de outra empresa. Agora toda versão nasce no **canal de teste** (o computador
+dela e o da Pneus Amigão) e só chega no resto quando ela **liberar**.
+
+#### Como ficou, em uma linha cada
+
+- **Publicar** (o workflow Release de sempre) cria a release como **pré-lançamento** no GitHub.
+- **Liberar** é um workflow novo, "Liberar versão para todas as lojas", rodado na mão com a
+  versão digitada. Ele confere a release inteira antes de mexer (instalador, `latest.yml`, e a
+  impressão digital de um batendo com o outro) e confere de fora depois. **Voltar atrás é o mesmo
+  botão**, com a versão boa anterior. Passo a passo pra ela na seção 9.
+- **Cada computador escolhe o canal** em Configurações → "Atualizações deste computador" (só
+  admin). O padrão é normal.
+
+O detalhe está em "Canal de atualização" (seção 7) e o que se aprendeu, no item 70 da seção 6 —
+principalmente que `autoUpdater.channel`, o nome óbvio, **liga `allowDowngrade` sozinho**, e que
+a receita do guia (copiar `latest.yml` entre canais) não funciona com o provedor GitHub.
+
+#### ⚠️ A pegadinha da PRIMEIRA versão com canal (a `v0.9.40`)
+
+**Nenhum computador está no canal de teste hoje** — os dois que deveriam estar (o dela e o da
+Pneus Amigão) ainda rodam a `v0.9.39`, que nem sabe que canal existe e só enxerga versão
+liberada. Então a `v0.9.40` publicada do jeito novo **não chega em ninguém** até ser liberada.
+
+O caminho, na ordem:
+1. Publicar a `v0.9.40` (Release, como sempre).
+2. **Liberar a `v0.9.40` logo em seguida** (workflow novo) — de quebra, é a primeira rodada de
+   verdade do Liberar, que é o que o critério de aceite do item pede.
+3. Depois de a `v0.9.40` chegar nas duas máquinas: em cada uma, Configurações → "Atualizações
+   deste computador" → **Teste** → Salvar. A partir da `v0.9.41`, vale o fluxo de dois passos.
+
+**Não é urgente fazer o passo 3** enquanto só existir a Pneus Amigão: com todo computador no
+canal normal, o sistema se comporta exatamente como antes (cada versão só chega quando liberada).
+Ele passa a importar no dia em que a primeira loja de outra empresa for instalada.
+
+#### Como foi conferido
+
+- **O `electron-updater` instalado (6.8.9) rodando de verdade** contra um GitHub de mentira, nos
+  cenários que importam: normal não vê o pré-lançamento, teste vê, depois de liberar os dois
+  veem, voltar atrás devolve o normal à versão boa, e publicação pela metade não instala nada.
+  Se uma atualização da biblioteca mudar a regra, esse teste fica vermelho.
+- **O Liberar**, com um `gh` de mentira: o caminho feliz, voltar atrás (na ordem certa — a boa
+  vira "a mais recente" **antes** de a ruim sair), e **oito recusas**, cada uma provando que
+  recusar é não mexer em nada: versão que não existe, rascunho, sem `latest.yml` (o caso da
+  `v0.9.38`), sem instalador, instalador vazio, anúncio de outra versão, anúncio de outro arquivo,
+  e instalador cortado (impressão digital não bate).
+- **O trecho novo do Release**, com `gh` e `curl` de mentira, nos quatro cenários: publicou no
+  teste, a marca não pegou (fica vermelho), rede caiu (só aviso), release já liberada.
+- **Sete mutações** — cada trava quebrada de propósito ficou vermelha no teste certo.
+- **O Electron de verdade** (`npm run test:electron`, agora 27 checagens): a escolha feita na tela
+  chega no disco, canal inventado é recusado sem estragar o arquivo, o diagnóstico mostra o canal,
+  e o atualizador é configurado com o canal gravado — rodado partindo de "normal" e de "teste".
+- A seção nova de Configurações **renderizada** nos três estados, com o CSS real do tema.
+- `tsc`, lint, `npm run contraste` limpos; **565 testes** nos dois fusos (eram 529).
+
+**O que não dá pra conferir daqui, e fica pra primeira rodada de verdade**: o GitHub em si. Esta
+sessão não alcança `github.com` (nem pra ler o feed de releases), então os endereços públicos só
+foram exercitados com imitação. É por isso que o Release e o Liberar conferem **de fora**, pelo
+mesmo endereço que o app usa, e ficam vermelhos se a resposta não for a esperada.
+
+#### O que depende dela agora
+
+1. **Dizer se é pra publicar** — e, se sim, a ordem acima (publicar, liberar em seguida).
+2. Depois, **marcar as duas máquinas como Teste** (quando quiser, ver acima).
+3. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como
+   obrigatório pra mesclar, decidir sobre atualizar o Electron, e a alíquota mensal no portal.
+
+#### Etapa 4: 11 de 12
+
+Falta o `TR-04.2` (token da Focus NFe numa Edge Function, `E3`) — o último da etapa — mais as
+**etapas 2 e 3 do `TR-04.1`** nas tabelas que sobraram (a `0056` fez só RH). Vale confirmar com
+ela antes de começar qualquer um.
+
+O que está abaixo é o marco anterior.
+
+### Onde parou em 18-25/09/2026 (histórico — o marco mais recente está logo acima)
 
 **Saiu o `TR-04.3` — dado de RH só pra quem tem o módulo.** Décimo item da Etapa 4; faltam
 dois. **Nada pendente: sem SQL esperando, sem tag esperando.** O código foi escrito em

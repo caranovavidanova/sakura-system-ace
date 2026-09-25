@@ -5720,9 +5720,9 @@ e o rodapé à direita.
 **O deck só promete o que é verdade HOJE** (conferido slide a slide em 25/09/2026, versão 27).
 Duas frases foram suavizadas por isso: no slide 14, "Atualizações automáticas" dizia "já testadas
 em operação", mas nenhum computador estava no canal de teste e a `v0.9.41` foi liberada direto —
-virou "sem reinstalar nada". **Quando os dois computadores estiverem como Teste (o dela já está,
-desde 25/09/2026; falta o da loja) e ela passar a publicar → esperar → liberar, a frase forte pode
-voltar** (e as anotações do slide junto) — ela pediu pra ser avisada/lembrada disso. No
+virou "sem reinstalar nada". **E fica assim, por decisão dela** (*"não precisa prometer isso
+na apresentação"*, 25/09/2026): não recolocar "já testadas em operação" no deck, nem quando o
+computador da loja for marcado como Teste. Com isso o deck ficou pronto pra ela mandar pro pai. No
 slide 16, a habilitação fiscal "leva alguns dias" virou "pode levar algumas semanas", que foi o
 que aconteceu na loja do pai dela. E o quadro "Sem contratos paralelos" (slide 14) só vale
 enquanto a Focus NFe, o Supabase e o resto continuarem na conta dela (decisão de 28/08/2026,

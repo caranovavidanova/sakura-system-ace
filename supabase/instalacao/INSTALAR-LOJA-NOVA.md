@@ -206,6 +206,13 @@ Quando essa etapa chegar, a parte do **sistema** são dois passos, e levam 5 min
 ## Depois de entregue
 
 - **Backup**: já é automático (Parte 1, passo 2). Vale conferir uma vez que está aparecendo.
+- **Acrescentar a empresa no secret `BACKUP_EMPRESAS`** do GitHub (um bloco a mais na lista —
+  modelo em `PROJETO_STATUS.md`, seção 9, "Backup do banco"). É **um bloco por empresa**, não por
+  loja. Isso faz duas coisas de uma vez: a cópia de segurança própria de todo dia (a do Supabase
+  guarda só 7 dias) e o botão **"Atualizar o banco de todas as empresas"**, que passa a levar as
+  migrations novas a este banco junto com os outros. Sem o bloco, a empresa fica de fora dos dois
+  — e ninguém avisa. **Cuidado**: a caixa de editar secret aparece sempre vazia; monte a lista
+  inteira no Bloco de Notas e cole pronta.
 - **Atualização**: uma versão nova chega primeiro só nos computadores marcados como **Teste**
   (Configurações → "Atualizações deste computador"), e nas outras lojas só depois que você rodar o
   "Liberar versão para todas as lojas" (`PROJETO_STATUS.md`, seção 9). Computador de loja nova
@@ -224,3 +231,4 @@ Quando essa etapa chegar, a parte do **sistema** são dois passos, e levam 5 min
 | "Importar por foto" com erro de crédito | Crédito da Anthropic acabou — recarregue em Billing |
 | Emitir nota diz "falta publicar o porteiro" | A Edge Function `focus-nfe` não foi publicada (Parte 5) |
 | Botão que "não faz nada", sem erro | Quase sempre é RLS sem policy pra aquela ação (`PROJETO_STATUS.md`, seção 6, item 15) |
+| Faixa "o banco desta empresa ainda não foi atualizado" | Uma migration nova não chegou neste banco — rode o "Atualizar o banco de todas as empresas" (`PROJETO_STATUS.md`, seção 9). Se a empresa não aparece na tabela do resultado, falta o bloco dela no `BACKUP_EMPRESAS` |

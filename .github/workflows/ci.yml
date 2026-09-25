@@ -179,6 +179,14 @@ jobs:
       - name: Matriz de RLS
         run: npm run test:rls
 
+      # Aproveita o mesmo Postgres: o botão "Atualizar o banco de todas as
+      # empresas" (scripts/atualizar-bancos.mjs) rodando contra bancos de
+      # verdade, montados com as migrations reais — ensaio que desfaz, dado
+      # que barra a aplicação em todos, transação que desfaz a migration
+      # inteira, e tabela travada que não congela a loja.
+      - name: Botão de atualizar os bancos
+        run: npm run test:atualizar-bancos
+
   segredos:
     name: Varredura de segredo
     runs-on: ubuntu-latest

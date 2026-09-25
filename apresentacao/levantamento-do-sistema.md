@@ -1,8 +1,11 @@
 # O que o Sakura System oferece — levantamento
 
-> Rascunho de trabalho (25/09/2026). É a **matéria-prima** do texto de apresentação que o pai
-> dela vai usar com os amigos donos de autocenter. **Ainda não é o texto final.** Está escrito do
-> ponto de vista do dono da loja: o que muda no dia a dia dele.
+> Rascunho de trabalho (25/09/2026). É a **matéria-prima** da apresentação em slides que o pai
+> dela vai usar com os amigos donos de autocenter. Está escrito do ponto de vista do dono da loja:
+> o que muda no dia a dia dele.
+>
+> **Regras da apresentação, decididas por ela**: formal, em slides, **sem preço**, **sem citar a
+> Pneus Amigão pelo nome** e **sem citar o "Importar por foto"**.
 
 **Legenda**
 
@@ -70,9 +73,8 @@ Araraquara.
 - 🆕 Busca que aceita **leitor de código de barras**: bipou, abriu a peça.
 - 🆕 Campos próprios de pneu: medida, índice de carga/velocidade e DOT.
 - 🆕 Os campos fiscais da peça (NCM, CSOSN...) têm um "?" explicando de onde tirar cada valor.
-- ⚠️ Cadastrar peças **lendo a foto ou o PDF da nota do fornecedor** (inteligência artificial).
-  Chegou a funcionar até a IA responder, mas **nunca foi confirmado lendo uma nota inteira de
-  verdade**, e o crédito da conta da IA estava zerado desde agosto. Conferir antes de mostrar.
+- ⛔ "Importar por foto/PDF" **desligado em 25/09/2026**, a pedido dela, até ela decidir o que
+  fazer com ele. **Não citar em material de apresentação.**
 
 ## 5. Compras e fornecedores
 

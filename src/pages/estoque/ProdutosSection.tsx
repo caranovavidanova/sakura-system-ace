@@ -19,6 +19,12 @@ import { ImportarNotasFiscaisModal } from "./ImportarNotasFiscaisModal";
 import { PecaForm } from "./PecaForm";
 import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 
+// "Importar por foto/PDF" desligado a pedido dela (25/09/2026), até ela
+// decidir o que fazer com a leitura por IA. O código continua todo aqui:
+// religar é trocar pra `true` e voltar a cena "13-importar-foto" em
+// site/ferramentas/cenas.mjs (a varredura de contraste clica nesse botão).
+const IMPORTAR_POR_FOTO_LIGADO = false;
+
 function IconeCamera({ className = "" }: { className?: string }) {
   return (
     <svg
@@ -236,13 +242,15 @@ export function ProdutosSection({
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMostrarImportar(true)}
-              className="flex items-center gap-2 rounded-xl border border-sakura-purple/40 px-5 py-2.5 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
-            >
-              <IconeCamera className="h-4 w-4" />
-              Importar por foto/PDF
-            </button>
+            {IMPORTAR_POR_FOTO_LIGADO && (
+              <button
+                onClick={() => setMostrarImportar(true)}
+                className="flex items-center gap-2 rounded-xl border border-sakura-purple/40 px-5 py-2.5 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+              >
+                <IconeCamera className="h-4 w-4" />
+                Importar por foto/PDF
+              </button>
+            )}
             <button
               onClick={() => setMostrarFormulario(true)}
               className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"

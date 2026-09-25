@@ -1051,6 +1051,17 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   permissão só da policy de INSERT não era pego (o teste agora insere direto, sem `returning`);
   e `mov.forma_pagamento <> 'dinheiro'` com forma NULA dá nulo, e a checagem passava calada
   (virou `is distinct from`).
+- `0059` (criada em 25/09/2026, mesma validação: instalação inteira três vezes do zero e a
+  migration sozinha duas vezes num banco no estado `0058` — **ainda NÃO rodada por ela**): a
+  **comissão paga**, item `TL-46.1`. Cria `comissoes_fechamentos` — um registro por funcionário
+  por período, com o retrato das OS (`snapshot`). Leitura e registro exigem o módulo
+  **Funcionários** no banco (é onde a aba Comissões mora, e `funcionarios` já exige o mesmo desde
+  a `0056`); sem update; desfazer é de admin; auditado. Teste repetível em
+  `supabase/scripts/testar-comissoes-pagas.sql` (9 blocos), com cinco mutações — e duas delas
+  **não entravam** na primeira rodada, o que vale guardar pra qualquer teste de migration: rodar
+  de novo uma migration idempotente sobre um banco que já tem a tabela **não aplica mudança de
+  tabela** (`create table if not exists` pula), então "tirar a unique" e "trocar o `on delete`"
+  só foram de fato testadas derrubando a tabela antes.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1293,6 +1304,12 @@ outro projeto Supabase do zero (ver seção 9).
   criado_em. Único por (loja_id, data). **Gravado só por `fechar_caixa()`**; sem update;
   delete só de admin da loja, por `desfazer_fechamento_caixa()`. A conta do esperado é de
   `src/schemas/fechamentoCaixa.ts`, não do banco.
+- **`comissoes_fechamentos`** (migration `0059`): id, loja_id, funcionario_id (`on delete set
+  null`), funcionario_nome (congelado — o registro continua dizendo pra quem foi), periodo_inicio,
+  periodo_fim, percentual, valor_calculado, valor_pago, data_pagamento, observacao, snapshot
+  (jsonb: as OS com papel e comissão no dia do pagamento), operador_id, criado_em. Único por
+  (funcionario_id, periodo_inicio, periodo_fim). Ler e registrar exigem o módulo Funcionários
+  **no banco**; sem update; delete só de admin da loja.
 - **`operadores`**: id (= id do usuário no Supabase Auth), usuario (único **globalmente**, não por
   loja), nome, admin (bool), permissoes (`text[]` com as chaves de `MODULOS` em
   `src/types/operador.ts`), ativo, deve_trocar_senha (bool, default `false` — migration `0038`;
@@ -3241,6 +3258,26 @@ Quatro coisas que valem saber:
     quem usa, comissão é assunto de funcionário. Consequência de permissão: quem enxerga
     Funcionários passa a enxergar comissão. Sem novidade de verdade — o cadastro de funcionário já
     mostra salário e a porcentagem de comissão de cada um.
+  - **Comissão paga fica registrada e congelada (25/09/2026, item `TL-46.1` — depende da
+    migration `0059`, ainda não rodada)**. O problema: a comissão é sempre recalculada a partir
+    das OS, e desde a `v0.9.28` dá pra corrigir o valor de um item de OS já lançado — uma
+    correção numa OS antiga mudava, calada, uma comissão já paga. Agora cada linha tem
+    **"Registrar pagamento"** (valor pago, data, observação), que grava junto um **retrato das
+    OS** que formaram o valor. Daí em diante:
+    - o período pago mostra "✓ R$ X em dd/mm" no lugar do botão, com o **recibo** pra imprimir
+      (feito do retrato, não do recálculo — recibo diz o que foi pago naquele dia);
+    - se o recálculo de hoje **divergir** do retrato, aparece uma faixa dizendo quanto foi pago,
+      quanto dá hoje, e **qual OS mudou** (antes → agora, inclusive OS que entrou ou saiu do
+      período). Mostrar, nunca esconder: é o sinal de que alguém editou uma OS depois;
+    - escolhendo um período que cruza com um já pago ("de 15/09 a 15/10" depois de pagar
+      setembro), aparece quanto daquela comissão **vem de OS já pagas**, com os números — aviso,
+      não trava;
+    - embaixo, "Pagamentos já registrados", com recibo e (só admin) "Desfazer" — que apaga só o
+      **registro**, nunca mexe em dinheiro. Registrar **não lança nada no Caixa**, de propósito:
+      comissão sai de jeitos diferentes em cada loja.
+    As contas ficam em `src/schemas/comissoesPagas.ts`; o recibo em `src/lib/reciboComissao.ts`
+    (todo texto do banco escapado). **Não vista por ela ainda.** Dos sub-itens do `TL-46`, ficaram
+    de fora os links nos avisos (levar ao cadastro da peça/à OS) e o gráfico de evolução.
   **Formulário refatorado nesta sessão** pro padrão novo `react-hook-form` + `zod` (ver "Padrão de
   formulário" na seção 4) — primeiro do app nesse estilo, orquestrador caiu de 601 pra ~140 linhas,
   campos organizados em `campos/*Fields.tsx` por grupo. Comportamento pro usuário final não mudou

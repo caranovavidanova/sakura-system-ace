@@ -48,7 +48,7 @@
 set session_replication_role = replica;
 
 truncate table
-  schema_versao, auditoria, fechamentos_caixa, whatsapp_mensagens, configuracoes_whatsapp,
+  schema_versao, auditoria, fechamentos_caixa, comissoes_fechamentos, whatsapp_mensagens, configuracoes_whatsapp,
   configuracoes_juros_parcelas, configuracoes_painel_inicio,
   configuracoes_fiscais_loja, configuracoes_garantia, segredos_fiscais_loja,
   cotacoes_pecas, pedidos_compra_itens, pedidos_compra,
@@ -135,6 +135,12 @@ insert into depositos (id, loja_id, nome, ativo) values
 insert into funcionarios (id, loja_id, nome, ativo) values
   ('33333333-0000-0000-0000-0000000000aa', '11111111-1111-1111-1111-1111111111aa', 'Funcionário A', true),
   ('33333333-0000-0000-0000-0000000000bb', '11111111-1111-1111-1111-1111111111bb', 'Funcionário B', true);
+
+-- Um pagamento de comissão de AGOSTO em cada loja: a sonda de INSERT registra
+-- setembro, pra não bater na trava de um registro por funcionário por período.
+insert into comissoes_fechamentos (id, loja_id, funcionario_id, funcionario_nome, periodo_inicio, periodo_fim, valor_calculado, valor_pago, data_pagamento) values
+  ('33333333-1111-0000-0000-0000000000aa', '11111111-1111-1111-1111-1111111111aa', '33333333-0000-0000-0000-0000000000aa', 'Funcionário A', '2026-08-01', '2026-08-31', 10.00, 10.00, '2026-09-05'),
+  ('33333333-1111-0000-0000-0000000000bb', '11111111-1111-1111-1111-1111111111bb', '33333333-0000-0000-0000-0000000000bb', 'Funcionário B', '2026-08-01', '2026-08-31', 10.00, 10.00, '2026-09-05');
 
 insert into funcionario_filhos (id, funcionario_id, nome) values
   ('33333333-1111-0000-0000-0000000000aa', '33333333-0000-0000-0000-0000000000aa', 'Filho A'),

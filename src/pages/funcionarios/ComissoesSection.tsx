@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { diaBrasileiro } from "@/lib/datas";
 import { mapaCustoPecas, mapaCustoServicos } from "@/schemas/metricasCaixa";
 import {
   resumirComissoes,
@@ -7,6 +8,17 @@ import {
   type ComissaoFuncionario,
   type ResumoPapel,
 } from "@/schemas/comissoes";
+import {
+  compararComPagamento,
+  jaPagoEmOutrosPeriodos,
+  pagamentoDoPeriodo,
+} from "@/schemas/comissoesPagas";
+import type { ComissaoFechamento } from "@/types/comissaoFechamento";
+import {
+  HistoricoPagamentos,
+  ReciboComissaoModal,
+  RegistrarPagamentoModal,
+} from "./ComissoesPagamentos";
 import type { ContaReceber } from "@/types/contaReceber";
 import type { Funcionario } from "@/types/funcionario";
 import type { OrdemServico } from "@/types/os";
@@ -36,6 +48,13 @@ interface ComissoesSectionProps {
   servicos: Servico[];
   funcionarios: Funcionario[];
   contasReceber: ContaReceber[];
+  lojaId: string;
+  nomeLoja: string;
+  /** Pagamentos já registrados (migration 0059). Vazio se o banco ainda não tem a tabela. */
+  pagamentos: ComissaoFechamento[];
+  /** Só admin da loja desfaz um registro — o banco confere de novo. */
+  podeDesfazer: boolean;
+  onPagamentosMudaram: () => Promise<void>;
 }
 
 export function ComissoesSection({
@@ -44,10 +63,17 @@ export function ComissoesSection({
   servicos,
   funcionarios,
   contasReceber,
+  lojaId,
+  nomeLoja,
+  pagamentos,
+  podeDesfazer,
+  onPagamentosMudaram,
 }: ComissoesSectionProps) {
   const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes());
   const [dataFim, setDataFim] = useState(hojeStr());
   const [abertoId, setAbertoId] = useState<string | null>(null);
+  const [pagando, setPagando] = useState<ComissaoFuncionario | null>(null);
+  const [recibo, setRecibo] = useState<ComissaoFechamento | null>(null);
 
   const linhas = useMemo(
     () =>
@@ -72,6 +98,27 @@ export function ComissoesSection({
     (linha) => linha.funcionarioId !== SEM_FUNCIONARIO && linha.percentual === null,
   );
   const semDono = linhas.find((linha) => linha.funcionarioId === SEM_FUNCIONARIO);
+
+  // Pagamento registrado pra EXATAMENTE este período, e o que mudou desde ele.
+  // Inclui quem pagou-se no período mas não tem mais OS nele (a linha sumiu
+  // do recálculo) — é justamente o caso mais estranho, e não pode sumir junto.
+  const pagosNoPeriodo = pagamentos.filter(
+    (p) => p.periodo_inicio === dataInicio && p.periodo_fim === dataFim,
+  );
+  const divergencias = pagosNoPeriodo
+    .map((p) => ({
+      pagamento: p,
+      comparacao: compararComPagamento(
+        linhas.find((l) => l.funcionarioId === p.funcionario_id),
+        p,
+      ),
+    }))
+    .filter((d) => d.comparacao.divergiu);
+  const jaPagosEmOutros = linhas
+    .filter((l) => l.funcionarioId !== SEM_FUNCIONARIO)
+    .filter((l) => !pagamentoDoPeriodo(pagamentos, l.funcionarioId, dataInicio, dataFim))
+    .map((l) => ({ linha: l, jaPago: jaPagoEmOutrosPeriodos(l, pagamentos, dataInicio, dataFim) }))
+    .filter((x) => x.jaPago.valor !== 0);
 
   return (
     <>
@@ -155,6 +202,36 @@ export function ComissoesSection({
         </p>
       )}
 
+      {divergencias.map(({ pagamento, comparacao }) => (
+        <div key={pagamento.id} className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
+          <p className="font-medium">
+            A comissão de {pagamento.funcionario_nome} mudou depois do pagamento de{" "}
+            {diaBrasileiro(pagamento.data_pagamento)}.
+          </p>
+          <p>
+            Foi paga com base em {formatarMoeda(comparacao.congelado)}; recalculada hoje dá{" "}
+            {formatarMoeda(comparacao.recalculado)} ({comparacao.diferenca > 0 ? "+" : "−"}
+            {formatarMoeda(Math.abs(comparacao.diferenca))}). Alguma OS desse período foi editada depois:
+          </p>
+          <ul className="mt-1 list-inside list-disc text-rotulo">
+            {comparacao.mudancas.map((m) => (
+              <li key={`${m.numero}-${m.papel}`}>
+                OS {m.numero} ({m.papel === "vendedor" ? "vendedor" : "técnico"}):{" "}
+                {m.antes === null ? "entrou no período" : formatarMoeda(m.antes)} →{" "}
+                {m.agora === null ? "saiu do período" : formatarMoeda(m.agora)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+
+      {jaPagosEmOutros.map(({ linha, jaPago }) => (
+        <p key={linha.funcionarioId} className="rounded-xl bg-amber-50 px-4 py-3 text-corpo text-amber-800">
+          {formatarMoeda(jaPago.valor)} da comissão de {linha.nome} neste período vem de OS que já
+          entraram num pagamento anterior (OS {jaPago.numeros.join(", ")}). Confira antes de pagar de novo.
+        </p>
+      ))}
+
       {linhas.length === 0 ? (
         <p className="text-corpo text-sakura-muted">
           Nenhuma OS faturada nesse período — nada pra calcular ainda.
@@ -173,6 +250,7 @@ export function ComissoesSection({
                   <th className="px-4 py-3 font-medium">Vendeu</th>
                   <th className="px-4 py-3 font-medium">Lucro gerado</th>
                   <th className="px-4 py-3 font-medium">A pagar</th>
+                  <th className="px-4 py-3 font-medium">Pagamento</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -182,6 +260,9 @@ export function ComissoesSection({
                     key={linha.funcionarioId}
                     linha={linha}
                     aberta={abertoId === linha.funcionarioId}
+                    pagamento={pagamentoDoPeriodo(pagamentos, linha.funcionarioId, dataInicio, dataFim)}
+                    onPagar={() => setPagando(linha)}
+                    onRecibo={setRecibo}
                     onAlternar={() =>
                       setAbertoId(abertoId === linha.funcionarioId ? null : linha.funcionarioId)
                     }
@@ -192,6 +273,32 @@ export function ComissoesSection({
           </div>
         </section>
       )}
+
+      <HistoricoPagamentos
+        pagamentos={pagamentos}
+        podeDesfazer={podeDesfazer}
+        onRecibo={setRecibo}
+        onDesfeito={onPagamentosMudaram}
+      />
+
+      {pagando && (
+        <RegistrarPagamentoModal
+          lojaId={lojaId}
+          linha={pagando}
+          de={dataInicio}
+          ate={dataFim}
+          jaPago={jaPagoEmOutrosPeriodos(pagando, pagamentos, dataInicio, dataFim)}
+          onRegistrado={async () => {
+            setPagando(null);
+            await onPagamentosMudaram();
+          }}
+          onFechar={() => setPagando(null)}
+        />
+      )}
+
+      {recibo && (
+        <ReciboComissaoModal nomeLoja={nomeLoja} pagamento={recibo} onFechar={() => setRecibo(null)} />
+      )}
     </>
   );
 }
@@ -200,10 +307,16 @@ function LinhaFuncionario({
   linha,
   aberta,
   onAlternar,
+  pagamento,
+  onPagar,
+  onRecibo,
 }: {
   linha: ComissaoFuncionario;
   aberta: boolean;
   onAlternar: () => void;
+  pagamento: ComissaoFechamento | null;
+  onPagar: () => void;
+  onRecibo: (p: ComissaoFechamento) => void;
 }) {
   return (
     <>
@@ -219,6 +332,32 @@ function LinhaFuncionario({
         <td className="px-4 py-3">{formatarMoeda(linha.vendidoTotal)}</td>
         <td className="px-4 py-3">{formatarMoeda(linha.lucroTotal)}</td>
         <td className="px-4 py-3 font-medium">{formatarMoeda(linha.comissaoTotal)}</td>
+        <td className="px-4 py-3">
+          {linha.funcionarioId === SEM_FUNCIONARIO ? (
+            <span className="text-sakura-muted">—</span>
+          ) : pagamento ? (
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="whitespace-nowrap text-sakura-purple-dark">
+                ✓ {formatarMoeda(pagamento.valor_pago)} em {diaBrasileiro(pagamento.data_pagamento)}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRecibo(pagamento)}
+                className="min-h-8 rounded-lg px-2 text-rotulo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+              >
+                Recibo
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onPagar}
+              className="min-h-8 whitespace-nowrap rounded-lg border border-sakura-gray/40 px-3 text-rotulo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10"
+            >
+              Registrar pagamento
+            </button>
+          )}
+        </td>
         <td className="px-4 py-3 text-right">
           <button
             onClick={onAlternar}
@@ -230,7 +369,7 @@ function LinhaFuncionario({
       </tr>
       {aberta && (
         <tr className="border-t border-sakura-gray/20">
-          <td colSpan={6} className="px-4 py-4">
+          <td colSpan={7} className="px-4 py-4">
             <div className="space-y-4">
               <BlocoDoPapel
                 titulo="Como vendedor (atendeu a OS)"

@@ -121,6 +121,7 @@ export async function coletarDiagnostico(
       sistema: doProcessoPrincipal?.sistema ?? "—",
       arquitetura: doProcessoPrincipal?.arquitetura ?? "—",
       pastaDados: doProcessoPrincipal?.pastaDados ?? "—",
+      canalAtualizacao: doProcessoPrincipal?.canalAtualizacao ?? "—",
     },
     enderecoDoBanco: enderecoDoBanco || "(não configurado)",
     esquema: situacaoDoEsquema(versaoDoBanco),

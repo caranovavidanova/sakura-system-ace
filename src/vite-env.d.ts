@@ -37,7 +37,12 @@ interface Window {
       sistema: string;
       arquitetura: string;
       pastaDados: string;
+      canalAtualizacao?: "teste" | "normal";
     }>;
     lerLogs?: (linhas: number) => Promise<{ erros: string; atualizacoes: string }>;
+    // Canal de atualização deste computador (item TR-09.1). Opcionais pelo
+    // mesmo motivo: fora do Electron não há atualização automática nenhuma.
+    canalAtualizacao?: () => Promise<"teste" | "normal">;
+    definirCanalAtualizacao?: (canal: "teste" | "normal") => Promise<void>;
   };
 }

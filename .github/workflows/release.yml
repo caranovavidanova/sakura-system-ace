@@ -1,8 +1,13 @@
 name: Release
 
 # Dispara quando uma tag de versão (ex: v0.1.0) é enviada ao GitHub. Builda o
-# instalador Windows e publica como GitHub Release — o app instalado nas lojas
-# (via electron-updater) detecta a release nova sozinho e se atualiza.
+# instalador Windows e publica como GitHub Release.
+#
+# A release nasce como PRÉ-LANÇAMENTO, ou seja, no canal de TESTE (item
+# TR-09.1): só os computadores marcados como teste a recebem sozinhos — o
+# dela e o da Pneus Amigão. As outras lojas só recebem depois que ela rodar
+# o workflow "Liberar versão para todas as lojas" (liberar-versao.yml).
+# Até o TR-09.1, publicar aqui atualizava todas as lojas no mesmo minuto.
 #
 # workflow_dispatch é uma saída manual pra quando o gatilho automático da tag
 # não disparar (já aconteceu do GitHub Actions atrasar/travar a fila pro push
@@ -66,8 +71,17 @@ jobs:
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "A release $tag já existe — vou completar o que faltar nela."
           else
-            echo "Criando a release $tag."
-            gh release create "$tag" --target "$GITHUB_SHA" --title "$versao" --notes ""
+            # `--prerelease` é o que põe a versão no canal de teste: o
+            # GitHub nunca responde um pré-lançamento como "a release mais
+            # recente", e é essa a pergunta que os computadores do canal
+            # normal fazem. Tirar esta marca = liberar pra todas as lojas,
+            # e isso é trabalho do liberar-versao.yml, nunca daqui.
+            #
+            # Numa release que JÁ existe (rodada de novo pra completar
+            # arquivo), a marca não é mexida: se ela já tinha sido liberada,
+            # continua liberada.
+            echo "Criando a release $tag no canal de teste."
+            gh release create "$tag" --target "$GITHUB_SHA" --title "$versao" --notes "" --prerelease
           fi
 
           subir() {
@@ -116,3 +130,38 @@ jobs:
 
           echo "Publicado em $tag:"
           gh release view "$tag" --json assets --jq '.assets[] | "  \(.name) — \(.size) bytes"'
+
+          # Conferência de fora, pelo mesmo endereço que o app instalado usa:
+          # uma versão recém-publicada NÃO pode ser a "mais recente" pro
+          # canal normal. Se for, a marca de pré-lançamento não pegou, e
+          # todas as lojas vão receber uma versão que ninguém testou — o job
+          # fica vermelho pra que isso seja visto (e o conserto é marcar a
+          # release como pré-lançamento na tela do GitHub, ou rodar o
+          # Liberar com a versão anterior).
+          #
+          # Falha de rede aqui vira só aviso: a publicação em si já deu
+          # certo, e um job vermelho por causa disso mandaria procurar
+          # problema onde não há.
+          if [ "$(gh release view "$tag" --json isPrerelease --jq .isPrerelease)" = "true" ]; then
+            mais_recente="$(curl -sSL --max-time 30 -H 'Accept: application/json' \
+              "https://github.com/$GITHUB_REPOSITORY/releases/latest" \
+              | node -e 'let t="";process.stdin.on("data",d=>t+=d).on("end",()=>{try{console.log(JSON.parse(t).tag_name||"")}catch{console.log("")}})' \
+              || true)"
+            if [ -z "$mais_recente" ]; then
+              echo "::warning::Não consegui perguntar ao GitHub qual é a versão das outras lojas. A $tag foi publicada no canal de teste."
+            elif [ "$mais_recente" = "$tag" ]; then
+              echo "::error::A $tag está aparecendo como a versão de TODAS as lojas, mas era pra estar só no canal de teste."
+              exit 1
+            else
+              echo "Canal de teste: $tag. Todas as lojas continuam em $mais_recente."
+            fi
+            {
+              echo "### $tag publicada no canal de teste"
+              echo ""
+              echo "Só os computadores marcados como **teste** recebem esta versão agora."
+              echo "Quando ela estiver aprovada, libere para todas as lojas em"
+              echo "Actions → **Liberar versão para todas as lojas** → Run workflow → \`$tag\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "A $tag já estava liberada para todas as lojas — esta rodada só completou os arquivos."
+          fi

@@ -16,6 +16,8 @@
 //     que o React escreve no elemento, e os documentos de garantia/recibo/
 //     DANFE, que aparecem dentro de `iframe`;
 //   - a ponte da Focus NFe recusa endereço que não seja a API dela;
+//   - o canal de atualização escolhido na tela chega no disco, e o
+//     atualizador procura no canal que estava gravado (item TR-09.1);
 //   - nada navega pra fora do app nem abre janela nova.
 //
 // Como rodar:  npm run test:electron
@@ -103,11 +105,13 @@ try {
   }));
   const CHAVES_ESPERADAS = [
     "abrirWhatsapp",
+    "canalAtualizacao",
     "conexao",
     "diagnostico",
     "fetchComAuth",
     "lerLogs",
     "registrarErro",
+    "definirCanalAtualizacao",
     "salvarConexao",
     "version",
   ];
@@ -293,6 +297,80 @@ try {
     diagnostico.deu && !!diagnostico.versao && !!diagnostico.electron,
     JSON.stringify(diagnostico),
   );
+
+  // --- 7c. O canal de atualização deste computador (item TR-09.1) --------
+  //
+  // O arquivo de verdade, na pasta de dados de verdade: é o único jeito de
+  // provar que a escolha feita na tela chega no disco no formato que o
+  // processo principal lê na abertura seguinte. O arquivo que existia antes
+  // do teste é devolvido no fim, pra rodada nenhuma mudar o computador.
+  const pastaDados = await app.evaluate(({ app: electronApp }) => electronApp.getPath("userData"));
+  const arquivoCanal = path.join(pastaDados, "atualizacao.json");
+  const canalAntes = fs.existsSync(arquivoCanal) ? fs.readFileSync(arquivoCanal, "utf8") : null;
+  const canalNaAbertura = (() => {
+    try {
+      const lido = JSON.parse(canalAntes ?? "{}").canal;
+      return lido === "teste" ? "teste" : "normal";
+    } catch {
+      return "normal";
+    }
+  })();
+  try {
+    // O atualizador foi configurado com o canal que estava no disco quando
+    // o programa abriu — e diz isso no registro, que é onde se olha quando
+    // uma loja "não atualizou". (Fora do instalador a biblioteca pula a
+    // busca em si, então é a linha da configuração que dá pra conferir.)
+    const logAtualizacao = fs.existsSync(path.join(pastaDados, "atualizacoes.log"))
+      ? fs.readFileSync(path.join(pastaDados, "atualizacoes.log"), "utf8")
+      : "";
+    const ultimaBusca = logAtualizacao
+      .split("\n")
+      .filter((linha) => linha.includes("Abrindo no canal de atualização"))
+      .pop();
+    conferir(
+      "o atualizador foi configurado com o canal gravado neste computador",
+      !!ultimaBusca && ultimaBusca.includes(`canal de atualização: ${canalNaAbertura}.`),
+      ultimaBusca ?? "nenhuma busca registrada",
+    );
+
+    const canal = await pagina.evaluate(async () => {
+      const lido = await window.sakuraApp.canalAtualizacao();
+      await window.sakuraApp.definirCanalAtualizacao("teste");
+      const depois = await window.sakuraApp.canalAtualizacao();
+      let recusou = "";
+      try {
+        await window.sakuraApp.definirCanalAtualizacao("beta");
+      } catch (erro) {
+        recusou = String(erro?.message ?? erro);
+      }
+      const info = await window.sakuraApp.diagnostico();
+      return { lido, depois, recusou, noDiagnostico: info?.canalAtualizacao };
+    });
+    conferir(
+      "a tela lê o canal gravado",
+      canal.lido === canalNaAbertura,
+      `veio "${canal.lido}", esperado "${canalNaAbertura}"`,
+    );
+    conferir(
+      "escolher o canal de teste grava no disco",
+      canal.depois === "teste" &&
+        JSON.parse(fs.readFileSync(arquivoCanal, "utf8")).canal === "teste",
+    );
+    conferir(
+      "canal inventado é recusado e não estraga o arquivo",
+      /Canal inválido/.test(canal.recusou) &&
+        JSON.parse(fs.readFileSync(arquivoCanal, "utf8")).canal === "teste",
+      canal.recusou,
+    );
+    conferir(
+      "o diagnóstico mostra o canal",
+      canal.noDiagnostico === "teste",
+      `veio "${canal.noDiagnostico}"`,
+    );
+  } finally {
+    if (canalAntes === null) fs.rmSync(arquivoCanal, { force: true });
+    else fs.writeFileSync(arquivoCanal, canalAntes);
+  }
 
   // --- 8. Nada abre janela nova nem navega pra fora ----------------------
   const janelasAntes = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);

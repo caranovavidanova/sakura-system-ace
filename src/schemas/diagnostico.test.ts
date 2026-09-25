@@ -28,6 +28,7 @@ function diagnosticoDeTeste(parcial: Partial<Diagnostico> = {}): Diagnostico {
       sistema: "Windows 11 Pro (10.0.26100)",
       arquitetura: "x64",
       pastaDados: "C:\\Users\\Loja\\AppData\\Roaming\\Sakura System",
+      canalAtualizacao: "teste",
     },
     enderecoDoBanco: "https://exemplo.supabase.co",
     esquema: { estado: "em_dia", versaoBanco: 55, versaoApp: 55, faltando: [] },
@@ -139,6 +140,12 @@ describe("o pacote que sai da máquina da loja", () => {
     // inteira justamente porque ninguém sabia que horas eram na máquina dela.
     const resumo = montarResumo(diagnosticoDeTeste());
     expect(resumo).toContain("America/Sao_Paulo");
+  });
+
+  it("diz o canal de atualização junto da versão (item TR-09.1)", () => {
+    // Loja no canal de teste pode estar numa versão que as outras ainda não
+    // receberam — é a primeira coisa a saber antes de comparar dois relatos.
+    expect(montarResumo(diagnosticoDeTeste())).toContain("(canal de atualização: teste)");
   });
 
   it("mostra as checagens que falharam com o tempo que levaram", () => {

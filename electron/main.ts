@@ -5,6 +5,13 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { autoUpdater } from "electron-updater";
+import {
+  configuracaoDoAtualizador,
+  conteudoDoArquivo,
+  ehCanalAtualizacao,
+  lerCanal,
+  type CanalAtualizacao,
+} from "../src/schemas/canalAtualizacao";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -224,6 +231,43 @@ aoPedidoDaTela("conexao:salvar", async (conexao: ConexaoSalva) => {
   fs.writeFileSync(CAMINHO_CONEXAO(), JSON.stringify(limpa, null, 2), "utf8");
   aplicarConexaoNoAmbiente(limpa);
   mainWindow?.webContents.reload();
+});
+
+// --- Canal de atualização deste computador (item TR-09.1 do guia) ---------
+//
+// Cada computador escolhe se recebe toda versão nova assim que ela sai
+// (canal de teste) ou só depois que ela for liberada para todas as lojas
+// (canal normal, o padrão). A regra e o porquê de cada detalhe estão em
+// `src/schemas/canalAtualizacao.ts`.
+//
+// Fica num arquivo PRÓPRIO, `atualizacao.json`, e não dentro do
+// `conexao.json` como o guia sugeria, de propósito: o `conexao.json` é o
+// arquivo que decide se a pessoa consegue entrar no sistema, e ele é
+// regravado inteiro toda vez que alguém salva a conexão. Misturar os dois
+// faria cada salvamento de conexão apagar o canal, e cada mudança de canal
+// mexer no arquivo que, se estragar, deixa a loja do lado de fora.
+const CAMINHO_CANAL = () => path.join(app.getPath("userData"), "atualizacao.json");
+
+function carregarCanal(): CanalAtualizacao {
+  try {
+    return lerCanal(fs.readFileSync(CAMINHO_CANAL(), "utf8"));
+  } catch {
+    // Arquivo ainda não existe: é o caso de quase todo computador.
+    return lerCanal(null);
+  }
+}
+
+aoPedidoDaTela("atualizacao:canal", async () => carregarCanal());
+
+// Vale a partir da próxima vez que o programa abrir, que é quando a
+// atualização é procurada. Não dispara uma busca na hora de propósito: uma
+// segunda busca enquanto a primeira ainda baixa é caminho que ninguém testou.
+aoPedidoDaTela("atualizacao:definirCanal", async (canal: unknown) => {
+  if (!ehCanalAtualizacao(canal)) {
+    throw new Error('Canal inválido: só existem "teste" e "normal".');
+  }
+  fs.writeFileSync(CAMINHO_CANAL(), conteudoDoArquivo(canal), "utf8");
+  logAtualizacao(`Canal deste computador trocado para "${canal}".`);
 });
 
 // Sem isso, o Chromium detecta que a janela ficou "oculta" atrás de outra
@@ -457,6 +501,7 @@ aoPedidoDaTela("diagnostico:info", async () => ({
   sistema: `${osVersaoLegivel()} (${os.release()})`,
   arquitetura: process.arch,
   pastaDados: app.getPath("userData"),
+  canalAtualizacao: carregarCanal(),
 }));
 
 function osVersaoLegivel(): string {
@@ -506,6 +551,16 @@ app.whenReady().then(() => {
   createWindow();
 
   if (!VITE_DEV_SERVER_URL) {
+    const canal = carregarCanal();
+    const { allowPrerelease, allowDowngrade } = configuracaoDoAtualizador(canal);
+    autoUpdater.allowPrerelease = allowPrerelease;
+    autoUpdater.allowDowngrade = allowDowngrade;
+    // Registrado aqui, e não no evento "checking-for-update": fora do
+    // instalador a biblioteca pula a busca sem emitir evento nenhum, e numa
+    // loja a busca pode falhar antes de começar. Em qualquer dos casos,
+    // "em que canal este computador estava?" continua respondido.
+    logAtualizacao(`Abrindo no canal de atualização: ${canal}.`);
+
     autoUpdater.on("checking-for-update", () => logAtualizacao("Procurando atualização..."));
     autoUpdater.on("update-available", (info) =>
       logAtualizacao(`Atualização encontrada: v${info.version}`),

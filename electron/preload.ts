@@ -42,4 +42,10 @@ contextBridge.exposeInMainWorld("sakuraApp", {
   // As últimas linhas de "erros.log" e "atualizacoes.log". Sem isto, socorrer
   // uma loja é pedir pra pessoa do balcão achar arquivo dentro de %APPDATA%.
   lerLogs: (linhas: number) => ipcRenderer.invoke("diagnostico:logs", linhas),
+  // Por qual canal este computador recebe versão nova — "teste" (assim que
+  // sai) ou "normal" (só depois de liberada). Item TR-09.1; a regra está em
+  // src/schemas/canalAtualizacao.ts e os handlers em main.ts.
+  canalAtualizacao: () => ipcRenderer.invoke("atualizacao:canal"),
+  definirCanalAtualizacao: (canal: string) =>
+    ipcRenderer.invoke("atualizacao:definirCanal", canal),
 });

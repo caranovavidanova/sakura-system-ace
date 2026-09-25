@@ -114,8 +114,12 @@ marcada como `secret` / `service_role`.
 
 ## Parte 2 — Deixar o app rodando na loja (~10 min)
 
-1. No computador da loja, baixe o instalador mais recente em
-   [Releases](https://github.com/caranovavidanova/sakura-system-ace/releases) (o arquivo `.exe`).
+1. No computador da loja, baixe o instalador **da versão liberada** por este endereço, que sempre
+   entrega a certa:
+   `https://github.com/caranovavidanova/sakura-system-ace/releases/latest/download/SakuraSystem-Setup.exe`
+   - **Não pegue "o de cima" da página de Releases.** Desde o canal de teste (item TR-09.1), a
+     versão do topo pode estar marcada **Pre-release** — ainda em teste, só pros computadores de
+     teste. A liberada é a marcada **Latest**.
 2. O Windows vai avisar "editor desconhecido" — **Mais informações → Executar assim mesmo**.
    É normal, é por não ter certificado pago. Vale avisar antes, pra não assustar.
 3. Na primeira abertura o app pede a **conexão**: cole a URL e a chave do passo 6.
@@ -123,6 +127,9 @@ marcada como `secret` / `service_role`.
      **"Salvar assim mesmo"**.
    - Isso é **uma vez por computador**. Se a loja tiver dois PCs, repete em cada um.
 4. Entre com o usuário e a senha provisória do passo 5, e **troque a senha na hora**.
+5. **Não mexa em "Atualizações deste computador"** (Configurações). Computador novo já nasce no
+   canal **normal**, que é o certo pra loja de cliente: ele só recebe versão depois que ela for
+   liberada. O canal de teste é só pro seu computador e o da Pneus Amigão.
 
 ---
 

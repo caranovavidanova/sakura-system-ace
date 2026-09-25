@@ -1,0 +1,55 @@
+name: Liberar versão para todas as lojas
+
+# Item TR-09.1 do guia de melhorias. Toda versão nova nasce no canal de TESTE
+# (o workflow Release a publica como "pré-lançamento"), e só os computadores
+# marcados como teste a recebem — o dela e o da Pneus Amigão. Este workflow é
+# o passo seguinte: depois de a versão rodar uns dias sem problema, ele a
+# libera para TODAS as lojas.
+#
+# Como rodar (é ela quem roda): aba Actions → "Liberar versão para todas as
+# lojas" → "Run workflow" → digitar a versão (ex: v0.9.40) → "Run workflow".
+# O passo a passo, em português simples, está no PROJETO_STATUS.md, seção 9.
+#
+# VOLTAR ATRÁS é este mesmo workflow, com a versão boa anterior: ela vira a
+# versão de todas as lojas e as mais novas voltam para o teste.
+#
+# Antes de mexer em qualquer coisa, o script confere que a versão está
+# inteira e que o anúncio bate com o instalador — liberar uma publicação pela
+# metade foi exatamente o estrago da v0.9.38. Ver scripts/liberar-versao.mjs.
+#
+# Só roda na mão, de propósito: nenhum gatilho automático leva uma versão até
+# loja de outra empresa.
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Qual versão liberar (ex: v0.9.40). Para voltar atrás, a versão boa anterior."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# Dois "Liberar" ao mesmo tempo poderiam se atropelar; o segundo espera.
+concurrency:
+  group: liberar-versao
+  cancel-in-progress: false
+
+jobs:
+  liberar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # A versão digitada entra por variável de ambiente, e nunca direto no
+      # comando: texto digitado num campo de formulário é dado, não código.
+      - name: Conferir e liberar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSAO: ${{ inputs.versao }}
+        run: node scripts/liberar-versao.mjs "$VERSAO"

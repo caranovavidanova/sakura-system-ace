@@ -167,6 +167,7 @@ export function DiagnosticoPage() {
               Este computador
             </h2>
             <Linha rotulo="Versão do app" valor={dados.app.versao} />
+            <Linha rotulo="Canal de atualização" valor={dados.app.canalAtualizacao} />
             <Linha rotulo="Sistema" valor={dados.app.sistema} />
             <Linha
               rotulo="Electron / Chromium"

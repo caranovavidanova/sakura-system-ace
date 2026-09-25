@@ -52,7 +52,10 @@ Os botões apontam para:
 https://github.com/caranovavidanova/sakura-system-ace/releases/latest/download/SakuraSystem-Setup.exe
 ```
 
-Esse endereço entrega **sempre a última versão**, sem precisar mexer no site a cada lançamento.
+Esse endereço entrega **sempre a última versão liberada**, sem precisar mexer no site a cada
+lançamento. "Liberada" importa desde o canal de teste (item TR-09.1): uma versão recém-publicada
+fica só no teste, e o site só passa a entregá-la depois do workflow "Liberar versão para todas as
+lojas" — que é o certo, porque quem baixa pelo site é loja nova.
 Para isso o instalador passou a ter nome fixo (`artifactName` no `package.json`, antes o nome
 carregava o número da versão).
 

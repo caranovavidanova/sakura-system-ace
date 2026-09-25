@@ -52,6 +52,12 @@ export interface Diagnostico {
     sistema: string;
     arquitetura: string;
     pastaDados: string;
+    /**
+     * "teste" ou "normal" (item TR-09.1). Vai no resumo porque é a pergunta
+     * que vem logo depois de "que versão você tem?": se a loja está no canal
+     * de teste, ela pode estar numa versão que as outras ainda não receberam.
+     */
+    canalAtualizacao: string;
   };
   /** Só o ENDEREÇO do projeto Supabase. A chave nunca entra aqui. */
   enderecoDoBanco: string;
@@ -171,7 +177,7 @@ export function montarResumo(d: Diagnostico): string {
   const erros = ultimasLinhas(d.logs.erros, 1000).length;
   return [
     "Sakura System — diagnóstico",
-    `Versão do app: ${d.app.versao}`,
+    `Versão do app: ${d.app.versao} (canal de atualização: ${d.app.canalAtualizacao})`,
     `Sistema: ${d.app.sistema} · Electron ${d.app.electron} · Chromium ${d.app.chromium}`,
     `Banco: ${d.enderecoDoBanco}`,
     `Versão do banco: ${descreverEsquema(d.esquema)}`,

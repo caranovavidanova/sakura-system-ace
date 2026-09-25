@@ -43,6 +43,7 @@ import { OperadorForm } from "./OperadorForm";
 import { TextoGarantiaSection } from "./TextoGarantiaSection";
 import { ModelosWhatsappSection } from "./ModelosWhatsappSection";
 import { AcoesDaLinha } from "@/components/AcoesDaLinha";
+import { AtualizacoesComputadorSection } from "./AtualizacoesComputadorSection";
 
 export function ConfiguracoesPage() {
   const { operador: operadorLogado, lojaAtual } = useAuth();
@@ -423,6 +424,13 @@ export function ConfiguracoesPage() {
           </SecaoRecolhivel>
         </>
       )}
+
+      <SecaoRecolhivel
+        titulo="Atualizações deste computador"
+        descricao="Se este computador recebe cada versão nova assim que ela sai (canal de teste) ou só depois que ela for liberada para todas as lojas (normal). Vale só para este computador."
+      >
+        <AtualizacoesComputadorSection />
+      </SecaoRecolhivel>
 
       {senhaGerada && (
         <Modal titulo="Senha temporária gerada" onFechar={() => setSenhaGerada(null)}>

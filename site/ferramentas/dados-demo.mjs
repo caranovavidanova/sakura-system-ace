@@ -398,12 +398,28 @@ const versaoDoEsquema = Number(
 
 const schemaVersao = [{ versao: versaoDoEsquema, aplicada_em: dia(-30) }];
 
+// Fechamentos de caixa (TR-06.4, migration 0058): três dias pra trás, um que
+// bateu, um com falta e um com sobra — a aba Fechamento mostra o histórico e
+// a soma das diferenças, e sem dado ela apareceria vazia no catálogo.
+const fechamentosCaixa = [
+  { d: -1, esperado: 612.4, contado: 612.4, obs: null },
+  { d: -2, esperado: 845.0, contado: 832.5, obs: "Troco de R$ 12,50 dado a mais pro cliente da tarde" },
+  { d: -3, esperado: 498.9, contado: 503.9, obs: null },
+].map((f, i) => ({
+  id: `fc-${i}`, loja_id: LOJA, data: diaCurto(f.d), fundo_troco: 100,
+  saldo_sistema: f.esperado, valor_contado: f.contado,
+  diferenca: Math.round((f.contado - f.esperado) * 100) / 100,
+  totais_por_forma: {}, observacao: f.obs, caixa_movimento_id: null,
+  operador_id: OP, criado_em: dia(f.d), operador: { nome: "Marcos Andrade" },
+}));
+
 export const TABELAS = {
   schema_versao: schemaVersao,
   lojas, clientes, veiculos, pecas, servicos, depositos,
   ordens_servico: ordens,
   ordens_servico_itens: ordensItens,
   caixa_movimentos: caixa,
+  fechamentos_caixa: fechamentosCaixa,
   contas_pagar: contasPagar,
   contas_receber: contasReceber,
   estoque_movimentos: estoque,

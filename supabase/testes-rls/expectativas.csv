@@ -87,6 +87,10 @@ caixa_movimentos,select,2,1,1,0,0,
 caixa_movimentos,insert,1,1,1,0,0,
 caixa_movimentos,update,2,1,1,0,0,
 caixa_movimentos,delete,2,1,1,0,0,
+fechamentos_caixa,select,2,1,1,0,0,fechamento de caixa (TR-06.4): exige a loja E o módulo Caixa
+fechamentos_caixa,insert,1,1,1,0,0,o balconista do caixa fecha o dia
+fechamentos_caixa,update,0,0,0,0,0,ninguém altera um fechamento: contou errado desfaz e fecha de novo
+fechamentos_caixa,delete,2,1,0,0,0,desfazer é só de admin da loja — senão bastaria fechar com falta e desfazer
 estoque_movimentos,select,2,1,1,0,0,
 estoque_movimentos,insert,1,1,1,0,0,
 estoque_movimentos,update,2,1,1,0,0,

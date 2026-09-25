@@ -116,6 +116,9 @@ export const CENAS = [
   { arquivo: "29-caixa-saidas", modulo: "Caixa Diário", titulo: "Saídas",
     rota: "/caixa", passos: [{ aba: "Saídas" }],
     descricao: "As despesas do dia a dia. É o outro lado do Contas a Pagar: aqui fica o que já saiu, lá fica o que ainda vai vencer." },
+  { arquivo: "29b-caixa-fechamento", modulo: "Caixa Diário", titulo: "Fechamento do caixa",
+    rota: "/caixa", passos: [{ aba: "Fechamento" }],
+    descricao: "No fim do dia, conta-se o dinheiro da gaveta e o sistema compara com o que ele esperava. Se faltou ou sobrou, a diferença vira um lançamento de verdade (Quebra ou Sobra de caixa) — ela nunca some. Pix e cartão aparecem à parte, pra conferir com o extrato." },
 
   // ---------------------------------------------------------- contas a pagar
   { arquivo: "30-contas-pagar", modulo: "Contas a Pagar", titulo: "Contas a pagar",

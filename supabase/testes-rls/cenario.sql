@@ -48,7 +48,7 @@
 set session_replication_role = replica;
 
 truncate table
-  schema_versao, auditoria, whatsapp_mensagens, configuracoes_whatsapp,
+  schema_versao, auditoria, fechamentos_caixa, whatsapp_mensagens, configuracoes_whatsapp,
   configuracoes_juros_parcelas, configuracoes_painel_inicio,
   configuracoes_fiscais_loja, configuracoes_garantia, segredos_fiscais_loja,
   cotacoes_pecas, pedidos_compra_itens, pedidos_compra,
@@ -151,6 +151,12 @@ insert into ordens_servico_itens (id, ordem_servico_id, tipo, descricao, quantid
 insert into caixa_movimentos (id, loja_id, tipo, valor, descricao) values
   ('55555555-0000-0000-0000-0000000000aa', '11111111-1111-1111-1111-1111111111aa', 'entrada', 100.00, 'Movimento da loja A'),
   ('55555555-0000-0000-0000-0000000000bb', '11111111-1111-1111-1111-1111111111bb', 'entrada', 100.00, 'Movimento da loja B');
+
+-- Fechamento de ONTEM nas duas lojas: a sonda de INSERT fecha HOJE, pra não
+-- bater na trava de um fechamento por loja por dia.
+insert into fechamentos_caixa (id, loja_id, data, saldo_sistema, valor_contado, diferenca) values
+  ('55555555-1111-0000-0000-0000000000aa', '11111111-1111-1111-1111-1111111111aa', current_date - 1, 100.00, 100.00, 0),
+  ('55555555-1111-0000-0000-0000000000bb', '11111111-1111-1111-1111-1111111111bb', current_date - 1, 100.00, 100.00, 0);
 
 insert into estoque_movimentos (id, loja_id, deposito_id, peca_id, tipo, quantidade, motivo) values
   ('66666666-0000-0000-0000-0000000000aa', '11111111-1111-1111-1111-1111111111aa', '22222222-0000-0000-0000-0000000000aa', 'eeeeeeee-0000-0000-0000-0000000000aa', 'entrada', 1, 'compra'),

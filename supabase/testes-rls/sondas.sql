@@ -54,6 +54,7 @@ insert into teste_rls.sondas (tabela, insercao) values
 ('ordens_servico',        $$insert into ordens_servico (numero, loja_id, cliente_id) values (900, '11111111-1111-1111-1111-1111111111aa', 'cccccccc-0000-0000-0000-0000000000aa')$$),
 ('ordens_servico_itens',  $$insert into ordens_servico_itens (ordem_servico_id, tipo, descricao, quantidade) values ('44444444-0000-0000-0000-0000000000aa', 'servico', 'Item sonda', 1)$$),
 ('caixa_movimentos',      $$insert into caixa_movimentos (loja_id, tipo, valor) values ('11111111-1111-1111-1111-1111111111aa', 'entrada', 1.00)$$),
+('fechamentos_caixa',     $$insert into fechamentos_caixa (loja_id, data, saldo_sistema, valor_contado, diferenca) values ('11111111-1111-1111-1111-1111111111aa', current_date, 1.00, 1.00, 0)$$),
 ('estoque_movimentos',    $$insert into estoque_movimentos (loja_id, deposito_id, peca_id, tipo, quantidade, motivo) values ('11111111-1111-1111-1111-1111111111aa', '22222222-0000-0000-0000-0000000000aa', 'eeeeeeee-0000-0000-0000-0000000000aa', 'entrada', 1, 'ajuste')$$),
 ('contagens_estoque',     $$insert into contagens_estoque (loja_id, deposito_id, peca_id, quantidade_contada, saldo_sistema, diferenca) values ('11111111-1111-1111-1111-1111111111aa', '22222222-0000-0000-0000-0000000000aa', 'eeeeeeee-0000-0000-0000-0000000000aa', 1, 1, 0)$$),
 ('contas_pagar',          $$insert into contas_pagar (loja_id, descricao, valor, vencimento) values ('11111111-1111-1111-1111-1111111111aa', 'Conta sonda', 1.00, current_date)$$),

@@ -130,6 +130,12 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    **Publicado na `v0.9.18` e confirmado funcionando por ela** (instalou no notebook, colou URL +
    chave, entrou normalmente). **Pendência**: avisar a loja do pai dela que, na primeira abertura
    depois de atualizar, o app vai pedir a conexão uma vez — motivo e valores na seção 7.
+   **Cenário conversado em 25/09/2026** (ainda hipotético — ela disse "vamo supor"): além da loja
+   do pai, **uma empresa com 2 lojas (o amigo) e uma empresa com 1 loja** — ou seja 3 bancos no
+   Supabase, 4 lojas e 4 CNPJs. **O valor NÃO está decidido**: o pai sugeriu R$ 250 por loja, e
+   ela pediu pra ele dizer ao amigo que ela ainda está decidindo. O que o app precisa, a conta de
+   custo e os cuidados de contrato estão no marco "LEIA ISTO PRIMEIRO" de 25/09/2026, perto do fim
+   do arquivo.
 3. **Oferecer pras ~30 lojas de autocenter que o pai dela conhece e poderia apresentar o sistema**
    — essa fase **já envolve estados diferentes** (não fica só em Araraquara/SP como as fases
    anteriores) — o que pode importar pra emissão fiscal (regras de ICMS/ISS variam por
@@ -4166,6 +4172,12 @@ Quatro coisas que valem saber:
    negociado ("sob consulta") só faz sentido buscar **com volume real comprovado** (fase 2/3, não
    agora com 1 loja só) — sem histórico de uso, não tem alavancagem de negociação nenhuma.
 
+   > **Em reconsideração (25/09/2026)**: o R$ 350 abaixo foi calculado com a Pneus Amigão como
+   > uma das 3 lojas. No cenário novo (o amigo com 2 lojas + outra empresa com 1, pagando; a do
+   > pai à parte), o pai sugeriu **R$ 250 por loja** pra um contrato curto de começo, e **a
+   > decisão está pendente com ela**. A conta e os cuidados de contrato estão no marco "LEIA ISTO
+   > PRIMEIRO" de 25/09/2026. Quando ela decidir, atualizar aqui e na seção 3.
+
    **Preço decidido pra fase 2 (3 lojas: Pneus Amigão + as 2 lojas do amigo do pai dela,
    confirmado que ele vai conhecer o sistema numa segunda-feira)**: **R$350/loja/mês**, calculado
    como o dobro do custo de infraestrutura por loja (fórmula da usuária: preço bruto = 2x custo,
@@ -4394,6 +4406,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
 | 25/09 (noite) | `TR-04.2`, **parte 1 de 2** — o token da Focus NFe sai do computador: vai pra um cofre no banco (migration `0057`) e quem usa é o **porteiro**, a Edge Function `focus-nfe`, que confere quem pede e o CNPJ da nota antes de repassar. Ela rodou a `0057` e publicou a função; saiu na **`v0.9.41`**, **publicada e liberada** a pedido dela. Etapa 4 em 12 de 12 começados. |
+| 25/09 (fim da noite) | A **apresentação comercial** em slides (pronta pra ela mandar ao pai) e o **"Importar por foto" desligado**, sem tag, a pedido dela. E conversa de fase 2: cenário de 2 empresas novas (uma com 2 lojas), **preço em aberto** (o pai sugeriu R$ 250/loja), cuidados de contrato, e o plano do **botão de atualizar todos os bancos** (item 11 da seção 8). Computador dela marcado como Teste. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -5694,9 +5707,11 @@ Se ela pedir sugestão, as duas respostas honestas são:
 
 ### ⏸ Onde parou em 25/09/2026, fim da noite — LEIA ISTO PRIMEIRO
 
-**A apresentação comercial em slides saiu, e o "Importar por foto" foi desligado.** O marco logo
-abaixo (o porteiro da Focus NFe) **continua valendo inteiro** — nada do que ele pede foi resolvido
-nesta leva.
+**A apresentação comercial em slides saiu (pronta pra ela mandar ao pai), o "Importar por foto"
+foi desligado, e a fase 2 ganhou cenário, conta de preço e plano — sem valor decidido ainda.** O
+marco logo abaixo (o porteiro da Focus NFe) **continua valendo inteiro** — nada do que ele pede
+foi resolvido nesta leva. As três subseções do fim deste marco ("Fase 2", "O que o app precisa" e
+"Pendências, em uma lista só") são as que respondem "onde estamos?".
 
 #### A apresentação
 
@@ -5762,9 +5777,10 @@ Conferido: `tsc`, lint, os 612 testes, as 53 telas percorridas sem falha, e a CI
 depois do merge (inclusive o job de contraste nas telas, que era o que a cena tirada podia
 quebrar).
 
-**Por onde a próxima sessão começa**: ela disse *"continuamos isso em breve"*. O ponto em aberto
-é se/quando publicar o "Importar por foto" desligado (o contato do último slide foi resolvido:
-fica sem, ver acima).
+**Por onde a próxima sessão começa**: ela disse *"continuamos isso em breve"*. Os pontos em
+aberto são se/quando publicar o "Importar por foto" desligado e o **valor da fase 2** (ver "Fase
+2" logo abaixo). O contato do último slide foi resolvido: fica sem. A lista completa do que falta
+está em "Pendências, em uma lista só", no fim deste marco.
 
 #### Planejado pra depois: atualizar o banco de todas as empresas de uma vez
 
@@ -5774,6 +5790,92 @@ em código**: um botão no GitHub que aplica em todos os bancos só o que falta,
 ensaio que roda e desfaz. Ela pediu pra registrar *"pra fazermos isso depois"* — está no **item 11
 da seção 8**, com o desenho, as armadilhas e como testar. **Não começar sozinho**; o momento
 certo é antes da primeira empresa nova ser instalada.
+
+#### Fase 2: o cenário, o preço e o contrato (25/09/2026 — valor NÃO decidido)
+
+**Cenário** (hipotético, "vamo supor"): além da loja do pai, **uma empresa com 2 lojas (o amigo)
+e uma com 1 loja**. São **3 bancos no Supabase, 4 lojas e 4 CNPJs** emitindo nota.
+
+**Valor**: o pai sugeriu **R$ 250 por loja**, contrato curto e valor baixo pra começar. Ela disse
+*"vamos decidir em breve"*, e pediu pro pai dizer ao amigo que ela ainda está decidindo. **Não
+tratar nem R$ 250 nem o R$ 350 da seção 8 como decidido.**
+
+**A leitura que eu dei a ela**: R$ 250 funciona pro começo, e não iria abaixo disso. Conta
+aproximada, com as 3 lojas pagantes:
+
+| | Por mês |
+|---|---|
+| Entra: 3 × R$ 250 | R$ 750 |
+| Supabase (3 bancos) | ~R$ 100 a 230 |
+| Focus NFe (3 CNPJs novos, ~15 carros/dia por loja) | ~R$ 230 a 260 |
+| IA (desligada) e backup | ~zero |
+| **Sobra** | **~R$ 260 a 420** |
+
+- **Supabase**: a faixa depende de o projeto da loja do pai já estar no Pro. O grátis aceita no
+  máximo 2 projetos por organização, então com 3 o pago vira obrigatório (US$ 25 + US$ 10 por
+  projeto a mais, cobrado por organização — seção 3).
+- **Focus NFe**: preços de agosto, **não reconferidos** (o site é bloqueado aqui), e ela cobra
+  por nota excedente — o custo sobe com o volume. **4 CNPJs passam do plano Start** (até 3),
+  então falta decidir entre um plano acima ou contas separadas. A decisão de 28/08 (tudo na conta
+  dela) continua valendo, e é ela que sustenta o quadro "Sem contratos paralelos" da apresentação.
+- Custo por loja ~R$ 115 a 160, então R$ 250 dá **1,5 a 2 vezes o custo** — a regra dela é 2x.
+  **A conta não inclui o tempo dela** (instalação, suporte, cadastro fiscal de cada CNPJ, que na
+  loja do pai levou semanas).
+
+**Cuidados de contrato sugeridos a ela** (não é aconselhamento jurídico — o contrato passa por
+advogado ou contabilidade):
+1. **Preço de lançamento escrito**, válido só durante o contrato, com o valor depois (ex.: R$ 350
+   ou "a combinar"). Começar baixo só é tranquilo se o reajuste já estiver no papel.
+2. **6 meses, não 3** — a parte fiscal pode levar semanas; com 3 meses o cliente mal usaria o
+   sistema completo.
+3. **Por loja, sem desconto na segunda** — cada loja é um CNPJ com custo e cadastro fiscal
+   próprios. A empresa de 2 lojas paga 2 × o valor.
+4. **Taxa de implantação**: pode ser dispensada nesses primeiros, mas **escrita** como dispensada.
+5. **A cláusula de dados (LGPD)** do `ANTES-DA-PRIMEIRA-VENDA.md` (item 10 da seção 8).
+
+**Quando ela decidir**: registrar o valor aqui, no item 6 da seção 8 e na tabela de decisões da
+seção 3.
+
+#### O que o app precisa pra essas lojas (conversado em 25/09/2026)
+
+- **Pra começar a usar: nada de código.** O instalador serve qualquer empresa, e cada empresa
+  segue o `INSTALAR-LOJA-NOVA.md` (conferido: já inclui o porteiro e o canal de atualização). A
+  empresa de 2 lojas é **um banco só**, com a 2ª loja criada em Configurações → Lojas; o
+  isolamento entre as duas lojas já é feito no banco, não só na tela.
+- **Parte fiscal, por CNPJ** — a lenta, e depende de gente de fora (playbook no item 1 da seção
+  8). Recomendação dada: usar OS, estoque e caixa no primeiro dia, nota fiscal depois.
+- **Recomendado ANTES da primeira loja de terceiro**: (a) permissão por módulo nas tabelas que
+  faltam (etapas 2 e 3 do `TR-04.1`) — o maior item, e precisa dela decidindo tabela por tabela;
+  (b) a parte 2 do porteiro, depois de ela emitir e cancelar uma nota; (c) marcar os
+  computadores como Teste (o dela já está; falta o da loja); (d) a decisão sobre o Electron; (e) o
+  contrato com a cláusula de dados.
+- **Com 3 bancos**: o botão de atualizar todos os bancos (item 11 da seção 8) passa a valer; e o
+  backup ganha 2 blocos no `BACKUP_EMPRESAS` (a empresa de 2 lojas é um bloco só).
+- **O que um dono de 2 lojas deve pedir, e não existe**: ver as duas lojas somadas, transferir
+  peça entre elas, preço diferente por loja (seção 5, "Fora de escopo"). Esperar ele pedir.
+
+#### Pendências, em uma lista só (conferida com ela em 25/09/2026)
+
+Ela perguntou "o que está pendente, certo?" — a lista combinada:
+
+**Grandes:**
+1. **Slides pro pai** — ✅ prontos pra mandar (sem contato, sem flor, frases conferidas contra o
+   sistema de hoje). Falta só ela baixar em PDF/PowerPoint ou compartilhar pelo Share.
+2. **Terminar o guia** — Etapa 3: 4 itens, todos com migration, e dois pedem uma consulta no
+   banco real antes. Etapa 4: a parte 2 do `TR-04.2` e as etapas 2 e 3 do `TR-04.1`. Etapa 5: 15
+   itens, sem pressa.
+3. **Adequar pra lojas novas** — em boa parte **é** a Etapa 4, mais o botão de atualizar os bancos
+   e, opcional, as três lacunas de multi-loja acima.
+
+**Pequenas, que dependem só dela:**
+- Decidir o **valor da fase 2**.
+- Publicar ou não a versão com o "Importar por foto" desligado.
+- Emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
+- Marcar o computador da loja do pai como Teste — *"não vou conseguir marcar hoje"*.
+- **1º/10/2026: cadastrar a alíquota de 10/2026 no portal da prefeitura** antes da primeira NFS-e
+  do mês.
+- Sem prazo: trocar as três credenciais expostas, o contrato com a cláusula de dados, a pergunta
+  do CSOSN 500 pra contabilidade, a decisão sobre o Electron e marcar o CI como obrigatório.
 
 ### Onde parou em 25/09/2026, à noite (histórico — o marco mais recente está logo acima)
 

@@ -56,9 +56,12 @@ export const CENAS = [
   { arquivo: "12-produto-form", modulo: "Estoque", titulo: "Cadastro de produto",
     rota: "/estoque", passos: [{ clicar: "+ Novo produto" }],
     descricao: "Além dos dados comuns, guarda tudo que a nota fiscal exige (NCM, CFOP, CSOSN, alíquota de ICMS, origem) e o prazo de garantia da peça, que é o que alimenta o módulo de Garantias. Custo, margem e preço final se calculam entre si nos dois sentidos." },
-  { arquivo: "13-importar-foto", modulo: "Estoque", titulo: "Importar produtos por foto ou PDF",
-    rota: "/estoque", passos: [{ clicar: "Importar por foto/PDF" }],
-    descricao: "Lê a nota fiscal do fornecedor por foto ou PDF usando inteligência artificial e devolve os produtos já separados numa tabela editável, pra cadastrar em lote em vez de digitar um por um. A chave da IA fica guardada no servidor, nunca dentro do programa instalado." },
+  // "13-importar-foto" saiu da lista junto com o botão "Importar por foto/PDF",
+  // desligado a pedido dela em 25/09/2026 (IMPORTAR_POR_FOTO_LIGADO em
+  // src/pages/estoque/ProdutosSection.tsx). Religando o botão, a cena volta:
+  // { arquivo: "13-importar-foto", modulo: "Estoque", titulo: "Importar produtos por foto ou PDF",
+  //   rota: "/estoque", passos: [{ clicar: "Importar por foto/PDF" }],
+  //   descricao: "Lê a nota fiscal do fornecedor por foto ou PDF usando inteligência artificial e devolve os produtos já separados numa tabela editável, pra cadastrar em lote em vez de digitar um por um. A chave da IA fica guardada no servidor, nunca dentro do programa instalado." },
   { arquivo: "14-movimentacoes", modulo: "Estoque", titulo: "Movimentações",
     rota: "/estoque", passos: [{ aba: "Movimentações" }],
     descricao: "O extrato de tudo que entrou e saiu do estoque, com o motivo (compra, venda, uso em OS, ajuste) e a referência de onde veio. É aqui que se descobre a origem de um saldo estranho." },

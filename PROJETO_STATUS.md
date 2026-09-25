@@ -2937,6 +2937,12 @@ Quatro coisas que valem saber:
   Edge Function. **Desde 09/09/2026, o CST/CSOSN lido na nota do fornecedor já entra corrigido
   pro padrão da loja** (a coluna continua editável), com aviso quando algum produto ficar sem um
   código que sirva — ver item 47 da seção 6.
+  **⛔ DESLIGADO desde 25/09/2026, a pedido dela** ("o importar por foto tem créditos, mas eu
+  gostaria de desabilitar ele por enquanto, resolvemos isso depois"). O botão some da tela; o
+  código inteiro continua lá. Religar = `IMPORTAR_POR_FOTO_LIGADO = true` em
+  `src/pages/estoque/ProdutosSection.tsx` **e** descomentar a cena `13-importar-foto` em
+  `site/ferramentas/cenas.mjs` (a varredura de contraste do CI clica nesse botão — com o botão
+  escondido e a cena ativa, o job de contraste nas telas fica vermelho). Não retomar sozinho.
 
   **A lista de Produtos respondendo "o que preciso comprar?" (12/09/2026, item `TL-11` do
   guia)** — até aqui "Estoque atual" era um número neutro: dava pra ver que sobrou 1, mas não
@@ -5617,7 +5623,52 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 25/09/2026, à noite — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 25/09/2026, fim da noite — LEIA ISTO PRIMEIRO
+
+**A apresentação comercial em slides saiu, e o "Importar por foto" foi desligado.** O marco logo
+abaixo (o porteiro da Focus NFe) **continua valendo inteiro** — nada do que ele pede foi resolvido
+nesta leva.
+
+#### A apresentação
+
+O pai dela pediu uma apresentação pra oferecer o sistema aos amigos donos de autocenter. Saiu em
+duas etapas, as duas pedidas por ela:
+
+1. **Levantamento** do que o sistema oferece: `apresentacao/levantamento-do-sistema.md`, em 12
+   blocos, cada item marcado como já usado na loja (✅), pronto mas ainda não usado na loja (🆕),
+   ou com porém (⚠️). É a matéria-prima; vale atualizar quando a apresentação mudar.
+2. **O deck**: 17 slides, "Sakura System — Apresentação", artifact **privado dela** no claude.ai
+   (`https://claude.ai/artifact/Qgrq6KjoAJigmSXHouXien`) — só ela abre, até compartilhar pelo
+   menu Share. Cada slide tem nas anotações um roteiro de fala pro pai dela.
+
+**As quatro regras dela pra esse material, e valem pra qualquer versão futura**: formal, em
+slides, **sem preço**, **sem citar a Pneus Amigão pelo nome** (vira "uma autocenter em
+operação") e **sem citar o "Importar por foto"**.
+
+**Falta dela**: o contato do último slide está como `[Nome do contato] · [WhatsApp] · [e-mail]`
+— ela não disse se o contato é o dela ou o do pai.
+
+**As telas dos slides são do app de verdade, com os dados de exemplo** (a loja inventada "Auto
+Center Modelo"). Duas pegadinhas das ferramentas de tela que apareceram fotografando, e valem pra
+qualquer foto futura: (a) o banco de mentira **não filtra** as notas fiscais por OS, então o
+fechamento de uma OS mostra "Ver DANFE" repetido — é dado de exemplo, não bug do app; (b) o Caixa
+Diário de **hoje** sai com lucro igual à venda e sem cliente, então não serve de vitrine. As fotos
+foram tiradas chamando `percorrerTelas` com um recorte (`clip`) por tela, num script que ficou
+fora do repositório.
+
+#### "Importar por foto/PDF" desligado
+
+Pedido dela junto com a apresentação: o crédito da IA existe, mas ela quer o recurso desligado
+por enquanto e decidir depois. O botão sumiu da tela; o código ficou todo (ver o módulo Estoque,
+seção 7, pra como religar). A cena dele saiu da lista de telas, que agora tem **53**, não 54.
+
+**Não foi publicado em versão nenhuma** — enquanto não sair uma tag, o botão continua aparecendo
+nos computadores das lojas. Sem migration. **Perguntar a ela antes de publicar**, e lembrar que
+publicar e liberar são dois passos (seção 9).
+
+Conferido: `tsc`, lint, os 612 testes e as 53 telas percorridas sem falha.
+
+### Onde parou em 25/09/2026, à noite (histórico — o marco mais recente está logo acima)
 
 **Saiu o `TR-04.2`, parte 1 de 2 — o token da Focus NFe deixou de ir pro computador de cada
 operador.** Último item da Etapa 4 que faltava começar. Ela disse "continua pro próximo passo", e

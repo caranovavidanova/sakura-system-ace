@@ -5983,6 +5983,23 @@ em **740 células**; os **7 testes de migration** passando no CI, cada um num ba
   `v0.9.42`) → **conferir na loja** o que está em "O que confirmar em uso real", logo acima →
   emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
 - **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
+- **⚠️ Até 03/10/2026: ativar a verificação em duas etapas (2FA) na conta do GitHub.** Apareceu
+  numa faixa amarela no topo do GitHub, nos prints de 25/09/2026: *"You will need to enable
+  two-factor authentication on your account before October 03, 2026, or be restricted from
+  account actions"*. **Não é detalhe**: sem isso a conta fica restrita, e é por ela que tudo
+  passa — publicar versão, liberar, o botão de atualizar os bancos e o backup. Ela ainda não
+  pediu o passo a passo; oferecer no começo da próxima sessão (Settings → Password and
+  authentication → Enable two-factor authentication, com um aplicativo autenticador no celular,
+  e guardar os códigos de recuperação num lugar fora do computador).
+- **Aviso técnico do GitHub, pra olhar depois de 19/10/2026** (apareceu no rodapé das rodadas do
+  botão, 25/09/2026): a máquina `ubuntu-latest` que roda o CI, o backup e os botões passa pra
+  **Ubuntu 26** em 19/10/2026 (e o Node 20 das actions `checkout@v4`/`setup-node@v4` já está sendo
+  trocado pelo 24 — isso só gera o aviso, não quebra nada). **O que pode quebrar é o backup**:
+  `backup-banco.yml` instala o `postgresql-client-17` do repositório do Postgres pelo codinome da
+  versão do Ubuntu (`$(lsb_release -cs)-pgdg`), e um Ubuntu recém-lançado pode ainda não ter esse
+  repositório. Se a rodada das 3h ficar vermelha depois de 19/10, é isso — o conserto é fixar
+  `runs-on: ubuntu-24.04` no job do backup (e, se precisar, no do botão de atualizar os bancos).
+  **Não mexido ainda**, de propósito: ela pediu só pra atualizar este arquivo.
 - **Continua valendo do marco abaixo**: valor da fase 2, marcar o computador da loja como Teste,
   trocar as três credenciais expostas, o contrato com a cláusula de dados, a pergunta do CSOSN
   500, a decisão sobre o Electron e marcar o CI como obrigatório.
@@ -5990,6 +6007,23 @@ em **740 células**; os **7 testes de migration** passando no CI, cada um num ba
 - **O que dá pra fazer sem ela, daqui**: praticamente nada que valha — o resto da Etapa 4 (RLS
   por módulo nas outras tabelas, parte 2 do porteiro) depende de decisão ou de teste real dela,
   e a Etapa 5 é da fase 3.
+
+#### Por onde a próxima sessão começa
+
+Ela fechou esta sessão com *"atualiza o projeto status, volto em outra sessão"*. Nada ficou
+pendente de código, SQL ou publicação: `main` em dia com a `v0.9.42`, banco na `0060`. Então:
+
+1. **Lembrar do 2FA do GitHub** (prazo 03/10/2026, ver acima) e oferecer o passo a passo.
+2. **Perguntar se a `v0.9.42` chegou na loja** e se ela conferiu as três coisas de "O que
+   confirmar em uso real" (Fechamento de caixa, Registrar pagamento de comissão, a trava do
+   desconto). É a primeira versão que leva as abas novas pra loja de verdade.
+3. **Perguntar se já emitiu e cancelou uma nota pelo porteiro** — é o que libera a parte 2 do
+   `TR-04.2` (apagar a cópia antiga do token), um dos poucos itens de código que dependem só
+   disso.
+4. Depois disso, ela escolhe o próximo pelo código do item no `MELHORIAS.md`, como sempre. Os
+   que sobram de peso são as etapas 2 e 3 do `TR-04.1` (permissão por módulo nas outras
+   tabelas), que precisam da decisão dela tabela por tabela, e o `TR-05.2`, que espera o porteiro
+   ser exercitado em produção.
 
 ### Onde parou em 25/09/2026, fim da noite (histórico — o marco mais recente está logo acima)
 

@@ -3285,7 +3285,8 @@ Quatro coisas que valem saber:
     build: é a mesma release, só sem a marca de pré-lançamento.
   - **Aparece no Diagnóstico e no resumo do WhatsApp**, junto da versão — loja no canal de teste
     pode estar numa versão que as outras ainda não receberam.
-  **Ainda não visto por ela rodando** — e ainda não foi publicado.
+  **Publicado e liberado na `v0.9.40`** (25/09/2026). O que ainda não foi visto rodando é a
+  seção nova em Configurações, e nenhum computador foi marcado como Teste ainda.
 - **Aviso de banco desatualizado** (15/09/2026, item `TR-05.7`): uma faixa no topo de qualquer
   tela quando o programa e o banco daquela empresa não estão na mesma versão. Existe porque as
   duas coisas andam por caminhos diferentes — o auto-update chega em todas as lojas no mesmo
@@ -3674,6 +3675,15 @@ Quatro coisas que valem saber:
     `funcionarios_publico`. Mesma disciplina da `v0.9.30`/`0049`, da `v0.9.32`/`0050`, da
     `v0.9.33`/`0051`+`0052`, da `v0.9.35`/`0053` e da `v0.9.37`/`0055`. Via
     `workflow_dispatch`.
+
+  - `v0.9.40`: **canal de teste** (`TR-09.1`) — ver "Canal de atualização" nesta seção. **É a
+    primeira versão publicada do jeito novo**, e por isso saiu em dois passos no mesmo minuto,
+    em 25/09/2026: o Release a publicou como pré-lançamento (o próprio workflow conferiu de fora:
+    "Canal de teste: v0.9.40. Todas as lojas continuam em v0.9.39"), e em seguida o Liberar
+    conferiu a impressão digital do instalador contra o `latest.yml`, liberou, e confirmou de fora
+    que o GitHub passou a responder `v0.9.40` pra todas as lojas. Liberar logo em seguida era
+    obrigatório aqui: nenhum computador estava no canal de teste, e a `v0.9.39` só enxerga versão
+    liberada. **Sem migration**: o banco dela continua na `0056`.
 
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
@@ -4187,7 +4197,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 18/09 (manhã) | `TR-12.1` — o **backup próprio do banco**, cifrado e em dois lugares fora do Supabase, rodando todo dia às 3h. Ela abriu uma cópia com as próprias mãos pra conferir. Não mexe no app, então **sem tag**. Etapa 4 em 9 de 12. |
 | 18/09 (tarde) | `TR-04.3` — **dado de RH só pra quem tem o módulo** (migration `0056`): salário, CPF, RG, CNH e filhos deixam de ser escondidos só pela tela e passam a ser recusados pelo banco, sem tirar do balconista o que ele precisa pra montar uma OS. É a **primeira tabela da etapa 2 do `TR-04.1`**. Etapa 4 em 10 de 12. |
 | 25/09 | Ela rodou a migration `0056` e a leva acima saiu na tag **`v0.9.39`** — a ordem obrigatória cumprida (SQL primeiro, porque a tela de OS passa a ler uma view que só existe depois dela). |
-| 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration; mesclado, ainda sem tag.** Etapa 4 em 11 de 12. |
+| 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4710,10 +4720,11 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.39"` — publicada em 25/09/2026 (o `TR-04.3`, dado de RH
-  só com o módulo). **`main` UMA leva à frente da tag** (o `TR-09.1`, canal de teste, sem
-  migration), banco na `0056`. A próxima tag tem uma ordem própria — ver o marco "LEIA ISTO
-  PRIMEIRO" perto do fim deste arquivo.
+- `package.json` em `"version": "0.9.40"` — publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
+  canal de teste). **`main` em dia com a tag, banco na `0056`, nada esperando SQL nem
+  publicação** — ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
+  frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
+  ela em que versão as lojas estão.
  (Ver "Empacotamento" na seção 7 pro que cada tag trouxe e
   pro detalhe de publicação). O parágrafo abaixo é histórico de uma sessão anterior — a
   lista completa de tags publicadas depois dela, com o que cada uma corrigiu, está em
@@ -5442,9 +5453,8 @@ Se ela pedir sugestão, as duas respostas honestas são:
 Etapa 4; falta um (o `TR-04.2`, mais as etapas 2 e 3 do `TR-04.1`). Ela disse "continuar", e este
 era o próximo da ordem combinada (do mais simples pro mais complexo).
 
-**Estado: mesclado na `main`, NÃO publicado.** Sem migration nenhuma — o banco dela continua na
-`0056`, nada de SQL pendente. O primeiro passo da próxima sessão é **perguntar se é pra publicar**,
-e a publicação desta versão tem uma pegadinha (logo abaixo).
+**Estado: publicado e LIBERADO na `v0.9.40`**, a pedido dela ("se tiver como, pode publicar").
+Sem migration nenhuma — o banco dela continua na `0056`. **Nada esperando SQL nem publicação.**
 
 #### O problema que isso resolve, em uma frase
 
@@ -5467,22 +5477,28 @@ O detalhe está em "Canal de atualização" (seção 7) e o que se aprendeu, no 
 principalmente que `autoUpdater.channel`, o nome óbvio, **liga `allowDowngrade` sozinho**, e que
 a receita do guia (copiar `latest.yml` entre canais) não funciona com o provedor GitHub.
 
-#### ⚠️ A pegadinha da PRIMEIRA versão com canal (a `v0.9.40`)
+#### A primeira versão com canal (a `v0.9.40`) — já resolvida
 
-**Nenhum computador está no canal de teste hoje** — os dois que deveriam estar (o dela e o da
-Pneus Amigão) ainda rodam a `v0.9.39`, que nem sabe que canal existe e só enxerga versão
-liberada. Então a `v0.9.40` publicada do jeito novo **não chega em ninguém** até ser liberada.
+**Nenhum computador estava no canal de teste** — os dois que deveriam estar (o dela e o da
+Pneus Amigão) rodavam a `v0.9.39`, que nem sabe que canal existe e só enxerga versão liberada.
+Então a `v0.9.40` foi **publicada e liberada no mesmo minuto**, e isso serviu de primeira rodada
+de verdade dos dois workflows — que é justamente o que o critério de aceite do item pedia:
+1. **Release**: publicou como pré-lançamento e conferiu de fora — *"Canal de teste: v0.9.40.
+   Todas as lojas continuam em v0.9.39."* Ou seja: a marca pegou, e **publicar não atualizou
+   ninguém**.
+2. **Liberar**: *"Conferido: v0.9.40 tem o instalador e o anúncio, e a impressão digital bate"*
+   → *"v0.9.40 liberada para todas as lojas"* → *"Conferido de fora: o GitHub responde v0.9.40
+   para todas as lojas."* Menos de um minuto de ponta a ponta.
 
-O caminho, na ordem:
-1. Publicar a `v0.9.40` (Release, como sempre).
-2. **Liberar a `v0.9.40` logo em seguida** (workflow novo) — de quebra, é a primeira rodada de
-   verdade do Liberar, que é o que o critério de aceite do item pede.
-3. Depois de a `v0.9.40` chegar nas duas máquinas: em cada uma, Configurações → "Atualizações
-   deste computador" → **Teste** → Salvar. A partir da `v0.9.41`, vale o fluxo de dois passos.
+**O que falta, e é dela**: depois de a `v0.9.40` chegar nas duas máquinas, em cada uma,
+Configurações → "Atualizações deste computador" → **Teste** → Salvar. A partir da `v0.9.41`,
+vale o fluxo de dois passos. **Não é urgente**: com todo computador no canal normal, o sistema se
+comporta como sempre, só que cada versão precisa ser liberada pra chegar. Passa a importar no dia
+em que a primeira loja de outra empresa for instalada.
 
-**Não é urgente fazer o passo 3** enquanto só existir a Pneus Amigão: com todo computador no
-canal normal, o sistema se comporta exatamente como antes (cada versão só chega quando liberada).
-Ele passa a importar no dia em que a primeira loja de outra empresa for instalada.
+**E uma consequência que vale lembrar em toda sessão daqui pra frente**: enquanto as duas
+máquinas não estiverem em Teste, **publicar sem liberar não entrega a versão pra ninguém**. Se
+ela pedir "publica", perguntar se é pra liberar junto — ou marcar as máquinas antes.
 
 #### Como foi conferido
 
@@ -5504,16 +5520,20 @@ Ele passa a importar no dia em que a primeira loja de outra empresa for instalad
 - A seção nova de Configurações **renderizada** nos três estados, com o CSS real do tema.
 - `tsc`, lint, `npm run contraste` limpos; **565 testes** nos dois fusos (eram 529).
 
-**O que não dá pra conferir daqui, e fica pra primeira rodada de verdade**: o GitHub em si. Esta
-sessão não alcança `github.com` (nem pra ler o feed de releases), então os endereços públicos só
-foram exercitados com imitação. É por isso que o Release e o Liberar conferem **de fora**, pelo
-mesmo endereço que o app usa, e ficam vermelhos se a resposta não for a esperada.
+**O que não dava pra conferir daqui era o GitHub em si** — esta sessão não alcança `github.com`
+(nem pra ler o feed de releases). Por isso o Release e o Liberar conferem **de fora**, pelo mesmo
+endereço que o app usa. A primeira rodada de verdade (acima) passou nas duas conferências.
+
+**O que ainda NÃO foi visto de verdade**: um computador no canal de teste recebendo um
+pré-lançamento. Isso só acontece na `v0.9.41`, depois de ela marcar as máquinas — o comportamento
+da biblioteca está provado pelo teste que roda o código dela, mas a primeira vez numa máquina
+real vale conferir no `atualizacoes.log` (linha "Abrindo no canal de atualização: teste").
 
 #### O que depende dela agora
 
-1. **Dizer se é pra publicar** — e, se sim, a ordem acima (publicar, liberar em seguida).
-2. Depois, **marcar as duas máquinas como Teste** (quando quiser, ver acima).
-3. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como
+1. **Marcar as duas máquinas como Teste**, quando a `v0.9.40` chegar nelas (sem pressa, ver
+   acima).
+2. O de sempre, nenhum bloqueando o uso: trocar as três credenciais expostas, marcar o CI como
    obrigatório pra mesclar, decidir sobre atualizar o Electron, e a alíquota mensal no portal.
 
 #### Etapa 4: 11 de 12

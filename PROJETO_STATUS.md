@@ -5713,6 +5713,16 @@ cerejeira** na capa e no encerramento — ela tirou de propósito. Os dois slide
 sem ela (versão 26 do deck): texto alinhado à esquerda na margem de 128px, como os outros slides,
 e o rodapé à direita.
 
+**O deck só promete o que é verdade HOJE** (conferido slide a slide em 25/09/2026, versão 27).
+Duas frases foram suavizadas por isso: no slide 14, "Atualizações automáticas" dizia "já testadas
+em operação", mas nenhum computador está no canal de teste e a `v0.9.41` foi liberada direto —
+virou "sem reinstalar nada". **Quando ela marcar os dois computadores como Teste e passar a
+publicar → esperar → liberar, a frase forte pode voltar** (e as anotações do slide junto). No
+slide 16, a habilitação fiscal "leva alguns dias" virou "pode levar algumas semanas", que foi o
+que aconteceu na loja do pai dela. E o quadro "Sem contratos paralelos" (slide 14) só vale
+enquanto a Focus NFe, o Supabase e o resto continuarem na conta dela (decisão de 28/08/2026,
+seção 3) — se isso mudar, o quadro muda junto.
+
 **Pra que serve, nas palavras dela**: *"é só pra eu salvar e enviar pros compradores"*. Ou seja, o
 deck vai sair do claude.ai — ela baixa (PDF ou PowerPoint) ou compartilha o link pelo Share.
 

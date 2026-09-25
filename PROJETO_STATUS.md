@@ -5713,9 +5713,12 @@ operação") e **sem citar o "Importar por foto"**.
 **Pra que serve, nas palavras dela**: *"é só pra eu salvar e enviar pros compradores"*. Ou seja, o
 deck vai sair do claude.ai — ela baixa (PDF ou PowerPoint) ou compartilha o link pelo Share.
 
-**Falta dela, ANTES de mandar pra alguém**: o contato do último slide ("encerramento") ainda está
-como `[Nome do contato] · [WhatsApp] · [e-mail]` — ela não disse se é o contato dela ou o do pai.
-Se o deck sair assim, o comprador recebe os colchetes. Ela pode editar direto no deck ou pedir.
+**O último slide ("encerramento") saiu SEM contato, por decisão dela** (*"por enquanto não vou
+colocar meu contato nesse slide"*, 25/09/2026). A linha provisória
+`[Nome do contato] · [WhatsApp] · [e-mail]` foi apagada (versão 24 do deck), junto com a frase das
+anotações que dizia "os contatos estão aqui na tela" — assim o deck pode sair sem colchetes. O
+slide ficou com "Sakura System · AutoCenter Edition" e "Obrigado.". **Não recolocar contato por
+conta própria**; se ela quiser depois, é uma linha no slide `encerramento`.
 
 **As telas dos slides são do app de verdade, com os dados de exemplo** (a loja inventada "Auto
 Center Modelo"). Duas pegadinhas das ferramentas de tela que apareceram fotografando, e valem pra
@@ -5741,8 +5744,9 @@ Conferido: `tsc`, lint, os 612 testes, as 53 telas percorridas sem falha, e a CI
 depois do merge (inclusive o job de contraste nas telas, que era o que a cena tirada podia
 quebrar).
 
-**Por onde a próxima sessão começa**: ela disse *"continuamos isso em breve"*. Os dois pontos em
-aberto são o contato do último slide e se/quando publicar o "Importar por foto" desligado.
+**Por onde a próxima sessão começa**: ela disse *"continuamos isso em breve"*. O ponto em aberto
+é se/quando publicar o "Importar por foto" desligado (o contato do último slide foi resolvido:
+fica sem, ver acima).
 
 #### Planejado pra depois: atualizar o banco de todas as empresas de uma vez
 

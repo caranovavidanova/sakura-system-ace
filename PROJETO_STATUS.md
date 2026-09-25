@@ -321,7 +321,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                             # lê a tabela e exige o módulo; `listarFuncionariosPublico` lê a
 │                             # view `funcionarios_publico`, que é o que os seletores da OS usam
 │                             # — ver TR-04.3 na seção 5), notasFiscais.ts, auth.ts,
-│   │                             # errors.ts, categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
+│   │                             # errors.ts (mensagemDeErro + a frase em português de cada
+│   │                             # trava `ck_` do banco, MENSAGEM_DA_TRAVA), categorias.ts, categoriasCaixa.ts, categoriasServico.ts,
 │   │                             # contagens.ts, garantias.ts, contasPagar.ts, lojas.ts, depositos.ts
 │   │                             # (locais físicos de estoque dentro de uma loja — mesmo padrão CRUD
 │   │                             # de lojas.ts, mas sem exclusão de verdade; expõe também
@@ -515,7 +516,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # mesmo assim ainda monta uma OS pela view pública; e
 │                                  # testar-porteiro-focus-nfe.sql prova o cofre do TR-04.2 —
 │                                  # ninguém lê o token, só admin da loja grava, e a regra de
-│                                  # quem emite/cancela bate com a da tela. NUNCA
+│                                  # quem emite/cancela bate com a da tela; e
+│                                  # testar-fechamento-caixa.sql, testar-comissoes-pagas.sql e
+│                                  # testar-travas-de-dado.sql (0058 a 0060). NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql
  (apaga dados de negócio de teste,
@@ -1062,6 +1065,35 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   de novo uma migration idempotente sobre um banco que já tem a tabela **não aplica mudança de
   tabela** (`create table if not exists` pula), então "tirar a unique" e "trocar o `on delete`"
   só foram de fato testadas derrubando a tabela antes.
+- `0060` (criada em 25/09/2026 — **ainda NÃO rodada por ela**): as **travas de dado impossível**,
+  item `TR-05.1`. São 17 `check` com nome `ck_<tabela>_<regra>`: preço e desconto de item de OS
+  (o desconto nunca maior que a própria linha), preços/custo/garantia/ICMS de peça, preço e custo
+  de serviço, valor de conta a pagar/receber, preço e quantidade recebida de pedido de compra,
+  datas da OS, juros de parcelamento, alíquota de ISS e CNPJ (da loja, e do cliente pessoa
+  jurídica). Quatro decisões que valem saber:
+  (a) **cada trava só é criada se o dado que já existe deixar.** O guia manda consultar o banco
+  real antes, e daqui não se alcança banco real nenhum — então a migration confere sozinha, trava
+  por trava: dado fora da regra → a trava **não** é criada, **nada é alterado**, e o resultado
+  aparece numa tabelinha no fim do Run ("NÃO criada — N linha(s) fora da regra"). Rodar esta
+  migration nunca falha por causa do dado de uma loja. **Consequência prática**: se alguma sair
+  "NÃO criada", o dado é conversa com ela; depois de corrigido, colar a `0060` de novo no SQL
+  Editor cria o que faltou — o botão de atualizar os bancos **não** roda de novo uma migration
+  que já está registrada;
+  (b) **valor de conta é `>= 0`, não `> 0`** como o guia pedia: OS de garantia tem total zero e,
+  faturada "a receber depois", cria conta a receber de valor zero;
+  (c) **a data de fechamento pode ser até um dia antes da abertura**: a abertura usa o relógio do
+  servidor e o faturamento o do computador da loja — um Windows uns minutos atrasado bateria numa
+  trava de "maior ou igual";
+  (d) **o CNPJ conta letras e números**, não só dígitos: a Receita emite CNPJ alfanumérico desde
+  julho de 2026, e uma trava de "14 dígitos" recusaria toda empresa aberta de lá pra cá.
+  Cada trava tem uma frase em português em `src/lib/errors.ts` (`MENSAGEM_DA_TRAVA`), e um teste
+  reprova trava nova sem frase. O formulário da OS confere o desconto **antes** de gravar — o banco
+  recusaria o item, mas a OS nova já teria sido criada sem ele. Teste repetível em
+  `supabase/scripts/testar-travas-de-dado.sql` (18 recusas + os casos estranhos-mas-verdadeiros
+  aceitos), conferido com quatro mutações; e o caminho "dado ruim → não cria → corrige → cria"
+  exercitado num banco no estado `0059`.
+  **O `TR-05.2` (uma nota por OS por tipo) NÃO entrou aqui, de propósito** — ver o item 3 de "O
+  que ainda está frágil na parte fiscal", seção 8.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -2784,11 +2816,32 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
       batido — só uma das nove mutações sobreviveu, e foi justo a do segredo. Ampliado pra passar
       por **todo** caminho de recusa: mensagem de erro montada com o valor errado é exatamente
       como segredo costuma vazar. É a lição do item 53 outra vez, no lugar onde ela mais custaria.
-    **O que ficou pra parte 2, e por quê**: limpar a coluna antiga (migration `0058`) e tirar a
+    **O que ficou pra parte 2, e por quê**: limpar a coluna antiga (numa migration nova — a `0058` acabou sendo o fechamento de caixa) e tirar a
     ponte `http:fetchComAuth` do Electron, que ficou sem uso (ela não tem mais token nenhum pra
     carregar, mas ponte sem uso é superfície à toa). As duas só depois de ela emitir **e**
     cancelar uma nota de verdade pelo porteiro — até lá, voltar pra `v0.9.40` precisa continuar
     emitindo nota.
+
+72. **Uma trava de banco que não pode consultar o banco de verdade tem que se conferir sozinha
+    (25/09/2026, item `TR-05.1`).** O guia pede, antes de cada `check`, uma consulta no banco
+    real pra saber se já existe linha que ele recusaria — e daqui não se alcança banco real
+    nenhum, e com três empresas seriam três consultas. A saída foi a migration fazer a conferência
+    ela mesma (`pg_temp.criar_trava` na `0060`): conta as linhas fora da regra e só cria a trava
+    se não houver nenhuma; havendo, **avisa e não mexe em nada**. É a regra do item 33 aplicada a
+    migration: o pior caso tem que ser "essa trava ficou pra depois", nunca "a atualização do
+    banco parou no meio" nem "o dado da loja foi alterado sem ninguém decidir".
+    **Três coisas que só apareceram testando:**
+    - **A regra "da forma que o guia escreveu" barraria casos de verdade.** Conta de valor zero
+      (OS de garantia), OS faturada por um computador com o relógio atrasado, e CNPJ com letras.
+      Por isso o teste da `0060` tem duas metades: o impossível é recusado **e** o
+      estranho-mas-verdadeiro é aceito. Uma trava que barra o caso real é tranca.
+    - **Duas travas disparando pelo mesmo erro apontam o campo errado.** Com preço negativo, a
+      trava do desconto (`desconto <= quantidade × preço`) também disparava, e a tela diria
+      "desconto" quando o problema era o preço. Daí o `greatest(..., 0)` na regra do desconto.
+    - **A trava sozinha piorava um caso: a OS nova.** O item vai pro banco depois da OS; com o
+      banco recusando o item, a OS nasceria **sem** ele. Por isso o formulário confere a mesma
+      regra (`problemaDoItem`, em `schemas/ordemServico.ts`) antes de gravar qualquer coisa — e o
+      teste de tela prova que um desconto de R$ 500 num item de R$ 400 não chega a salvar.
 
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
@@ -4104,6 +4157,14 @@ Quatro coisas que valem saber:
       da seção 6), mas uma `unique (ordem_servico_id, tipo)` — considerando que nota cancelada
       precisa permitir reemissão — resolveria de vez. Não foi feito: exige migration e uma decisão
       sobre o caso da reemissão.
+      **Revisto em 25/09/2026 (item `TR-05.2`), e adiado de novo, com motivo**: o índice único
+      sozinho seria **pior** que nada. O registro da nota só é gravado **depois** que a SEFAZ
+      autoriza — então, no caso exato que ele deveria pegar (uma segunda nota autorizada pra mesma
+      OS), o banco recusaria **gravar o XML de uma nota que já vale lá fora**, e o documento que a
+      lei manda guardar 5 anos se perderia. O desenho certo é o do item 5 logo abaixo: gravar uma
+      linha "processando" **antes** de enviar e o índice valer sobre ela. Isso mexe no fluxo de
+      emissão e no porteiro, que ainda nem foi exercitado em produção — fica pra depois da parte 2
+      do `TR-04.2`.
    4. **Os dados da loja em Configurações → "Dados fiscais" quase não vão pra nota.** Só o **CNPJ**
       é enviado (mais inscrição municipal, código do município, CNAE e alíquota na NFS-e). Razão
       social, inscrição estadual, endereço e regime tributário **não saem na nota** — a emitente de
@@ -4116,6 +4177,18 @@ Quatro coisas que valem saber:
       espera vence, em vez de recuperar sozinho. Guardar antes exigiria uma linha "em andamento" em
       `notas_fiscais_arquivos` (migration). O timestamp na `ref` é de propósito e **não deve virar
       fixo**: é ele que permite reemitir depois de cancelar uma nota.
+   6. **CNPJ alfanumérico — o código fiscal só entende dígitos** (achado em 25/09/2026, ao
+      escrever as travas da `0060`). A Receita emite CNPJ com letras desde julho de 2026. O
+      cadastro já aceita (a trava da `0060` conta letras e números), mas a montagem da nota tira
+      tudo que não é dígito: `src/lib/focusNfe.ts` (destinatário da NFC-e, emitente, tomador e
+      prestador da NFS-e), a conferência de CNPJ do porteiro
+      (`supabase/functions/focus-nfe/index.ts`, função que limpa o documento), a validação de
+      "CNPJ completo" antes de emitir (`EmitirNotaFiscalModal.tsx`) e o casamento de fornecedor
+      na importação de XML (`src/lib/notaFiscalXmlFornecedor.ts`). Com uma empresa dessas, a nota
+      sairia com o CNPJ mutilado — ou o porteiro recusaria, dizendo que o CNPJ não é da loja.
+      **Não foi mexido às cegas**: antes, confirmar com o suporte da Focus NFe o formato que a API
+      espera (com ou sem as letras em maiúscula, com ou sem pontuação). **Pesa na fase 2** — uma
+      loja aberta de julho pra cá já nasce com CNPJ assim.
 
    ### Playbook de habilitação fiscal por loja nova (lições da primeira)
 
@@ -6045,7 +6118,7 @@ três passos é o teste real, e é por isso que a parte 2 espera por ela.
 
 #### A parte 2 (não feita, e com condição)
 
-Uma migration `0058` que apaga a cópia antiga do token em `configuracoes_fiscais_loja`, e a
+Uma migration nova (a próxima livre — a `0058` virou o fechamento de caixa) que apaga a cópia antiga do token em `configuracoes_fiscais_loja`, e a
 retirada da ponte `http:fetchComAuth` do Electron (ficou sem uso). **Só depois de ela emitir uma
 nota E cancelar uma nota de verdade pelo porteiro** — até lá, voltar pra `v0.9.40` precisa
 continuar emitindo. Até a parte 2, o token segue legível na coluna antiga: **a proteção só fica

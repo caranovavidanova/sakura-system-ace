@@ -8,9 +8,15 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { DIAS_PARA_CONSIDERAR_EM_USO, compararVersoes as compararVersoesDaTela } from "../src/schemas/computadores";
 import {
   atualizarBancos,
   avisosDaMigration,
+  compararVersoes,
+  DIAS_EM_USO,
+  lerVersaoMinima,
+  sqlComputadoresAtrasados,
+  versaoMinimaExigida,
   lerEmpresas,
   listarMigrations,
   montarResumo,
@@ -32,6 +38,15 @@ interface BancoFalso {
   fora?: boolean;
   aplicadas: number[];
   ensaios: number;
+  /**
+   * Os computadores registrados neste banco (migration 0063). `undefined` =
+   * banco sem a tabela `computadores`.
+   */
+  computadores?: { nome: string; versao: string; dias: number }[];
+  /** A consulta aos computadores dá erro. */
+  computadoresQuebra?: boolean;
+  /** Quantas vezes perguntaram pelos computadores. */
+  consultasComputadores?: number;
 }
 
 function migracoes(...numeros: number[]) {
@@ -39,8 +54,16 @@ function migracoes(...numeros: number[]) {
     numero: n,
     arquivo: `${String(n).padStart(4, "0")}_x.sql`,
     caminho: `/repo/supabase/migrations/${String(n).padStart(4, "0")}_x.sql`,
+    versaoMinima: null as string | null,
   }));
 }
+
+/** As mesmas migrations, com uma delas exigindo uma versão mínima do programa. */
+function comVersaoMinima(lista: ReturnType<typeof migracoes>, numero: number, versao: string) {
+  return lista.map((m) => (m.numero === numero ? { ...m, versaoMinima: versao } : m));
+}
+
+const AGORA = Date.now();
 
 function psqlFalso(bancos: Record<string, BancoFalso>) {
   return async ({ banco, argumentos = [], entrada }: { banco: string; argumentos?: string[]; entrada?: string }) => {
@@ -49,6 +72,19 @@ function psqlFalso(bancos: Record<string, BancoFalso>) {
     if (b.fora) return { codigo: 2, saida: "", erro: 'psql: error: connection to server at "x" failed: timeout expired' };
 
     const sql = argumentos[1] ?? "";
+    if (sql.includes("to_regclass('public.computadores')")) {
+      return { codigo: 0, saida: b.computadores === undefined ? "f\n" : "t\n", erro: "" };
+    }
+    if (sql.includes("from computadores")) {
+      b.consultasComputadores = (b.consultasComputadores ?? 0) + 1;
+      if (b.computadoresQuebra) return { codigo: 1, saida: "", erro: "ERROR:  permission denied for table computadores\n" };
+      const exigida = /string_to_array\('([\d.]+)'/.exec(sql)![1];
+      const emUso = (b.computadores ?? []).filter((c) => c.dias < 30);
+      const atrasados = emUso
+        .filter((c) => compararVersoesDaTela(c.versao, exigida) < 0)
+        .map((c) => ({ nome: c.nome, versao: c.versao, vistoEm: new Date(AGORA - c.dias * 86_400_000).toISOString() }));
+      return { codigo: 0, saida: `${JSON.stringify({ emUso: emUso.length, atrasados })}\n`, erro: "" };
+    }
     if (sql.includes("to_regclass")) return { codigo: 0, saida: b.versao === null ? "f\n" : "t\n", erro: "" };
     if (sql.includes("max(versao)")) return { codigo: 0, saida: `${b.versao}\n`, erro: "" };
 
@@ -332,5 +368,182 @@ describe("montarResumo", () => {
     expect(texto).toMatch(/\| pneus-amigao \| 0056 \| 0057 \| ✅ passaria \|/);
     expect(texto).toMatch(/\| loja-b \| 0057 \| nada \| ✅ em dia \|/);
     expect(texto).toMatch(/O que as migrations avisaram/);
+  });
+});
+
+describe("versão mínima do programa (migration 0063)", () => {
+  it("lê a linha do cabeçalho; sem a linha, não há exigência nenhuma", () => {
+    expect(lerVersaoMinima("-- Migration 0070\n-- versao-minima-do-programa: 0.9.45\ncreate table x();")).toBe("0.9.45");
+    expect(lerVersaoMinima("--   versao-minima-do-programa:   1.2.3   \n")).toBe("1.2.3");
+    expect(lerVersaoMinima("-- Migration 0063\ncreate table x();")).toBeNull();
+  });
+
+  it("linha com versão torta recusa a rodada — ignorar faria a migration que pediu cuidado passar sem cuidado", () => {
+    expect(() => lerVersaoMinima("-- versao-minima-do-programa: 0.9", "0070_x.sql")).toThrow(/0070_x.sql.*não é uma versão/);
+    expect(() => lerVersaoMinima("-- versao-minima-do-programa: próxima")).toThrow(/não é uma versão/);
+  });
+
+  it("listarMigrations lê a exigência de dentro de cada arquivo", () => {
+    const pasta = mkdtempSync(join(tmpdir(), "migrations-"));
+    try {
+      writeFileSync(join(pasta, "0070_a.sql"), "-- versao-minima-do-programa: 0.9.45\nselect 1;");
+      writeFileSync(join(pasta, "0071_b.sql"), "select 1;");
+      expect(listarMigrations(pasta).map((m: { versaoMinima: string | null }) => m.versaoMinima)).toEqual(["0.9.45", null]);
+    } finally {
+      rmSync(pasta, { recursive: true, force: true });
+    }
+  });
+
+  it("entre as que faltam, manda a MAIOR — comparada como número", () => {
+    const lista = comVersaoMinima(comVersaoMinima(migracoes(70, 71, 72), 70, "0.9.10"), 71, "0.9.9");
+    expect(versaoMinimaExigida(lista)).toBe("0.9.10");
+    expect(versaoMinimaExigida(migracoes(70))).toBeNull();
+  });
+
+  it("compara versão igual à tela, e a SQL recusa texto que não é versão (vai dentro do comando)", () => {
+    for (const [a, b] of [["0.9.9", "0.9.10"], ["0.10.0", "0.9.99"], ["1.0.0", "1.0.0"], ["0.9.44", "0.9.43"]]) {
+      expect(Math.sign(compararVersoes(a, b))).toBe(Math.sign(compararVersoesDaTela(a, b)));
+    }
+    expect(() => sqlComputadoresAtrasados("0.9.43'); drop table lojas; --")).toThrow(/não é uma versão/);
+    expect(sqlComputadoresAtrasados("0.9.43")).toMatch(/string_to_array\('0\.9\.43', '\.'\)::int\[\]/);
+  });
+
+  it("a janela de 'em uso' do robô é a mesma da tela de Configurações", () => {
+    expect(DIAS_EM_USO).toBe(DIAS_PARA_CONSIDERAR_EM_USO);
+  });
+
+  it("migration SEM exigência nem pergunta pelos computadores — nada muda pro caso comum", async () => {
+    const bancos = { a: banco(62, { computadores: [{ nome: "Balcão", versao: "0.0.1", dias: 0 }] }) };
+    const r = await atualizarBancos({ modo: "aplicar", empresas: empresas("a"), migrations: migracoes(62, 63), psql: psqlFalso(bancos), log: silencio });
+    expect(r.sucesso).toBe(true);
+    expect(bancos.a.consultasComputadores ?? 0).toBe(0);
+    expect(bancos.a.aplicadas).toEqual([63]);
+  });
+
+  it("computador EM USO abaixo da exigida: o ensaio avisa que a aplicação vai esperar", async () => {
+    const bancos = {
+      "pneus-amigao": banco(63, {
+        computadores: [
+          { nome: "Balcão", versao: "0.9.45", dias: 0 },
+          { nome: "DESKTOP-A1C3F9", versao: "0.9.44", dias: 2 },
+        ],
+      }),
+    };
+    const r = await atualizarBancos({
+      modo: "ensaiar",
+      empresas: empresas("pneus-amigao"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(false);
+    expect(r.esperando).toBe(true);
+    expect(r.conclusao).toMatch(/vai ESPERAR/);
+    const texto = montarResumo(r);
+    expect(texto).toMatch(/\| pneus-amigao \| 0063 \| 0064 \| ⏸ passaria, mas espera 1 computador abaixo da 0\.9\.45 \|/);
+    expect(texto).toMatch(/DESKTOP-A1C3F9 \(0\.9\.44, visto há 2 dias\)/);
+    expect(texto).not.toMatch(/Balcão \(/);
+    expect(bancos["pneus-amigao"].aplicadas).toEqual([]);
+  });
+
+  it("aplicar com computador atrasado: NÃO aplica em banco nenhum — nem no que estava em dia com os computadores", async () => {
+    const bancos = {
+      a: banco(63, { computadores: [{ nome: "Balcão", versao: "0.9.45", dias: 0 }] }),
+      b: banco(63, { computadores: [{ nome: "Notebook", versao: "0.9.44", dias: 5 }] }),
+    };
+    const r = await atualizarBancos({
+      modo: "aplicar",
+      empresas: empresas("a", "b"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(false);
+    expect(Object.values(bancos).flatMap((x) => x.aplicadas)).toEqual([]);
+    expect(r.situacoes.every((s: { aplicacao: string }) => s.aplicacao === "nao-tocado")).toBe(true);
+    expect(r.conclusao).toMatch(/Nada foi aplicado.*computadores.*Esquecer.*aplicar mesmo com computadores atrasados/s);
+  });
+
+  it("a caixinha 'aplicar mesmo com computadores atrasados' passa por cima, e o resumo diz isso", async () => {
+    const bancos = { a: banco(63, { computadores: [{ nome: "Notebook", versao: "0.9.44", dias: 5 }] }) };
+    const r = await atualizarBancos({
+      modo: "aplicar",
+      empresas: empresas("a"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+      aplicarComAtrasados: true,
+    });
+    expect(r.sucesso).toBe(true);
+    expect(bancos.a.aplicadas).toEqual([64]);
+    expect(montarResumo(r)).toMatch(/Notebook \(0\.9\.44, visto há 5 dias\) — seguindo mesmo assim, como pedido/);
+  });
+
+  it("computador SUMIDO (30 dias ou mais) não segura nada", async () => {
+    const bancos = { a: banco(63, { computadores: [{ nome: "Velho", versao: "0.9.30", dias: 41 }, { nome: "Balcão", versao: "0.9.45", dias: 0 }] }) };
+    const r = await atualizarBancos({
+      modo: "aplicar",
+      empresas: empresas("a"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(true);
+    expect(bancos.a.aplicadas).toEqual([64]);
+    expect(montarResumo(r)).toMatch(/o computador em uso já está nela ou numa mais nova/);
+  });
+
+  it("banco que ainda não registra computadores: segue, mas o resumo diz que não deu pra conferir", async () => {
+    const bancos = { a: banco(62) }; // sem a tabela `computadores`
+    const r = await atualizarBancos({
+      modo: "aplicar",
+      empresas: empresas("a"),
+      migrations: comVersaoMinima(migracoes(62, 63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(true);
+    expect(bancos.a.aplicadas).toEqual([63, 64]);
+    expect(montarResumo(r)).toMatch(/exige a 0\.9\.45; este banco ainda não registra os computadores — não deu pra conferir/);
+  });
+
+  it("nenhum computador visto nos últimos 30 dias: segue, avisando", async () => {
+    const bancos = { a: banco(63, { computadores: [] }) };
+    const r = await atualizarBancos({
+      modo: "ensaiar",
+      empresas: empresas("a"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(true);
+    expect(montarResumo(r)).toMatch(/nenhum computador apareceu nos últimos 30 dias — não deu pra conferir/);
+  });
+
+  it("não conseguir perguntar pelos computadores SEGURA — não saber não vira 'então pode'", async () => {
+    const bancos = { a: banco(63, { computadores: [], computadoresQuebra: true }), b: banco(63, { computadores: [] }) };
+    const r = await atualizarBancos({
+      modo: "aplicar",
+      empresas: empresas("a", "b"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(false);
+    expect(r.situacoes[0].motivo).toMatch(/não consegui conferir os computadores/);
+    expect(Object.values(bancos).flatMap((x) => x.aplicadas)).toEqual([]);
+  });
+
+  it("banco em dia não é perguntado — só quem tem migration pendente que exige versão", async () => {
+    const bancos = { a: banco(64, { computadores: [{ nome: "X", versao: "0.0.1", dias: 0 }] }) };
+    const r = await atualizarBancos({
+      modo: "ensaiar",
+      empresas: empresas("a"),
+      migrations: comVersaoMinima(migracoes(63, 64), 64, "0.9.45"),
+      psql: psqlFalso(bancos),
+      log: silencio,
+    });
+    expect(r.sucesso).toBe(true);
+    expect(bancos.a.consultasComputadores ?? 0).toBe(0);
   });
 });

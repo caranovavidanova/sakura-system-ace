@@ -205,6 +205,9 @@ export const CENAS = [
   { arquivo: "52-config-garantia", modulo: "Configurações", titulo: "Texto de garantia",
     rota: "/configuracoes", passos: [{ secao: "Texto de garantia" }, { rolar: 800 }],
     descricao: "O texto que sai no documento de garantia entregue ao cliente. Os trechos entre chaves são trocados na hora pelos dados reais da ordem." },
+  { arquivo: "55-config-computadores", modulo: "Configurações", titulo: "Computadores desta empresa",
+    rota: "/configuracoes", passos: [{ secao: "Computadores desta empresa" }, { rolar: 1400 }],
+    descricao: "Em que versão está cada computador que abre o sistema, e quando foi usado pela última vez. Cada um aparece sozinho no primeiro login; o administrador só dá um apelido e esquece o que não existe mais. É o que mostra quem ficou pra trás numa atualização." },
 
   // -------------------------------------------------------------- auditoria
   { arquivo: "53-auditoria", modulo: "Auditoria", titulo: "Trilha de auditoria",

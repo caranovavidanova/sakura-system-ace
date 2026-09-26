@@ -11,6 +11,7 @@ import { useEnterParaProximoCampo } from "./hooks/useEnterParaProximoCampo";
 import { useLimparDataAoApagar } from "./hooks/useLimparDataAoApagar";
 import { useNaoMexerNoNumeroSemDigitar } from "./hooks/useNaoMexerNoNumeroSemDigitar";
 import { useSituacaoDoEsquema } from "./hooks/useSituacaoDoEsquema";
+import { registrarEsteComputador } from "./lib/computadores";
 import { conexaoConfigurada } from "./lib/conexao";
 import { definirContextoDeErro } from "./lib/registrarErros";
 import { AuditoriaPage } from "./pages/auditoria/AuditoriaPage";
@@ -83,6 +84,18 @@ export default function App() {
       loja: lojaAtual?.nome,
     });
   }, [operador?.usuario, lojaAtual?.nome]);
+
+  // Conta ao banco que este computador está aberto, em que versão e em que
+  // loja (migration 0063) — é o que deixa o admin ver quem ficou pra trás e
+  // o botão de atualizar os bancos saber quem esperar. Roda quando o login
+  // termina de carregar, ao trocar de loja e a cada renovação da sessão (o
+  // Supabase renova de tempos em tempos), o que mantém o "visto em" de um
+  // computador que fica aberto o dia inteiro. Nunca trava nada: ver
+  // lib/computadores.ts.
+  useEffect(() => {
+    if (carregando || !operador?.id) return;
+    void registrarEsteComputador(lojaAtual?.id ?? null);
+  }, [carregando, operador?.id, lojaAtual?.id]);
 
   if (configurandoConexao) {
     return (

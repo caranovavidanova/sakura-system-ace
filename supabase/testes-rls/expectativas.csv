@@ -216,3 +216,7 @@ auditoria,select,1,1,0,0,0,só admin lê a trilha
 auditoria,insert,0,0,0,0,0,ninguém escreve pela API — só o gatilho do banco
 auditoria,update,0,0,0,0,0,trilha não se reescreve
 auditoria,delete,0,0,0,0,0,apagar é só pelo SQL Editor via expurgar_auditoria()
+computadores,select,2,1,0,0,0,versão de cada computador (0063): só o admin da loja em que ele foi visto
+computadores,insert,0,0,0,0,0,gravar é só por registrar_computador() — nem o dono insere direto
+computadores,update,0,0,0,0,0,apelido só por definir_apelido_computador(); o resto, a cada login
+computadores,delete,2,1,0,0,0,"esquecer" um computador que não existe mais: admin da loja

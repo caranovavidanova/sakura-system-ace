@@ -58,6 +58,12 @@
 -- módulos.) Entre uma coisa e outra, a faixa "banco desatualizado" aparece;
 -- é aviso, nada quebra.
 --
+-- A linha abaixo foi acrescentada depois (migration 0063): é ela que faz o
+-- botão "Atualizar o banco de todas as empresas" esperar os computadores que
+-- ainda estão numa versão mais antiga — o que em 26/09/2026 foi conferido à
+-- mão. Ela só muda o comportamento do botão; o SQL desta migration é o mesmo.
+-- versao-minima-do-programa: 0.9.43
+--
 -- O fechamento de caixa (0058) continua igual: `fechar_caixa()` já exige o
 -- módulo Caixa, e `desfazer_fechamento_caixa()` é de admin.
 --

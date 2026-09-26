@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
+import { randomUUID } from "node:crypto";
 import { autoUpdater } from "electron-updater";
 import {
   configuracaoDoAtualizador,
@@ -12,6 +13,11 @@ import {
   lerCanal,
   type CanalAtualizacao,
 } from "../src/schemas/canalAtualizacao";
+import {
+  conteudoDaIdentidade,
+  lerIdentidadeComputador,
+  type IdentidadeComputador,
+} from "../src/schemas/identidadeComputador";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -269,6 +275,49 @@ aoPedidoDaTela("atualizacao:definirCanal", async (canal: unknown) => {
   fs.writeFileSync(CAMINHO_CANAL(), conteudoDoArquivo(canal), "utf8");
   logAtualizacao(`Canal deste computador trocado para "${canal}".`);
 });
+
+// --- A identidade deste computador (migration 0063) -----------------------
+//
+// Um número aleatório criado na primeira abertura e guardado em
+// `computador.json`. A tela manda esse número ao banco a cada login, junto
+// com a versão e o canal, e é assim que o admin sabe em que versão está cada
+// computador da loja — e que o botão de atualizar os bancos sabe quem
+// esperar. O formato e o porquê de arquivo próprio estão em
+// `src/schemas/identidadeComputador.ts`.
+const CAMINHO_IDENTIDADE = () => path.join(app.getPath("userData"), "computador.json");
+
+function carregarOuCriarIdentidade(): IdentidadeComputador {
+  let conteudo: string | null = null;
+  try {
+    conteudo = fs.readFileSync(CAMINHO_IDENTIDADE(), "utf8");
+  } catch {
+    // Primeira abertura: o arquivo ainda não existe.
+  }
+  const existente = lerIdentidadeComputador(conteudo);
+  if (existente) return existente;
+
+  const nova: IdentidadeComputador = { id: randomUUID(), criadoEm: new Date().toISOString() };
+  try {
+    fs.writeFileSync(CAMINHO_IDENTIDADE(), conteudoDaIdentidade(nova), "utf8");
+  } catch (err) {
+    // Sem conseguir gravar, a identidade muda a cada abertura — ruim pra
+    // lista de computadores, mas nunca motivo pra atrapalhar quem está no
+    // balcão. Fica registrado pra quem for olhar o Diagnóstico.
+    logErroDaTela(`Não consegui gravar computador.json: ${String(err)}`);
+  }
+  return nova;
+}
+
+aoPedidoDaTela("computador:identidade", async () => ({
+  id: carregarOuCriarIdentidade().id,
+  // O nome que o Windows dá à máquina ("DESKTOP-7GH2K1"). É o que já aparece
+  // na rede da loja, e o que ajuda o admin a saber qual computador é qual
+  // antes de dar um apelido.
+  nomeMaquina: os.hostname(),
+  versao: app.getVersion(),
+  canal: carregarCanal(),
+  sistema: `${osVersaoLegivel()} (${os.release()})`,
+}));
 
 // Sem isso, o Chromium detecta que a janela ficou "oculta" atrás de outra
 // (ex: alt-tab, mesmo que por poucos segundos) e descarta/recarrega a tela

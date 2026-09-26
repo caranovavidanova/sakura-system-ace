@@ -15,6 +15,13 @@ name: Atualizar o banco de todas as empresas
 #     nenhum. Passando, aplica banco por banco, cada migration na própria
 #     transação, e para no primeiro erro.
 #
+# Migration que declara "versao-minima-do-programa" no cabeçalho (é a exceção:
+# a que aperta uma regra que a versão anterior do programa usava) só é
+# aplicada quando nenhum computador EM USO está abaixo daquela versão — o robô
+# pergunta à tabela `computadores` de cada banco (migration 0063). A caixinha
+# "aplicar mesmo com computadores atrasados" passa por cima disso, pra quando
+# ela souber que os atrasados não serão afetados.
+#
 # O resultado aparece em português na página da própria rodada. O passo a
 # passo está na seção 9 do PROJETO_STATUS.md, em "Atualizar o banco de todas
 # as empresas".
@@ -38,6 +45,11 @@ on:
         options:
           - ensaiar
           - aplicar
+      aplicar_com_computadores_atrasados:
+        description: "Só marque se tiver certeza: aplica mesmo com computadores em uso numa versão do programa mais antiga que a que a migration exige"
+        required: false
+        default: false
+        type: boolean
 
 # Mesmo grupo do backup: os dois nunca mexem no mesmo banco ao mesmo tempo.
 # Um espera o outro terminar.
@@ -50,7 +62,12 @@ permissions:
 
 jobs:
   atualizar:
-    runs-on: ubuntu-latest
+    # Versão FIXA do Ubuntu, não "latest": a instalação do psql logo abaixo usa
+    # o repositório do Postgres pelo codinome do Ubuntu, e um Ubuntu
+    # recém-lançado pode ainda não ter esse repositório. O GitHub troca o
+    # "latest" pelo 26 em 19/10/2026. Subir este número é decisão, não
+    # surpresa — conferir antes que `apt.postgresql.org` já tem o codinome.
+    runs-on: ubuntu-24.04
     # Sem limite, o padrão do GitHub são 6 HORAS: uma conexão travada deixaria
     # a rodada pendurada sem aparecer como falha.
     timeout-minutes: 20
@@ -86,4 +103,5 @@ jobs:
         env:
           BACKUP_EMPRESAS: ${{ secrets.BACKUP_EMPRESAS }}
           MODO: ${{ inputs.modo }}
-        run: node scripts/atualizar-bancos.mjs "$MODO"
+          COM_ATRASADOS: ${{ inputs.aplicar_com_computadores_atrasados }}
+        run: node scripts/atualizar-bancos.mjs "$MODO" "$COM_ATRASADOS"

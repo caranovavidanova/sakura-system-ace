@@ -15,7 +15,10 @@
 //   4. uma migration que falha no meio é desfeita INTEIRA (a transação vale);
 //   5. banco anterior à 0055 é recusado com explicação;
 //   6. tabela travada por outra conexão faz a migration desistir em segundos,
-//      em vez de ficar esperando e congelar a tela da loja.
+//      em vez de ficar esperando e congelar a tela da loja;
+//   8. migration que declara "versao-minima-do-programa" espera os
+//      computadores em uso atrasados (tabela `computadores`, migration 0063)
+//      — e a caixinha "aplicar mesmo assim" passa por cima.
 //
 // COMO RODAR: igual à matriz de RLS — no CI já roda sozinho; num Linux com
 // Postgres local, `service postgresql start` e `npm run test:atualizar-bancos`.
@@ -98,8 +101,8 @@ function criarBanco(sufixo, ate) {
 }
 
 /** Roda o script do jeito que o workflow roda. */
-function rodarBotao(modo, empresas, pasta) {
-  const r = spawnSync(process.execPath, [join(AQUI, "atualizar-bancos.mjs"), modo], {
+function rodarBotao(modo, empresas, pasta, comAtrasados = "false") {
+  const r = spawnSync(process.execPath, [join(AQUI, "atualizar-bancos.mjs"), modo, comAtrasados], {
     encoding: "utf8",
     env: {
       ...process.env,
@@ -239,6 +242,55 @@ try {
   soltarTrava(c.nome, segurando2);
   conferir(direta.status !== 0 && /lock timeout/i.test(direta.stderr), "desiste com 'lock timeout'");
   conferir(segundos2 < 40, `desiste em ${segundos2.toFixed(0)}s`);
+
+  console.log("\n8. Migration que exige versão mínima espera os computadores atrasados");
+  // Pasta própria: só as reais + uma que declara a versão mínima. Assim o
+  // passo não depende do que os passos anteriores deixaram na outra pasta.
+  const pastaVersao = mkdtempSync(join(tmpdir(), "migrations-versao-"));
+  try {
+    cpSync(PASTA_REAL, pastaVersao, { recursive: true });
+    writeFileSync(
+      join(pastaVersao, `${NOVA}_exige_versao.sql`),
+      [
+        "-- Migration de teste: aperta uma regra que a versão anterior usava.",
+        "-- versao-minima-do-programa: 0.9.50",
+        "create table if not exists teste_versao_minima (id int);",
+        `insert into schema_versao (versao) values (${NOVA}) on conflict do nothing;`,
+        "",
+      ].join("\n"),
+    );
+    const d = { ...criarBanco("d", ULTIMA_REAL), rotulo: "empresa-d" };
+    criados.push(d);
+    // Como o registrar_computador() gravaria — direto, como dono do banco.
+    psql(d.banco, [
+      "-c",
+      "insert into computadores (id, nome_maquina, apelido, versao_app, visto_em) values " +
+        "(gen_random_uuid(), 'DESKTOP-BALCAO', 'Balcão', '0.9.50', now()), " +
+        "(gen_random_uuid(), 'DESKTOP-FUNDOS', null, '0.9.49', now() - interval '2 days'), " +
+        "(gen_random_uuid(), 'NOTEBOOK-VELHO', null, '0.9.10', now() - interval '40 days')",
+    ]);
+
+    r = rodarBotao("ensaiar", [d], pastaVersao);
+    conferir(r.codigo === 1 && /⏸ passaria, mas espera 1 computador abaixo da 0\.9\.50/.test(r.texto), "o ensaio avisa que vai esperar 1 computador");
+    conferir(/DESKTOP-FUNDOS \(0\.9\.49, visto há 2 dias\)/.test(r.texto), "e diz qual é, com a versão e quando foi visto");
+    conferir(!/NOTEBOOK-VELHO/.test(r.texto), "o computador sumido há 40 dias não entra na conta");
+
+    r = rodarBotao("aplicar", [d], pastaVersao);
+    conferir(r.codigo === 1 && /Nada foi aplicado em banco nenhum/.test(r.texto), "aplicar recusa");
+    conferir(versao(d.banco) === ULTIMA_REAL, "o banco ficou como estava");
+
+    r = rodarBotao("aplicar", [d], pastaVersao, "true");
+    conferir(r.codigo === 0 && /seguindo mesmo assim, como pedido/.test(r.texto), "com a caixinha marcada, aplica e diz que seguiu mesmo assim");
+    conferir(versao(d.banco) === NOVA, `o banco chegou na ${NOVA}`);
+
+    const e = { ...criarBanco("e", ULTIMA_REAL), rotulo: "empresa-e" };
+    criados.push(e);
+    psql(e.banco, ["-c", "insert into computadores (id, versao_app) values (gen_random_uuid(), '0.9.51')"]);
+    r = rodarBotao("aplicar", [e], pastaVersao);
+    conferir(r.codigo === 0 && versao(e.banco) === NOVA, "com todos os computadores em dia, aplica sem precisar de nada");
+  } finally {
+    rmSync(pastaVersao, { recursive: true, force: true });
+  }
 } catch (erro) {
   falhas++;
   console.error("\nO teste quebrou antes de terminar:");

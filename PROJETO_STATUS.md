@@ -1189,7 +1189,9 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   (ver `0063` logo abaixo) — só comentário, o SQL é o mesmo, e ela já está aplicada em todo banco.
 - `0063` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0062` **com dado
-  plantado** — **ainda NÃO aplicada no Supabase real**): **cada computador diz ao banco em que
+  plantado** — **aplicada em 26/09/2026 pelo botão "Atualizar o banco de todas as empresas"**,
+  ensaio e depois aplicação, Pneus Amigão `0062` → `0063`, e o programa saiu na `v0.9.44`,
+  publicada e liberada no mesmo dia): **cada computador diz ao banco em que
   versão está.** Pedido dela entre as opções (26/09/2026), e a proposta registrada no marco
   anterior: sem isso, "posso rodar uma migration que quebra a versão velha?" só se respondia
   conferindo à mão, como na `0062`. Cria a tabela `computadores` (ver abaixo), a função
@@ -3791,8 +3793,8 @@ Quatro coisas que valem saber:
   mais de um computador, marcar todos, pra loja inteira ficar na mesma versão).
   **Consequência pra quem publica**: até a loja ser marcada, uma versão publicada e não liberada
   chega **só no computador dela** — a loja só recebe depois do Liberar.
-- **Computadores desta empresa** (26/09/2026, migration `0063` — **ainda não aplicada nem
-  publicada**): Configurações → "Computadores desta empresa" (só admin) mostra cada computador que
+- **Computadores desta empresa** (26/09/2026, migration `0063` — aplicada, e o programa na
+  `v0.9.44`, publicada e liberada no mesmo dia; **ainda não vista por ela rodando**): Configurações → "Computadores desta empresa" (só admin) mostra cada computador que
   abre o sistema — apelido ou nome da máquina, **versão**, canal, loja e **quando foi usado pela
   última vez, e por quem**. Existe pra responder "quem ficou pra trás numa atualização?", que até
   aqui só se respondia perguntando na loja. Cinco coisas que valem saber:
@@ -4262,6 +4264,16 @@ Quatro coisas que valem saber:
     pelo botão (Pneus Amigão `0060` → `0062`) — sem esperar o computador da loja abrir a versão
     nova, porque ela conferiu que não havia na loja nenhum operador do único perfil afetado (não
     admin, com Contas a Pagar/Receber e sem Caixa).
+
+  - `v0.9.44`: **a versão de cada computador** — cada computador se registra no banco a cada
+    login, o admin vê a lista em Configurações → "Computadores desta empresa", e o botão de
+    atualizar os bancos passa a esperar os atrasados quando uma migration declara versão mínima.
+    **Na ordem de sempre**: a `0063` entrou pelo botão primeiro (ensaio e aplicação, `0062` →
+    `0063`), e só depois a versão. Publicada via `workflow_dispatch` e **liberada em 26/09/2026,
+    à noite**, a pedido dela ("pode fazer" e, perguntada, "liberar já"). Conferido de fora: o
+    endereço "mais recente" que o app usa responde `version: 0.9.44`, e o instalador baixado de
+    lá tem a impressão digital sha512 **idêntica** à do `latest.yml`. A partir dela, o
+    computador da loja aparece na lista na primeira vez que alguém entrar nele.
 
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
@@ -4869,7 +4881,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`), e tudo saiu na **`v0.9.42`**, publicada e liberada. Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
-| 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. **Sem tag e sem aplicar** — esperando ela. |
+| 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. A `0063` entrou pelo botão (banco na **`0063`**) e o programa saiu na **`v0.9.44`**, publicada e liberada no mesmo dia. |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4906,8 +4918,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**A `0063` (computadores) está no repositório e AINDA NÃO foi aplicada** — é a próxima a entrar
-pelo botão, e pode entrar antes ou depois da versão que a usa (ver a entrada dela na seção 5).
+**Estado em 26/09/2026, noite: `0001` a `0063` estão aplicadas no Supabase real dela.** A `0063`
+(computadores) entrou pelo botão — ensaio e depois aplicação, `0062` → `0063` —, **antes** da
+`v0.9.44`, na ordem de sempre. Foi também a primeira rodada do botão no `ubuntu-24.04` fixado:
+o `psql` 17 instalou normal. Nada pendente de SQL.
 
 **Estado até 26/09/2026, tarde: `0001` a `0062` estão aplicadas no Supabase real dela** — a `0061` (contas só com
 o módulo) e a `0062` (Caixa só com o módulo) entraram em 26/09/2026 pelo botão, **depois** da
@@ -5502,12 +5516,10 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- **A `main` está à frente da `v0.9.43`** (26/09/2026, noite): a leva da versão de cada
-  computador (migration `0063`) e o Ubuntu fixado no backup — ver o marco "LEIA ISTO PRIMEIRO".
-  O `package.json` continua em `0.9.43`: subir pra `0.9.44` é o primeiro passo de publicar, e
-  publicar é decisão dela.
-- `package.json` em `"version": "0.9.43"` — **publicada e liberada em 26/09/2026** (antes da
-  migration, de propósito: ver o marco "LEIA ISTO PRIMEIRO"). Histórico: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
+- `package.json` em `"version": "0.9.44"` — **publicada e liberada em 26/09/2026, à noite** (a
+  versão de cada computador, migration `0063`, que entrou no banco antes). A `main` está em dia
+  com ela. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
+  migration dela, de propósito). E antes: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
   "Importar por foto" desligado) foi publicada E liberada no mesmo dia**, depois de o banco ir pra
@@ -6245,8 +6257,9 @@ Se ela pedir sugestão, as duas respostas honestas são:
 conferir é saber em que versão cada computador está"), escolhida por ela entre as opções quando
 disse "vamos continuar com codagem". Junto, a pendência do Ubuntu (19/10) resolvida.
 
-**Estado: tudo mesclado na `main`, NADA aplicado nem publicado.** O banco dela continua na
-`0062`, e a loja na `v0.9.43`. **Não aplicar nem publicar sem ela pedir.**
+**Estado: TUDO FEITO no mesmo dia.** Ela disse "pode fazer" e, perguntada, escolheu "liberar
+já": a `0063` entrou pelo botão (ensaio → aplicação, banco na **`0063`**) e a **`v0.9.44`** saiu
+publicada e liberada pra todas as lojas. Nada pendente de SQL nem de publicação.
 
 #### O que saiu, em uma linha cada
 
@@ -6285,18 +6298,25 @@ máquina que aparece é o que o Windows dá).
 
 #### O que falta, e é dela
 
-1. **Aplicar a `0063`** pelo botão (ensaiar → aplicar). Qualquer ordem com a versão é segura.
-2. **Publicar a `0.9.44`** (subir o `package.json`, e o fluxo de sempre da seção 9) e decidir se
-   libera direto ou passa antes pelo computador dela (que está no canal de teste).
-3. **Depois de a loja abrir a versão nova**: conferir em Configurações → "Computadores desta
-   empresa" que o computador da loja apareceu — e dar um apelido pra ele ("Balcão").
-4. O resto continua como no marco abaixo (alíquota em 1º/10, conferir na loja o que a `v0.9.43`
+1. ~~Aplicar a `0063`~~ e ~~publicar e liberar a `0.9.44`~~ — feitos em 26/09/2026, à noite.
+2. **Depois de a loja abrir a versão nova** (o programa atualiza quando é fechado e aberto de
+   novo): conferir em Configurações → "Computadores desta empresa" que o computador da loja
+   apareceu, com `0.9.44` — e dar um apelido pra ele ("Balcão"). **É o único teste de verdade
+   desta leva**: o registro fala com o Supabase e com o Windows, e nenhum dos dois dá pra
+   conferir daqui. **Se o computador NÃO aparecer depois de alguém entrar nele**, conferir nele:
+   (a) o canto inferior direito diz `0.9.44`? (b) alguém fez login DEPOIS de o programa
+   atualizar? (c) aparece a faixa de banco desatualizado? **Não adianta pedir o `erros.log`**:
+   a falha do registro vai só pro console (`console.warn` em `lib/computadores.ts`), que no app
+   instalado ninguém vê — é o preço de ele nunca atrapalhar o login. Só a falha de criar o
+   `computador.json` (no processo principal) vai pro `erros.log`. Se isso virar problema de
+   verdade, o conserto pequeno é mandar essa falha também pro `erros.log`.
+3. O resto continua como no marco abaixo (alíquota em 1º/10, conferir na loja o que a `v0.9.43`
    e a `v0.9.42` trouxeram, emitir e cancelar uma nota pelo porteiro).
 
 #### Por onde a próxima sessão começa
 
-Perguntar se ela aplicou a `0063` e publicou a `0.9.44`. Se sim, conferir com ela a lista de
-computadores. Se ela quiser seguir o guia depois disso, as opções de 26/09 continuam de pé:
+Perguntar se o computador da loja já apareceu em Configurações → "Computadores desta empresa"
+(e o dela, com o canal de teste). Se ela quiser seguir o guia depois disso, as opções de 26/09 continuam de pé:
 **venda de balcão sem OS** (`FN-09`, P0 — com a decisão "cliente opcional na OS ou cliente fixo
 'Consumidor'"), **ficha do veículo** (`FN-04`, sem migration) e **permissão nas Ordens de
 Serviço** (`TR-04.1`, lote 4 — ganho menor que os anteriores, porque quase todo módulo lê as OS).

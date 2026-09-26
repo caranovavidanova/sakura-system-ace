@@ -41,7 +41,7 @@ export async function receberConta({
   formaPagamento,
   operadorId,
 }: ReceberContaParams): Promise<void> {
-  const movimento = await criarMovimentoCaixa(
+  const movimentoId = await criarMovimentoCaixa(
     {
       ordem_servico_id: conta.ordem_servico_id,
       tipo: "entrada",
@@ -58,7 +58,7 @@ export async function receberConta({
     .update({
       status: "recebido",
       data_recebimento: new Date().toISOString(),
-      caixa_movimento_id: movimento.id,
+      caixa_movimento_id: movimentoId,
       operador_id: operadorId,
     })
     .eq("id", conta.id);

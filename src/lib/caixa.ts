@@ -31,23 +31,48 @@ export async function listarMovimentosCaixaPorOrdem(
   return data as MovimentoCaixa[];
 }
 
+/**
+ * Lança no Caixa e devolve o id do lançamento.
+ *
+ * O id é gerado AQUI, antes de gravar, e o insert não pede a linha de volta
+ * — de propósito (migration 0062). Pedir de volta (`.select()`) faz o
+ * Postgres passar também pela policy de LEITURA, e quem só tem Contas a
+ * Pagar (ou a Receber) não "enxerga" o lançamento que acabou de criar: ele
+ * só fica ligado à conta no passo seguinte. Com o `.select()`, pagar uma
+ * conta daria erro de permissão pra essa pessoa.
+ */
 export async function criarMovimentoCaixa(
   movimento: NovoMovimentoCaixa,
   lojaId: string,
-): Promise<MovimentoCaixa> {
-  const { data, error } = await supabase
+): Promise<string> {
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("caixa_movimentos")
-    .insert({ ...movimento, loja_id: lojaId })
-    .select()
-    .single();
+    .insert({ ...movimento, id, loja_id: lojaId });
 
   if (error) throw error;
-  return data as MovimentoCaixa;
+  return id;
 }
 
+/**
+ * Apaga um lançamento — e confere que apagou mesmo.
+ *
+ * Sem a conferência, um `delete` barrado pela RLS "roda sem erro" e apaga
+ * zero linhas (§6 item 15), deixando o lançamento no Caixa enquanto a tela
+ * diz que deu certo.
+ */
 export async function excluirMovimentoCaixa(id: string): Promise<void> {
-  const { error } = await supabase.from("caixa_movimentos").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("caixa_movimentos")
+    .delete()
+    .eq("id", id)
+    .select("id");
   if (error) throw error;
+  if ((data?.length ?? 0) === 0) {
+    throw new Error(
+      "O lançamento do Caixa não foi apagado — confira se você tem permissão pra isso, ou peça a um administrador.",
+    );
+  }
 }
 
 /**
@@ -57,9 +82,10 @@ export async function excluirMovimentoCaixa(id: string): Promise<void> {
  * policy cobrindo o comando não dá erro nenhum — ela filtra a zero linhas, e
  * um `.update()` que "roda sem erro" sem mudar nada é indistinguível de ter
  * dado certo (PROJETO_STATUS.md, seção 6, item 15: foi exatamente assim que o
- * botão de excluir loja passou a não fazer nada, em silêncio). Aqui a policy
- * de `caixa_movimentos` é `for all`, então o update é coberto — a checagem
- * existe pro dia em que alguém mexer nessa policy.
+ * botão de excluir loja passou a não fazer nada, em silêncio). Desde a
+ * migration 0062, alterar um lançamento exige o módulo Caixa no banco: quem
+ * não tem cairia a zero linhas, e é esta checagem que transforma isso num
+ * aviso em vez de um "salvo" que não salvou.
  */
 export async function definirCategoriaDosMovimentos(
   ids: string[],

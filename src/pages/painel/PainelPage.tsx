@@ -20,6 +20,7 @@ import {
   janelaDoMesAteODia,
   mesmaJanelaNoMesAnterior,
   metricasDoPeriodo,
+  MODULOS_QUE_LEEM_O_CAIXA,
   moduloQueFaltaAoCartao,
   rotuloDeIdade,
   valoresPorCartao,
@@ -100,6 +101,10 @@ export function PainelPage() {
   // Quem não tem Contas a Pagar não recebe conta nenhuma do banco (migration
   // 0061) — então nem pergunta, e o cartão diz "sem acesso" em vez de R$ 0,00.
   const podeVerContas = temPermissao(operador, "contas_pagar");
+  // Mesma coisa pro Caixa (migration 0062) — e aqui com um cuidado a mais:
+  // quem tem só OS recebe do banco um PEDAÇO do Caixa (os lançamentos de OS).
+  // Pedir e somar esse pedaço daria "Vendas mês" errada com cara de certa.
+  const podeVerCaixa = MODULOS_QUE_LEEM_O_CAIXA.some((m) => temPermissao(operador, m));
 
   const [mesVisivel, setMesVisivel] = useState(() => ({
     ano: hoje.getFullYear(),
@@ -123,7 +128,7 @@ export function PainelPage() {
           servicosCarregados,
           fiscalCarregada,
         ] = await Promise.all([
-          listarMovimentosCaixa(lojaAtual.id),
+          podeVerCaixa ? listarMovimentosCaixa(lojaAtual.id) : Promise.resolve([]),
           listarOrdens(lojaAtual.id),
           listarClientes(),
           podeVerContas ? listarContasPagar(lojaAtual.id) : Promise.resolve([]),
@@ -148,7 +153,7 @@ export function PainelPage() {
       }
     }
     carregar();
-  }, [lojaAtual, podeVerContas]);
+  }, [lojaAtual, podeVerContas, podeVerCaixa]);
 
   const avisoAliquota = avisoAliquotaCompetencia(configFiscal, hoje);
 
@@ -297,14 +302,18 @@ export function PainelPage() {
             ))}
           </div>
 
-          <div className="flex justify-center">
-            <Link
-              to="/relatorios"
-              className="rounded-full bg-white/10 px-5 py-2 text-rotulo font-medium text-sakura-pink hover:bg-white/20"
-            >
-              Ver relações completas →
-            </Link>
-          </div>
+          {/* Só pra quem pode abrir Relações — pros outros, o link levava a
+              uma tela que a permissão não deixa abrir. */}
+          {temPermissao(operador, "relatorios") && (
+            <div className="flex justify-center">
+              <Link
+                to="/relatorios"
+                className="rounded-full bg-white/10 px-5 py-2 text-rotulo font-medium text-sakura-pink hover:bg-white/20"
+              >
+                Ver relações completas →
+              </Link>
+            </div>
+          )}
 
           <div className="grid grid-cols-[2fr_1fr] gap-4">
             <section className="sakura-card p-4">

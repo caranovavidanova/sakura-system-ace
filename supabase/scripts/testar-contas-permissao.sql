@@ -105,16 +105,26 @@ begin
     if sqlerrm not like '%row-level security%' then raise; end if;  -- é a RLS, não falta de GRANT
   end;
 
-  with s as (update contas_pagar set valor = 0.01 returning 1)
-  select count(*) into quantas from s;
+  -- 4 e 5: comando SEM filtro, contado com `get diagnostics`. Um filtro
+  -- (ou um `returning` que cite coluna) faria o banco aplicar também a regra
+  -- de LEITURA, e o teste passaria pela regra errada (§6 item 74). As
+  -- versões "b" conferem a outra tabela de contas, que faltava.
+  update contas_pagar set valor = 0.01; get diagnostics quantas = row_count;
   if quantas <> 0 then
     raise exception 'FALHOU (4): só-Caixa alterou % conta(s) a pagar', quantas;
   end if;
+  update contas_receber set valor = 0.01; get diagnostics quantas = row_count;
+  if quantas <> 0 then
+    raise exception 'FALHOU (4b): só-Caixa alterou % conta(s) a receber', quantas;
+  end if;
 
-  with s as (delete from contas_receber returning 1)
-  select count(*) into quantas from s;
+  delete from contas_receber; get diagnostics quantas = row_count;
   if quantas <> 0 then
     raise exception 'FALHOU (5): só-Caixa apagou % conta(s) a receber', quantas;
+  end if;
+  delete from contas_pagar; get diagnostics quantas = row_count;
+  if quantas <> 0 then
+    raise exception 'FALHOU (5b): só-Caixa apagou % conta(s) a pagar', quantas;
   end if;
 
   -- ===================================================================
@@ -165,10 +175,13 @@ begin
   end if;
 
   -- 10. nem a marcar como recebida
-  with s as (update contas_receber set status = 'recebido' returning 1)
-  select count(*) into quantas from s;
+  update contas_receber set status = 'recebido'; get diagnostics quantas = row_count;
   if quantas <> 0 then
     raise exception 'FALHOU (10): quem só fatura OS marcou % conta(s) como recebida', quantas;
+  end if;
+  delete from contas_receber; get diagnostics quantas = row_count;
+  if quantas <> 0 then
+    raise exception 'FALHOU (10b): quem só fatura OS apagou % conta(s) a receber', quantas;
   end if;
 
   -- 11. e Contas a Pagar continua fechada pra ele
@@ -197,10 +210,13 @@ begin
   end if;
 
   -- 14. ler não dá direito a receber
-  with s as (update contas_receber set status = 'recebido' returning 1)
-  select count(*) into quantas from s;
+  update contas_receber set status = 'recebido'; get diagnostics quantas = row_count;
   if quantas <> 0 then
     raise exception 'FALHOU (14): Funcionários marcou % conta(s) como recebida', quantas;
+  end if;
+  delete from contas_receber; get diagnostics quantas = row_count;
+  if quantas <> 0 then
+    raise exception 'FALHOU (14b): Funcionários apagou % conta(s) a receber', quantas;
   end if;
 
   -- 15. nem a criar

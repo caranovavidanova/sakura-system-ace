@@ -83,8 +83,8 @@ ordens_servico_itens,select,2,1,1,0,0,não tem loja_id próprio: herda pela OS
 ordens_servico_itens,insert,1,1,1,0,0,
 ordens_servico_itens,update,2,1,1,0,0,
 ordens_servico_itens,delete,2,1,1,0,0,
-caixa_movimentos,select,2,1,1,0,0,
-caixa_movimentos,insert,1,1,1,0,0,
+caixa_movimentos,select,2,1,1,0,0,Caixa (0062): exige a loja E o módulo — ou Relações (lê tudo), ou as portas estreitas de OS/contas, testadas em testar-caixa-permissao.sql
+caixa_movimentos,insert,1,1,1,0,0,o balconista deste cenário TEM o Caixa: por isso nada muda aqui
 caixa_movimentos,update,2,1,1,0,0,
 caixa_movimentos,delete,2,1,1,0,0,
 fechamentos_caixa,select,2,1,1,0,0,fechamento de caixa (TR-06.4): exige a loja E o módulo Caixa

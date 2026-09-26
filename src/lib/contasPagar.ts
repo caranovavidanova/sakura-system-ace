@@ -71,7 +71,7 @@ export async function pagarConta({
   formaPagamento,
   operadorId,
 }: PagarContaParams): Promise<void> {
-  const movimento = await criarMovimentoCaixa(
+  const movimentoId = await criarMovimentoCaixa(
     {
       ordem_servico_id: null,
       tipo: "saida",
@@ -88,7 +88,7 @@ export async function pagarConta({
     .update({
       status: "paga",
       data_pagamento: new Date().toISOString(),
-      caixa_movimento_id: movimento.id,
+      caixa_movimento_id: movimentoId,
       operador_id: operadorId,
     })
     .eq("id", conta.id);
@@ -113,7 +113,18 @@ export async function pagarConta({
 
 // Reverte um pagamento feito por engano: volta a conta pra pendente e
 // remove a Saída que tinha sido lançada automaticamente no Caixa.
+//
+// A ORDEM importa (migration 0062): o lançamento é apagado ANTES de a conta
+// ser desligada dele. Quem só tem Contas a Pagar enxerga (e pode apagar) no
+// Caixa apenas o lançamento que está ligado a uma conta — desligando
+// primeiro, o `delete` seguinte apagaria zero linhas e a saída ficaria órfã
+// no Caixa. A chave estrangeira é `on delete set null`, então apagar o
+// lançamento já desliga a conta sozinho.
 export async function desfazerPagamento(conta: ContaPagar): Promise<void> {
+  if (conta.caixa_movimento_id) {
+    await excluirMovimentoCaixa(conta.caixa_movimento_id);
+  }
+
   const { error } = await supabase
     .from("contas_pagar")
     .update({
@@ -124,8 +135,4 @@ export async function desfazerPagamento(conta: ContaPagar): Promise<void> {
     })
     .eq("id", conta.id);
   if (error) throw error;
-
-  if (conta.caixa_movimento_id) {
-    await excluirMovimentoCaixa(conta.caixa_movimento_id);
-  }
 }

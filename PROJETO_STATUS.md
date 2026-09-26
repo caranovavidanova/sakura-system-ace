@@ -4153,6 +4153,17 @@ Quatro coisas que valem saber:
     `latest.yml` e instalador do endereço "mais recente" que o app usa: `version: 0.9.42`, e a
     impressão digital sha512 do instalador baixado **idêntica** à anunciada.
 
+  - `v0.9.43`: **Contas a Pagar, Contas a Receber e o Caixa só com o módulo** (`TR-04.1`, lotes
+    2 e 3) — do lado do programa: o Caixa gravado sem pedir a linha de volta, "desfazer
+    pagamento" apagando a saída antes de voltar a conta pra pendente, e os cartões do Início com
+    "—" pra quem não tem o módulo. **É a primeira versão que sai ANTES da migration dela**
+    (`0061`+`0062`), porque a `0062` quebraria a `v0.9.42` pra quem paga conta sem ter o Caixa
+    (ver a entrada da `0062` na seção 5). Publicada via `workflow_dispatch` e **liberada em
+    26/09/2026**, a pedido dela ("rodar e publicar o que ficou pronto"): o Liberar conferiu a
+    impressão digital do instalador contra o `latest.yml` e confirmou de fora que o GitHub
+    responde `v0.9.43` pra todas as lojas. O ensaio das duas migrations no banco real já tinha
+    passado antes ("✅ passaria", Pneus Amigão em `0060`).
+
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
   "Liberar versão para todas as lojas" (ver seção 9). Uma versão publicada e nunca liberada fica
@@ -4784,11 +4795,11 @@ ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
 **Estado hoje: `0001` a `0060` estão aplicadas no Supabase real dela; a `0061` (contas só com o
-módulo) e a `0062` (Caixa só com o módulo), as duas de 26/09/2026, estão no repositório e AINDA
-NÃO FORAM RODADAS** — rodar pelo botão "Atualizar o banco de todas as empresas" (ensaiar, depois
-aplicar: o botão roda as duas de uma vez, em ordem) — **mas só DEPOIS de a `0.9.43` chegar nos
-computadores**: a `0062` inverte a ordem de sempre (ver a entrada dela na seção 5 e o marco
-"LEIA ISTO PRIMEIRO"). As três últimas
+módulo) e a `0062` (Caixa só com o módulo), as duas de 26/09/2026, já passaram no ENSAIO do
+botão ("✅ passaria") mas AINDA NÃO FORAM APLICADAS.** A `0.9.43` já foi publicada e liberada
+(26/09/2026); falta só ela confirmar que o computador da loja abriu a `0.9.43` e então rodar o
+botão com `aplicar` — a `0062` inverte a ordem de sempre (ver a entrada dela na seção 5 e o
+marco "LEIA ISTO PRIMEIRO"). As três últimas
 (`0058` fechamento de caixa, `0059` comissão paga, `0060` travas de dado) foram as primeiras a
 entrar **pelo botão "Atualizar o banco de todas as empresas"** (seção 9), em 25/09/2026 — ensaio
 e depois aplicação, sem colar nada no SQL Editor. É esse o jeito de rodar migration daqui pra
@@ -5366,13 +5377,14 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
-- `package.json` em `"version": "0.9.42"`. A `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
+- `package.json` em `"version": "0.9.43"` — **publicada e liberada em 26/09/2026** (antes da
+  migration, de propósito: ver o marco "LEIA ISTO PRIMEIRO"). Histórico: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
   "Importar por foto" desligado) foi publicada E liberada no mesmo dia**, depois de o banco ir pra
-  **`0060`** pelo botão novo. **Em 26/09/2026 a `main` passou a estar DUAS levas à frente da
-  `v0.9.42`**: as migrations `0061` (contas só com o módulo) e `0062` (Caixa só com o módulo),
-  ainda não rodadas nem publicadas.
+  **`0060`** pelo botão novo. **Em 26/09/2026 saiu a `v0.9.43`** (o programa das migrations `0061`,
+  contas só com o módulo, e `0062`, Caixa só com o módulo), publicada e liberada — as duas
+  migrations passaram no ensaio e esperam o `aplicar`.
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -6107,16 +6119,17 @@ quem não tem o módulo; e Relações continua lendo o Caixa inteiro. Ela també
 essas outras coisas depois" sobre as pendências do marco anterior — ver "O que ficou pra
 depois", logo abaixo.
 
-**Estado: `main` DUAS levas à frente da `v0.9.42`. A `0061` e a `0062` NÃO foram rodadas e NÃO
-há tag.**
+**Estado: a `v0.9.43` foi PUBLICADA E LIBERADA em 26/09/2026, e o ENSAIO da `0061`+`0062` no
+banco real passou ("✅ passaria", Pneus Amigão em `0060`). Falta só o passo 3 abaixo — aplicar —,
+que espera ela confirmar que o computador da loja abriu a `0.9.43`.**
 
-#### ⚠️ A ordem, quando ela for publicar — desta vez é AO CONTRÁRIO do de sempre
+#### ⚠️ A ordem — desta vez é AO CONTRÁRIO do de sempre
 
-1. **Primeiro a versão** (`0.9.43`): publicar **e liberar** (o computador da loja ainda está no
-   canal normal).
-2. **Esperar os computadores da loja abrirem a versão nova** (fechar e abrir o programa uma vez).
-3. **Depois o banco**: botão "Atualizar o banco de todas as empresas" → `ensaiar` → conferir
-   "✅ passaria" → `aplicar`. O botão roda a `0061` e a `0062` juntas, em ordem.
+1. ✅ **Primeiro a versão** (`0.9.43`): publicada **e liberada** em 26/09/2026.
+2. ⏳ **Esperar os computadores da loja abrirem a versão nova** (fechar e abrir o programa uma
+   vez; a versão aparece no canto inferior direito). **É isto que falta, e é dela.**
+3. **Depois o banco**: botão "Atualizar o banco de todas as empresas" → ~~`ensaiar`~~ (feito,
+   "✅ passaria") → `aplicar`. O botão roda a `0061` e a `0062` juntas, em ordem.
 
 **Por quê** (medido num Postgres local, não suposto): a `v0.9.42` grava no Caixa pedindo a linha
 de volta. Com a `0062` rodada e a `v0.9.42` ainda instalada, **quem não tem o Caixa e paga ou
@@ -6189,8 +6202,9 @@ Clientes (é o que mais tela lê, e é o dado pessoal que mais importa proteger)
 #### Por onde a próxima sessão começa
 
 1. Lembrar do **2FA** (prazo 03/10).
-2. Perguntar se é pra **publicar a `0.9.43` e depois rodar a `0061`+`0062`** — nessa ordem, e
-   não fazer sozinho.
+2. Perguntar se o computador da loja **já mostra a `0.9.43`**. Se sim, rodar o botão "Atualizar
+   o banco de todas as empresas" com `aplicar` (o ensaio já passou) e conferir que o banco ficou
+   na `0062`. **Não aplicar antes dessa confirmação.**
 3. Se ela quiser seguir o guia: o próximo lote do `TR-04.1` (Ordens de Serviço), apresentando
    antes as duas decisões acima.
 

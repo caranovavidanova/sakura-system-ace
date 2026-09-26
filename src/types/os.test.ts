@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nomeOrdem, totalOrdem, totalPorTipo } from "./os";
+import { ehVendaBalcao, nomeOrdem, totalOrdem, totalPorTipo } from "./os";
 import type { ItemOS } from "./os";
 
 function item(sobrescreve: Partial<ItemOS>): ItemOS {
@@ -48,5 +48,22 @@ describe("totalPorTipo", () => {
 describe("nomeOrdem", () => {
   it("monta o nome curto da OS a partir do número sequencial", () => {
     expect(nomeOrdem(12)).toBe("OS 12");
+  });
+
+  it("venda de balcão usa o mesmo número, só troca a palavra", () => {
+    expect(nomeOrdem(17, "venda_balcao")).toBe("Venda 17");
+    expect(nomeOrdem(17, "os")).toBe("OS 17");
+    // Banco anterior à migration 0064 não manda o tipo: é OS.
+    expect(nomeOrdem(17, undefined)).toBe("OS 17");
+    expect(nomeOrdem(17, null)).toBe("OS 17");
+  });
+});
+
+describe("ehVendaBalcao", () => {
+  it("só é venda quando o tipo diz — ausente (banco antigo) é OS", () => {
+    expect(ehVendaBalcao({ tipo: "venda_balcao" })).toBe(true);
+    expect(ehVendaBalcao({ tipo: "os" })).toBe(false);
+    expect(ehVendaBalcao({})).toBe(false);
+    expect(ehVendaBalcao(null)).toBe(false);
   });
 });

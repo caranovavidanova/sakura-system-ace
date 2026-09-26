@@ -19,13 +19,26 @@ import {
   somarLinhasPagamento,
   type FaturamentoFormValues,
 } from "@/schemas/faturamento";
+import { ehConsumidor } from "@/types/cliente";
 import type { JurosParcela } from "@/types/configuracao";
-import { FORMA_PAGAMENTO_LABEL, nomeOrdem, totalOrdem } from "@/types/os";
+import { FORMA_PAGAMENTO_LABEL, ehVendaBalcao, nomeOrdem, totalOrdem } from "@/types/os";
 import type { OrdemServico } from "@/types/os";
 
+// Só o que o pagamento precisa saber da ordem — é o que deixa a venda de
+// balcão (item FN-09) usar este mesmo cartão ANTES de a venda existir no
+// banco, sem inventar uma OS inteira de mentira.
+export type OrdemParaFaturar = Pick<
+  OrdemServico,
+  "numero" | "tipo" | "cliente_id" | "cliente" | "itens"
+>;
+
 interface FaturamentoCardProps {
-  ordem: OrdemServico;
+  ordem: OrdemParaFaturar;
   jurosParcelas: JurosParcela[];
+  /** Troca o "Faturar OS 12 de Fulano" do topo (a venda nova ainda não tem número). */
+  titulo?: string;
+  /** Texto do botão de confirmar. */
+  rotuloConfirmar?: string;
   onConfirmar: (
     pagamentos: PagamentoOrdem[],
     parcelas: number,
@@ -46,11 +59,17 @@ function formatarMoeda(valor: number): string {
 export function FaturamentoCard({
   ordem,
   jurosParcelas,
+  titulo,
+  rotuloConfirmar = "Confirmar faturamento",
   onConfirmar,
   onCancelar,
 }: FaturamentoCardProps) {
   const total = totalOrdem(ordem.itens ?? []);
   const [erro, setErro] = useState<string | null>(null);
+  const ehVenda = ehVendaBalcao(ordem);
+  // Venda no Consumidor não fica "a receber": não há de quem cobrar, e a
+  // conta nasceria no nome de "ninguém" (migration 0064).
+  const permiteAReceber = !ehConsumidor(ordem.cliente_id);
 
   const {
     register,
@@ -114,18 +133,22 @@ export function FaturamentoCard({
 
     if (
       !confirm(
-        "Confirmar o faturamento? Depois disso não dá mais pra acrescentar peça ou serviço " +
-          "nessa OS — se esquecer algo, só numa OS nova.",
+        ehVenda
+          ? "Confirmar a venda? Ela baixa o estoque e lança o pagamento — depois disso as " +
+              "peças dela não mudam mais."
+          : "Confirmar o faturamento? Depois disso não dá mais pra acrescentar peça ou serviço " +
+              "nessa OS — se esquecer algo, só numa OS nova.",
       )
     ) {
       return;
     }
 
+    const recebidoAgora = valores.recebidoAgora || !permiteAReceber;
     try {
       await onConfirmar(
-        paraPagamentos(valores, valorCobrado, jurosParcelas),
-        parcelasDaOrdem(valores),
-        valores.recebidoAgora ? null : valores.previsaoRecebimento,
+        paraPagamentos({ ...valores, recebidoAgora }, valorCobrado, jurosParcelas),
+        parcelasDaOrdem({ ...valores, recebidoAgora }),
+        recebidoAgora ? null : valores.previsaoRecebimento,
       );
     } catch (err) {
       console.error("Erro ao faturar ordem de serviço:", err);
@@ -139,7 +162,8 @@ export function FaturamentoCard({
         <BotaoVoltar onClick={onCancelar} />
         <div>
           <h3 className="text-corpo font-semibold text-sakura-purple-dark">
-            Faturar {nomeOrdem(ordem.numero)} de {ordem.cliente?.nome ?? "cliente"}
+            {titulo ??
+              `Faturar ${nomeOrdem(ordem.numero, ordem.tipo)} de ${ordem.cliente?.nome ?? "cliente"}`}
           </h3>
           <p className="text-rotulo text-sakura-muted">Total dos itens: {formatarMoeda(total)}</p>
         </div>
@@ -147,51 +171,58 @@ export function FaturamentoCard({
 
       {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
 
-      <div className="rounded-xl border border-sakura-gray/30 p-4">
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-corpo">
-            <input
-              type="radio"
-              name="recebimento"
-              checked={recebidoAgora}
-              onChange={() => setValue("recebidoAgora", true)}
-              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
-            />
-            <span className="text-sakura-purple-dark/80">Recebido agora</span>
-          </label>
-          <label className="flex items-center gap-2 text-corpo">
-            <input
-              type="radio"
-              name="recebimento"
-              checked={!recebidoAgora}
-              onChange={() => setValue("recebidoAgora", false)}
-              className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
-            />
-            <span className="text-sakura-purple-dark/80">A receber depois</span>
-          </label>
-        </div>
-
-        {recebidoAgora ? (
-          <p className="mt-2 text-rotulo text-sakura-muted">
-            Lança o valor como Entrada no Caixa agora mesmo.
-          </p>
-        ) : (
-          <>
-            <p className="mt-2 text-rotulo text-sakura-muted">
-              Não lança nada no Caixa ainda — cria uma pendência em "Contas a Receber", que só vira
-              Entrada quando você marcar como recebido de verdade.
-            </p>
-            <label className="mt-2 flex items-center gap-2 text-corpo">
-              <span className="text-sakura-purple-dark/80">Previsão de recebimento</span>
+      {!permiteAReceber ? (
+        <p className="text-rotulo text-sakura-muted">
+          Venda no Consumidor é recebida na hora. Pra deixar a receber depois, escolha quem está
+          comprando.
+        </p>
+      ) : (
+        <div className="rounded-xl border border-sakura-gray/30 p-4">
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-corpo">
               <input
-                type="date"
-                {...register("previsaoRecebimento")}
-                className="rounded-lg border border-sakura-borda-campo px-3 py-1.5 focus:border-sakura-purple"
+                type="radio"
+                name="recebimento"
+                checked={recebidoAgora}
+                onChange={() => setValue("recebidoAgora", true)}
+                className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
               />
+              <span className="text-sakura-purple-dark/80">Recebido agora</span>
             </label>
-          </>
-        )}
-      </div>
+            <label className="flex items-center gap-2 text-corpo">
+              <input
+                type="radio"
+                name="recebimento"
+                checked={!recebidoAgora}
+                onChange={() => setValue("recebidoAgora", false)}
+                className="h-4 w-4 text-sakura-purple focus:ring-sakura-purple"
+              />
+              <span className="text-sakura-purple-dark/80">A receber depois</span>
+            </label>
+          </div>
+
+          {recebidoAgora ? (
+            <p className="mt-2 text-rotulo text-sakura-muted">
+              Lança o valor como Entrada no Caixa agora mesmo.
+            </p>
+          ) : (
+            <>
+              <p className="mt-2 text-rotulo text-sakura-muted">
+                Não lança nada no Caixa ainda — cria uma pendência em "Contas a Receber", que só vira
+                Entrada quando você marcar como recebido de verdade.
+              </p>
+              <label className="mt-2 flex items-center gap-2 text-corpo">
+                <span className="text-sakura-purple-dark/80">Previsão de recebimento</span>
+                <input
+                  type="date"
+                  {...register("previsaoRecebimento")}
+                  className="rounded-lg border border-sakura-borda-campo px-3 py-1.5 focus:border-sakura-purple"
+                />
+              </label>
+            </>
+          )}
+        </div>
+      )}
 
       {recebidoAgora && (
         <label className="flex items-center gap-2 text-corpo">
@@ -406,7 +437,7 @@ export function FaturamentoCard({
           disabled={isSubmitting || (recebidoAgora && dividirPagamento && !linhasBatem)}
           className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? "Faturando..." : "Confirmar faturamento"}
+          {isSubmitting ? "Faturando..." : rotuloConfirmar}
         </button>
       </div>
     </form>

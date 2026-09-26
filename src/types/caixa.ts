@@ -1,4 +1,4 @@
-import type { ItemOS } from "@/types/os";
+import type { ItemOS, TipoOrdem } from "@/types/os";
 
 export type TipoCaixa = "entrada" | "saida";
 
@@ -15,6 +15,8 @@ export interface MovimentoCaixa {
   ordem_servico?: {
     id: string;
     numero: number;
+    /** Ausente em banco anterior à migration 0064 (aí é sempre OS). */
+    tipo?: TipoOrdem;
     cliente: { nome: string } | null;
     itens: ItemOS[];
   } | null;

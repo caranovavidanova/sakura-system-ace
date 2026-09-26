@@ -27,8 +27,14 @@ import {
   editarItemOrdem,
   faturarOrdem,
   listarOrdens,
+  registrarVendaBalcao,
+  VendaSemFaturamentoError,
 } from "@/lib/ordensServico";
-import type { PagamentoOrdem } from "@/lib/ordensServico";
+import type {
+  DadosVendaBalcao,
+  PagamentoDaVenda,
+  PagamentoOrdem,
+} from "@/lib/ordensServico";
 import { listarArquivosDasOrdens } from "@/lib/notasFiscais";
 import { listarPecas } from "@/lib/pecas";
 import { listarServicos } from "@/lib/servicos";
@@ -47,6 +53,7 @@ import type {
 } from "@/types/os";
 import {
   STATUS_COM_FECHAMENTO,
+  ehVendaBalcao,
   nomeOrdem,
   totalOrdem,
   totalPorTipo,
@@ -55,9 +62,12 @@ import type { NotaFiscalArquivo } from "@/types/notaFiscal";
 import { agruparNotasPorOrdem, temAlgumaNotaValida } from "@/schemas/situacaoFiscal";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
+import { EmitirNotaFiscalModal } from "./EmitirNotaFiscalModal";
 import { FaturamentoCard } from "./FaturamentoCard";
 import { StatusOrdem } from "./StatusOrdemBadge";
 import { OrdemServicoForm } from "./OrdemServicoForm";
+import { VendaBalcaoDetalhe } from "./VendaBalcaoDetalhe";
+import { VendaBalcaoForm } from "./VendaBalcaoForm";
 
 function primeiroDiaDoMes(): string {
   const hoje = new Date();
@@ -109,6 +119,16 @@ export function OrdensServicoPage() {
   const [ordemEmEdicao, setOrdemEmEdicao] = useState<OrdemServico | null>(null);
   const [abaInicialEdicao, setAbaInicialEdicao] = useState<"detalhes" | "fechamento">("detalhes");
   const [ordemFaturando, setOrdemFaturando] = useState<OrdemServico | null>(null);
+  // Venda de balcão (item FN-09): o formulário de uma venda nova, uma venda
+  // já registrada aberta pela lista, e a venda que acabou de sair e está
+  // esperando a NFC-e. As três são estados à parte da OS de propósito — a
+  // venda não abre no formulário da OS (não tem veículo, KM nem "em
+  // andamento", e os itens dela não mudam depois de registrada).
+  const [mostrarVenda, setMostrarVenda] = useState(false);
+  const [vendaAberta, setVendaAberta] = useState<OrdemServico | null>(null);
+  const [vendaParaNota, setVendaParaNota] = useState<OrdemServico | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [lista, setLista] = useState<"os" | "vendas">("os");
   const [dataInicio, setDataInicio] = useState(primeiroDiaDoMes());
   const [dataFim, setDataFim] = useState(hojeStr());
   const [busca, setBusca] = useState("");
@@ -147,6 +167,16 @@ export function OrdensServicoPage() {
       return dia >= dataInicio && dia <= dataFim;
     });
   }, [ordens, busca, dataInicio, dataFim]);
+
+  // As duas abas da lista (item FN-09): a venda de balcão fica separada das
+  // OS, senão a lista de "carros atendidos" se enche de venda de palheta.
+  const quantasVendas = ordensFiltradas.filter(ehVendaBalcao).length;
+  const quantasOs = ordensFiltradas.length - quantasVendas;
+  const ordensDaLista = ordensFiltradas.filter(
+    (ordem) => ehVendaBalcao(ordem) === (lista === "vendas"),
+  );
+  const nadaAberto =
+    !mostrarFormulario && !ordemEmEdicao && !mostrarVenda && !vendaAberta && !ordemFaturando;
 
   // Devolve as ordens recarregadas (ou null se nem chegou a consultar): quem
   // corrige um item precisa da versão nova da OS que está aberta na tela, e
@@ -198,7 +228,12 @@ export function OrdensServicoPage() {
       const abrirOrdemId = (location.state as { abrirOrdemId?: string } | null)?.abrirOrdemId;
       if (abrirOrdemId) {
         const ordemParaAbrir = ordensCarregadas.find((o) => o.id === abrirOrdemId);
-        if (ordemParaAbrir) setOrdemEmEdicao(ordemParaAbrir);
+        if (ordemParaAbrir && ehVendaBalcao(ordemParaAbrir)) {
+          setLista("vendas");
+          setVendaAberta(ordemParaAbrir);
+        } else if (ordemParaAbrir) {
+          setOrdemEmEdicao(ordemParaAbrir);
+        }
         navigate(location.pathname, { replace: true, state: null });
       }
 
@@ -220,7 +255,7 @@ export function OrdensServicoPage() {
   // Recarrega a cada abertura do formulário (em vez de guardar pra sempre):
   // lançar peça numa OS mexe no estoque, então um saldo guardado da vez
   // anterior mostraria número velho na próxima abertura.
-  const formularioAberto = mostrarFormulario || !!ordemEmEdicao;
+  const formularioAberto = mostrarFormulario || !!ordemEmEdicao || mostrarVenda;
   useEffect(() => {
     if (!formularioAberto || !isSupabaseConfigured || !lojaAtual) {
       setMovimentos(null);
@@ -320,6 +355,54 @@ export function OrdensServicoPage() {
     return criado.id;
   }
 
+  // A venda de balcão grava e fatura num passo só. Duas saídas de erro, e
+  // elas pedem reações opostas (ver `registrarVendaBalcao`):
+  //   • qualquer erro comum volta pra tela de pagamento, que o mostra — a
+  //     venda foi desfeita e tentar de novo é seguro;
+  //   • `VendaSemFaturamentoError` NÃO volta: a venda existe e já baixou o
+  //     estoque, e um segundo "Confirmar venda" registraria outra. Então o
+  //     formulário fecha, a venda aparece na lista, e o erro fica no topo da
+  //     página dizendo pra faturar a que já existe.
+  async function handleRegistrarVenda(
+    venda: DadosVendaBalcao,
+    itens: NovoItemOS[],
+    pagamento: PagamentoDaVenda,
+  ) {
+    if (!operador || !lojaAtual) return;
+    try {
+      const criada = await registrarVendaBalcao(venda, itens, pagamento, operador.id, lojaAtual.id);
+      setMostrarVenda(false);
+      setLista("vendas");
+      const recarregadas = await carregar();
+      setAviso(`${nomeOrdem(criada.numero, criada.tipo)} registrada.`);
+      const completa = recarregadas?.find((o) => o.id === criada.id);
+      if (completa) setVendaParaNota(completa);
+    } catch (err) {
+      if (!(err instanceof VendaSemFaturamentoError)) throw err;
+      setMostrarVenda(false);
+      setLista("vendas");
+      await carregar();
+      setErro(err.message);
+    }
+  }
+
+  async function handleCadastrarClienteDaVenda(cliente: NovoCliente) {
+    const criado = await criarCliente(cliente, []);
+    setClientes(await listarClientes());
+    return criado.id;
+  }
+
+  // Fecha tudo que estiver aberto antes de abrir outra coisa: a página só
+  // mostra um formulário por vez.
+  function fecharPaineis() {
+    setMostrarFormulario(false);
+    setOrdemEmEdicao(null);
+    setOrdemFaturando(null);
+    setMostrarVenda(false);
+    setVendaAberta(null);
+    setAviso(null);
+  }
+
   async function handleEncerrar(ordem: OrdemServico) {
     if (!operador) return;
     await concluirOrdem(ordem.id, operador.id);
@@ -335,8 +418,16 @@ export function OrdensServicoPage() {
   ) {
     if (!ordemFaturando) return;
     await faturarOrdem(ordemFaturando, pagamentos, parcelas, previsaoRecebimento);
+    const faturada = ordemFaturando;
     setOrdemFaturando(null);
-    await carregar();
+    setVendaAberta(null);
+    const recarregadas = await carregar();
+    // Venda de balcão faturada pela lista (a que ficou sem pagamento) segue
+    // pro mesmo lugar que uma venda nova: a NFC-e.
+    if (ehVendaBalcao(faturada)) {
+      const completa = recarregadas?.find((o) => o.id === faturada.id);
+      if (completa) setVendaParaNota(completa);
+    }
   }
 
   return (
@@ -353,13 +444,29 @@ export function OrdensServicoPage() {
             </p>
           </div>
         </div>
-        {clientes.length > 0 && !mostrarFormulario && !ordemEmEdicao && operador && (
-          <button
-            onClick={() => setMostrarFormulario(true)}
-            className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
-          >
-            + Nova ordem de serviço
-          </button>
+        {nadaAberto && operador && lojaAtual && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                fecharPaineis();
+                setMostrarVenda(true);
+              }}
+              className="rounded-xl border border-sakura-purple px-5 py-2.5 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-pink-soft/40"
+            >
+              + Venda de balcão
+            </button>
+            {clientes.length > 0 && (
+              <button
+                onClick={() => {
+                  fecharPaineis();
+                  setMostrarFormulario(true);
+                }}
+                className="rounded-xl bg-sakura-purple px-5 py-2.5 text-corpo font-medium text-white hover:opacity-90"
+              >
+                + Nova ordem de serviço
+              </button>
+            )}
+          </div>
         )}
       </header>
 
@@ -426,6 +533,33 @@ export function OrdensServicoPage() {
         />
       )}
 
+      {mostrarVenda && operador && (
+        <VendaBalcaoForm
+          clientes={clientes}
+          pecas={pecas}
+          funcionarios={funcionarios}
+          funcionarioAtualId={funcionarioAtualId}
+          saldoPorPeca={saldoPorPeca}
+          saldoCarregado={movimentos !== null}
+          jurosParcelas={jurosParcelas}
+          onRegistrar={handleRegistrarVenda}
+          onCadastrarCliente={handleCadastrarClienteDaVenda}
+          onCancelar={() => setMostrarVenda(false)}
+        />
+      )}
+
+      {vendaAberta && (
+        <VendaBalcaoDetalhe
+          ordem={vendaAberta}
+          notas={notasPorOrdem.get(vendaAberta.id) ?? []}
+          onFaturar={() => setOrdemFaturando(vendaAberta)}
+          onVoltar={() => {
+            setVendaAberta(null);
+            setOrdemFaturando(null);
+          }}
+        />
+      )}
+
       {ordemFaturando && (
         <FaturamentoCard
           ordem={ordemFaturando}
@@ -435,10 +569,59 @@ export function OrdensServicoPage() {
         />
       )}
 
+      {/* Venda registrada: a NFC-e abre sozinha, porque é o passo seguinte
+          no balcão. Nada é emitido sem o "Confirmar emissão" dela — fechar
+          aqui deixa a nota pra depois (na lista, "Fechamento"). */}
+      {vendaParaNota && (
+        <EmitirNotaFiscalModal
+          ordem={vendaParaNota}
+          tipoNota="NFC-e"
+          onFechar={() => {
+            setVendaParaNota(null);
+            void carregar();
+          }}
+          onEmitido={() => undefined}
+        />
+      )}
+
+      {aviso && (
+        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-corpo text-emerald-700">{aviso}</p>
+      )}
+
       {erro && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-corpo text-red-700">
           {erro}
         </p>
+      )}
+
+      {!carregando && ordens.length > 0 && (
+        <div
+          role="tablist"
+          aria-label="O que mostrar na lista"
+          className="flex gap-2 border-b border-sakura-gray/20"
+        >
+          {(
+            [
+              ["os", `Ordens de serviço (${quantasOs})`],
+              ["vendas", `Vendas de balcão (${quantasVendas})`],
+            ] as const
+          ).map(([valor, rotulo]) => (
+            <button
+              key={valor}
+              type="button"
+              role="tab"
+              aria-selected={lista === valor}
+              onClick={() => setLista(valor)}
+              className={`px-4 py-2 text-corpo font-medium ${
+                lista === valor
+                  ? "border-b-2 border-sakura-purple text-sakura-purple-dark"
+                  : "text-sakura-purple-dark/75 hover:text-sakura-purple-dark"
+              }`}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
       )}
 
       {!carregando && ordens.length > 0 && (
@@ -476,7 +659,9 @@ export function OrdensServicoPage() {
           <p className="text-rotulo text-sakura-muted">
             {busca.trim()
               ? "Buscando em todo o histórico, sem limite de data."
-              : "OS em aberto sempre aparecem, não importa a data — o período filtra só o histórico já faturado."}
+              : lista === "vendas"
+                ? "Venda sem pagamento sempre aparece, não importa a data — o período filtra só as já faturadas."
+                : "OS em aberto sempre aparecem, não importa a data — o período filtra só o histórico já faturado."}
           </p>
         </div>
       )}
@@ -487,9 +672,11 @@ export function OrdensServicoPage() {
         <p className="text-corpo text-sakura-muted">
           Nenhuma ordem de serviço aberta ainda.
         </p>
-      ) : ordensFiltradas.length === 0 ? (
+      ) : ordensDaLista.length === 0 ? (
         <p className="text-corpo text-sakura-muted">
-          Nenhuma ordem de serviço encontrada com esse filtro.
+          {lista === "vendas"
+            ? "Nenhuma venda de balcão neste período."
+            : "Nenhuma ordem de serviço encontrada com esse filtro."}
         </p>
       ) : (
         <div className="overflow-hidden sakura-card">
@@ -498,40 +685,52 @@ export function OrdensServicoPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">Nº</th>
                 <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Veículo</th>
-                <th className="px-4 py-3 font-medium">Aberta em</th>
+                {lista === "os" && <th className="px-4 py-3 font-medium">Veículo</th>}
+                <th className="px-4 py-3 font-medium">{lista === "os" ? "Aberta em" : "Data"}</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Peças</th>
-                <th className="px-4 py-3 font-medium">Serviços</th>
+                {lista === "os" && <th className="px-4 py-3 font-medium">Peças</th>}
+                {lista === "os" && <th className="px-4 py-3 font-medium">Serviços</th>}
                 <th className="px-4 py-3 font-medium">Total</th>
                 <th className="px-4 py-3 font-medium">Lucro</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
-              {ordensFiltradas.map((ordem) => (
+              {ordensDaLista.map((ordem) => (
                 <tr
                   key={ordem.id}
                   onClick={() => {
-                    setMostrarFormulario(false);
+                    fecharPaineis();
+                    if (ehVendaBalcao(ordem)) {
+                      setVendaAberta(ordem);
+                      return;
+                    }
                     setAbaInicialEdicao("detalhes");
                     setOrdemEmEdicao(ordem);
                   }}
                   className="cursor-pointer border-t border-sakura-gray/20 hover:bg-sakura-pink-soft/30"
                 >
-                  <td className="px-4 py-3 text-sakura-muted">{nomeOrdem(ordem.numero)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sakura-muted">
+                    {nomeOrdem(ordem.numero, ordem.tipo)}
+                  </td>
                   <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
-                  <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>
+                  {lista === "os" && <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>}
                   <td className="px-4 py-3">
                     {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
                   </td>
                   <td className="px-4 py-3">
                     <StatusOrdem ordem={ordem} notas={notasPorOrdem.get(ordem.id) ?? []} />
                   </td>
-                  <td className="px-4 py-3">{formatarMoeda(totalPorTipo(ordem.itens ?? [], "peca"))}</td>
-                  <td className="px-4 py-3">
-                    {formatarMoeda(totalPorTipo(ordem.itens ?? [], "servico"))}
-                  </td>
+                  {lista === "os" && (
+                    <td className="px-4 py-3">
+                      {formatarMoeda(totalPorTipo(ordem.itens ?? [], "peca"))}
+                    </td>
+                  )}
+                  {lista === "os" && (
+                    <td className="px-4 py-3">
+                      {formatarMoeda(totalPorTipo(ordem.itens ?? [], "servico"))}
+                    </td>
+                  )}
                   <td className="px-4 py-3">{formatarMoeda(totalOrdem(ordem.itens ?? []))}</td>
                   <td className="px-4 py-3">{formatarMoeda(lucroOrdem(ordem))}</td>
                   <td className="px-4 py-3 text-right">
@@ -542,7 +741,7 @@ export function OrdensServicoPage() {
                       {/* O carro só fica pronto pra retirar quando a OS é
                           concluída ou faturada — antes disso o aviso seria
                           mentira. */}
-                      {STATUS_COM_FECHAMENTO.includes(ordem.status) && (
+                      {STATUS_COM_FECHAMENTO.includes(ordem.status) && !ehVendaBalcao(ordem) && (
                         <BotaoWhatsapp
                           telefone={
                             clientes.find((c) => c.id === ordem.cliente_id)?.telefone
@@ -566,7 +765,11 @@ export function OrdensServicoPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setMostrarFormulario(false);
+                            fecharPaineis();
+                            if (ehVendaBalcao(ordem)) {
+                              setVendaAberta(ordem);
+                              return;
+                            }
                             setAbaInicialEdicao("fechamento");
                             setOrdemEmEdicao(ordem);
                           }}
@@ -579,6 +782,7 @@ export function OrdensServicoPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            fecharPaineis();
                             setOrdemFaturando(ordem);
                           }}
                           className="rounded-full bg-sakura-purple px-3 py-1.5 text-rotulo font-medium text-white hover:opacity-90"

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { montarCorpoNFCe, montarCorpoNFSe } from "./focusNfe";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
+import { CLIENTE_CONSUMIDOR_ID } from "@/types/cliente";
 import type { Peca } from "@/types/peca";
 
 function configuracaoFiscal(sobrescrever: Partial<ConfiguracaoFiscalLoja> = {}): ConfiguracaoFiscalLoja {
@@ -228,6 +229,30 @@ describe("montarCorpoNFCe", () => {
     expect(corpo.nome_destinatario).toBe("");
     expect(corpo.cpf_destinatario).toBe("");
     expect(corpo.cnpj_destinatario).toBeUndefined();
+  });
+
+  it("o cliente Consumidor da venda de balcão sai sempre sem identificação, mesmo com CPF gravado nele", () => {
+    // Se alguém gravar um CPF no Consumidor (só dá pela API — ele não aparece
+    // no cadastro), toda venda anônima da loja iria parar no CPF dessa pessoa.
+    for (const tipo_pessoa of ["fisica", "juridica"] as const) {
+      const corpo = montarCorpoNFCe({
+        ordem: { numero: 1 } as never,
+        itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
+        cliente: clientePessoaFisica({
+          id: CLIENTE_CONSUMIDOR_ID,
+          nome: "Consumidor",
+          tipo_pessoa,
+          cpf_cnpj: tipo_pessoa === "fisica" ? "043.915.416-29" : "66.217.744/0001-70",
+        }),
+        pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
+        configuracaoFiscal: configuracaoFiscal(),
+      });
+
+      expect(corpo.nome_destinatario).toBe("");
+      expect(corpo.cpf_destinatario).toBe("");
+      expect(corpo.cnpj_destinatario).toBeUndefined();
+      expect(corpo.indicador_inscricao_estadual_destinatario).toBeUndefined();
+    }
   });
 
   it("calcula icms_valor_total só quando a peça tem alíquota de ICMS", () => {

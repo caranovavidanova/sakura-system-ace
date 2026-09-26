@@ -8,6 +8,7 @@
 import { diaBrasileiro as dataBr } from "@/lib/datas";
 import { formatarMoeda } from "@/schemas/dinheiro";
 import type { ComissaoFechamento } from "@/types/comissaoFechamento";
+import { nomeOrdem } from "@/types/os";
 
 /** Todo texto que veio do banco passa por aqui antes de virar HTML. */
 export function escaparHtml(texto: string): string {
@@ -33,7 +34,7 @@ export function montarHtmlReciboComissao({
     .sort((a, b) => a.numero - b.numero || a.papel.localeCompare(b.papel))
     .map(
       (i) =>
-        `<tr><td>OS ${i.numero}</td><td>${PAPEL[i.papel]}</td><td class="n">${formatarMoeda(i.comissao)}</td></tr>`,
+        `<tr><td>${nomeOrdem(i.numero, i.tipo)}</td><td>${PAPEL[i.papel]}</td><td class="n">${formatarMoeda(i.comissao)}</td></tr>`,
     )
     .join("");
 

@@ -49,6 +49,30 @@ export const CENAS = [
     rota: "/ordens-servico", passos: [{ clicar: "Fechamento" }],
     descricao: "Aqui saem os documentos da OS. O sistema sabe de que nota aquela ordem precisa — NFC-e se tem peça, NFS-e se tem serviço, as duas se tem os dois — e mostra só o botão que faz sentido. A emissão é automática, via Focus NFe, e o PDF aparece na própria tela. O botão de garantia gera o documento pro cliente assinar." },
 
+  // ------------------------------------------------ venda de balcão (FN-09)
+  { arquivo: "10b-venda-balcao", modulo: "Ordens de Serviço", titulo: "Venda de balcão",
+    rota: "/ordens-servico",
+    passos: [
+      { clicar: "+ Venda de balcão" },
+      { digitar: "7891234567894", em: 'input[placeholder^="Código de barras"]', enter: true },
+      { digitar: "pneu", em: 'input[placeholder^="Código de barras"]' },
+    ],
+    descricao: "Vender uma peça pra quem não vai deixar o carro, numa tela só: passa o leitor de código de barras (ou procura pelo nome ou pela medida), confere quantidade e preço, e segue pro pagamento. Quem não se identifica compra como 'Consumidor'; quem pede CPF na nota é escolhido ou cadastrado ali mesmo. Baixa o estoque, lança no caixa e abre a NFC-e — tudo o que a OS já fazia." },
+  { arquivo: "10c-venda-pagamento", modulo: "Ordens de Serviço", titulo: "Pagamento da venda de balcão",
+    rota: "/ordens-servico",
+    passos: [
+      { clicar: "+ Venda de balcão" },
+      { digitar: "7891234567894", em: 'input[placeholder^="Código de barras"]', enter: true },
+      { clicar: "Ir para o pagamento" },
+    ],
+    descricao: "O mesmo pagamento da OS — dividir em formas, parcelar o cartão com os juros da loja. Venda no Consumidor é sempre recebida na hora: pra deixar a receber, é preciso saber de quem cobrar." },
+  { arquivo: "10d-vendas-lista", modulo: "Ordens de Serviço", titulo: "Vendas de balcão na lista",
+    rota: "/ordens-servico", passos: [{ aba: "Vendas de balcão (1)" }],
+    descricao: "As vendas de balcão ficam numa aba própria, separadas das ordens de serviço — e fora do ticket médio, que responde quanto rende cada carro atendido. O número é o mesmo contador das OS, então 'Venda 149' e 'OS 148' nunca se repetem." },
+  { arquivo: "10e-venda-detalhe", modulo: "Ordens de Serviço", titulo: "Uma venda de balcão já registrada",
+    rota: "/ordens-servico", passos: [{ aba: "Vendas de balcão (1)" }, { clicar: "Fechamento" }],
+    descricao: "Aberta pela lista, a venda mostra o que sobra pra fazer depois de registrada: emitir (ou reemitir) a NFC-e, ver o DANFE e imprimir a garantia da peça. As peças de uma venda não mudam depois de registrada." },
+
   // ----------------------------------------------------------------- estoque
   { arquivo: "11-estoque-produtos", modulo: "Estoque", titulo: "Produtos",
     rota: "/estoque",

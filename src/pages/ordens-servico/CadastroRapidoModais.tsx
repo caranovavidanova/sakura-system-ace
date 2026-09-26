@@ -206,3 +206,80 @@ export function NovoVeiculoRapidoModal({
     </Modal>
   );
 }
+
+/**
+ * Cadastro rápido de cliente de dentro da VENDA DE BALCÃO (item FN-09).
+ *
+ * Irmão do `NovoClienteRapidoModal`, com a diferença que importa no balcão:
+ * aqui o motivo de identificar o cliente é quase sempre "CPF na nota", então
+ * o CPF/CNPJ aparece — e o veículo não, porque quem compra no balcão não
+ * deixou carro nenhum. Mesmo schema e mesma conversão do cadastro completo.
+ */
+export function NovoClienteVendaModal({
+  onFechar,
+  onCadastrar,
+}: {
+  onFechar: () => void;
+  onCadastrar: (cliente: NovoCliente) => Promise<void>;
+}) {
+  const [erro, setErro] = useState<string | null>(null);
+  const {
+    register,
+    watch,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ClienteFormValues>({
+    resolver: zodResolver(clienteFormSchema),
+    defaultValues: paraValoresFormulario(),
+  });
+  const juridica = watch("tipo_pessoa") === "juridica";
+
+  async function aoSubmeter(valores: ClienteFormValues) {
+    setErro(null);
+    try {
+      await onCadastrar(paraNovoCliente(valores));
+    } catch (err) {
+      console.error("Erro ao cadastrar cliente pela venda de balcão:", err);
+      setErro(mensagemDeErro(err));
+    }
+  }
+
+  return (
+    <Modal titulo="Cliente da venda" onFechar={onFechar}>
+      <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4">
+        {erro && <p className="rounded-lg bg-red-50 px-4 py-2 text-corpo text-red-700">{erro}</p>}
+
+        <Campo label={juridica ? "Razão social" : "Nome"} obrigatorio erro={errors.nome?.message}>
+          <input type="text" {...register("nome")} className={inputClasse} />
+        </Campo>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Campo label="Tipo">
+            <select {...register("tipo_pessoa")} className={inputClasse}>
+              <option value="fisica">Pessoa física</option>
+              <option value="juridica">Empresa</option>
+            </select>
+          </Campo>
+          <Campo label={juridica ? "CNPJ" : "CPF"}>
+            <input type="text" {...register("cpf_cnpj")} className={inputClasse} />
+          </Campo>
+        </div>
+
+        <Campo label="Telefone">
+          <input type="text" {...register("telefone")} className={inputClasse} />
+        </Campo>
+
+        <p className="text-rotulo text-sakura-muted">
+          O {juridica ? "CNPJ" : "CPF"} é o que vai na nota. O resto do cadastro (endereço,
+          aniversário) fica pra quando der tempo, na tela de Clientes.
+        </p>
+
+        <BotoesDoModal
+          salvando={isSubmitting}
+          rotulo="Cadastrar e usar nesta venda"
+          onFechar={onFechar}
+        />
+      </form>
+    </Modal>
+  );
+}

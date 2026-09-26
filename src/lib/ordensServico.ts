@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import { criarMovimentoCaixa } from "./caixa";
 import { criarContaReceber } from "./contasReceber";
 import { buscarDepositoPadraoId } from "./depositos";
+import { mensagemDeErro } from "./errors";
 import { arredondarCentavo, somar } from "@/schemas/dinheiro";
 import { idsDeFuncionarios, nomearFuncionarios } from "@/schemas/ordemServico";
 import { FORMA_PAGAMENTO_LABEL, nomeOrdem } from "@/types/os";
@@ -63,7 +64,7 @@ async function buscarNomesDeFuncionarios(
 
 async function inserirItens(
   ordemId: string,
-  numeroOrdem: number,
+  referencia: string,
   itens: NovoItemOS[],
   lojaId: string,
 ): Promise<void> {
@@ -84,7 +85,7 @@ async function inserirItens(
         tipo: "saida" as const,
         quantidade: item.quantidade,
         motivo: "uso_em_os" as const,
-        referencia: nomeOrdem(numeroOrdem),
+        referencia,
         loja_id: lojaId,
       })),
     );
@@ -111,7 +112,12 @@ export async function criarOrdem(
 
   if (erroOrdem) throw erroOrdem;
 
-  await inserirItens(ordemCriada.id, ordemCriada.numero, itens, lojaId);
+  await inserirItens(
+    ordemCriada.id,
+    nomeOrdem(ordemCriada.numero, ordemCriada.tipo),
+    itens,
+    lojaId,
+  );
 
   return ordemCriada as OrdemServico;
 }
@@ -138,7 +144,7 @@ export async function adicionarItensOrdem(
   operadorId: string,
   lojaId: string,
 ): Promise<void> {
-  await inserirItens(ordemId, numeroOrdem, itens, lojaId);
+  await inserirItens(ordemId, nomeOrdem(numeroOrdem), itens, lojaId);
   await atualizarOrdem(ordemId, {}, operadorId);
 }
 
@@ -231,6 +237,109 @@ export async function editarItemOrdem(
   await atualizarOrdem(itemOriginal.ordem_servico_id, {}, operadorId);
 }
 
+/**
+ * A venda de balcão foi gravada (e já baixou o estoque), mas o pagamento não
+ * entrou. É um erro à parte porque pede uma reação diferente de qualquer
+ * outro: NÃO registrar a venda de novo — isso baixaria o estoque duas vezes.
+ * O certo é faturar a que já existe, pela lista de vendas.
+ */
+export class VendaSemFaturamentoError extends Error {
+  constructor(
+    readonly ordem: OrdemServico,
+    motivo: string,
+  ) {
+    super(
+      `A ${nomeOrdem(ordem.numero, ordem.tipo)} foi registrada e já baixou o estoque, mas o ` +
+        `pagamento não foi lançado: ${motivo}. Ela está em "Vendas de balcão" com o botão ` +
+        `Faturar — fature por lá, não registre a venda de novo.`,
+    );
+    this.name = "VendaSemFaturamentoError";
+  }
+}
+
+export interface DadosVendaBalcao {
+  cliente_id: string;
+  vendedor_id: string | null;
+}
+
+export interface PagamentoDaVenda {
+  pagamentos: PagamentoOrdem[];
+  parcelas: number;
+  previsaoRecebimento: string | null;
+}
+
+/**
+ * Registra e fatura uma venda de balcão num passo só (item FN-09).
+ *
+ * Por baixo é uma ordem de serviço `tipo = 'venda_balcao'` que já nasce
+ * concluída — e é por isso que estoque, caixa, contas a receber e nota fiscal
+ * funcionam sem uma linha nova: são os mesmos `inserirItens` e
+ * `faturarOrdem` da OS.
+ *
+ * O que muda é o cuidado com a falha pela metade, que aqui custaria mais que
+ * numa OS: a venda é feita com o cliente no balcão, e o reflexo de quem vê
+ * um erro é clicar de novo. Então:
+ *   • falhou ANTES de o pagamento entrar (a venda ou os itens não gravaram) →
+ *     a venda é desfeita inteira, e tentar de novo é seguro;
+ *   • falhou NO pagamento → a venda fica, e o erro diz pra faturar a que já
+ *     existe (`VendaSemFaturamentoError`), nunca pra registrar outra.
+ */
+export async function registrarVendaBalcao(
+  venda: DadosVendaBalcao,
+  itens: NovoItemOS[],
+  pagamento: PagamentoDaVenda,
+  operadorId: string,
+  lojaId: string,
+): Promise<OrdemServico> {
+  if (itens.length === 0) throw new Error("A venda não tem nenhuma peça.");
+
+  const { data, error } = await supabase
+    .from("ordens_servico")
+    .insert({
+      cliente_id: venda.cliente_id,
+      vendedor_id: venda.vendedor_id,
+      veiculo_id: null,
+      km_entrada: null,
+      descricao_problema: null,
+      tipo: "venda_balcao",
+      status: "concluida",
+      criado_por_id: operadorId,
+      atualizado_por_id: operadorId,
+      loja_id: lojaId,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  const ordem = data as OrdemServico;
+
+  try {
+    await inserirItens(ordem.id, nomeOrdem(ordem.numero, ordem.tipo), itens, lojaId);
+  } catch (erroItens) {
+    // Os itens entram antes da baixa de estoque (ver `inserirItens`), então
+    // apagar a venda aqui leva os itens junto (cascata) e não deixa estoque
+    // mexido. Se nem apagar der, o erro original é o que importa mostrar.
+    const { error: erroDesfazer } = await supabase
+      .from("ordens_servico")
+      .delete()
+      .eq("id", ordem.id);
+    if (erroDesfazer) console.error("Não deu pra desfazer a venda pela metade:", erroDesfazer);
+    throw erroItens;
+  }
+
+  try {
+    await faturarOrdem(
+      ordem,
+      pagamento.pagamentos,
+      pagamento.parcelas,
+      pagamento.previsaoRecebimento,
+    );
+  } catch (erroPagamento) {
+    throw new VendaSemFaturamentoError(ordem, mensagemDeErro(erroPagamento));
+  }
+
+  return ordem;
+}
+
 // Marca a OS como "concluída" — usado pelo botão "Encerrar OS", que já leva
 // direto pra tela de faturamento em seguida.
 export async function concluirOrdem(id: string, operadorId: string): Promise<void> {
@@ -281,7 +390,7 @@ export async function faturarOrdem(
           tipo: "entrada",
           forma_pagamento: pagamento.formaPagamento,
           valor: pagamento.valor,
-          descricao: `Faturamento da ${nomeOrdem(ordem.numero)}`,
+          descricao: `Faturamento da ${nomeOrdem(ordem.numero, ordem.tipo)}`,
           categoria_id: null,
         },
         ordem.loja_id,
@@ -292,7 +401,7 @@ export async function faturarOrdem(
       {
         cliente_id: ordem.cliente_id,
         ordem_servico_id: ordem.id,
-        descricao: `Faturamento da ${nomeOrdem(ordem.numero)}`,
+        descricao: `Faturamento da ${nomeOrdem(ordem.numero, ordem.tipo)}`,
         valor: valorTotal,
         vencimento: previsaoRecebimento,
       },

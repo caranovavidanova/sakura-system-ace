@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { CLIENTE_CONSUMIDOR_ID } from "@/types/cliente";
 import type {
   Cliente,
   NovoCliente,
@@ -6,10 +7,16 @@ import type {
   VeiculoFormulario,
 } from "@/types/cliente";
 
+// O cliente "Consumidor" da venda de balcão (migration 0064) fica de fora de
+// propósito: esta lista alimenta o cadastro de Clientes e toda caixinha de
+// "escolha o cliente" do app, e ele não é uma pessoa pra ser editada nem
+// escolhida numa OS — ver `CLIENTE_CONSUMIDOR_ID`. A venda de balcão o
+// oferece pela própria constante.
 export async function listarClientes(): Promise<Cliente[]> {
   const { data, error } = await supabase
     .from("clientes")
     .select("*, veiculos(*)")
+    .neq("id", CLIENTE_CONSUMIDOR_ID)
     .order("nome", { ascending: true });
 
   if (error) throw error;

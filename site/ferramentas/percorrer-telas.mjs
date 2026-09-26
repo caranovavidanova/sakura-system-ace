@@ -110,6 +110,15 @@ export async function percorrerTelas(aoChegar) {
       await secao.click();
       return pagina.waitForTimeout(900);
     }
+    if (passo.digitar !== undefined) {
+      // Escrever num campo (ex: o código de barras na venda de balcão).
+      // `enter: true` aperta Enter depois, como o leitor faz.
+      const campo = pagina.locator(passo.em).first();
+      await campo.waitFor({ state: "visible", timeout: ESPERA_POR_BOTAO });
+      await campo.fill(passo.digitar);
+      if (passo.enter) await campo.press("Enter");
+      return pagina.waitForTimeout(700);
+    }
     if (passo.seletor) {
       // Botão sem texto (ícone), como o "⋯" de ações da linha — não dá pra
       // casar por rótulo, só por seletor.

@@ -228,6 +228,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Instalação de empresa nova | Um arquivo SQL único (`supabase/instalacao/instalacao-completa.sql`, gerado por `npm run gerar-instalacao`) + o checklist `supabase/instalacao/INSTALAR-LOJA-NOVA.md` | Colar as ~47 migrations uma por uma era o maior risco operacional da venda: pular uma ou trocar a ordem não dá erro na hora, só quebra depois na tela do app. Ver itens 36 e 37 da seção 6 |
 | Site de apresentação (28/08/2026) | Pasta `site/` no próprio repositório, **HTML/CSS puros sem build**, publicado na Vercel com Root Directory = `site` | Uma página só não justifica um segundo `node_modules`; sem build não há risco de quebrar o build/teste do app, e a usuária consegue editar um texto sem rodar nada. Reaproveita a conexão da Vercel que já existia no repositório e só atrapalhava (check falhando nos PRs) |
 | Canal de atualização (25/09/2026, item TR-09.1) | Toda versão nasce no GitHub como **pré-lançamento** (canal de teste) e só chega nas outras lojas quando ela roda o workflow **"Liberar versão para todas as lojas"**. Cada computador escolhe o canal em Configurações → "Atualizações deste computador" (padrão: normal) | Publicar atualizava todas as lojas no mesmo minuto — com lojas de terceiros, uma versão ruim vira vários telefonemas. Usa o mecanismo que o `electron-updater` já tem pro GitHub (`allowPrerelease`), em vez do "copiar `latest.yml` entre canais" que o guia sugeria e que não funciona com o provedor GitHub. Ver "Liberar uma versão para todas as lojas" na seção 9 |
+| Versão de cada computador (26/09/2026, migration 0063) | Cada computador cria um número próprio (`computador.json`) e grava no banco, a cada login, versão, canal e loja (tabela `computadores`). Migration que aperta uma regra da versão anterior declara `-- versao-minima-do-programa: X`, e o botão de atualizar os bancos espera os computadores em uso abaixo de X (com uma caixinha pra passar por cima) | Com lojas de terceiros, conferir à mão "alguém ainda está na versão velha?" (como na `0062`) deixa de ser possível. Registro no login, e não um sinal contínuo de vida: é o que responde a pergunta sem tráfego a mais. A exigência é da MIGRATION, não uma regra geral — quase toda migration só acrescenta e não precisa esperar ninguém. Escolha dela entre as opções. Ver seção 9, "Atualizar o banco de todas as empresas" |
 | Nome do arquivo do instalador (28/08/2026) | Fixo: `SakuraSystem-Setup.exe` (`build.artifactName` no `package.json`), sem o número da versão | Permite ao site apontar pra um endereço permanente (`/releases/latest/download/SakuraSystem-Setup.exe`) que sempre entrega a última versão, sem editar o site a cada lançamento. Seguro pro auto-update: o `latest.yml` guarda o nome do arquivo, então a próxima versão já aponta sozinha pro nome novo |
 | Preço no site (28/08/2026) | Mostrar **o que está incluído, sem valor fechado** — escolha dela, entre "sem preço nenhum" e "preço na cara" | O R$350/loja foi calculado pras 3 primeiras lojas (fase 2), não é preço de tabela; e a venda é pra conhecidos do pai dela, onde o valor pode variar caso a caso |
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
@@ -347,6 +348,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # + whatsapp.ts (abre a conversa no WhatsApp pela ponte do
 │   │                             # Electron, com a URL conferida) + modelosWhatsapp.ts (os textos
 │   │                             # editáveis por loja e o registro de que a mensagem foi ABERTA)
+│   │                             # + computadores.ts (migration 0063: registra ESTE computador no
+│   │                             # banco a cada login — nunca lança erro nem trava o login — e
+│   │                             # lista/apelida/esquece os computadores pro admin)
 │   │                             # fornecedores.ts + pedidosCompra.ts + cotacoesPecas.ts (histórico
 │   │                             # de preço por fornecedor, ver "Cotação de peças" na seção 7) +
 │   │                             # notaFiscalXmlFornecedor.ts (lê o XML de NFe que o fornecedor
@@ -423,7 +427,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                   # DadosFiscaisSection.tsx, CartoesInicioSection.tsx (todas dentro de
 │   │                   # SecaoRecolhivel e recebem `lojaId` — dado por loja agora);
 │   │                   # AtualizacoesComputadorSection.tsx (a exceção: NÃO mora no banco — é o
-│   │                   # canal de atualização DESTE computador, item TR-09.1); LojasSection.tsx
+│   │                   # canal de atualização DESTE computador, item TR-09.1);
+│   │                   # ComputadoresSection.tsx (em que versão está cada computador da
+│   │                   # empresa — lê a tabela `computadores`, migration 0063); LojasSection.tsx
 │   │                   # (criar/inativar lojas, sempre visível, mesmo padrão do card Operadores);
 │   │                   # OperadorForm.tsx ganhou multi-select de lojas (só aparece com 2+ lojas)
 │   │   funcionarios/   # FuncionariosPage.tsx (orquestrador de abas Cadastro/Comissões) +
@@ -473,6 +479,10 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # recebe versão nova e como isso vira `allowPrerelease`; o
 │   │                             # teste roda o GitHubProvider DE VERDADE do electron-updater
 │   │                             # contra um GitHub de mentira (item TR-09.1);
+│   │                             # identidadeComputador.ts — o `computador.json` de cada
+│   │                             # máquina (sem import nenhum: roda também no main.ts);
+│   │                             # computadores.ts — versão comparada como número, "em uso"
+│   │                             # (30 dias) e quem está numa versão mais antiga (0063);
 │   │                             # whatsapp.ts — telefone no formato do wa.me, marcadores das
 │   │                             # mensagens e os textos padrão;
 │   │                             # diagnostico.ts — mascararSegredos (esconde a chave deste
@@ -495,7 +505,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0062), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0063), todas idempotentes
 ├── supabase/instalacao/          # instalacao-completa.sql (as 54 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
@@ -522,7 +532,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # testar-fechamento-caixa.sql, testar-comissoes-pagas.sql e
 │                                  # testar-travas-de-dado.sql (0058 a 0060) e
 │                                  # testar-contas-permissao.sql (0061) e
-│                                  # testar-caixa-permissao.sql (0062). NUNCA
+│                                  # testar-caixa-permissao.sql (0062) e
+│                                  # testar-computadores.sql (0063). NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql
  (apaga dados de negócio de teste,
@@ -537,7 +548,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 ├── supabase/testes-rls/          # `npm run test:rls` — a MATRIZ DE RLS (item TR-07.3). Monta um
 │                                  # banco descartável do zero, simula cinco papéis (admin das duas
 │                                  # lojas, admin de uma, balconista só-Caixa, operador SEM loja, e
-│                                  # ninguém logado) e confere as 700 combinações de
+│                                  # ninguém logado) e confere as 760 combinações de
 │                                  # tabela × comando × papel — a view do TR-04.3 entra junto, e
 │                                  # é o caso que mais importa, porque view não reage a RLS.
 │                                  # expectativas.csv é A PARTE QUE SE
@@ -734,6 +745,12 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
   Sem essa linha o aviso de "banco desatualizado" do app **mente** — ele passa a acusar um banco
   em dia. O `npm test` reprova quem esquecer (`scripts/gerar-instalacao-completa.test.ts`), e a
   constante `VERSAO_ESQUEMA_ESPERADA` (`src/schemas/versaoEsquema.ts`) sobe junto.
+- **Migration que aperta uma regra que a versão ANTERIOR do programa usava** (é a exceção — o
+  caso da `0062`) declara no cabeçalho a versão mínima do programa, numa linha própria:
+  `-- versao-minima-do-programa: 0.9.44`. Com ela, o botão "Atualizar o banco de todas as
+  empresas" só aplica quando nenhum computador em uso está abaixo dessa versão (desde a `0063`,
+  ver seção 9). Migration que só ACRESCENTA — quase todas — não leva a linha. Versão torta na
+  linha recusa a rodada inteira, de propósito.
 
 **Padrão de formulário — `react-hook-form` + `zod`, migração concluída**: decisão tomada pela
 usuária (a partir de um plano de refatoração escrito por outra IA, Gemini, fora desta sessão) de
@@ -1168,6 +1185,30 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   delas (a porta de exclusão de Contas a Pagar sem a conferência da conta) **passou na primeira
   versão do teste**, ver item 74 da seção 6. Desempenho com 20 mil lançamentos por loja, quem tem
   o Caixa abrindo a lista: 76 ms antes, 76–77 ms depois.
+  **Em 26/09/2026 a `0062` ganhou no cabeçalho a linha `-- versao-minima-do-programa: 0.9.43`**
+  (ver `0063` logo abaixo) — só comentário, o SQL é o mesmo, e ela já está aplicada em todo banco.
+- `0063` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0062` **com dado
+  plantado** — **ainda NÃO aplicada no Supabase real**): **cada computador diz ao banco em que
+  versão está.** Pedido dela entre as opções (26/09/2026), e a proposta registrada no marco
+  anterior: sem isso, "posso rodar uma migration que quebra a versão velha?" só se respondia
+  conferindo à mão, como na `0062`. Cria a tabela `computadores` (ver abaixo), a função
+  `registrar_computador()` (qualquer operador ativo grava a linha do computador em que está —
+  **sem poder ler a lista**) e `definir_apelido_computador()` (só admin). Quatro decisões:
+  (a) **a identidade é do computador, não do banco**: um número aleatório criado na primeira
+  abertura e guardado em `computador.json`, na pasta de dados do app — arquivo próprio, pelo
+  mesmo motivo do `atualizacao.json` (o `conexao.json` é regravado inteiro ao salvar a conexão);
+  (b) **ler e "esquecer" é do admin da loja em que o computador foi visto por último**; sem loja
+  (a loja foi excluída), qualquer admin — senão viraria linha que ninguém alcança (§6 item 23);
+  (c) **sem auditoria**, de propósito: a linha muda a cada login e encheria a trilha;
+  (d) **limite aceito**: um operador que descubra o id de outro computador consegue gravar por
+  cima da linha dele (mentir uma versão). O id só o admin vê, e nenhum dado da loja fica exposto.
+  Teste repetível em `supabase/scripts/testar-computadores.sql` (11 blocos, as duas metades),
+  conferido com **doze mutações** — e uma delas (dar ao `anon` permissão de chamar a função)
+  **passou na primeira versão do teste**, ver item 76 da seção 6.
+  **Ordem de subir: a de sempre** (migration primeiro), mas aqui qualquer ordem é segura: a
+  versão nova sem a migration só não registra (e mostra a faixa de banco desatualizado); a
+  migration sem a versão nova só fica vazia.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1470,6 +1511,15 @@ outro projeto Supabase do zero (ver seção 9).
   Uma linha por migration aplicada neste banco. Lida pelo app na abertura (`lib/schemaVersao.ts`),
   nunca escrita por ele: só a migration grava, rodando no SQL Editor. Ver "Aviso de banco
   desatualizado" na seção 7.
+- **`computadores`** (migration `0063`): id (uuid gerado **pelo próprio computador**, guardado no
+  `computador.json` dele), nome_maquina (o nome que o Windows dá), apelido (do admin), versao_app
+  (só "números.números.números", por `check`), canal (`normal`/`teste`), sistema, loja_id e
+  operador_id (os dois `on delete set null` — excluir loja ou operador não trava), primeiro_acesso,
+  visto_em. **Gravada só por `registrar_computador()`** (a cada login e a cada renovação da sessão);
+  sem policy de insert/update, declarado como lacuna na matriz de RLS. Lida pelo admin (Configurações
+  → "Computadores desta empresa") e pelo botão de atualizar os bancos, que a consulta como dono do
+  banco. **Só aparecem computadores que já abriram uma versão que registra** — os que ainda estão
+  numa versão antiga ficam invisíveis até atualizarem.
 - **`configuracoes_painel_inicio`**: 1 linha **por loja** (`loja_id` é a PK) com `cartoes`
   (`text[]`, até 3 chaves) — define quais indicadores aparecem nos cartões de tendência da tela
   Início. Ajuste por loja, editável só pelo admin. As 5 chaves possíveis ficam em
@@ -1528,7 +1578,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
    teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
    **E esse teste já existe, desde 13/09/2026**: é a matriz de RLS (`npm run test:rls`, item
-   `TR-07.3`, item 63 desta seção), hoje em 740 células. O diff do `expectativas.csv` **é** a
+   `TR-07.3`, item 63 desta seção), hoje em 760 células. O diff do `expectativas.csv` **é** a
    revisão: na `0056` ele mostra, em números, o balconista saindo de 1 pra 0 nas oito linhas de
    RH e entrando com 1 na view pública — ou seja, o que ele perdeu e o que ele manteve, lado a
    lado.
@@ -1582,7 +1632,7 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    dela).
    **E desde 13/09/2026 a RLS também é conferida por máquina**, fora do `npm test`:
    `npm run test:rls` (item `TR-07.3`) monta um banco do zero, simula cinco papéis e confere as
-   700 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
+   760 combinações de tabela × comando × papel — ver `supabase/testes-rls/` e o item 63 desta
    seção. Continua sem falar com o Supabase de verdade: é um Postgres local/do CI.
    **Exceção**: `lib/notaFiscalXmlFornecedor.test.ts` testa
    o parser de XML de verdade
@@ -2985,6 +3035,28 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     (é o padrão do Postgres; não dá pra saber daqui se o Supabase liga), e olhar o custo
     ESTIMADO, não só o tempo — um salto grande no custo é o aviso antes de o JIT aparecer.
 
+76. **Três testes que mediam outra coisa, achados quebrando o código de propósito (26/09/2026,
+    migration `0063`).** Nenhum deles é bug do sistema; todos são bug do TESTE, do tipo que deixa
+    passar exatamente o que ele existia pra pegar:
+    - **O "anônimo" herdava a identidade do balconista.** Dentro de uma transação de teste, o
+      `set_config('request.jwt.claim.sub', ...)` do passo anterior continua valendo depois do
+      `set local role anon` — então a checagem "sem login não chama a função" chegava na função
+      COM o `auth.uid()` do balconista. Dando ao `anon` a permissão de chamar (a mutação), o teste
+      **continuou verde**. Corrigido limpando o `sub` antes e, mais importante, conferindo a
+      permissão diretamente (`has_function_privilege('anon', ...)`): a tranca que se quer provar
+      é o `revoke`, não o comportamento da função. Vale pra todo teste futuro que simule "sem
+      login" depois de ter simulado alguém.
+    - **`now()` é o mesmo instante na transação inteira.** "Registrar de novo atualiza o visto
+      em" nunca poderia passar num teste que roda numa transação só — os dois registros teriam o
+      mesmo horário. O teste empurra a primeira passagem um dia pra trás, que é o caso real (cada
+      login é uma transação).
+    - **Teste que estoura em vez de dizer FALHOU.** No teste do Electron, a quebra de propósito
+      ("não gravar o `computador.json`") derrubou o script inteiro com um `SyntaxError` do
+      `JSON.parse` — vermelho, mas sem dizer qual promessa quebrou, e escondendo as outras
+      checagens. Ler o arquivo agora nunca estoura: a checagem diz FALHOU e o teste segue.
+    **A lição comum**: o teste só prova o que se viu ele reprovar. Os três passaram na primeira
+    rodada, e "passou de primeira" continua sendo motivo pra desconfiar (itens 53, 58 e 73).
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3692,7 +3764,8 @@ Quatro coisas que valem saber:
   "Como cadastrar a alíquota no portal da prefeitura" — texto livre que alimenta o aviso mensal do
   Início; em branco, vale o passo a passo de Araraquara que está no código. E, no fim, desde
   25/09/2026, **"Atualizações deste computador"** — a única seção que não mora no banco (ver
-  "Canal de atualização" logo abaixo).
+  "Canal de atualização" logo abaixo) — e, desde 26/09/2026, **"Computadores desta empresa"**
+  (a versão de cada computador; ver o item logo depois de "Canal de atualização").
 - **Canal de atualização** (25/09/2026, item `TR-09.1`): até aqui, publicar uma versão atualizava
   **todas** as lojas no mesmo minuto. Agora são dois canais:
   - **Teste** — recebe toda versão nova assim que ela sai. É pra ser o computador dela e o da
@@ -3718,6 +3791,29 @@ Quatro coisas que valem saber:
   mais de um computador, marcar todos, pra loja inteira ficar na mesma versão).
   **Consequência pra quem publica**: até a loja ser marcada, uma versão publicada e não liberada
   chega **só no computador dela** — a loja só recebe depois do Liberar.
+- **Computadores desta empresa** (26/09/2026, migration `0063` — **ainda não aplicada nem
+  publicada**): Configurações → "Computadores desta empresa" (só admin) mostra cada computador que
+  abre o sistema — apelido ou nome da máquina, **versão**, canal, loja e **quando foi usado pela
+  última vez, e por quem**. Existe pra responder "quem ficou pra trás numa atualização?", que até
+  aqui só se respondia perguntando na loja. Cinco coisas que valem saber:
+  - **Ninguém cadastra nada**: cada computador aparece sozinho no primeiro login numa versão que
+    registra (a partir da que levar isto). **Os que ainda estão numa versão antiga não aparecem** —
+    a tela diz isso, pra lista vazia não parecer "tudo certo".
+  - **A identidade é do computador**: um número criado na primeira abertura e guardado em
+    `computador.json`, na pasta de dados do app. Reinstalar o programa não troca; apagar a pasta
+    de dados troca (e o computador aparece duas vezes — o admin esquece a linha velha).
+  - **"Mais antiga" é comparada com a versão do computador de quem está olhando**, não com "a
+    mais nova que existe" — o programa não sabe se há uma versão em teste que as lojas ainda não
+    receberam, e isso não é atraso. Computador no canal de teste numa versão MAIS NOVA não é
+    marcado.
+  - **"Em uso" = visto nos últimos 30 dias.** Os outros ficam embaixo, apagados, com a opção de
+    esquecer — nunca somem sozinhos (um notebook na gaveta pode voltar). O mesmo número vale no
+    botão de atualizar os bancos; um teste confere que os dois batem.
+  - **O registro nunca atrapalha o login**: sem rede, sem a migration ou fora do Electron, ele
+    simplesmente não acontece. Em `npm run dev` também não, pra máquina de quem programa não
+    aparecer na lista da loja. E o "visto em" se atualiza a cada login, ao trocar de loja e a cada
+    renovação da sessão (de tempos em tempos), então um computador que fica aberto o dia inteiro
+    não parece sumido.
 - **Aviso de banco desatualizado** (15/09/2026, item `TR-05.7`): uma faixa no topo de qualquer
   tela quando o programa e o banco daquela empresa não estão na mesma versão. Existe porque as
   duas coisas andam por caminhos diferentes — o auto-update chega em todas as lojas no mesmo
@@ -4713,6 +4809,18 @@ Quatro coisas que valem saber:
     proibido — exigiria a senha principal do banco dentro do instalador, em cada computador.
     **Ideia pra depois, não pedida**: o Release conferir, antes de publicar, que nenhum banco
     está atrás da última migration.
+    **Desde 26/09/2026 (migration `0063`) o botão também espera os computadores atrasados**:
+    migration que declara `-- versao-minima-do-programa: X` no cabeçalho só é aplicada quando
+    nenhum computador em uso (visto nos últimos 30 dias, na tabela `computadores`) está abaixo de
+    X. Com algum atrasado, o ensaio mostra "⏸ passaria, mas espera N computador(es)" com o nome,
+    a versão e quando cada um foi visto, e o aplicar não mexe em banco nenhum — a menos que a
+    caixinha **"aplicar mesmo com computadores atrasados"** esteja marcada. Banco que ainda não
+    registra computadores (antes da `0063`) ou que não viu nenhum em 30 dias: segue, avisando que
+    não deu pra conferir. Não conseguir PERGUNTAR (erro na consulta) segura, como um ensaio que
+    falhou. É a resposta à dúvida dela de 26/09 ("com muitas lojas, vamos ter que esperar todos
+    atualizarem?"): só a migration que declara precisa esperar, e agora o botão sabe quem.
+    Conferido com 13 testes de `psql` de mentira (seis mutações, todas vermelhas) e no teste de
+    integração com Postgres de verdade (passo 8).
 
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
@@ -4761,6 +4869,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`), e tudo saiu na **`v0.9.42`**, publicada e liberada. Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
+| 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. **Sem tag e sem aplicar** — esperando ela. |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4797,7 +4906,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0062` estão aplicadas no Supabase real dela** — a `0061` (contas só com
+**A `0063` (computadores) está no repositório e AINDA NÃO foi aplicada** — é a próxima a entrar
+pelo botão, e pode entrar antes ou depois da versão que a usa (ver a entrada dela na seção 5).
+
+**Estado até 26/09/2026, tarde: `0001` a `0062` estão aplicadas no Supabase real dela** — a `0061` (contas só com
 o módulo) e a `0062` (Caixa só com o módulo) entraram em 26/09/2026 pelo botão, **depois** da
 `v0.9.43` liberada (a `0062` inverte a ordem de sempre — ver a entrada dela na seção 5). Nada
 pendente de SQL. As três anteriores
@@ -4872,7 +4984,7 @@ senão o `set local` não pega e o teste roda como superusuário, que ignora RLS
 sessão que precisava validar uma migration recriava esses mesmos stubs do zero.
 
 **E toda migration que mexa em policy tem que passar na matriz de RLS** (item `TR-07.3`), que faz
-esse mesmo trabalho por conta própria e confere 700 combinações de tabela × comando × papel:
+esse mesmo trabalho por conta própria e confere 760 combinações de tabela × comando × papel:
 
 ```bash
 service postgresql start
@@ -5116,6 +5228,18 @@ lugar de colar cada arquivo no SQL Editor de cada projeto Supabase. Usa a mesma 
 - **"MAIS NOVO que a última migration deste código"** → o botão foi rodado de uma branch que não
   é a `main`. Em "Use workflow from", escolha `main`.
 - **Empresa que não aparece na tabela** → falta o bloco dela no `BACKUP_EMPRESAS`.
+
+**Se aparecer ⏸ "passaria, mas espera N computador(es)"** (desde a `0063`): alguma migration que
+falta só funciona com o programa numa versão mínima, e aquele computador, usado nos últimos 30
+dias, ainda está numa mais antiga. A tabela embaixo diz qual é e quando foi visto. Três saídas:
+- **Esperar**: o computador se atualiza sozinho quando o programa é fechado e aberto de novo
+  (e só recebe versão liberada, a menos que esteja no canal de teste). Rode o ensaio de novo
+  depois.
+- **O computador não existe mais**: Configurações → "Computadores desta empresa" → ⋯ → "Esquecer
+  este computador". Ele sai da conta.
+- **Você sabe que ele não será afetado** (como em 26/09, quando ninguém na loja tinha o perfil
+  que a `0062` quebrava): rode o `aplicar` marcando **"aplicar mesmo com computadores
+  atrasados"**. O resumo registra que foi assim.
 
 **A ordem de sempre continua valendo**: primeiro o banco (este botão), depois a versão nova do
 programa. E **aplicar só depois de ensaiar** — o `aplicar` ensaia sozinho de novo antes de mexer,
@@ -5378,6 +5502,10 @@ isso que existe a regra abaixo.
 - **Branch de trabalho**: `antigravity-trabalho-local` (mesclada na `main`) foi a branch daquela
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
+- **A `main` está à frente da `v0.9.43`** (26/09/2026, noite): a leva da versão de cada
+  computador (migration `0063`) e o Ubuntu fixado no backup — ver o marco "LEIA ISTO PRIMEIRO".
+  O `package.json` continua em `0.9.43`: subir pra `0.9.44` é o primeiro passo de publicar, e
+  publicar é decisão dela.
 - `package.json` em `"version": "0.9.43"` — **publicada e liberada em 26/09/2026** (antes da
   migration, de propósito: ver o marco "LEIA ISTO PRIMEIRO"). Histórico: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
@@ -6111,7 +6239,69 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 26/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 26/09/2026, à noite — LEIA ISTO PRIMEIRO
+
+**Saiu a "versão de cada computador"** — a proposta do marco logo abaixo ("o que falta pra
+conferir é saber em que versão cada computador está"), escolhida por ela entre as opções quando
+disse "vamos continuar com codagem". Junto, a pendência do Ubuntu (19/10) resolvida.
+
+**Estado: tudo mesclado na `main`, NADA aplicado nem publicado.** O banco dela continua na
+`0062`, e a loja na `v0.9.43`. **Não aplicar nem publicar sem ela pedir.**
+
+#### O que saiu, em uma linha cada
+
+- **Migration `0063`**: a tabela `computadores` e as funções `registrar_computador()` (qualquer
+  operador ativo grava a linha do computador em que está, sem poder ler a lista) e
+  `definir_apelido_computador()` (só admin). Ver a entrada na seção 5.
+- **O programa**: cada computador cria um número próprio na primeira abertura
+  (`computador.json`) e, a cada login, conta ao banco versão, canal, sistema, loja e quem entrou.
+  Nunca trava o login; em `npm run dev` não registra.
+- **Configurações → "Computadores desta empresa"** (só admin): versão, canal, loja, última vez e
+  por quem; apelido e "esquecer". Detalhe em "Estado atual por módulo" (seção 7).
+- **O botão de atualizar os bancos espera os atrasados**: migration com
+  `-- versao-minima-do-programa: X` no cabeçalho só entra quando nenhum computador em uso está
+  abaixo de X — com a caixinha "aplicar mesmo com computadores atrasados" pra quando ela souber
+  que não há risco. A `0062` ganhou essa linha (0.9.43) como exemplo. Passo a passo na seção 9.
+- **Backup e botão presos em `ubuntu-24.04`** (em vez de `ubuntu-latest`), antes de o GitHub
+  trocar pro 26 em 19/10/2026.
+
+#### Como foi conferido
+
+- A `0063` num Postgres local: instalação inteira três vezes do zero, ela sozinha duas vezes num
+  banco no estado `0062` com dado. `testar-computadores.sql` (as duas metades) com **doze
+  mutações**, todas vermelhas — uma só depois de consertar o teste (item 76 da seção 6).
+- Matriz de RLS: **760 células** (a tabela nova entrou, com as duas lacunas declaradas), e uma
+  mutação (leitura aberta) acusada nas células certas.
+- O Electron de verdade (`npm run test:electron`, agora **31 checagens**): a identidade é a mesma
+  a cada pedido, fica no disco, e com o arquivo estragado nasce outra válida — e a mutação "não
+  gravar o arquivo" ficou vermelha em três checagens.
+- O botão: 13 testes novos com `psql` de mentira (seis mutações) e o passo 8 do teste de
+  integração, com Postgres de verdade.
+- `tsc`, lint, contraste; **727 testes** nos dois fusos; os 10 testes de migration; a seção nova
+  vista renderizada no app de verdade (com os dados de exemplo) e na varredura de contraste.
+
+**O que não dá pra conferir daqui**: o Supabase de verdade e um Windows de verdade (o nome da
+máquina que aparece é o que o Windows dá).
+
+#### O que falta, e é dela
+
+1. **Aplicar a `0063`** pelo botão (ensaiar → aplicar). Qualquer ordem com a versão é segura.
+2. **Publicar a `0.9.44`** (subir o `package.json`, e o fluxo de sempre da seção 9) e decidir se
+   libera direto ou passa antes pelo computador dela (que está no canal de teste).
+3. **Depois de a loja abrir a versão nova**: conferir em Configurações → "Computadores desta
+   empresa" que o computador da loja apareceu — e dar um apelido pra ele ("Balcão").
+4. O resto continua como no marco abaixo (alíquota em 1º/10, conferir na loja o que a `v0.9.43`
+   e a `v0.9.42` trouxeram, emitir e cancelar uma nota pelo porteiro).
+
+#### Por onde a próxima sessão começa
+
+Perguntar se ela aplicou a `0063` e publicou a `0.9.44`. Se sim, conferir com ela a lista de
+computadores. Se ela quiser seguir o guia depois disso, as opções de 26/09 continuam de pé:
+**venda de balcão sem OS** (`FN-09`, P0 — com a decisão "cliente opcional na OS ou cliente fixo
+'Consumidor'"), **ficha do veículo** (`FN-04`, sem migration) e **permissão nas Ordens de
+Serviço** (`TR-04.1`, lote 4 — ganho menor que os anteriores, porque quase todo módulo lê as OS).
+
+### Onde parou em 26/09/2026, à tarde (histórico — o marco mais recente está logo acima)
 
 **Saíram os lotes 2 e 3 da permissão por módulo (`TR-04.1`, etapa 2): Contas a Pagar, Contas
 a Receber e o Caixa passam a ser protegidos pelo BANCO** (migrations `0061` e `0062`). Ela

@@ -47,7 +47,13 @@ permissions:
 
 jobs:
   backup:
-    runs-on: ubuntu-latest
+    # Versão FIXA do Ubuntu, não "latest": a instalação do pg_dump usa o
+    # repositório do Postgres pelo codinome do Ubuntu (`lsb_release -cs`), e
+    # um Ubuntu recém-lançado pode ainda não ter esse repositório — o backup
+    # das 3h ficaria vermelho sem ninguém ter mexido em nada. O GitHub troca o
+    # "latest" pelo 26 em 19/10/2026. Subir este número é decisão, não
+    # surpresa — conferir antes que `apt.postgresql.org` já tem o codinome.
+    runs-on: ubuntu-24.04
     # Um backup que não terminou em 20 minutos não vai terminar. Sem este
     # limite, o padrão do GitHub são 6 HORAS — tempo suficiente pro backup do
     # dia não acontecer sem que nada apareça como falha.

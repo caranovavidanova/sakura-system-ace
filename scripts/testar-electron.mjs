@@ -27,6 +27,7 @@
 // NÃO roda no Windows dela, e não precisa: é uma checagem de CI, como a
 // matriz de RLS. Nada aqui fala com o Supabase de verdade.
 
+import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -109,6 +110,7 @@ try {
     "conexao",
     "diagnostico",
     "fetchComAuth",
+    "identidadeComputador",
     "lerLogs",
     "registrarErro",
     "definirCanalAtualizacao",
@@ -370,6 +372,64 @@ try {
   } finally {
     if (canalAntes === null) fs.rmSync(arquivoCanal, { force: true });
     else fs.writeFileSync(arquivoCanal, canalAntes);
+  }
+
+  // --- 7d. A identidade deste computador (migration 0063) ----------------
+  //
+  // É ela que diz ao banco "sou o mesmo computador de ontem". O que precisa
+  // ser verdade: o mesmo número a cada pedido (senão cada login vira um
+  // computador novo na lista do admin), gravado no disco, e — com o arquivo
+  // estragado — um número novo e válido, nunca um erro que trave a tela.
+  // O arquivo que existia antes do teste é devolvido no fim.
+  const arquivoIdentidade = path.join(pastaDados, "computador.json");
+  const identidadeAntes = fs.existsSync(arquivoIdentidade)
+    ? fs.readFileSync(arquivoIdentidade, "utf8")
+    : null;
+  // Ler o id gravado sem nunca estourar: com o arquivo estragado (ou não
+  // gravado), a checagem tem que dizer FALHOU, não derrubar o teste inteiro.
+  const idNoDisco = () => {
+    try {
+      return JSON.parse(fs.readFileSync(arquivoIdentidade, "utf8")).id ?? null;
+    } catch {
+      return null;
+    }
+  };
+  try {
+    const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    const [primeira, segunda] = await pagina.evaluate(async () => [
+      await window.sakuraApp.identidadeComputador(),
+      await window.sakuraApp.identidadeComputador(),
+    ]);
+    conferir(
+      "o computador tem uma identidade, e é a mesma a cada pedido",
+      FORMATO_UUID.test(primeira.id) && primeira.id === segunda.id,
+      `veio "${primeira.id}" e "${segunda.id}"`,
+    );
+    conferir(
+      "a identidade fica gravada no disco",
+      idNoDisco() === primeira.id,
+    );
+    conferir(
+      "junto vão a versão do app, o nome da máquina e o canal",
+      primeira.versao === ponte.versao &&
+        primeira.nomeMaquina === os.hostname() &&
+        (primeira.canal === "normal" || primeira.canal === "teste") &&
+        typeof primeira.sistema === "string" && primeira.sistema.length > 0,
+      JSON.stringify(primeira),
+    );
+
+    fs.writeFileSync(arquivoIdentidade, "{ isto não é json");
+    const depoisDeEstragar = await pagina.evaluate(() => window.sakuraApp.identidadeComputador());
+    conferir(
+      "com o arquivo estragado, nasce uma identidade nova e válida",
+      FORMATO_UUID.test(depoisDeEstragar.id) &&
+        depoisDeEstragar.id !== primeira.id &&
+        idNoDisco() === depoisDeEstragar.id,
+      depoisDeEstragar.id,
+    );
+  } finally {
+    if (identidadeAntes === null) fs.rmSync(arquivoIdentidade, { force: true });
+    else fs.writeFileSync(arquivoIdentidade, identidadeAntes);
   }
 
   // --- 8. Nada abre janela nova nem navega pra fora ----------------------

@@ -44,5 +44,14 @@ interface Window {
     // mesmo motivo: fora do Electron não há atualização automática nenhuma.
     canalAtualizacao?: () => Promise<"teste" | "normal">;
     definirCanalAtualizacao?: (canal: "teste" | "normal") => Promise<void>;
+    // Quem é este computador (migration 0063). Opcional pelo mesmo motivo:
+    // fora do Electron não existe "este computador" pra registrar.
+    identidadeComputador?: () => Promise<{
+      id: string;
+      nomeMaquina: string;
+      versao: string;
+      canal: "teste" | "normal";
+      sistema: string;
+    }>;
   };
 }

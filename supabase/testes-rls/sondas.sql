@@ -88,6 +88,11 @@ insert into teste_rls.sondas (tabela, insercao) values
 -- de gatilho grava. Esta sonda é o que prova isso a cada rodada.
 ('auditoria',      $$insert into auditoria (tabela, registro_id, acao) values ('clientes', 'cccccccc-0000-0000-0000-0000000000aa', 'criar')$$),
 
+-- ---------- computadores (ninguém grava direto, nem o dono) --------------
+-- Gravar é só por registrar_computador(); esta sonda prova que a tabela em
+-- si não aceita insert de ninguém.
+('computadores',   $$insert into computadores (id, versao_app, loja_id) values ('cccc0000-0000-0000-0000-0000000000ff', '0.9.44', '11111111-1111-1111-1111-1111111111aa')$$),
+
 -- ---------- versão do esquema (ninguém escreve pela API) ------------------
 -- 900 é um número que o cenário não usa: chave duplicada aqui viraria um erro
 -- que se parece com "a RLS bloqueou", que é a confusão que este teste evita.

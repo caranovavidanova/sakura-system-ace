@@ -48,7 +48,7 @@
 set session_replication_role = replica;
 
 truncate table
-  schema_versao, auditoria, fechamentos_caixa, comissoes_fechamentos, whatsapp_mensagens, configuracoes_whatsapp,
+  computadores, schema_versao, auditoria, fechamentos_caixa, comissoes_fechamentos, whatsapp_mensagens, configuracoes_whatsapp,
   configuracoes_juros_parcelas, configuracoes_painel_inicio,
   configuracoes_fiscais_loja, configuracoes_garantia, segredos_fiscais_loja,
   cotacoes_pecas, pedidos_compra_itens, pedidos_compra,
@@ -224,6 +224,14 @@ insert into configuracoes_painel_inicio (loja_id, cartoes) values
 -- vazia" — o dono tem acesso à loja B em toda outra tabela da matriz.
 insert into segredos_fiscais_loja (loja_id, focus_nfe_token) values
   ('11111111-1111-1111-1111-1111111111bb', 'token-de-mentira-naopodevazar');
+
+-- ---------- um computador em cada loja (migration 0063) -------------------
+-- A leitura e o "esquecer" são do admin da loja em que o computador foi
+-- visto por último — então é uma tabela DA LOJA, com a exceção de que nem o
+-- dono grava direto: é só por registrar_computador().
+insert into computadores (id, nome_maquina, versao_app, loja_id) values
+  ('cccc0000-0000-0000-0000-0000000000aa', 'PC-LOJA-A', '0.9.44', '11111111-1111-1111-1111-1111111111aa'),
+  ('cccc0000-0000-0000-0000-0000000000bb', 'PC-LOJA-B', '0.9.44', '11111111-1111-1111-1111-1111111111bb');
 
 -- ---------- duas linhas de versão de esquema ------------------------------
 -- A migration 0055 planta uma linha por migration já aplicada, então esta

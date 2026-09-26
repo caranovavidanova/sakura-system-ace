@@ -30,6 +30,11 @@ export const MENSAGEM_DA_TRAVA: Record<string, string> = {
   ck_fechamentos_caixa_valores: "O valor contado e o troco não podem ser negativos.",
   ck_comissoes_fechamentos_valores:
     "O valor pago não pode ser negativo, e o fim do período não pode vir antes do início.",
+  // Migration 0063 (computadores). Quem grava é o próprio programa, a cada
+  // login — estas frases só aparecem se algo muito estranho chegar ao banco.
+  ck_computadores_versao: "A versão do programa informada por este computador não está no formato 0.9.43.",
+  ck_computadores_canal: 'O canal de atualização deste computador precisa ser "normal" ou "teste".',
+  ck_computadores_tamanhos: "O nome ou o apelido do computador está comprido demais (apelido: até 60 letras).",
 };
 
 /** A frase da trava, se a mensagem do banco for de uma trava conhecida. */

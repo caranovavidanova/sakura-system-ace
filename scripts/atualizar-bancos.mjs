@@ -33,6 +33,19 @@
 // Banco sem essa tabela é anterior à 0055: o robô recusa e explica — esse
 // caso raro se resolve à mão, uma vez.
 //
+// A VERSÃO MÍNIMA DO PROGRAMA (migration 0063). Algumas migrations apertam
+// uma regra que a versão anterior do programa usava — a 0062 é o exemplo: com
+// ela rodada, quem ainda estava na v0.9.42 e pagava conta sem ter o Caixa
+// levava erro. Pra isso a migration declara, numa linha do cabeçalho:
+//
+//     -- versao-minima-do-programa: 0.9.43
+//
+// e o robô, antes de aplicar, pergunta ao banco (tabela `computadores`) se
+// algum computador EM USO (visto nos últimos 30 dias) ainda está abaixo dela.
+// Se estiver, NÃO aplica em banco nenhum e diz quais são — a não ser que
+// quem rodou tenha marcado "aplicar mesmo com computadores atrasados". Quase
+// toda migration só ACRESCENTA e não precisa da linha; ela é pra exceção.
+//
 // POR QUE A LÓGICA MORA AQUI, COM TESTE, e não em linhas de bash no workflow:
 // é o passo que mexe no banco de loja de outra empresa, e o jeito de ele dar
 // errado é silencioso (uma migration aplicada fora de ordem, um banco que
@@ -41,7 +54,7 @@
 // errado escolhido sozinho, campo vazio que se disfarça de outro erro.
 
 import { execFile } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { appendFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,6 +71,17 @@ export const ESPERA_POR_TRAVA = "15s";
 
 /** O marcador que o `psql` imprime antes de cada migration, no ensaio. */
 const MARCADOR = "@@sakura-migration";
+
+/**
+ * Computador que não aparece há mais que isto não conta como "em uso" e não
+ * segura a aplicação. **O mesmo número está em src/schemas/computadores.ts**
+ * (DIAS_PARA_CONSIDERAR_EM_USO), e um teste confere que os dois batem — senão
+ * a tela diria "em uso" pra um computador que o robô já ignora.
+ */
+export const DIAS_EM_USO = 30;
+
+const LINHA_VERSAO_MINIMA = /^--\s*versao-minima-do-programa:\s*(\S+)\s*$/m;
+const FORMATO_VERSAO = /^\d{1,4}\.\d{1,4}\.\d{1,6}$/;
 
 // --- As empresas -------------------------------------------------------------
 
@@ -136,8 +160,60 @@ export function segredosDaConexao(banco) {
 // --- As migrations -----------------------------------------------------------
 
 /**
- * @typedef {{ numero: number, arquivo: string, caminho: string }} Migration
+ * @typedef {{ numero: number, arquivo: string, caminho: string, versaoMinima?: string | null }} Migration
  */
+
+/**
+ * A versão mínima do programa que a migration declara no cabeçalho, ou null.
+ *
+ * Linha com versão torta RECUSA a rodada inteira, em vez de ser ignorada:
+ * ignorar faria justamente a migration que pediu cuidado passar sem cuidado
+ * nenhum, calada.
+ *
+ * @param {string} conteudo
+ * @param {string} arquivo  só pra mensagem de erro
+ * @returns {string | null}
+ */
+export function lerVersaoMinima(conteudo, arquivo = "a migration") {
+  const casou = LINHA_VERSAO_MINIMA.exec(String(conteudo));
+  if (!casou) return null;
+  if (!FORMATO_VERSAO.test(casou[1])) {
+    throw new Error(
+      `${arquivo} declara "versao-minima-do-programa: ${casou[1]}", que não é uma versão (o formato é 0.9.43). Nada foi feito.`,
+    );
+  }
+  return casou[1];
+}
+
+/**
+ * Compara duas versões como NÚMERO ("0.9.9" é mais antiga que "0.9.10").
+ * A mesma regra de compararVersoes() em src/schemas/computadores.ts, e da
+ * comparação que a consulta ao banco faz (`string_to_array(...)::int[]`).
+ *
+ * @param {string} a
+ * @param {string} b
+ */
+export function compararVersoes(a, b) {
+  const [pa, pb] = [a, b].map((v) => v.split(".").map(Number));
+  for (let i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  return 0;
+}
+
+/**
+ * A maior versão mínima entre as migrations que faltam — é ela que manda.
+ *
+ * @param {Migration[]} lista
+ * @returns {string | null}
+ */
+export function versaoMinimaExigida(lista) {
+  let maior = null;
+  for (const m of lista) {
+    if (m.versaoMinima && (maior === null || compararVersoes(m.versaoMinima, maior) > 0)) {
+      maior = m.versaoMinima;
+    }
+  }
+  return maior;
+}
 
 /**
  * As migrations do repositório, em ordem NUMÉRICA — nunca alfabética. Hoje as
@@ -166,7 +242,8 @@ export function listarMigrations(pasta) {
     if (/['\n\r\\]/.test(caminho)) {
       throw new Error(`O caminho da migration ${arquivo} tem um caractere que não dá pra passar ao psql.`);
     }
-    lista.push({ numero, arquivo, caminho });
+    const versaoMinima = lerVersaoMinima(readFileSync(caminho, "utf8"), arquivo);
+    lista.push({ numero, arquivo, caminho, versaoMinima });
   }
   return lista.sort((a, b) => a.numero - b.numero);
 }
@@ -290,6 +367,8 @@ export function avisosDaMigration(saidaDeErro) {
  * @property {string[]} [avisos]           o que as migrations pediram pra mostrar
  * @property {"aplicado" | "em-dia" | "falhou" | "nao-tocado"} [aplicacao]
  * @property {number | null} [versaoFinal] a versão conferida no fim
+ * @property {string} [versaoMinima]      a versão do programa que as pendentes exigem
+ * @property {Computadores} [computadores] o que o banco disse sobre os computadores
  */
 
 async function consultar(psql, banco, sql) {
@@ -314,15 +393,102 @@ export async function versaoDoBanco(psql, banco) {
 }
 
 /**
+ * A consulta dos computadores em uso abaixo de uma versão. A versão entra no
+ * texto do SQL, e por isso só passa se for "números.números.números" — o
+ * formato já foi conferido ao ler o cabeçalho da migration, e é conferido de
+ * novo aqui porque esta função não sabe de onde veio o valor.
+ *
+ * @param {string} versaoMinima
+ */
+export function sqlComputadoresAtrasados(versaoMinima) {
+  if (!FORMATO_VERSAO.test(versaoMinima)) {
+    throw new Error(`"${versaoMinima}" não é uma versão no formato 0.9.43.`);
+  }
+  return [
+    "with em_uso as (",
+    `  select * from computadores where visto_em > now() - interval '${DIAS_EM_USO} days'`,
+    ")",
+    "select json_build_object(",
+    "  'emUso', (select count(*) from em_uso),",
+    "  'atrasados', coalesce((",
+    "    select json_agg(json_build_object(",
+    "      'nome', coalesce(nullif(btrim(apelido), ''), nullif(btrim(nome_maquina), ''), 'computador sem nome'),",
+    "      'versao', versao_app,",
+    "      'vistoEm', visto_em",
+    "    ) order by visto_em desc)",
+    "    from em_uso",
+    `    where string_to_array(versao_app, '.')::int[] < string_to_array('${versaoMinima}', '.')::int[]`,
+    "  ), '[]'::json)",
+    ")",
+  ].join("\n");
+}
+
+/**
+ * @typedef {{ nome: string, versao: string, vistoEm: string, dias: number }} ComputadorAtrasado
+ * @typedef {{ registra: boolean, emUso: number, atrasados: ComputadorAtrasado[] }} Computadores
+ */
+
+/**
+ * Os computadores deste banco que, estando EM USO, ainda rodam uma versão do
+ * programa abaixo de `versaoMinima`.
+ *
+ * `registra: false` quando o banco ainda não tem a tabela `computadores`
+ * (anterior à 0063) — aí não há como saber, e isso vira AVISO no resumo, não
+ * tranca: travar pra sempre um banco que não tem como responder seria o erro
+ * do §6 item 33.
+ *
+ * @param {Psql} psql
+ * @param {string} banco
+ * @param {string} versaoMinima
+ * @param {Date} [agora]
+ * @returns {Promise<Computadores>}
+ */
+export async function computadoresAtrasados(psql, banco, versaoMinima, agora = new Date()) {
+  const sql = sqlComputadoresAtrasados(versaoMinima);
+  const existe = await consultar(psql, banco, "select to_regclass('public.computadores') is not null");
+  if (existe !== "t") return { registra: false, emUso: 0, atrasados: [] };
+  const texto = await consultar(psql, banco, sql);
+  let dados;
+  try {
+    dados = JSON.parse(texto);
+  } catch {
+    throw new Error(`a lista de computadores veio num formato inesperado ("${texto.slice(0, 80)}")`);
+  }
+  const atrasados = (Array.isArray(dados?.atrasados) ? dados.atrasados : []).map((c) => ({
+    nome: String(c.nome),
+    versao: String(c.versao),
+    vistoEm: String(c.vistoEm),
+    dias: Math.max(0, Math.floor((agora.getTime() - new Date(c.vistoEm).getTime()) / 86_400_000)),
+  }));
+  return { registra: true, emUso: Number(dados?.emUso) || 0, atrasados };
+}
+
+/** "hoje", "ontem", "há 3 dias". */
+function rotuloDias(dias) {
+  if (dias <= 0) return "visto hoje";
+  if (dias === 1) return "visto ontem";
+  return `visto há ${dias} dias`;
+}
+
+/**
  * @param {object} p
  * @param {"ensaiar" | "aplicar"} p.modo
  * @param {{ nome: string, banco: string }[]} p.empresas
  * @param {Migration[]} p.migrations
  * @param {Psql} p.psql
  * @param {(mensagem: string) => void} [p.log]
- * @returns {Promise<{ modo: string, ultima: number, situacoes: Situacao[], sucesso: boolean, conclusao: string }>}
+ * @param {boolean} [p.aplicarComAtrasados]  seguir mesmo com computadores
+ *   em uso abaixo da versão mínima (a caixinha do workflow). Padrão: não.
+ * @returns {Promise<{ modo: string, ultima: number, situacoes: Situacao[], sucesso: boolean, conclusao: string, esperando: boolean, aplicarComAtrasados: boolean }>}
  */
-export async function atualizarBancos({ modo, empresas, migrations, psql, log = console.log }) {
+export async function atualizarBancos({
+  modo,
+  empresas,
+  migrations,
+  psql,
+  log = console.log,
+  aplicarComAtrasados = false,
+}) {
   if (!MODOS.includes(modo)) {
     throw new Error(`Modo "${modo}" não existe. Use "ensaiar" ou "aplicar".`);
   }
@@ -382,30 +548,71 @@ export async function atualizarBancos({ modo, empresas, migrations, psql, log = 
     }
   }
 
+  // --- 1b. Os computadores: alguém ainda roda uma versão que vai quebrar? ---
+  // Só pergunta quando alguma migration que falta declarou versão mínima — a
+  // imensa maioria não declara, e aí nada muda em relação ao que sempre foi.
+  for (const [i, s] of situacoes.entries()) {
+    if (s.ensaio !== "ok" || s.pendentes.length === 0) continue;
+    const exigida = versaoMinimaExigida(migrations.filter((m) => s.pendentes.includes(m.numero)));
+    if (!exigida) continue;
+    s.versaoMinima = exigida;
+    try {
+      s.computadores = await computadoresAtrasados(psql, empresas[i].banco, exigida);
+    } catch (erro) {
+      // A migration pediu cuidado e não deu pra conferir: isso segura, como
+      // um ensaio que falhou. Não saber não pode virar "então pode".
+      s.ensaio = "problema";
+      s.motivo = `as migrations que faltam exigem o programa na ${exigida} ou mais nova, e não consegui conferir os computadores deste banco: ${erro instanceof Error ? erro.message : erro}`;
+      log(`${s.nome}: ${s.motivo}`);
+      continue;
+    }
+    const { registra, atrasados } = s.computadores;
+    if (!registra) {
+      log(`${s.nome}: as migrations exigem o programa na ${exigida}, mas este banco ainda não registra os computadores — não deu pra conferir.`);
+    } else if (atrasados.length) {
+      log(
+        `${s.nome}: ${atrasados.length} computador(es) em uso abaixo da ${exigida}: ${atrasados.map((c) => `${c.nome} (${c.versao})`).join(", ")}.`,
+      );
+    } else {
+      log(`${s.nome}: todos os computadores em uso já estão na ${exigida} ou mais nova.`);
+    }
+  }
+
   const algumProblema = situacoes.some((s) => s.ensaio === "problema");
+  const esperando = situacoes.some((s) => (s.computadores?.atrasados.length ?? 0) > 0);
+  const segura = esperando && !aplicarComAtrasados;
+  const oQueFazerComOsAtrasados =
+    "Cada computador se atualiza sozinho quando o programa é fechado e aberto de novo — peça pra loja fazer isso e rode de novo. Um computador que não existe mais se tira da conta em Configurações → Computadores desta empresa → Esquecer. E se você tiver certeza de que eles não serão afetados, rode de novo marcando \"aplicar mesmo com computadores atrasados\".";
 
   if (modo === "ensaiar") {
     return {
       modo,
       ultima,
       situacoes,
-      sucesso: !algumProblema,
+      esperando,
+      aplicarComAtrasados,
+      sucesso: !algumProblema && !segura,
       conclusao: algumProblema
         ? "O ensaio encontrou problema em pelo menos um banco. Nada foi mudado em banco nenhum."
-        : "Ensaio concluído: todas as migrations que faltam passariam. Nada foi mudado em banco nenhum.",
+        : segura
+          ? `As migrations passariam, mas a aplicação vai ESPERAR: há computadores em uso numa versão do programa mais antiga que a que elas exigem (veja abaixo). Nada foi mudado em banco nenhum. ${oQueFazerComOsAtrasados}`
+          : "Ensaio concluído: todas as migrations que faltam passariam. Nada foi mudado em banco nenhum.",
     };
   }
 
   // --- 2. Aplicar — só se TODOS os ensaios passaram --------------------------
-  if (algumProblema) {
+  if (algumProblema || segura) {
     for (const s of situacoes) s.aplicacao = "nao-tocado";
     return {
       modo,
       ultima,
       situacoes,
+      esperando,
+      aplicarComAtrasados,
       sucesso: false,
-      conclusao:
-        "Nada foi aplicado em banco nenhum: o ensaio encontrou problema em pelo menos um deles. Resolva o que está apontado e rode de novo — o que já estava em dia continua em dia.",
+      conclusao: algumProblema
+        ? "Nada foi aplicado em banco nenhum: o ensaio encontrou problema em pelo menos um deles. Resolva o que está apontado e rode de novo — o que já estava em dia continua em dia."
+        : `Nada foi aplicado em banco nenhum: há computadores em uso numa versão do programa mais antiga que a que as migrations exigem (veja abaixo). Aplicar agora daria erro na tela deles. ${oQueFazerComOsAtrasados}`,
     };
   }
 
@@ -454,6 +661,8 @@ export async function atualizarBancos({ modo, empresas, migrations, psql, log = 
     modo,
     ultima,
     situacoes,
+    esperando,
+    aplicarComAtrasados,
     sucesso: !parou && todosEmDia,
     conclusao: parou
       ? "Uma migration falhou e o robô parou. Os bancos antes dela ficaram atualizados; o que falhou ficou exatamente como estava antes da migration que deu erro; os seguintes não foram tocados. Resolva e rode de novo: ele aplica só o que ainda falta."
@@ -488,10 +697,13 @@ export function montarResumo(r) {
     linhas.push("| Empresa | Está em | Faltam | O ensaio |", "|---|---|---|---|");
     for (const s of r.situacoes) {
       const faltam = s.pendentes.length ? s.pendentes.map(numeroComZeros).join(", ") : "nada";
+      const atrasados = s.computadores?.atrasados.length ?? 0;
       const ensaio =
         s.ensaio === "ok"
           ? s.pendentes.length
-            ? "✅ passaria"
+            ? atrasados && !r.aplicarComAtrasados
+              ? `⏸ passaria, mas espera ${atrasados === 1 ? "1 computador" : `${atrasados} computadores`} abaixo da ${s.versaoMinima}`
+              : "✅ passaria"
             : "✅ em dia"
           : `❌ ${s.falhouEm ? `parou na ${numeroComZeros(s.falhouEm)}: ` : ""}${s.motivo}`;
       linhas.push(`| ${s.nome} | ${v(s.versao)} | ${faltam} | ${ensaio.replace(/\|/g, "/")} |`);
@@ -514,6 +726,33 @@ export function montarResumo(r) {
     linhas.push("", "**O que as migrations avisaram** (não é erro — é o que elas pediram pra mostrar):", "");
     for (const s of comAviso) {
       for (const aviso of s.avisos) linhas.push(`- ${s.nome}: ${aviso}`);
+    }
+  }
+
+  const comVersaoMinima = r.situacoes.filter((s) => s.versaoMinima && s.computadores);
+  if (comVersaoMinima.length) {
+    linhas.push(
+      "",
+      "**Versão mínima do programa** (alguma migration que falta só funciona com o programa a partir de uma versão):",
+      "",
+    );
+    for (const s of comVersaoMinima) {
+      const c = s.computadores;
+      const exige = `exige a ${s.versaoMinima}`;
+      if (!c.registra) {
+        linhas.push(`- ${s.nome}: ${exige}; este banco ainda não registra os computadores — não deu pra conferir.`);
+      } else if (c.atrasados.length === 0) {
+        linhas.push(
+          c.emUso === 0
+            ? `- ${s.nome}: ${exige}; nenhum computador apareceu nos últimos ${DIAS_EM_USO} dias — não deu pra conferir.`
+            : `- ${s.nome}: ${exige}; ${c.emUso === 1 ? "o computador em uso já está" : `os ${c.emUso} computadores em uso já estão`} nela ou numa mais nova.`,
+        );
+      } else {
+        const lista = c.atrasados.map((x) => `${x.nome} (${x.versao}, ${rotuloDias(x.dias)})`).join("; ");
+        linhas.push(
+          `- ${s.nome}: ${exige}; ainda abaixo dela: ${lista}${r.aplicarComAtrasados ? " — seguindo mesmo assim, como pedido." : "."}`,
+        );
+      }
     }
   }
 
@@ -554,13 +793,21 @@ if (process.argv[1] && path.resolve(process.argv[1]) === ESTE_ARQUIVO) {
   const noGitHub = process.env.GITHUB_ACTIONS === "true";
   try {
     const modo = String(process.argv[2] || "ensaiar").trim();
+    // A caixinha "aplicar mesmo com computadores atrasados" do workflow.
+    const aplicarComAtrasados = String(process.argv[3] || "").trim() === "true";
     const empresas = lerEmpresas(process.env.BACKUP_EMPRESAS);
     // Antes de qualquer saída: esconder as linhas de conexão e as senhas.
     if (noGitHub) {
       for (const e of empresas) for (const s of segredosDaConexao(e.banco)) console.log(`::add-mask::${s}`);
     }
     const pasta = process.env.PASTA_MIGRATIONS || path.join(path.dirname(ESTE_ARQUIVO), "..", "supabase", "migrations");
-    const r = await atualizarBancos({ modo, empresas, migrations: listarMigrations(pasta), psql: psqlDeVerdade });
+    const r = await atualizarBancos({
+      modo,
+      empresas,
+      migrations: listarMigrations(pasta),
+      psql: psqlDeVerdade,
+      aplicarComAtrasados,
+    });
     const texto = montarResumo(r);
     console.log(`\n${texto}`);
     if (resumo) await appendFile(resumo, `${texto}\n`);

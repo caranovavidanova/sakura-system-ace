@@ -48,4 +48,7 @@ contextBridge.exposeInMainWorld("sakuraApp", {
   canalAtualizacao: () => ipcRenderer.invoke("atualizacao:canal"),
   definirCanalAtualizacao: (canal: string) =>
     ipcRenderer.invoke("atualizacao:definirCanal", canal),
+  // Quem é este computador, e em que versão ele está (migration 0063). A
+  // tela manda isso ao banco a cada login — ver src/lib/computadores.ts.
+  identidadeComputador: () => ipcRenderer.invoke("computador:identidade"),
 });

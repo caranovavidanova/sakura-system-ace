@@ -430,7 +430,30 @@ const comissoesPagas = [{
   operador_id: OP, criado_em: dia(-20),
 }];
 
+// Os computadores da empresa (migration 0063): quatro, pra seção de
+// Configurações mostrar o que ela existe pra mostrar — um no canal de teste,
+// um uma versão atrás, e um notebook que sumiu há mais de 30 dias.
+const versaoDoApp = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../package.json"), "utf8"),
+).version;
+const versaoAnterior = versaoDoApp.replace(/(\d+)$/, (n) => String(Math.max(0, Number(n) - 1)));
+const computadores = [
+  { id: "pc-1", nome_maquina: "DESKTOP-4K7PQ2", apelido: "Balcão", versao_app: versaoDoApp,
+    canal: "teste", sistema: "Windows 11 Pro", loja_id: LOJA, operador_id: OP,
+    primeiro_acesso: dia(-200), visto_em: dia(0), loja: { nome: lojas[0].nome }, operador: { nome: "Marcos Andrade" } },
+  { id: "pc-2", nome_maquina: "DESKTOP-9ZB1LM", apelido: "Caixa", versao_app: versaoDoApp,
+    canal: "normal", sistema: "Windows 10 Pro", loja_id: LOJA, operador_id: OP2,
+    primeiro_acesso: dia(-180), visto_em: dia(0), loja: { nome: lojas[0].nome }, operador: { nome: "Bruna Tavares" } },
+  { id: "pc-3", nome_maquina: "DESKTOP-A1C3F9", apelido: null, versao_app: versaoAnterior,
+    canal: "normal", sistema: "Windows 10 Home", loja_id: LOJA, operador_id: OP3,
+    primeiro_acesso: dia(-60), visto_em: dia(-2), loja: { nome: lojas[0].nome }, operador: { nome: "Anderson Lima" } },
+  { id: "pc-4", nome_maquina: "NOTEBOOK-SALA", apelido: "Notebook antigo", versao_app: "0.9.30",
+    canal: "normal", sistema: "Windows 10 Home", loja_id: LOJA, operador_id: OP,
+    primeiro_acesso: dia(-300), visto_em: dia(-41), loja: { nome: lojas[0].nome }, operador: { nome: "Marcos Andrade" } },
+];
+
 export const TABELAS = {
+  computadores,
   schema_versao: schemaVersao,
   lojas, clientes, veiculos, pecas, servicos, depositos,
   ordens_servico: ordens,
@@ -481,6 +504,8 @@ export const TABELAS = {
 export const FUNCOES = {
   loja_tem_token_focus_nfe: true,
   definir_token_focus_nfe: null,
+  registrar_computador: null,
+  definir_apelido_computador: null,
 };
 
 export const SESSAO = {

@@ -44,6 +44,7 @@ import { TextoGarantiaSection } from "./TextoGarantiaSection";
 import { ModelosWhatsappSection } from "./ModelosWhatsappSection";
 import { AcoesDaLinha } from "@/components/AcoesDaLinha";
 import { AtualizacoesComputadorSection } from "./AtualizacoesComputadorSection";
+import { ComputadoresSection } from "./ComputadoresSection";
 
 export function ConfiguracoesPage() {
   const { operador: operadorLogado, lojaAtual } = useAuth();
@@ -430,6 +431,13 @@ export function ConfiguracoesPage() {
         descricao="Se este computador recebe cada versão nova assim que ela sai (canal de teste) ou só depois que ela for liberada para todas as lojas (normal). Vale só para este computador."
       >
         <AtualizacoesComputadorSection />
+      </SecaoRecolhivel>
+
+      <SecaoRecolhivel
+        titulo="Computadores desta empresa"
+        descricao="Em que versão está cada computador que abre o sistema, e quando foi usado pela última vez. Serve pra ver quem ficou pra trás numa atualização."
+      >
+        <ComputadoresSection />
       </SecaoRecolhivel>
 
       {senhaGerada && (

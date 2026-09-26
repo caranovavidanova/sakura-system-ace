@@ -3794,7 +3794,10 @@ Quatro coisas que valem saber:
   **Consequência pra quem publica**: até a loja ser marcada, uma versão publicada e não liberada
   chega **só no computador dela** — a loja só recebe depois do Liberar.
 - **Computadores desta empresa** (26/09/2026, migration `0063` — aplicada, e o programa na
-  `v0.9.44`, publicada e liberada no mesmo dia; **ainda não vista por ela rodando**): Configurações → "Computadores desta empresa" (só admin) mostra cada computador que
+  `v0.9.44`, publicada e liberada no mesmo dia; **confirmada por ela funcionando no mesmo dia**:
+  o computador dela apareceu sozinho na lista, com `0.9.44`, "canal de teste", "este computador",
+  a loja e "hoje, por Pneus Amigao" — o Supabase e o Windows de verdade, que não dava pra
+  conferir daqui): Configurações → "Computadores desta empresa" (só admin) mostra cada computador que
   abre o sistema — apelido ou nome da máquina, **versão**, canal, loja e **quando foi usado pela
   última vez, e por quem**. Existe pra responder "quem ficou pra trás numa atualização?", que até
   aqui só se respondia perguntando na loja. Cinco coisas que valem saber:
@@ -6310,13 +6313,17 @@ máquina que aparece é o que o Windows dá).
    instalado ninguém vê — é o preço de ele nunca atrapalhar o login. Só a falha de criar o
    `computador.json` (no processo principal) vai pro `erros.log`. Se isso virar problema de
    verdade, o conserto pequeno é mandar essa falha também pro `erros.log`.
+   **Metade já confirmada (26/09/2026, à noite)**: o computador DELA apareceu sozinho, logo
+   depois de atualizar — `0.9.44`, canal de teste, marcado "este computador", loja e operador
+   certos (print dela). Ou seja, o caminho inteiro funciona no Supabase e no Windows de verdade;
+   o que falta é só o da loja, que depende de a loja abrir a versão nova.
 3. O resto continua como no marco abaixo (alíquota em 1º/10, conferir na loja o que a `v0.9.43`
    e a `v0.9.42` trouxeram, emitir e cancelar uma nota pelo porteiro).
 
 #### Por onde a próxima sessão começa
 
 Perguntar se o computador da loja já apareceu em Configurações → "Computadores desta empresa"
-(e o dela, com o canal de teste). Se ela quiser seguir o guia depois disso, as opções de 26/09 continuam de pé:
+(o dela já apareceu em 26/09/2026). Se ela quiser seguir o guia depois disso, as opções de 26/09 continuam de pé:
 **venda de balcão sem OS** (`FN-09`, P0 — com a decisão "cliente opcional na OS ou cliente fixo
 'Consumidor'"), **ficha do veículo** (`FN-04`, sem migration) e **permissão nas Ordens de
 Serviço** (`TR-04.1`, lote 4 — ganho menor que os anteriores, porque quase todo módulo lê as OS).

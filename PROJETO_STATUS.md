@@ -6188,9 +6188,8 @@ Clientes (é o que mais tela lê, e é o dado pessoal que mais importa proteger)
 
 #### O que ficou pra depois (ela disse "resolvemos essas outras coisas depois")
 
-- **⚠️ Até 03/10/2026: ativar a verificação em duas etapas do GitHub.** Sem isso a conta fica
-  restrita — e publicar, liberar, o botão dos bancos e o backup passam por ela. **Lembrar de novo
-  no começo da próxima sessão**, porque o prazo é curto.
+- ✅ **Verificação em duas etapas do GitHub — FEITA por ela em 26/09/2026**, antes do prazo de
+  03/10. Não lembrar mais.
 - Conferir na loja o que a `v0.9.42` trouxe (Fechamento de caixa, Registrar pagamento de
   comissão, a trava do desconto).
 - Emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
@@ -6201,10 +6200,29 @@ Clientes (é o que mais tela lê, e é o dado pessoal que mais importa proteger)
 
 #### Por onde a próxima sessão começa
 
-1. Lembrar do **2FA** (prazo 03/10).
+1. ~~Lembrar do 2FA~~ — feito em 26/09/2026.
 2. Perguntar se o computador da loja **já mostra a `0.9.43`**. Se sim, rodar o botão "Atualizar
    o banco de todas as empresas" com `aplicar` (o ensaio já passou) e conferir que o banco ficou
    na `0062`. **Não aplicar antes dessa confirmação.**
+   **Atalho que dispensa esperar** (combinado em 26/09/2026, era fim de semana e ela não tinha
+   acesso ao PC da loja): quem quebra com a `v0.9.42` + `0062` é só operador **não admin** que tem
+   Contas a Pagar ou Contas a Receber **sem** ter Caixa Diário (ao pagar/receber conta, e o
+   "desfazer pagamento"). Se em Configurações → Operadores não existir ninguém assim, dá pra
+   aplicar já. Ela ficou de conferir.
+   **Ela perguntou se isso vai se repetir com muitas lojas** ("vamos ter que esperar todos
+   atualizarem?"). Resposta dada: não como regra — a imensa maioria das migrations só acrescenta
+   e roda antes da versão, sem esperar ninguém. Só migration que **aperta** algo que a versão
+   velha usava (como a `0062`) pede espera, e aí o certo é esperar um prazo (a versão nova entra
+   quando o programa é fechado, então ~1 a 2 dias úteis depois de liberada) e **conferir**. O que
+   falta pra conferir é saber em que versão cada computador está — hoje não existe. Proposta
+   feita, **não pedida ainda**: o programa registra no banco, a cada login, "computador, versão,
+   visto por último", e o botão de atualizar os bancos recusa uma migration que exige versão
+   mínima enquanto houver computador ativo abaixo dela.
+   **E sobre a alíquota mensal** ("vamos ter que atualizar de todas as lojas manualmente?"): é
+   cadastro no portal da prefeitura, por CNPJ, e não tem API — o sistema só consegue lembrar
+   (já lembra). Pra lojas de terceiros, normalmente é tarefa da contabilidade de cada loja. Vale
+   ela conferir em 1º/10 se o botão "Replicar Alíquota" do portal deixa cadastrar vários meses
+   de uma vez — se deixar, vira tarefa anual.
 3. Se ela quiser seguir o guia: o próximo lote do `TR-04.1` (Ordens de Serviço), apresentando
    antes as duas decisões acima.
 

@@ -20,6 +20,7 @@ import {
   janelaDoMesAteODia,
   mesmaJanelaNoMesAnterior,
   metricasDoPeriodo,
+  moduloQueFaltaAoCartao,
   rotuloDeIdade,
   valoresPorCartao,
   variacoesPorCartao,
@@ -47,6 +48,7 @@ import type { Servico } from "@/types/servico";
 import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
 import { nomeOrdem } from "@/types/os";
+import { MODULOS, temPermissao, type ModuloChave } from "@/types/operador";
 import type { OrdemServico } from "@/types/os";
 
 const TITULO_CARTAO: Record<CartaoMetrica, string> = {
@@ -72,7 +74,7 @@ function dataDaChave(chave: string): Date {
 }
 
 export function PainelPage() {
-  const { lojaAtual } = useAuth();
+  const { lojaAtual, operador } = useAuth();
   const navigate = useNavigate();
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
@@ -95,6 +97,10 @@ export function PainelPage() {
   // Qual mês o calendário está mostrando — só ele anda com as setas ‹ ›. Os
   // cartões continuam sempre no mês corrente: "Vendas mês" mudando junto com
   // a navegação do calendário seria uma armadilha.
+  // Quem não tem Contas a Pagar não recebe conta nenhuma do banco (migration
+  // 0061) — então nem pergunta, e o cartão diz "sem acesso" em vez de R$ 0,00.
+  const podeVerContas = temPermissao(operador, "contas_pagar");
+
   const [mesVisivel, setMesVisivel] = useState(() => ({
     ano: hoje.getFullYear(),
     mes: hoje.getMonth(),
@@ -120,7 +126,7 @@ export function PainelPage() {
           listarMovimentosCaixa(lojaAtual.id),
           listarOrdens(lojaAtual.id),
           listarClientes(),
-          listarContasPagar(lojaAtual.id),
+          podeVerContas ? listarContasPagar(lojaAtual.id) : Promise.resolve([]),
           buscarConfiguracaoPainelInicio(lojaAtual.id),
           listarPecas(),
           listarServicos(),
@@ -142,7 +148,7 @@ export function PainelPage() {
       }
     }
     carregar();
-  }, [lojaAtual]);
+  }, [lojaAtual, podeVerContas]);
 
   const avisoAliquota = avisoAliquotaCompetencia(configFiscal, hoje);
 
@@ -284,6 +290,7 @@ export function PainelPage() {
                 explicacao={CARTAO_METRICA_DESCRICAO[chave]}
                 valor={valores[chave]}
                 variacao={variacoes[chave]}
+                semAcessoA={moduloQueFaltaAoCartao(chave, (m) => temPermissao(operador, m))}
                 subirEBom={SUBIR_E_BOM[chave]}
                 cor={COR_CARTAO[chave]}
               />
@@ -432,6 +439,7 @@ function CartaoValor({
   variacao,
   subirEBom,
   cor,
+  semAcessoA,
 }: {
   titulo: string;
   explicacao: string;
@@ -439,6 +447,8 @@ function CartaoValor({
   variacao: number | null;
   subirEBom: boolean;
   cor: string;
+  /** O módulo que o operador não tem — aí o cartão mostra "—", não R$ 0,00. */
+  semAcessoA: ModuloChave | null;
 }) {
   return (
     <div
@@ -455,14 +465,23 @@ function CartaoValor({
         <p className="text-rotulo text-sakura-muted">{titulo}</p>
         <Explicacao titulo={titulo} texto={explicacao} />
       </div>
-      <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <Valor valor={valor} className="text-metrica font-semibold" />
-        <Variacao
-          percentual={variacao}
-          subirEBom={subirEBom}
-          comparadoCom="o mesmo período do mês passado"
-        />
-      </div>
+      {semAcessoA ? (
+        <div className="mt-2">
+          <p className="text-metrica font-semibold text-sakura-muted">—</p>
+          <p className="mt-1 text-rotulo text-sakura-muted">
+            Sem acesso a {MODULOS.find((m) => m.chave === semAcessoA)?.label ?? semAcessoA}
+          </p>
+        </div>
+      ) : (
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <Valor valor={valor} className="text-metrica font-semibold" />
+          <Variacao
+            percentual={variacao}
+            subirEBom={subirEBom}
+            comparadoCom="o mesmo período do mês passado"
+          />
+        </div>
+      )}
     </div>
   );
 }

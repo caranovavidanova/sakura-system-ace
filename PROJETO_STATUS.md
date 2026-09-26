@@ -494,7 +494,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0054), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0061), todas idempotentes
 ├── supabase/instalacao/          # instalacao-completa.sql (as 54 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
@@ -519,7 +519,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # ninguém lê o token, só admin da loja grava, e a regra de
 │                                  # quem emite/cancela bate com a da tela; e
 │                                  # testar-fechamento-caixa.sql, testar-comissoes-pagas.sql e
-│                                  # testar-travas-de-dado.sql (0058 a 0060). NUNCA
+│                                  # testar-travas-de-dado.sql (0058 a 0060) e
+│                                  # testar-contas-permissao.sql (0061). NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql
  (apaga dados de negócio de teste,
@@ -1101,6 +1102,30 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   exercitado num banco no estado `0059`.
   **O `TR-05.2` (uma nota por OS por tipo) NÃO entrou aqui, de propósito** — ver o item 3 de "O
   que ainda está frágil na parte fiscal", seção 8.
+- `0061` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes — **ainda NÃO rodada por ela**): **Contas a
+  Pagar e Contas a Receber só pra quem tem o módulo**, o segundo lote da etapa 2 do `TR-04.1`
+  (o primeiro foi o RH, `0056`). Decisão dela, 26/09/2026, entre as opções. Quatro policies por
+  tabela, e duas **portas estreitas** em `contas_receber`, que são o que evita quebrar outro
+  módulo:
+  (a) **quem tem Ordens de Serviço pode CRIAR** — mas só uma conta amarrada a uma OS da mesma
+  loja. É o faturamento "a receber depois"; cobrança avulsa continua sendo só do módulo. O insert
+  do faturamento não pede a linha de volta, e precisa continuar assim: com `returning`, a policy
+  de leitura também teria de deixar;
+  (b) **quem tem Funcionários pode LER** — a aba Comissões avisa, com essas contas, quais OS o
+  cliente ainda não pagou. Uma view estreita (como a da `0056`) ficou pra quando `ordens_servico`
+  for fechada: hoje a lista de OS, com cliente e valor, continua aberta, então a view não
+  esconderia nada;
+  (c) **pagar e receber lançam no Caixa** — continua funcionando porque `caixa_movimentos` ainda
+  não foi fechada. **Quando for** (próximo lote), Contas a Pagar e Contas a Receber precisam
+  continuar podendo lançar ali;
+  (d) **o Início** não ganhou exceção no banco: quem não tem Contas a Pagar vê "—" no cartão (ver
+  "Início" na seção 7).
+  Teste repetível em `supabase/scripts/testar-contas-permissao.sql` (25 checagens, seis perfis),
+  conferido com **seis mutações** — e uma delas (tirar a conferência de loja da porta do
+  faturamento) **passou na primeira versão do teste**, ver item 73 da seção 6. Desempenho medido
+  com 20 mil contas por loja: 77–78 ms antes, 80–81 ms depois (a checagem de permissão vira
+  `InitPlan`, roda uma vez por consulta).
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1438,9 +1463,19 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    **A etapa 1 de 3 saiu em 13/09/2026** (item `TR-04.1`, migration `0054`): a função
    `operador_tem_permissao(modulo)`, no mesmo padrão de `operador_atual_e_admin()`.
    **A etapa 2 COMEÇOU em 18/09/2026, por uma tabela só** (migration `0056`, item `TR-04.3`):
-   `funcionarios` e `funcionario_filhos` são as primeiras a exigir a permissão no banco. As
+   `funcionarios` e `funcionario_filhos` são as primeiras a exigir a permissão no banco.
+   **O lote 2 saiu em 26/09/2026** (migration `0061`): `contas_pagar` e `contas_receber`. As
    outras **continuam como sempre foram** — o parágrafo acima segue valendo pra clientes,
-   peças, caixa e o resto.
+   peças, caixa e ordens de serviço.
+   **O que falta, e por que é mais difícil** (mapeado em 26/09/2026, tela por tela): as quatro
+   tabelas que sobram — `caixa_movimentos`, `clientes`/`veiculos`, `pecas`/`estoque_movimentos`
+   e `ordens_servico` — são lidas por MUITAS telas, e a principal é o **Início**, que quase todo
+   operador tem (ele lê caixa, OS, clientes, peças e serviços pra montar cartões, calendário e
+   pátio). Além disso o Caixa, as Garantias e as Notas Fiscais puxam o nome do cliente e os itens
+   da OS por `join` embutido — e `join` em tabela fechada não dá erro, devolve `null` (item 69).
+   Então cada uma dessas pede duas decisões dela antes: **o que o Início mostra pra quem não tem
+   o módulo** (a regra já existe: `MODULO_DO_CARTAO` em `schemas/painelInicio.ts`, e o cartão vira
+   "—") e **qual janela estreita cada tabela precisa** (ex: só o nome do cliente pro Caixa).
    **O que ela precisa saber antes de aprovar as próximas tabelas**: a partir daí, permissão
    errada no cadastro de um operador deixa de ser "o menu some" e passa a ser "a tela abre
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
@@ -2850,6 +2885,20 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
       regra (`problemaDoItem`, em `schemas/ordemServico.ts`) antes de gravar qualquer coisa — e o
       teste de tela prova que um desconto de R$ 500 num item de R$ 400 não chega a salvar.
 
+73. **Trava em dobro só se prova com quem enxerga os dois lados (26/09/2026, migration
+    `0061`).** A porta do faturamento em `contas_receber` confere que a OS é da **mesma loja**
+    da conta. Tirando essa conferência de propósito, o teste **continuou verde** — porque o
+    operador do teste era de uma loja só, e a RLS de `ordens_servico` já escondia dele a OS da
+    outra loja; o `exists` da policy dava falso de qualquer jeito. A conferência só passa a fazer
+    diferença pra quem trabalha nas **duas** lojas e enxerga as duas OS — e foi esse operador que
+    faltava no teste (checagem 8b). **Lição**: numa trava que repete outra trava, o teste precisa
+    de alguém que passe pela primeira, senão ele prova a primeira duas vezes. É a lição do item 53
+    outra vez — foi a mutação que achou, não a leitura.
+    **Pegadinha de ferramenta, da mesma sessão**: `pkill -f "vite --config site/ferramentas"`
+    mata também o próprio shell que o executa (o texto do comando contém o padrão), e o comando
+    morre com código 144 sem mensagem nenhuma. Pra parar o servidor das telas, procurar o PID com
+    `ps aux | grep vite` e matar pelo número.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3397,6 +3446,11 @@ Quatro coisas que valem saber:
   opcional que só aparece quando "Conta mensal recorrente" está marcado — em branco, continua
   recorrendo pra sempre (como sempre foi); preenchido com um mês, `pagarConta()` para de criar a
   próxima ocorrência depois dessa data (migration `0043`, já rodada por ela no Supabase real).
+  **Desde a migration `0061` (26/09/2026, ainda não rodada) o módulo é protegido pelo BANCO**, não
+  só pela tela: sem a permissão, a lista chega vazia e criar/pagar/apagar é recusado. Pra quem
+  não tem o módulo, o cartão "Contas a pagar vencendo" do Início mostra "—" e "Sem acesso a
+  Contas a Pagar" (em vez de um R$ 0,00 que parece verdade), e as contas não aparecem no
+  calendário dele. Admin e quem tem o módulo não veem diferença nenhuma.
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Nasce
   automaticamente quando uma OS é faturada escolhendo "A receber depois" em vez de "Recebido
   agora" — pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o cliente
@@ -3404,6 +3458,12 @@ Quatro coisas que valem saber:
   Contas a Pagar): cliente, descrição, valor e previsão de recebimento — pra cobrança que não
   passou por OS nenhuma. Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
   Contas a Pagar), venha a conta de qual dos dois jeitos for.
+  **Desde a migration `0061` (26/09/2026, ainda não rodada) o módulo é protegido pelo BANCO.**
+  Duas coisas de fora continuam funcionando, de propósito: **faturar uma OS "a receber depois"**
+  cria a conta mesmo pra quem não tem o módulo (só a conta daquela OS), e **a aba Comissões**
+  continua sabendo quais OS o cliente ainda não pagou (quem tem Funcionários lê a lista). Se o
+  banco recusar uma gravação por permissão, a tela diz em português a quem pedir, em vez de
+  "violates row-level security policy" (`MENSAGEM_SEM_PERMISSAO`, `src/lib/errors.ts`).
 - **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
   (Supabase Storage), vínculo opcional com uma OS. **Baixar o mês inteiro (02/09/2026)**: cada
   faixa de mês tem um botão "Baixar XMLs do mês (N)" que junta os XMLs daquela competência num
@@ -3494,6 +3554,10 @@ Quatro coisas que valem saber:
   contar nos dedos, e carro parado no pátio é dinheiro parado. A data exata continua no
   balãozinho do mouse. **O limite de 3 dias é constante no código, não configuração de tela** —
   virar ajuste por loja pediria migration.
+  **Cartão sem o módulo (26/09/2026, migration `0061`)**: quem não tem Contas a Pagar vê "—" e
+  "Sem acesso a Contas a Pagar" no cartão de contas, e as contas não entram no calendário dele — o
+  programa nem pergunta ao banco. A regra de qual cartão exige qual módulo é `MODULO_DO_CARTAO`
+  (`schemas/painelInicio.ts`); os cartões do Caixa entram nela quando o Caixa for fechado.
   **Aviso da alíquota do mês (11/09/2026, item `TR-11.2` do guia de melhorias)**: no topo do
   Início, uma faixa avisa que a alíquota daquela competência precisa ser cadastrada no portal da
   prefeitura antes da primeira NFS-e do mês — com o passo a passo curto e um botão "Já cadastrei"
@@ -4575,6 +4639,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (fim da noite) | A **apresentação comercial** em slides (pronta pra ela mandar ao pai) e o **"Importar por foto" desligado**, sem tag, a pedido dela. E conversa de fase 2: cenário de 2 empresas novas (uma com 2 lojas), **preço em aberto** (o pai sugeriu R$ 250/loja), cuidados de contrato, e o plano do **botão de atualizar todos os bancos** (item 11 da seção 8). Computador dela marcado como Teste. |
 | 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`), e tudo saiu na **`v0.9.42`**, publicada e liberada. Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
+| 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. **Ainda não rodada nem publicada.** |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4610,7 +4675,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0060` estão TODAS aplicadas no Supabase real dela.** As três últimas
+**Estado hoje: `0001` a `0060` estão aplicadas no Supabase real dela; a `0061` (contas só com o
+módulo, 26/09/2026) está no repositório e AINDA NÃO FOI RODADA** — rodar pelo botão "Atualizar
+o banco de todas as empresas" (ensaiar, depois aplicar) antes de publicar a versão que leva
+ela. As três últimas
 (`0058` fechamento de caixa, `0059` comissão paga, `0060` travas de dado) foram as primeiras a
 entrar **pelo botão "Atualizar o banco de todas as empresas"** (seção 9), em 25/09/2026 — ensaio
 e depois aplicação, sem colar nada no SQL Editor. É esse o jeito de rodar migration daqui pra
@@ -5192,7 +5260,8 @@ isso que existe a regra abaixo.
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
   "Importar por foto" desligado) foi publicada E liberada no mesmo dia**, depois de o banco ir pra
-  **`0060`** pelo botão novo. `main` em dia com a `v0.9.42`.
+  **`0060`** pelo botão novo. **Em 26/09/2026 a `main` passou a estar UMA leva à frente da
+  `v0.9.42`**: a migration `0061` (contas só com o módulo), ainda não rodada nem publicada.
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -5918,7 +5987,87 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 25/09/2026, última leva — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 26/09/2026 — LEIA ISTO PRIMEIRO
+
+**Saiu o lote 2 da permissão por módulo (`TR-04.1`, etapa 2): Contas a Pagar e Contas a
+Receber passam a ser protegidas pelo BANCO** (migration `0061`). Ela escolheu entre as opções
+(26/09/2026): proteger as duas e, no Início, **esconder** o cartão de contas de quem não tem o
+módulo (a opção recomendada). Ela também disse "resolvemos essas outras coisas depois" sobre as
+pendências do marco anterior — ver "O que ficou pra depois", logo abaixo.
+
+**Estado: `main` UMA leva à frente da `v0.9.42`. A `0061` NÃO foi rodada e NÃO há tag.**
+
+#### A ordem, quando ela for publicar
+
+1. **Primeiro o banco**: botão "Atualizar o banco de todas as empresas" (seção 9) → `ensaiar` →
+   conferir "✅ passaria" → `aplicar`. A `0061` só troca policy, não mexe em dado nenhum.
+2. **Depois a versão** (`0.9.43`), publicar e liberar (ou só publicar, se o computador da loja já
+   estiver no canal de teste).
+**Por que nessa ordem**: a versão nova espera o banco na `61` — publicada antes, a faixa "banco
+desatualizado" aparece até a migration rodar (é aviso, nada quebra). Já a `v0.9.42` rodando com
+o banco na `0061` funciona normal; o único efeito é, pra quem não tem Contas a Pagar e tiver o
+cartão de contas ligado no Início (não é o padrão), o cartão mostrar R$ 0,00 até a versão nova
+chegar.
+
+#### O que foi feito, em uma linha cada
+
+- **Contas a Pagar**: os quatro comandos exigem o módulo.
+- **Contas a Receber**: os quatro exigem o módulo, com duas portas estreitas — quem tem **Ordens
+  de Serviço** cria a conta **de uma OS da mesma loja** (o faturamento "a receber depois"), e quem
+  tem **Funcionários** lê (a aba Comissões). Detalhe na `0061`, seção 5.
+- **Início**: quem não tem Contas a Pagar vê "—" + "Sem acesso a Contas a Pagar" no cartão, e as
+  contas somem do calendário dele (o programa nem pede ao banco). Conferido com a tela de verdade,
+  nos dois casos.
+- **Mensagem em português** quando o banco recusa uma gravação por permissão.
+
+#### Como foi conferido
+
+- Instalação inteira três vezes do zero; a `0061` sozinha duas vezes.
+- `supabase/scripts/testar-contas-permissao.sql` — 25 checagens, seis perfis, as duas metades.
+  **Seis mutações**, todas vermelhas na checagem certa; uma delas só depois de acrescentar o
+  operador das duas lojas (item 73 da seção 6).
+- Matriz de RLS: 740 células, o balconista só-Caixa zerou nas oito linhas de contas.
+- Os 8 testes de migration (`npm run test:sql`) e o do botão de atualizar os bancos, num Postgres
+  de verdade.
+- `tsc`, lint, contraste; **681 testes** nos dois fusos.
+- Desempenho com 20 mil contas por loja: 77–78 ms antes, 80–81 ms depois.
+
+**O que não dá pra conferir daqui**: o Supabase de verdade. Depois de rodar e publicar, vale
+conferir na loja: (a) um operador **sem** Contas a Pagar vê "—" no cartão; (b) um operador **não
+admin** com Ordens de Serviço fatura uma OS "a receber depois" normalmente; (c) a aba Comissões
+continua avisando de OS não paga. Pra todo admin, nada muda.
+
+#### O que falta do `TR-04.1`, e o que precisa dela
+
+As quatro tabelas que sobram (Caixa, Clientes, Peças/Estoque e Ordens de Serviço) são lidas por
+muitas telas — o mapa está no item 1 da seção 6. Cada uma pede duas decisões dela antes de
+começar: **o que o Início mostra pra quem não tem o módulo** e **qual janela estreita cada
+tabela precisa** (ex: o Caixa precisa do nome do cliente e dos itens da OS pra calcular o
+lucro). A sugestão de ordem: **Caixa** primeiro (mexe no dinheiro, e o Início já tem o mecanismo
+de "—" pronto), depois Ordens de Serviço, Peças/Estoque e, por último, Clientes (é o que mais
+tela lê, e é o dado pessoal que mais importa proteger — então merece ir com calma).
+
+#### O que ficou pra depois (ela disse "resolvemos essas outras coisas depois")
+
+- **⚠️ Até 03/10/2026: ativar a verificação em duas etapas do GitHub.** Sem isso a conta fica
+  restrita — e publicar, liberar, o botão dos bancos e o backup passam por ela. **Lembrar de novo
+  no começo da próxima sessão**, porque o prazo é curto.
+- Conferir na loja o que a `v0.9.42` trouxe (Fechamento de caixa, Registrar pagamento de
+  comissão, a trava do desconto).
+- Emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
+- **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
+- Fixar `runs-on: ubuntu-24.04` no backup antes de 19/10 (ver o marco anterior).
+- E o resto da lista do marco anterior (valor da fase 2, marcar a loja como Teste, credenciais,
+  contrato, CSOSN 500, Electron, CI obrigatório).
+
+#### Por onde a próxima sessão começa
+
+1. Lembrar do **2FA** (prazo 03/10).
+2. Perguntar se é pra **rodar a `0061` e publicar a `0.9.43`** — não fazer sozinho.
+3. Se ela quiser seguir o guia: o próximo lote do `TR-04.1` (Caixa), apresentando antes as duas
+   decisões acima.
+
+### Onde parou em 25/09/2026, última leva (histórico — o marco mais recente está logo acima)
 
 **Ela disse "pode fazer com força, sem pedir permissão" e depois "continua" — e saíram cinco
 coisas. As três migrations entraram pelo botão novo (banco na `0060`) e tudo saiu na `v0.9.42`,

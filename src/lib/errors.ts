@@ -38,11 +38,27 @@ export function traduzirTrava(mensagem: string): string | null {
   return casou ? (MENSAGEM_DA_TRAVA[casou[1]] ?? null) : null;
 }
 
+/**
+ * O banco recusou por PERMISSÃO (RLS), desde que a permissão de módulo passou
+ * a ser conferida lá também (TR-04.1, migrations 0056 e 0061).
+ *
+ * Só a recusa de GRAVAR chega aqui como erro: a de LER não dá erro nenhum, só
+ * devolve zero linha (§6 item 15) — é por isso que as telas conferem a
+ * permissão antes de pedir, em vez de contar com esta frase.
+ */
+export const MENSAGEM_SEM_PERMISSAO =
+  "Você não tem permissão pra fazer isso. Peça a um administrador pra liberar o módulo no seu cadastro (Configurações → Operadores).";
+
+function traduzir(mensagem: string): string {
+  if (/violates row-level security policy/.test(mensagem)) return MENSAGEM_SEM_PERMISSAO;
+  return traduzirTrava(mensagem) ?? mensagem;
+}
+
 export function mensagemDeErro(erro: unknown): string {
   if (erro && typeof erro === "object" && "message" in erro) {
     const mensagem = (erro as { message?: unknown }).message;
-    if (typeof mensagem === "string" && mensagem.length > 0) return traduzirTrava(mensagem) ?? mensagem;
+    if (typeof mensagem === "string" && mensagem.length > 0) return traduzir(mensagem);
   }
-  if (erro instanceof Error) return traduzirTrava(erro.message) ?? erro.message;
+  if (erro instanceof Error) return traduzir(erro.message);
   return "Erro desconhecido ao salvar. Veja o console para mais detalhes.";
 }

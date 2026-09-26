@@ -216,8 +216,8 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Versionamento | SemVer + `CHANGELOG.md` | Só "lançar" versão quando testado e funcionando |
 | Lint | ESLint 9 flat config só com `rules-of-hooks` + `exhaustive-deps` | `eslint-plugin-react-hooks` v7 traz regras experimentais que reprovariam o padrão "fetch on mount" usado em todas as páginas |
 | Autenticação | Supabase Auth (e-mail/senha), operador só digita **usuário** — o app monta `usuario@sakura.local` por baixo dos panos | Login rápido, sem digitar e-mail. Ver seção 6 pra limitações |
-| Permissões por módulo | Checadas **na interface do app**, não reforçadas em RLS por categoria | Mais rápido de construir; ver seção 6 pro trade-off de segurança |
-| RLS das tabelas de negócio | Exige **login** (`auth.uid() is not null`), mas não reforça permissão por módulo | Fecha o buraco de acesso sem login; reforço por módulo fica pra depois se o risco mudar (ex: sistema vendido pra terceiros) |
+| Permissões por módulo | Checadas **na interface do app**; desde 2026 também **no banco**, tabela por tabela (item `TR-04.1`): RH (`0056`), Contas a Pagar/Receber (`0061`) e Caixa (`0062`) já exigem o módulo. Clientes, peças/estoque e OS ainda não | Começou só na tela por rapidez; a proteção no banco entra por lotes, cada um com decisão dela. Ver item 1 da seção 6 |
+| RLS das tabelas de negócio | Exige **login** e acesso à loja em todas; nas tabelas dos lotes acima, exige também o módulo (com "portas estreitas" pra quem precisa de um pedaço, ex: faturar OS lança no Caixa) | O risco mudou com a venda pra terceiros (fase 2), e o reforço começou por dinheiro e RH |
 | Fluxo de Git **enquanto não existir uma v1.0 oficial publicada** | Criar/reusar uma branch de trabalho, commitar, abrir PR e **já mergear direto em `main`** ao final de cada tarefa — nunca deixar PR esperando aprovação manual | Pedido explícito da usuária. **Sempre informar no chat, em português simples, os comandos exatos e onde rodar cada um** depois do merge. Revisitar quando existir uma v1.0 publicada de verdade |
 | Ir pra produção sem emissão fiscal pronta | A usuária já usa o sistema na borracharia (cadastro, OS, estoque, caixa) e continua emitindo nota fiscal por fora até a emissão automática ficar pronta | Desbloqueia o uso real sem esperar o projeto de integração fiscal (depende de escolher provedor + certificado digital) |
 | Empacotamento do instalador Windows | Instalador simples (NSIS) + atualização automática via GitHub Releases (`electron-builder` + `electron-updater`) | Evita ter que reinstalar manualmente em cada loja toda vez que sair uma versão nova |
@@ -866,12 +866,12 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   do endereço quando o CEP é buscado — evita digitar esse código toda vez que emite uma NFS-e pro
   mesmo cliente.
 - `0046` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
-  idempotência — **ainda não rodada por ela**): adiciona `notas_fiscais_arquivos.focus_nfe_ref` —
+  idempotência — **já rodada por ela**): adiciona `notas_fiscais_arquivos.focus_nfe_ref` —
   guarda a referência que a Focus NFe usa pra identificar a nota, gerada na hora da emissão
   automática. Sem essa coluna, não tinha como cancelar uma nota emitida automaticamente depois
   (ver botão "Cancelar nota" na seção 7, módulo "Notas Fiscais").
 - `0047` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
-  idempotência — **ainda não rodada por ela**): adiciona `configuracoes_fiscais_loja.codigo_cnae`
+  idempotência — **já rodada por ela**): adiciona `configuracoes_fiscais_loja.codigo_cnae`
   — campo exigido por Araraquara (e provavelmente outras prefeituras) pra autorizar a NFS-e, que o
   Sakura System não pedia nem mandava. Ver item 1 da seção 8.
 - `0048` (criada em 11/09/2026, validada num Postgres local — a sequência inteira rodada três
@@ -938,7 +938,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   tem como saber (ver "WhatsApp" na seção 7).
 - `0053` (criada em 13/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0052` **com dado
-  plantado** — **ainda NÃO rodada por ela**): a trilha de auditoria passa a cobrir o que
+  plantado** — **rodada por ela em 13/09/2026**, antes da tag `v0.9.35`): a trilha de auditoria passa a cobrir o que
   escapava. `INSERT` vira `acao = 'criar'`; entram `ordens_servico_itens` (o buraco mais grave —
   desde a `v0.9.28` dá pra corrigir o **valor** de um item de OS pela tela, e isso não deixava
   rastro nenhum), `notas_fiscais_arquivos`, `configuracoes_fiscais_loja`,
@@ -962,7 +962,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   de 6 meses; o padrão sugerido é 24 (`select expurgar_auditoria(24);`).
   (d) **a máscara é por NOME DE COLUNA, não por tabela** — coluna nova com esse nome já nasce
   protegida. Teste repetível em `supabase/scripts/testar-auditoria.sql` (7 checagens).
-- `0054` (criada em 13/09/2026, mesma validação — **ainda NÃO rodada por ela**): a função
+- `0054` (criada em 13/09/2026, mesma validação — **rodada por ela em 13/09/2026**): a função
   `operador_tem_permissao(modulo text)`, **etapa 1 de 3** do item `TR-04.1` (RLS por módulo).
   **Nenhuma policy usa ela ainda, e rodar esta migration não muda comportamento nenhum** — as
   policies são a etapa 2, que é mudança de arquitetura de segurança e precisa ser decidida com
@@ -3325,7 +3325,7 @@ Quatro coisas que valem saber:
   - **Não tem "Remover"** — só editar. Um item lançado por engano ainda precisa ser transformado em
     outro item pela edição; excluir de vez não foi construído (não foi pedido, e teria a mesma
     conversa de estoque/nota). Fácil de acrescentar depois, se fizer falta.
-  - **Passou a ser auditado em 13/09/2026** (migration `0053`, ainda não rodada por ela):
+  - **Passou a ser auditado em 13/09/2026** (migration `0053`, rodada por ela no mesmo dia):
     `ordens_servico_itens` entrou na trilha de auditoria, inclusive a criação do item. Era a
     ponta solta registrada aqui desde a `v0.9.28` — mexer no valor de um item não deixava rastro
     nenhum. Ver "Auditoria" nesta seção.
@@ -6303,14 +6303,9 @@ em **740 células**; os **7 testes de migration** passando no CI, cada um num ba
   `v0.9.42`) → **conferir na loja** o que está em "O que confirmar em uso real", logo acima →
   emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
 - **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
-- **⚠️ Até 03/10/2026: ativar a verificação em duas etapas (2FA) na conta do GitHub.** Apareceu
-  numa faixa amarela no topo do GitHub, nos prints de 25/09/2026: *"You will need to enable
-  two-factor authentication on your account before October 03, 2026, or be restricted from
-  account actions"*. **Não é detalhe**: sem isso a conta fica restrita, e é por ela que tudo
-  passa — publicar versão, liberar, o botão de atualizar os bancos e o backup. Ela ainda não
-  pediu o passo a passo; oferecer no começo da próxima sessão (Settings → Password and
-  authentication → Enable two-factor authentication, com um aplicativo autenticador no celular,
-  e guardar os códigos de recuperação num lugar fora do computador).
+- ✅ **2FA na conta do GitHub — FEITO por ela em 26/09/2026**, antes do prazo de 03/10/2026
+  (a faixa amarela avisava que, sem isso, a conta ficaria restrita — e é por ela que passam
+  publicar, liberar, o botão de atualizar os bancos e o backup). Não lembrar mais.
 - **Aviso técnico do GitHub, pra olhar depois de 19/10/2026** (apareceu no rodapé das rodadas do
   botão, 25/09/2026): a máquina `ubuntu-latest` que roda o CI, o backup e os botões passa pra
   **Ubuntu 26** em 19/10/2026 (e o Node 20 das actions `checkout@v4`/`setup-node@v4` já está sendo
@@ -6333,7 +6328,7 @@ em **740 células**; os **7 testes de migration** passando no CI, cada um num ba
 Ela fechou esta sessão com *"atualiza o projeto status, volto em outra sessão"*. Nada ficou
 pendente de código, SQL ou publicação: `main` em dia com a `v0.9.42`, banco na `0060`. Então:
 
-1. **Lembrar do 2FA do GitHub** (prazo 03/10/2026, ver acima) e oferecer o passo a passo.
+1. ~~Lembrar do 2FA do GitHub~~ — feito por ela em 26/09/2026.
 2. **Perguntar se a `v0.9.42` chegou na loja** e se ela conferiu as três coisas de "O que
    confirmar em uso real" (Fechamento de caixa, Registrar pagamento de comissão, a trava do
    desconto). É a primeira versão que leva as abas novas pra loja de verdade.

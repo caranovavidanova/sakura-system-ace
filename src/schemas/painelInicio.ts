@@ -181,30 +181,40 @@ export function variacoesPorCartao(
 }
 
 /**
- * O módulo que um cartão precisa pra ter número (TR-04.1, migration 0061).
- *
- * Sem o módulo, o banco devolve ZERO linha — sem erro nenhum — e zero linha
- * somada vira R$ 0,00: um número com cara de verdade dizendo "nenhuma conta
- * vencendo" pra quem simplesmente não pode vê-las. Pra esse operador o cartão
- * mostra "—" e diz por quê. Decisão dela, 26/09/2026.
- *
- * Só o cartão de contas está aqui por enquanto. Os outros quatro saem do
- * Caixa, que ainda não foi fechado por módulo; quando for, eles entram nesta
- * mesma tabela — e a tela não precisa mudar.
+ * Quem enxerga os lançamentos do Caixa INTEIROS (migration 0062): o próprio
+ * Caixa e Relações. Outros módulos veem só um pedaço — quem tem OS vê só os
+ * lançamentos de OS —, e um pedaço somado vira um número errado com cara de
+ * certo. Por isso o Início só pede os lançamentos pra quem tem um destes.
  */
-export const MODULO_DO_CARTAO: Partial<Record<CartaoMetrica, ModuloChave>> = {
-  contas_pagar_vencendo: "contas_pagar",
+export const MODULOS_QUE_LEEM_O_CAIXA: readonly ModuloChave[] = ["caixa", "relatorios"];
+
+/**
+ * Os módulos que dão o número de cada cartão — basta ter UM deles
+ * (TR-04.1, migrations 0061 e 0062).
+ *
+ * Sem eles, o banco devolve ZERO linha — sem erro nenhum — e zero linha
+ * somada vira R$ 0,00: um número com cara de verdade pra quem simplesmente
+ * não pode ver os dados. Pra esse operador o cartão mostra "—" e diz por quê.
+ * Decisão dela, 26/09/2026, pros dois lotes.
+ */
+export const MODULOS_DO_CARTAO: Record<CartaoMetrica, readonly ModuloChave[]> = {
+  vendas_mes: MODULOS_QUE_LEEM_O_CAIXA,
+  custos_mes: MODULOS_QUE_LEEM_O_CAIXA,
+  lucro_mes: MODULOS_QUE_LEEM_O_CAIXA,
+  ticket_medio_mes: MODULOS_QUE_LEEM_O_CAIXA,
+  contas_pagar_vencendo: ["contas_pagar"],
 };
 
 /**
- * O módulo que falta pra este cartão ter número, ou `null` se não falta nada.
+ * O módulo que falta pra este cartão ter número (o primeiro da lista, que é
+ * o que a tela cita), ou `null` se a pessoa tem algum deles.
  */
 export function moduloQueFaltaAoCartao(
   cartao: CartaoMetrica,
   podeVer: (modulo: ModuloChave) => boolean,
 ): ModuloChave | null {
-  const modulo = MODULO_DO_CARTAO[cartao];
-  return modulo && !podeVer(modulo) ? modulo : null;
+  const modulos = MODULOS_DO_CARTAO[cartao];
+  return modulos.some(podeVer) ? null : modulos[0];
 }
 
 /**

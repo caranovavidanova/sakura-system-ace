@@ -182,26 +182,44 @@ describe("idade de uma OS", () => {
   });
 });
 
-// TR-04.1 (migration 0061): sem o módulo, o banco devolve zero conta, e zero
-// conta somada seria um "R$ 0,00" com cara de verdade. O cartão tem que saber
-// que falta o módulo — e só aquele cartão.
+// TR-04.1 (migrations 0061 e 0062): sem o módulo, o banco devolve zero
+// linha, e zero linha somada seria um "R$ 0,00" com cara de verdade. O cartão
+// tem que saber que falta o módulo — e só aquele cartão.
 describe("moduloQueFaltaAoCartao", () => {
-  const soCaixa = (m: string) => m === "painel" || m === "caixa";
+  const so = (...modulos: string[]) => (m: string) => modulos.includes(m);
   const tudo = () => true;
+  const DE_DINHEIRO = ["vendas_mes", "custos_mes", "lucro_mes", "ticket_medio_mes"] as const;
 
   it("contas a pagar vencendo pede o módulo Contas a Pagar", () => {
-    expect(moduloQueFaltaAoCartao("contas_pagar_vencendo", soCaixa)).toBe("contas_pagar");
+    expect(moduloQueFaltaAoCartao("contas_pagar_vencendo", so("painel", "caixa"))).toBe("contas_pagar");
+    expect(moduloQueFaltaAoCartao("contas_pagar_vencendo", so("painel", "contas_pagar"))).toBeNull();
   });
 
-  it("com o módulo (ou admin), não falta nada", () => {
-    expect(moduloQueFaltaAoCartao("contas_pagar_vencendo", tudo)).toBeNull();
+  it("os quatro cartões de dinheiro pedem o Caixa — sem ele, citam o Caixa", () => {
+    for (const cartao of DE_DINHEIRO) {
+      expect(moduloQueFaltaAoCartao(cartao, so("painel", "ordens_servico"))).toBe("caixa");
+    }
   });
 
-  it("os cartões que saem do Caixa não mudam — o Caixa ainda não foi fechado por módulo", () => {
-    const nenhum = () => false;
-    expect(moduloQueFaltaAoCartao("vendas_mes", nenhum)).toBeNull();
-    expect(moduloQueFaltaAoCartao("custos_mes", nenhum)).toBeNull();
-    expect(moduloQueFaltaAoCartao("lucro_mes", nenhum)).toBeNull();
-    expect(moduloQueFaltaAoCartao("ticket_medio_mes", nenhum)).toBeNull();
+  it("Relações também abre os cartões de dinheiro (ele lê o Caixa inteiro)", () => {
+    for (const cartao of DE_DINHEIRO) {
+      expect(moduloQueFaltaAoCartao(cartao, so("painel", "relatorios"))).toBeNull();
+      expect(moduloQueFaltaAoCartao(cartao, so("painel", "caixa"))).toBeNull();
+    }
+  });
+
+  it("quem só tem OS ou contas NÃO abre os cartões de dinheiro", () => {
+    // O banco mostra a eles só um PEDAÇO do Caixa (os lançamentos de OS, ou o
+    // da própria conta). Somar um pedaço daria Vendas errada com cara de
+    // certa — é exatamente o que o "—" existe pra evitar.
+    for (const cartao of DE_DINHEIRO) {
+      expect(moduloQueFaltaAoCartao(cartao, so("ordens_servico", "contas_pagar", "contas_receber"))).toBe("caixa");
+    }
+  });
+
+  it("com todos os módulos (admin), não falta nada", () => {
+    for (const cartao of [...DE_DINHEIRO, "contas_pagar_vencendo"] as const) {
+      expect(moduloQueFaltaAoCartao(cartao, tudo)).toBeNull();
+    }
   });
 });

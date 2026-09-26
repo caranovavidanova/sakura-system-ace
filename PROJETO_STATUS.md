@@ -494,7 +494,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0061), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0062), todas idempotentes
 ├── supabase/instalacao/          # instalacao-completa.sql (as 54 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
@@ -520,7 +520,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # quem emite/cancela bate com a da tela; e
 │                                  # testar-fechamento-caixa.sql, testar-comissoes-pagas.sql e
 │                                  # testar-travas-de-dado.sql (0058 a 0060) e
-│                                  # testar-contas-permissao.sql (0061). NUNCA
+│                                  # testar-contas-permissao.sql (0061) e
+│                                  # testar-caixa-permissao.sql (0062). NUNCA
 │                                  # rodar no Supabase real: gravam e apagam dado de teste) +
 │                                  # limpar-dados-de-teste.sql
  (apaga dados de negócio de teste,
@@ -1121,11 +1122,51 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   continuar podendo lançar ali;
   (d) **o Início** não ganhou exceção no banco: quem não tem Contas a Pagar vê "—" no cartão (ver
   "Início" na seção 7).
-  Teste repetível em `supabase/scripts/testar-contas-permissao.sql` (25 checagens, seis perfis),
+  Teste repetível em `supabase/scripts/testar-contas-permissao.sql` (28 checagens, seis perfis),
   conferido com **seis mutações** — e uma delas (tirar a conferência de loja da porta do
   faturamento) **passou na primeira versão do teste**, ver item 73 da seção 6. Desempenho medido
   com 20 mil contas por loja: 77–78 ms antes, 80–81 ms depois (a checagem de permissão vira
-  `InitPlan`, roda uma vez por consulta).
+  `InitPlan`, roda uma vez por consulta). As checagens de "não altera / não apaga" foram
+  reescritas junto com a `0062` (comando sem filtro + `get diagnostics`, item 74 da seção 6).
+- `0062` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
+  vezes do zero, e a migration sozinha duas vezes num banco no estado `0061` **com dado
+  plantado** — **ainda NÃO rodada por ela**): **o Caixa só pra quem tem o módulo**, o terceiro
+  lote da etapa 2 do `TR-04.1`. Decisões dela, 26/09/2026: o Início mostra "—" nos cartões de
+  dinheiro pra quem não tem Caixa nem Relações, e Relações continua lendo tudo. É a tabela mais
+  "atravessada" até aqui, então cada módulo que grava ou lê nela ganhou uma **porta estreita**:
+  (a) **Relações LÊ tudo** e só lê;
+  (b) **Ordens de Serviço** lê só os lançamentos ligados a uma OS (a NFC-e rateia o pagamento e
+  a garantia mostra a forma de pagamento com eles) e lança só **entrada de uma OS da mesma
+  loja** (o faturamento "recebido agora");
+  (c) **Contas a Pagar** lança **saída sem OS**, e lê/apaga só o lançamento ligado a uma conta a
+  pagar **da mesma loja** (o "desfazer pagamento");
+  (d) **Contas a Receber** lança **entrada** (se de uma OS, da mesma loja) e lê só o lançamento
+  ligado a uma conta a receber da mesma loja;
+  (e) **editar** (categorizar em lote) é só do Caixa. O fechamento de caixa (`0058`) não mudou.
+  Três coisas que valem saber:
+  - **A pergunta "este lançamento é de uma conta?" mora numa função** (`caixa_movimento_de_conta_
+    pagar/receber`, `security definer`, com `revoke` de `anon`), e não num `exists` dentro da
+    policy — **por desempenho, medido**: com o `exists`, o planejador estimava a lista do Caixa
+    30× mais cara, ligava o JIT e gastava ~16 ms compilando a cada abertura (item 75 da seção 6).
+    Por ser `security definer`, a própria função confere que a conta é **da mesma loja** do
+    lançamento, que o `exists` herdava da RLS das contas.
+  - **Duas mudanças no app vieram junto, e sem elas as portas não bastariam**: lançar no Caixa
+    **não pede mais a linha de volta** (o id é gerado antes, `crypto.randomUUID()`), e "desfazer
+    pagamento" **apaga o lançamento ANTES** de desligar a conta (a FK é `on delete set null`, então
+    apagar já desliga). Na ordem antiga, quem só tem Contas a Pagar apagaria zero linhas em
+    silêncio e deixaria a saída órfã no Caixa. As duas têm teste (`src/lib/caixa.test.ts`).
+  - **Índices novos** em `contas_pagar.caixa_movimento_id` e `contas_receber.caixa_movimento_id`,
+    que as funções usam.
+  - **⚠️ A ordem de subir é AO CONTRÁRIO da de sempre: a versão do app (0.9.43) primeiro, a
+    migration depois.** A `v0.9.42` grava no Caixa pedindo a linha de volta; com a `0062` rodada
+    e ela ainda instalada, quem não tem o Caixa e paga ou recebe conta leva erro de permissão
+    (medido num Postgres local; admin e faturar OS não são afetados). A versão nova funciona com
+    o banco antigo. Está escrito no cabeçalho da própria migration.
+  Teste repetível em `supabase/scripts/testar-caixa-permissao.sql` (35 checagens, sete perfis —
+  inclusive um com OS nas duas lojas), conferido com **catorze mutações**, todas vermelhas — e uma
+  delas (a porta de exclusão de Contas a Pagar sem a conferência da conta) **passou na primeira
+  versão do teste**, ver item 74 da seção 6. Desempenho com 20 mil lançamentos por loja, quem tem
+  o Caixa abrindo a lista: 76 ms antes, 76–77 ms depois.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1303,7 +1344,8 @@ outro projeto Supabase do zero (ver seção 9).
 - **`caixa_movimentos`**: id, loja_id (FK lojas), data, ordem_servico_id (FK opcional — **não é mais
   único** desde a migration 0037: uma OS faturada com pagamento dividido em mais de uma forma gera
   1 lançamento por forma usada), tipo (`entrada`/`saida`), forma_pagamento, valor, descricao,
-  categoria_id (FK categorias_caixa, opcional)
+  categoria_id (FK categorias_caixa, opcional). **Desde a `0062` exige o módulo Caixa no banco**,
+  com as portas estreitas de Relações, OS e das contas descritas na entrada da migration acima.
 - **`categorias_caixa`**: id, nome, tipo (`entrada`/`saida`), criado_em. Gerenciada em
   Configurações (admin), selecionável ao lançar um movimento manual no Caixa (ex: "Aluguel",
   "Sucata"). Tabela separada de `categorias` (que é só pra produtos) — o conceito é diferente.
@@ -1464,24 +1506,28 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
    `operador_tem_permissao(modulo)`, no mesmo padrão de `operador_atual_e_admin()`.
    **A etapa 2 COMEÇOU em 18/09/2026, por uma tabela só** (migration `0056`, item `TR-04.3`):
    `funcionarios` e `funcionario_filhos` são as primeiras a exigir a permissão no banco.
-   **O lote 2 saiu em 26/09/2026** (migration `0061`): `contas_pagar` e `contas_receber`. As
-   outras **continuam como sempre foram** — o parágrafo acima segue valendo pra clientes,
-   peças, caixa e ordens de serviço.
-   **O que falta, e por que é mais difícil** (mapeado em 26/09/2026, tela por tela): as quatro
-   tabelas que sobram — `caixa_movimentos`, `clientes`/`veiculos`, `pecas`/`estoque_movimentos`
-   e `ordens_servico` — são lidas por MUITAS telas, e a principal é o **Início**, que quase todo
-   operador tem (ele lê caixa, OS, clientes, peças e serviços pra montar cartões, calendário e
-   pátio). Além disso o Caixa, as Garantias e as Notas Fiscais puxam o nome do cliente e os itens
-   da OS por `join` embutido — e `join` em tabela fechada não dá erro, devolve `null` (item 69).
+   **O lote 2 saiu em 26/09/2026** (migration `0061`): `contas_pagar` e `contas_receber`.
+   **E o lote 3, no mesmo dia** (migration `0062`): `caixa_movimentos`, com portas estreitas
+   pra Relações, OS e as duas contas. As outras **continuam como sempre foram** — o parágrafo
+   acima segue valendo pra clientes, peças e ordens de serviço.
+   **O que falta, e por que é mais difícil** (mapeado em 26/09/2026, tela por tela): as três
+   tabelas que sobram — `clientes`/`veiculos`, `pecas`/`estoque_movimentos` e `ordens_servico` —
+   são lidas por MUITAS telas, e a principal é o **Início**, que quase todo operador tem (ele lê
+   OS, clientes, peças e serviços pra montar calendário e pátio). Além disso o Caixa, as
+   Garantias e as Notas Fiscais puxam o nome do cliente e os itens da OS por `join` embutido — e
+   `join` em tabela fechada não dá erro, devolve `null` (item 69). **Isso agora pesa mais**: a
+   lista do Caixa (e o lucro dela, e Relações) depende desse `join` com a OS e o cliente — fechar
+   `ordens_servico` ou `clientes` sem janela deixa o lucro do Caixa zerado pra quem tem só Caixa.
    Então cada uma dessas pede duas decisões dela antes: **o que o Início mostra pra quem não tem
-   o módulo** (a regra já existe: `MODULO_DO_CARTAO` em `schemas/painelInicio.ts`, e o cartão vira
-   "—") e **qual janela estreita cada tabela precisa** (ex: só o nome do cliente pro Caixa).
+   o módulo** (a regra já existe: `MODULOS_DO_CARTAO` em `schemas/painelInicio.ts`, e o cartão
+   vira "—") e **qual janela estreita cada tabela precisa** (ex: o nome do cliente e os itens da
+   OS pro Caixa).
    **O que ela precisa saber antes de aprovar as próximas tabelas**: a partir daí, permissão
    errada no cadastro de um operador deixa de ser "o menu some" e passa a ser "a tela abre
    vazia" — e RLS falha em silêncio (item 15 desta seção). É por isso que a etapa 3 do item é um
    teste que prova o bloqueio perfil por perfil, e não um "confia que funcionou".
    **E esse teste já existe, desde 13/09/2026**: é a matriz de RLS (`npm run test:rls`, item
-   `TR-07.3`, item 63 desta seção), hoje em 700 células. O diff do `expectativas.csv` **é** a
+   `TR-07.3`, item 63 desta seção), hoje em 740 células. O diff do `expectativas.csv` **é** a
    revisão: na `0056` ele mostra, em números, o balconista saindo de 1 pra 0 nas oito linhas de
    RH e entrando com 1 na view pública — ou seja, o que ele perdeu e o que ele manteve, lado a
    lado.
@@ -2899,6 +2945,45 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     morre com código 144 sem mensagem nenhuma. Pra parar o servidor das telas, procurar o PID com
     `ps aux | grep vite` e matar pelo número.
 
+74. **Um filtro no `update`/`delete` faz o banco aplicar TAMBÉM a regra de leitura — e aí o
+    teste da regra de escrita passa pelo motivo errado (26/09/2026, migration `0062`).** A regra
+    do Postgres: quando o comando precisa LER a linha — um `where` que cita coluna, ou um
+    `returning` que devolve coluna —, a policy de `select` vale junto com a de `update`/`delete`.
+    O teste da porta "Contas a Pagar apaga a saída da própria conta" fazia
+    `delete ... where id = <aluguel>` e esperava zero. Deu zero — mas porque a regra de LEITURA
+    já escondia o aluguel dessa pessoa, não porque a de EXCLUSÃO barrava. Tirando de propósito a
+    conferência da conta na regra de exclusão, o teste **continuou verde**.
+    **O jeito certo**: comando **sem filtro** e contar com `get diagnostics quantas = row_count`
+    (`delete from caixa_movimentos;` tem de apagar exatamente as linhas que a regra de exclusão
+    permite, nem uma a mais). Os dois testes de permissão (`testar-contas-permissao.sql` e
+    `testar-caixa-permissao.sql`) passaram a ser assim nas checagens de "não altera / não apaga".
+    **Medido, não suposto**: `returning 1` (sem coluna) **não** acionou a regra de leitura — o
+    teste antigo das contas, que usava isso, pegava a mutação de `update` aberto. O que aciona é
+    citar coluna. **E a mesma regra decidiu duas mudanças no app** (ver `0062` na seção 5): o
+    insert do Caixa deixou de pedir a linha de volta, e o `delete` do "desfazer pagamento" (que
+    tem `where id` e `returning id`) passou a rodar enquanto o lançamento ainda está ligado à
+    conta — senão a regra de leitura o esconderia e ele apagaria zero linhas.
+
+75. **Um `exists` dentro da policy deixou a lista do Caixa 45% mais lenta sem ninguém usar a
+    porta dele — por causa do JIT (26/09/2026, migration `0062`).** A primeira versão da `0062`
+    perguntava "este lançamento é de uma conta?" com um `exists` sobre `contas_pagar` escrito na
+    própria policy. Medido com 20 mil lançamentos por loja, pra quem TEM o Caixa (e que por isso
+    nem chega a essa parte da regra — o plano mostrava a subconsulta como "never executed"):
+    **76 → 110 ms**. O motivo não estava no plano, estava na estimativa: o `exists` carregava a
+    RLS das contas pra dentro da conta do planejador, que estimou a consulta **30× mais cara**
+    (6.384 → 193.730), passou do `jit_above_cost` (100.000) e compilou a consulta a cada abertura
+    (~16 ms de "Emission" na seção JIT do `explain analyze`). Com `set jit = off` a diferença
+    sumia (76 → 78 ms) — foi o que separou "a regra é lenta" de "o custo estimado é que mudou".
+    **Corrigido** trocando o `exists` por uma função `security definer` pequena
+    (`caixa_movimento_de_conta_pagar/receber`): custo estimado 16.300, sem JIT, 76–77 ms.
+    **Cuidado que veio junto**: função `security definer` não herda a RLS das contas, então ela
+    mesma confere a loja, e os `revoke` de `anon` são obrigatórios (as duas coisas têm checagem
+    no teste, 33 a 37). **O preço**: quem só tem Contas a Pagar ficaria mais lento se listasse o
+    Caixa inteiro (85 → 155 ms, uma chamada de função por linha) — e nenhuma tela dele faz isso:
+    ele só apaga um lançamento pelo id. **Lição pras próximas policies**: medir com o JIT ligado
+    (é o padrão do Postgres; não dá pra saber daqui se o Supabase liga), e olhar o custo
+    ESTIMADO, não só o tempo — um salto grande no custo é o aviso antes de o JIT aparecer.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3436,6 +3521,13 @@ Quatro coisas que valem saber:
     soma as diferenças dos últimos dias — a resposta pra "está faltando dinheiro no caixa?".
   As contas ficam em `src/schemas/fechamentoCaixa.ts`, com teste (inclusive de propriedade:
   o esperado fecha no centavo e só depende das linhas em dinheiro). **Não vista por ela ainda.**
+  **Desde a migration `0062` (26/09/2026, ainda não rodada) o Caixa é protegido pelo BANCO**:
+  sem o módulo, ninguém lê, lança, edita nem apaga lançamento pela API. Quatro portas estreitas
+  mantêm o resto do sistema funcionando, cada uma do tamanho do que faz — **Relações** lê tudo
+  (só lê); quem **fatura OS** lança a entrada da OS e lê só os lançamentos de OS (a NFC-e e a
+  garantia precisam); quem **paga conta** lança a saída e apaga só a da própria conta (o
+  "desfazer"); quem **recebe conta** lança a entrada. Ninguém dessas portas vê aluguel, sangria
+  nem quebra de caixa. Detalhe na entrada da `0062`, seção 5.
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
   já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
@@ -3451,6 +3543,11 @@ Quatro coisas que valem saber:
   não tem o módulo, o cartão "Contas a pagar vencendo" do Início mostra "—" e "Sem acesso a
   Contas a Pagar" (em vez de um R$ 0,00 que parece verdade), e as contas não aparecem no
   calendário dele. Admin e quem tem o módulo não veem diferença nenhuma.
+  **Com a `0062`, "desfazer pagamento" mudou de ordem**: apaga a saída do Caixa **primeiro** e só
+  depois volta a conta pra pendente (antes era o contrário). Pra quem usa, nada muda; pra quem só
+  tem Contas a Pagar, é o que faz a saída sumir de verdade em vez de ficar órfã no Caixa. E, se o
+  banco não apagar a saída, a tela avisa e a conta **continua paga** — nunca fica "pendente" com a
+  saída ainda lançada.
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Nasce
   automaticamente quando uma OS é faturada escolhendo "A receber depois" em vez de "Recebido
   agora" — pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o cliente
@@ -3505,6 +3602,8 @@ Quatro coisas que valem saber:
   (pedido dela): mostra 5 anos, e os cartões do topo ganharam um quarto, "Vendas este ano".
   **A aba "Comissões" saiu daqui em 03/09/2026** — foi pra dentro de Funcionários, a pedido dela
   (ver o módulo Funcionários logo abaixo).
+  **Com a `0062` (26/09/2026, ainda não rodada), Relações continua lendo o Caixa inteiro**, por
+  decisão dela: quem recebe o relatório do dinheiro recebe pra ver esses números. Só lê.
 - **Início — calendário mostra também os dias vizinhos** (31/08/2026, pedido dela): a grade tem
   **6 semanas fixas** (como a do Windows), então a sobra do mês anterior e os primeiros dias do mês
   **seguinte** aparecem sempre, em cinza apagado. Motivo: o calendário mostra só o mês corrente e
@@ -3556,8 +3655,16 @@ Quatro coisas que valem saber:
   virar ajuste por loja pediria migration.
   **Cartão sem o módulo (26/09/2026, migration `0061`)**: quem não tem Contas a Pagar vê "—" e
   "Sem acesso a Contas a Pagar" no cartão de contas, e as contas não entram no calendário dele — o
-  programa nem pergunta ao banco. A regra de qual cartão exige qual módulo é `MODULO_DO_CARTAO`
-  (`schemas/painelInicio.ts`); os cartões do Caixa entram nela quando o Caixa for fechado.
+  programa nem pergunta ao banco. A regra de qual cartão exige qual módulo é `MODULOS_DO_CARTAO`
+  (`schemas/painelInicio.ts`).
+  **E os quatro cartões de dinheiro, desde a `0062`** (Vendas, Custos, Lucro, Ticket médio):
+  mostram "—" e "Sem acesso a Caixa Diário" pra quem não tem **nem Caixa nem Relações** —
+  qualquer um dos dois abre os cartões. Decisão dela: o Início não ganhou exceção no banco. Pra
+  essa pessoa o programa nem pede o Caixa ao banco — e é de propósito que não pede "só o que ela
+  enxerga": quem só fatura OS enxerga os lançamentos de OS, e somar só esses daria um "Vendas
+  mês" que parece o número da loja e não é. Junto, o botão **"Ver relações completas"** passou a
+  aparecer só pra quem tem Relações (antes aparecia pra todo mundo e levava a uma tela que a
+  permissão não deixava abrir).
   **Aviso da alíquota do mês (11/09/2026, item `TR-11.2` do guia de melhorias)**: no topo do
   Início, uma faixa avisa que a alíquota daquela competência precisa ser cadastrada no portal da
   prefeitura antes da primeira NFS-e do mês — com o passo a passo curto e um botão "Já cadastrei"
@@ -4640,6 +4747,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`), e tudo saiu na **`v0.9.42`**, publicada e liberada. Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. **Ainda não rodada nem publicada.** |
+| 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. **Ainda não rodada nem publicada.** |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4676,9 +4784,11 @@ ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
 **Estado hoje: `0001` a `0060` estão aplicadas no Supabase real dela; a `0061` (contas só com o
-módulo, 26/09/2026) está no repositório e AINDA NÃO FOI RODADA** — rodar pelo botão "Atualizar
-o banco de todas as empresas" (ensaiar, depois aplicar) antes de publicar a versão que leva
-ela. As três últimas
+módulo) e a `0062` (Caixa só com o módulo), as duas de 26/09/2026, estão no repositório e AINDA
+NÃO FORAM RODADAS** — rodar pelo botão "Atualizar o banco de todas as empresas" (ensaiar, depois
+aplicar: o botão roda as duas de uma vez, em ordem) — **mas só DEPOIS de a `0.9.43` chegar nos
+computadores**: a `0062` inverte a ordem de sempre (ver a entrada dela na seção 5 e o marco
+"LEIA ISTO PRIMEIRO"). As três últimas
 (`0058` fechamento de caixa, `0059` comissão paga, `0060` travas de dado) foram as primeiras a
 entrar **pelo botão "Atualizar o banco de todas as empresas"** (seção 9), em 25/09/2026 — ensaio
 e depois aplicação, sem colar nada no SQL Editor. É esse o jeito de rodar migration daqui pra
@@ -5260,8 +5370,9 @@ isso que existe a regra abaixo.
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
   "Importar por foto" desligado) foi publicada E liberada no mesmo dia**, depois de o banco ir pra
-  **`0060`** pelo botão novo. **Em 26/09/2026 a `main` passou a estar UMA leva à frente da
-  `v0.9.42`**: a migration `0061` (contas só com o módulo), ainda não rodada nem publicada.
+  **`0060`** pelo botão novo. **Em 26/09/2026 a `main` passou a estar DUAS levas à frente da
+  `v0.9.42`**: as migrations `0061` (contas só com o módulo) e `0062` (Caixa só com o módulo),
+  ainda não rodadas nem publicadas.
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -5989,63 +6100,78 @@ Se ela pedir sugestão, as duas respostas honestas são:
 
 ### ⏸ Onde parou em 26/09/2026 — LEIA ISTO PRIMEIRO
 
-**Saiu o lote 2 da permissão por módulo (`TR-04.1`, etapa 2): Contas a Pagar e Contas a
-Receber passam a ser protegidas pelo BANCO** (migration `0061`). Ela escolheu entre as opções
-(26/09/2026): proteger as duas e, no Início, **esconder** o cartão de contas de quem não tem o
-módulo (a opção recomendada). Ela também disse "resolvemos essas outras coisas depois" sobre as
-pendências do marco anterior — ver "O que ficou pra depois", logo abaixo.
+**Saíram os lotes 2 e 3 da permissão por módulo (`TR-04.1`, etapa 2): Contas a Pagar, Contas
+a Receber e o Caixa passam a ser protegidos pelo BANCO** (migrations `0061` e `0062`). Ela
+decidiu, entre as opções (26/09/2026): proteger as três; no Início, mostrar "—" no cartão de
+quem não tem o módulo; e Relações continua lendo o Caixa inteiro. Ela também disse "resolvemos
+essas outras coisas depois" sobre as pendências do marco anterior — ver "O que ficou pra
+depois", logo abaixo.
 
-**Estado: `main` UMA leva à frente da `v0.9.42`. A `0061` NÃO foi rodada e NÃO há tag.**
+**Estado: `main` DUAS levas à frente da `v0.9.42`. A `0061` e a `0062` NÃO foram rodadas e NÃO
+há tag.**
 
-#### A ordem, quando ela for publicar
+#### ⚠️ A ordem, quando ela for publicar — desta vez é AO CONTRÁRIO do de sempre
 
-1. **Primeiro o banco**: botão "Atualizar o banco de todas as empresas" (seção 9) → `ensaiar` →
-   conferir "✅ passaria" → `aplicar`. A `0061` só troca policy, não mexe em dado nenhum.
-2. **Depois a versão** (`0.9.43`), publicar e liberar (ou só publicar, se o computador da loja já
-   estiver no canal de teste).
-**Por que nessa ordem**: a versão nova espera o banco na `61` — publicada antes, a faixa "banco
-desatualizado" aparece até a migration rodar (é aviso, nada quebra). Já a `v0.9.42` rodando com
-o banco na `0061` funciona normal; o único efeito é, pra quem não tem Contas a Pagar e tiver o
-cartão de contas ligado no Início (não é o padrão), o cartão mostrar R$ 0,00 até a versão nova
-chegar.
+1. **Primeiro a versão** (`0.9.43`): publicar **e liberar** (o computador da loja ainda está no
+   canal normal).
+2. **Esperar os computadores da loja abrirem a versão nova** (fechar e abrir o programa uma vez).
+3. **Depois o banco**: botão "Atualizar o banco de todas as empresas" → `ensaiar` → conferir
+   "✅ passaria" → `aplicar`. O botão roda a `0061` e a `0062` juntas, em ordem.
+
+**Por quê** (medido num Postgres local, não suposto): a `v0.9.42` grava no Caixa pedindo a linha
+de volta. Com a `0062` rodada e a `v0.9.42` ainda instalada, **quem não tem o Caixa e paga ou
+recebe uma conta leva erro de permissão**, e "desfazer pagamento" deixaria a saída órfã no Caixa.
+A `0.9.43` funciona com o banco antigo. **Admin não é afetado nos dois casos**, e faturar OS
+funciona nas duas versões. Entre o passo 1 e o 3, a faixa "banco desatualizado" aparece — é
+aviso, nada quebra.
 
 #### O que foi feito, em uma linha cada
 
-- **Contas a Pagar**: os quatro comandos exigem o módulo.
-- **Contas a Receber**: os quatro exigem o módulo, com duas portas estreitas — quem tem **Ordens
-  de Serviço** cria a conta **de uma OS da mesma loja** (o faturamento "a receber depois"), e quem
-  tem **Funcionários** lê (a aba Comissões). Detalhe na `0061`, seção 5.
-- **Início**: quem não tem Contas a Pagar vê "—" + "Sem acesso a Contas a Pagar" no cartão, e as
-  contas somem do calendário dele (o programa nem pede ao banco). Conferido com a tela de verdade,
-  nos dois casos.
+- **Contas a Pagar** (`0061`): os quatro comandos exigem o módulo.
+- **Contas a Receber** (`0061`): os quatro exigem o módulo, com duas portas estreitas — quem tem
+  **Ordens de Serviço** cria a conta **de uma OS da mesma loja** (o faturamento "a receber
+  depois"), e quem tem **Funcionários** lê (a aba Comissões).
+- **Caixa** (`0062`): os quatro exigem o módulo, com quatro portas estreitas — **Relações** lê
+  tudo; **OS** lê só os lançamentos de OS e lança a entrada da OS; **Contas a Pagar** lança a
+  saída e apaga só a da própria conta; **Contas a Receber** lança a entrada. Detalhe na seção 5.
+- **No app, pro Caixa**: lançar não pede mais a linha de volta (id gerado antes), e "desfazer
+  pagamento" apaga a saída **antes** de voltar a conta pra pendente.
+- **Início**: quem não tem Contas a Pagar vê "—" no cartão de contas; quem não tem **nem Caixa nem
+  Relações** vê "—" nos quatro de dinheiro (Vendas, Custos, Lucro, Ticket médio). Nos dois casos
+  o programa nem pede o dado ao banco. O botão "Ver relações completas" só aparece pra quem tem
+  Relações. Conferido com a tela de verdade.
 - **Mensagem em português** quando o banco recusa uma gravação por permissão.
 
 #### Como foi conferido
 
-- Instalação inteira três vezes do zero; a `0061` sozinha duas vezes.
-- `supabase/scripts/testar-contas-permissao.sql` — 25 checagens, seis perfis, as duas metades.
-  **Seis mutações**, todas vermelhas na checagem certa; uma delas só depois de acrescentar o
-  operador das duas lojas (item 73 da seção 6).
-- Matriz de RLS: 740 células, o balconista só-Caixa zerou nas oito linhas de contas.
-- Os 8 testes de migration (`npm run test:sql`) e o do botão de atualizar os bancos, num Postgres
-  de verdade.
-- `tsc`, lint, contraste; **681 testes** nos dois fusos.
-- Desempenho com 20 mil contas por loja: 77–78 ms antes, 80–81 ms depois.
+- Instalação inteira três vezes do zero; cada migration sozinha duas vezes; a `0062` também num
+  banco no estado `0061` com dado plantado.
+- `testar-contas-permissao.sql` (28 checagens) e `testar-caixa-permissao.sql` (35 checagens,
+  sete perfis) — as duas metades. **20 mutações** no total, todas vermelhas; duas só depois de
+  corrigir o próprio teste (itens 73 e 74 da seção 6).
+- Matriz de RLS (740 células), os 9 testes de migration e o do botão de atualizar os bancos, num
+  Postgres de verdade.
+- `tsc`, lint, contraste; **688 testes** nos dois fusos — inclusive `src/lib/caixa.test.ts`, que
+  trava as duas mudanças do app (conferido quebrando cada uma).
+- Desempenho com 20 mil linhas por loja: contas 77–78 → 80–81 ms; Caixa 76 → 76–77 ms — este
+  **depois** de trocar um `exists` por função, porque a primeira versão ligava o JIT e ia a
+  110 ms (item 75 da seção 6).
 
 **O que não dá pra conferir daqui**: o Supabase de verdade. Depois de rodar e publicar, vale
 conferir na loja: (a) um operador **sem** Contas a Pagar vê "—" no cartão; (b) um operador **não
-admin** com Ordens de Serviço fatura uma OS "a receber depois" normalmente; (c) a aba Comissões
-continua avisando de OS não paga. Pra todo admin, nada muda.
+admin** com Ordens de Serviço fatura uma OS (recebido agora e a receber depois) normalmente;
+(c) a aba Comissões continua avisando de OS não paga; (d) pagar e desfazer o pagamento de uma
+conta; (e) emitir uma NFC-e (o rateio do pagamento lê o Caixa). Pra todo admin, nada muda.
 
 #### O que falta do `TR-04.1`, e o que precisa dela
 
-As quatro tabelas que sobram (Caixa, Clientes, Peças/Estoque e Ordens de Serviço) são lidas por
-muitas telas — o mapa está no item 1 da seção 6. Cada uma pede duas decisões dela antes de
+As três tabelas que sobram — **Ordens de Serviço, Peças/Estoque e Clientes** — são lidas por
+muitas telas; o mapa está no item 1 da seção 6. Cada uma pede duas decisões dela antes de
 começar: **o que o Início mostra pra quem não tem o módulo** e **qual janela estreita cada
-tabela precisa** (ex: o Caixa precisa do nome do cliente e dos itens da OS pra calcular o
-lucro). A sugestão de ordem: **Caixa** primeiro (mexe no dinheiro, e o Início já tem o mecanismo
-de "—" pronto), depois Ordens de Serviço, Peças/Estoque e, por último, Clientes (é o que mais
-tela lê, e é o dado pessoal que mais importa proteger — então merece ir com calma).
+tabela precisa**. Um cuidado novo: a lista do Caixa (e o lucro dela, e Relações) lê a OS e o
+cliente por `join` — fechar `ordens_servico` ou `clientes` sem janela zera o lucro do Caixa pra
+quem tem só Caixa. Sugestão de ordem: Ordens de Serviço, depois Peças/Estoque e, por último,
+Clientes (é o que mais tela lê, e é o dado pessoal que mais importa proteger).
 
 #### O que ficou pra depois (ela disse "resolvemos essas outras coisas depois")
 
@@ -6063,9 +6189,10 @@ tela lê, e é o dado pessoal que mais importa proteger — então merece ir com
 #### Por onde a próxima sessão começa
 
 1. Lembrar do **2FA** (prazo 03/10).
-2. Perguntar se é pra **rodar a `0061` e publicar a `0.9.43`** — não fazer sozinho.
-3. Se ela quiser seguir o guia: o próximo lote do `TR-04.1` (Caixa), apresentando antes as duas
-   decisões acima.
+2. Perguntar se é pra **publicar a `0.9.43` e depois rodar a `0061`+`0062`** — nessa ordem, e
+   não fazer sozinho.
+3. Se ela quiser seguir o guia: o próximo lote do `TR-04.1` (Ordens de Serviço), apresentando
+   antes as duas decisões acima.
 
 ### Onde parou em 25/09/2026, última leva (histórico — o marco mais recente está logo acima)
 

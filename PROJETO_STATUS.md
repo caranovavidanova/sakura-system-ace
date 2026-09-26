@@ -233,6 +233,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Multi-loja: 1 projeto Supabase pode servir 2+ lojas | Tabela de junção `operador_lojas` (many-to-many, não uma coluna `loja_id` em `operadores`) + `usuario` continua único **globalmente** (não por loja) | Um dono/gerente pode ter acesso a mais de uma loja (o balconista só à dele); manter `usuario` global evita seletor de loja na tela de login e reescrever o esquema de e-mail sintético — ganho não compensa a complexidade pro tamanho de operação dela. Ver seção 5 |
 | Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
 | Token da Focus NFe (25/09/2026, item TR-04.2) | Mora num **cofre** (`segredos_fiscais_loja`, sem policy nenhuma) e quem usa é o **porteiro** — a Edge Function `focus-nfe`, que confere quem pede e só **repassa** a nota que o programa montou. A tela só sabe SE a loja tem token; trocar é só de escrita | O token emite e cancela nota no CNPJ da loja e ia até o computador de todo operador. **Tabela, e não secret da função** como o guia sugeria: secret é um por projeto Supabase (uma empresa), e duas lojas em CNPJs diferentes precisam de dois tokens. **Repassar, e não remontar a nota lá**: remontar seria a sexta vez de uma conta de dinheiro divergindo entre dois lugares. Escolha dela entre as opções, 25/09/2026. Ver item 71 da seção 6 |
+| Cadastro mensal da alíquota da NFS-e no portal da prefeitura (26/09/2026) | **Responsabilidade da contabilidade de cada empresa**; o sistema só lembra (faixa no Início, o mês inteiro, só em loja que emite NFS-e) | É cadastro no site da prefeitura, por CNPJ, sem API — o sistema não tem como fazer. Em loja de terceiro, trocar o texto da faixa (Configurações → Dados fiscais) pra dizer a quem avisar. Ver o marco de 26/09/2026 |
 | Gerenciamento de formulário | `react-hook-form` + `zod` — **migração concluída**, todo formulário do app já está nesse padrão | Pedido da usuária, baseado num plano de refatoração de outra IA (Gemini) — decisão explícita de que é o padrão geral, não um teste isolado. Ver "Padrão de formulário" na seção 4 |
 
 ## 4. Estrutura de pastas
@@ -1104,7 +1105,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   **O `TR-05.2` (uma nota por OS por tipo) NÃO entrou aqui, de propósito** — ver o item 3 de "O
   que ainda está frágil na parte fiscal", seção 8.
 - `0061` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes — **ainda NÃO rodada por ela**): **Contas a
+  vezes do zero, e a migration sozinha duas vezes — **aplicada em 26/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação, **depois** de a `v0.9.43` ser liberada): **Contas a
   Pagar e Contas a Receber só pra quem tem o módulo**, o segundo lote da etapa 2 do `TR-04.1`
   (o primeiro foi o RH, `0056`). Decisão dela, 26/09/2026, entre as opções. Quatro policies por
   tabela, e duas **portas estreitas** em `contas_receber`, que são o que evita quebrar outro
@@ -1130,7 +1131,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   reescritas junto com a `0062` (comando sem filtro + `get diagnostics`, item 74 da seção 6).
 - `0062` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
   vezes do zero, e a migration sozinha duas vezes num banco no estado `0061` **com dado
-  plantado** — **ainda NÃO rodada por ela**): **o Caixa só pra quem tem o módulo**, o terceiro
+  plantado** — **aplicada em 26/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação, **depois** de a `v0.9.43` ser liberada): **o Caixa só pra quem tem o módulo**, o terceiro
   lote da etapa 2 do `TR-04.1`. Decisões dela, 26/09/2026: o Início mostra "—" nos cartões de
   dinheiro pra quem não tem Caixa nem Relações, e Relações continua lendo tudo. É a tabela mais
   "atravessada" até aqui, então cada módulo que grava ou lê nela ganhou uma **porta estreita**:
@@ -3521,7 +3522,7 @@ Quatro coisas que valem saber:
     soma as diferenças dos últimos dias — a resposta pra "está faltando dinheiro no caixa?".
   As contas ficam em `src/schemas/fechamentoCaixa.ts`, com teste (inclusive de propriedade:
   o esperado fecha no centavo e só depende das linhas em dinheiro). **Não vista por ela ainda.**
-  **Desde a migration `0062` (26/09/2026, ainda não rodada) o Caixa é protegido pelo BANCO**:
+  **Desde a migration `0062` (aplicada em 26/09/2026) o Caixa é protegido pelo BANCO**:
   sem o módulo, ninguém lê, lança, edita nem apaga lançamento pela API. Quatro portas estreitas
   mantêm o resto do sistema funcionando, cada uma do tamanho do que faz — **Relações** lê tudo
   (só lê); quem **fatura OS** lança a entrada da OS e lê só os lançamentos de OS (a NFC-e e a
@@ -3538,7 +3539,7 @@ Quatro coisas que valem saber:
   opcional que só aparece quando "Conta mensal recorrente" está marcado — em branco, continua
   recorrendo pra sempre (como sempre foi); preenchido com um mês, `pagarConta()` para de criar a
   próxima ocorrência depois dessa data (migration `0043`, já rodada por ela no Supabase real).
-  **Desde a migration `0061` (26/09/2026, ainda não rodada) o módulo é protegido pelo BANCO**, não
+  **Desde a migration `0061` (aplicada em 26/09/2026) o módulo é protegido pelo BANCO**, não
   só pela tela: sem a permissão, a lista chega vazia e criar/pagar/apagar é recusado. Pra quem
   não tem o módulo, o cartão "Contas a pagar vencendo" do Início mostra "—" e "Sem acesso a
   Contas a Pagar" (em vez de um R$ 0,00 que parece verdade), e as contas não aparecem no
@@ -3555,7 +3556,7 @@ Quatro coisas que valem saber:
   Contas a Pagar): cliente, descrição, valor e previsão de recebimento — pra cobrança que não
   passou por OS nenhuma. Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
   Contas a Pagar), venha a conta de qual dos dois jeitos for.
-  **Desde a migration `0061` (26/09/2026, ainda não rodada) o módulo é protegido pelo BANCO.**
+  **Desde a migration `0061` (aplicada em 26/09/2026) o módulo é protegido pelo BANCO.**
   Duas coisas de fora continuam funcionando, de propósito: **faturar uma OS "a receber depois"**
   cria a conta mesmo pra quem não tem o módulo (só a conta daquela OS), e **a aba Comissões**
   continua sabendo quais OS o cliente ainda não pagou (quem tem Funcionários lê a lista). Se o
@@ -3602,7 +3603,7 @@ Quatro coisas que valem saber:
   (pedido dela): mostra 5 anos, e os cartões do topo ganharam um quarto, "Vendas este ano".
   **A aba "Comissões" saiu daqui em 03/09/2026** — foi pra dentro de Funcionários, a pedido dela
   (ver o módulo Funcionários logo abaixo).
-  **Com a `0062` (26/09/2026, ainda não rodada), Relações continua lendo o Caixa inteiro**, por
+  **Com a `0062` (aplicada em 26/09/2026), Relações continua lendo o Caixa inteiro**, por
   decisão dela: quem recebe o relatório do dinheiro recebe pra ver esses números. Só lê.
 - **Início — calendário mostra também os dias vizinhos** (31/08/2026, pedido dela): a grade tem
   **6 semanas fixas** (como a do Windows), então a sobra do mês anterior e os primeiros dias do mês
@@ -4161,8 +4162,10 @@ Quatro coisas que valem saber:
     (ver a entrada da `0062` na seção 5). Publicada via `workflow_dispatch` e **liberada em
     26/09/2026**, a pedido dela ("rodar e publicar o que ficou pronto"): o Liberar conferiu a
     impressão digital do instalador contra o `latest.yml` e confirmou de fora que o GitHub
-    responde `v0.9.43` pra todas as lojas. O ensaio das duas migrations no banco real já tinha
-    passado antes ("✅ passaria", Pneus Amigão em `0060`).
+    responde `v0.9.43` pra todas as lojas. **Depois**, no mesmo dia, a `0061`+`0062` entraram
+    pelo botão (Pneus Amigão `0060` → `0062`) — sem esperar o computador da loja abrir a versão
+    nova, porque ela conferiu que não havia na loja nenhum operador do único perfil afetado (não
+    admin, com Contas a Pagar/Receber e sem Caixa).
 
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
@@ -4757,8 +4760,8 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (fim da noite) | A **apresentação comercial** em slides (pronta pra ela mandar ao pai) e o **"Importar por foto" desligado**, sem tag, a pedido dela. E conversa de fase 2: cenário de 2 empresas novas (uma com 2 lojas), **preço em aberto** (o pai sugeriu R$ 250/loja), cuidados de contrato, e o plano do **botão de atualizar todos os bancos** (item 11 da seção 8). Computador dela marcado como Teste. |
 | 25/09 (última leva) | Com "pode fazer com força": o **botão de atualizar os bancos**, o **fechamento de caixa do dia** (`TR-06.4`), a **comissão paga congelada** (`TL-46.1`), as **travas de dado impossível** (`TR-05.1`) e os **testes de migration no CI**. Migrations `0058`–`0060` rodadas **pelo botão**, na primeira rodada de verdade dele (banco na `0060`), e tudo saiu na **`v0.9.42`**, publicada e liberada. Etapa 3 em 6 de 7. |
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
-| 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. **Ainda não rodada nem publicada.** |
-| 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. **Ainda não rodada nem publicada.** |
+| 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
+| 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
 
@@ -4794,12 +4797,10 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado hoje: `0001` a `0060` estão aplicadas no Supabase real dela; a `0061` (contas só com o
-módulo) e a `0062` (Caixa só com o módulo), as duas de 26/09/2026, já passaram no ENSAIO do
-botão ("✅ passaria") mas AINDA NÃO FORAM APLICADAS.** A `0.9.43` já foi publicada e liberada
-(26/09/2026); falta só ela confirmar que o computador da loja abriu a `0.9.43` e então rodar o
-botão com `aplicar` — a `0062` inverte a ordem de sempre (ver a entrada dela na seção 5 e o
-marco "LEIA ISTO PRIMEIRO"). As três últimas
+**Estado hoje: `0001` a `0062` estão aplicadas no Supabase real dela** — a `0061` (contas só com
+o módulo) e a `0062` (Caixa só com o módulo) entraram em 26/09/2026 pelo botão, **depois** da
+`v0.9.43` liberada (a `0062` inverte a ordem de sempre — ver a entrada dela na seção 5). Nada
+pendente de SQL. As três anteriores
 (`0058` fechamento de caixa, `0059` comissão paga, `0060` travas de dado) foram as primeiras a
 entrar **pelo botão "Atualizar o banco de todas as empresas"** (seção 9), em 25/09/2026 — ensaio
 e depois aplicação, sem colar nada no SQL Editor. É esse o jeito de rodar migration daqui pra
@@ -5383,8 +5384,8 @@ isso que existe a regra abaixo.
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
   "Importar por foto" desligado) foi publicada E liberada no mesmo dia**, depois de o banco ir pra
   **`0060`** pelo botão novo. **Em 26/09/2026 saiu a `v0.9.43`** (o programa das migrations `0061`,
-  contas só com o módulo, e `0062`, Caixa só com o módulo), publicada e liberada — as duas
-  migrations passaram no ensaio e esperam o `aplicar`.
+  contas só com o módulo, e `0062`, Caixa só com o módulo), publicada e liberada — e as duas
+  migrations aplicadas no mesmo dia, banco na **`0062`**.
   Ver o marco "LEIA ISTO PRIMEIRO" perto do fim deste arquivo. **Daqui pra
   frente, "publicada" e "liberada" são duas coisas** (seção 9): confira as duas antes de dizer a
   ela em que versão as lojas estão.
@@ -6119,17 +6120,19 @@ quem não tem o módulo; e Relações continua lendo o Caixa inteiro. Ela també
 essas outras coisas depois" sobre as pendências do marco anterior — ver "O que ficou pra
 depois", logo abaixo.
 
-**Estado: a `v0.9.43` foi PUBLICADA E LIBERADA em 26/09/2026, e o ENSAIO da `0061`+`0062` no
-banco real passou ("✅ passaria", Pneus Amigão em `0060`). Falta só o passo 3 abaixo — aplicar —,
-que espera ela confirmar que o computador da loja abriu a `0.9.43`.**
+**Estado: TUDO FEITO em 26/09/2026.** A `v0.9.43` foi publicada e liberada, e a `0061`+`0062`
+foram aplicadas pelo botão (Pneus Amigão `0060` → `0062`, sem erro). **Nada pendente de SQL nem
+de publicação.**
 
 #### ⚠️ A ordem — desta vez é AO CONTRÁRIO do de sempre
 
 1. ✅ **Primeiro a versão** (`0.9.43`): publicada **e liberada** em 26/09/2026.
-2. ⏳ **Esperar os computadores da loja abrirem a versão nova** (fechar e abrir o programa uma
-   vez; a versão aparece no canto inferior direito). **É isto que falta, e é dela.**
-3. **Depois o banco**: botão "Atualizar o banco de todas as empresas" → ~~`ensaiar`~~ (feito,
-   "✅ passaria") → `aplicar`. O botão roda a `0061` e a `0062` juntas, em ordem.
+2. ⏭️ **Esperar os computadores da loja abrirem a versão nova** — **pulado de propósito**: era
+   fim de semana, ela não tinha acesso ao PC da loja, e conferiu em Configurações → Operadores
+   que não existe na loja ninguém do único perfil afetado (não admin, com Contas a Pagar/Receber
+   e sem Caixa). Sem esse perfil, a `v0.9.42` funciona igual com o banco novo.
+3. ✅ **Depois o banco**: botão "Atualizar o banco de todas as empresas" → `ensaiar` ("✅
+   passaria") → `aplicar` ("✅ atualizado", ficou em `0062`), em 26/09/2026.
 
 **Por quê** (medido num Postgres local, não suposto): a `v0.9.42` grava no Caixa pedindo a linha
 de volta. Com a `0062` rodada e a `v0.9.42` ainda instalada, **quem não tem o Caixa e paga ou
@@ -6198,33 +6201,42 @@ Clientes (é o que mais tela lê, e é o dado pessoal que mais importa proteger)
 - E o resto da lista do marco anterior (valor da fase 2, marcar a loja como Teste, credenciais,
   contrato, CSOSN 500, Electron, CI obrigatório).
 
+#### A dúvida dela: com muitas lojas, vamos ter que esperar todos atualizarem?
+
+Resposta dada (26/09/2026): **não como regra.** A imensa maioria das migrations só acrescenta e
+roda antes da versão, sem esperar ninguém. Só migration que **aperta** algo que a versão velha
+usava (como a `0062`) pede espera — e aí o certo é esperar um prazo (a versão nova entra quando o
+programa é fechado, então ~1 a 2 dias úteis depois de liberada) e **conferir**. O que falta pra
+conferir é saber em que versão cada computador está, e isso hoje **não existe**. Proposta feita,
+**não pedida ainda**: o programa registra no banco, a cada login, "computador, versão, visto por
+último", e o botão de atualizar os bancos recusa uma migration que exige versão mínima enquanto
+houver computador ativo abaixo dela. Vale construir **antes** da primeira loja de outra empresa.
+
+#### A alíquota mensal da NFS-e: responsabilidade da contabilidade de cada empresa
+
+Decisão dela (26/09/2026), depois de perguntar se ia ter que cadastrar "de todas as lojas
+manualmente": é cadastro no **portal da prefeitura**, por CNPJ, sem API — então fica com **a
+contabilidade de cada empresa**. O sistema continua só **lembrando**. Como o lembrete funciona de
+verdade (conferido no código, `schemas/aliquotaCompetencia.ts`), pra ninguém descrever errado:
+- **não é uma notificação no dia 1º** — é a faixa no topo do Início, que aparece **a partir do
+  dia 1º e fica o mês inteiro** até alguém clicar "Já cadastrei" ou sair uma NFS-e autorizada
+  naquele mês;
+- **só aparece em loja que emite NFS-e** (token da Focus NFe + inscrição municipal preenchidos);
+- **quem vê é quem abre o Início na loja, não a contabilidade.** Por isso, em loja de terceiro,
+  o texto da faixa pode ser trocado em Configurações → Dados fiscais → "Como cadastrar a alíquota
+  no portal da prefeitura", pra algo como "avise a contabilidade (nome/telefone) pra cadastrar a
+  alíquota do mês". Sem código novo.
+Ainda vale ela testar em **1º/10** se o "Replicar Alíquota" do portal cadastra vários meses de
+uma vez.
+
 #### Por onde a próxima sessão começa
 
-1. ~~Lembrar do 2FA~~ — feito em 26/09/2026.
-2. Perguntar se o computador da loja **já mostra a `0.9.43`**. Se sim, rodar o botão "Atualizar
-   o banco de todas as empresas" com `aplicar` (o ensaio já passou) e conferir que o banco ficou
-   na `0062`. **Não aplicar antes dessa confirmação.**
-   **Atalho que dispensa esperar** (combinado em 26/09/2026, era fim de semana e ela não tinha
-   acesso ao PC da loja): quem quebra com a `v0.9.42` + `0062` é só operador **não admin** que tem
-   Contas a Pagar ou Contas a Receber **sem** ter Caixa Diário (ao pagar/receber conta, e o
-   "desfazer pagamento"). Se em Configurações → Operadores não existir ninguém assim, dá pra
-   aplicar já. Ela ficou de conferir.
-   **Ela perguntou se isso vai se repetir com muitas lojas** ("vamos ter que esperar todos
-   atualizarem?"). Resposta dada: não como regra — a imensa maioria das migrations só acrescenta
-   e roda antes da versão, sem esperar ninguém. Só migration que **aperta** algo que a versão
-   velha usava (como a `0062`) pede espera, e aí o certo é esperar um prazo (a versão nova entra
-   quando o programa é fechado, então ~1 a 2 dias úteis depois de liberada) e **conferir**. O que
-   falta pra conferir é saber em que versão cada computador está — hoje não existe. Proposta
-   feita, **não pedida ainda**: o programa registra no banco, a cada login, "computador, versão,
-   visto por último", e o botão de atualizar os bancos recusa uma migration que exige versão
-   mínima enquanto houver computador ativo abaixo dela.
-   **E sobre a alíquota mensal** ("vamos ter que atualizar de todas as lojas manualmente?"): é
-   cadastro no portal da prefeitura, por CNPJ, e não tem API — o sistema só consegue lembrar
-   (já lembra). Pra lojas de terceiros, normalmente é tarefa da contabilidade de cada loja. Vale
-   ela conferir em 1º/10 se o botão "Replicar Alíquota" do portal deixa cadastrar vários meses
-   de uma vez — se deixar, vira tarefa anual.
+1. Nada pendente de SQL nem de publicação (banco na `0062`, `v0.9.43` liberada).
+2. Na segunda (28/09), quando a loja abrir: conferir na loja o que a `0.9.43` e a `0.9.42`
+   trouxeram (lista em "Como foi conferido" e no marco anterior).
 3. Se ela quiser seguir o guia: o próximo lote do `TR-04.1` (Ordens de Serviço), apresentando
-   antes as duas decisões acima.
+   antes as duas decisões acima — e, antes da primeira loja de outra empresa, o registro de
+   versão por computador.
 
 ### Onde parou em 25/09/2026, última leva (histórico — o marco mais recente está logo acima)
 

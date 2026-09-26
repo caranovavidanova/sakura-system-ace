@@ -193,7 +193,7 @@ export function DiarioSection({
                     <td className="px-4 py-3">
                       {m.ordem_servico_id
                         ? m.ordem_servico?.numero
-                          ? nomeOrdem(m.ordem_servico.numero)
+                          ? nomeOrdem(m.ordem_servico.numero, m.ordem_servico.tipo)
                           : "OS"
                         : m.categoria?.nome || m.descricao || "Lançamento manual"}
                       {idsDepoisDoFechamento.has(m.id) && (

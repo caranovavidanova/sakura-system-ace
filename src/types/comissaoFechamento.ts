@@ -1,7 +1,14 @@
+import type { TipoOrdem } from "@/types/os";
+
 /** Uma OS dentro do retrato de um pagamento de comissão. */
 export interface ItemRetratoComissao {
   ordemId: string;
   numero: number;
+  /**
+   * Só gravado quando é venda de balcão (migration 0064), pro recibo dizer
+   * "Venda 17". Retrato antigo não tem, e é sempre OS.
+   */
+  tipo?: TipoOrdem;
   papel: "vendedor" | "tecnico";
   comissao: number;
 }

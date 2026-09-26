@@ -105,6 +105,30 @@ describe("resumirMovimentos", () => {
     expect(resumo.ticketMedio).toBe(2435 / 2);
   });
 
+  it("venda de balcão entra em vendas, custo e lucro, mas fica fora do ticket médio", () => {
+    // Um par de palhetas vendido no balcão não é "um carro atendido": se
+    // entrasse na média, derrubaria o ticket médio da oficina.
+    const venda = entrada("m4", 100, "venda-1", [item("peca", "pneu", 1, 100)]);
+    venda.ordem_servico = { ...venda.ordem_servico!, tipo: "venda_balcao" };
+
+    const resumo = resumirMovimentos([...diaComPagamentoDividido, venda], custoPeca, custoServico);
+    expect(resumo.entradas).toBe(2535);
+    expect(resumo.custoDeAquisicao).toBe(950 + 300);
+    expect(resumo.lucro).toBe(2535 - 1250);
+    expect(resumo.ordensDistintas).toBe(2);
+    expect(resumo.ticketMedio).toBe(2435 / 2);
+  });
+
+  it("sem OS no período, o ticket médio é zero mesmo com venda de balcão", () => {
+    const venda = entrada("m4", 100, "venda-1", [item("peca", "pneu", 1, 100)]);
+    venda.ordem_servico = { ...venda.ordem_servico!, tipo: "venda_balcao" };
+
+    const resumo = resumirMovimentos([venda], custoPeca, custoServico);
+    expect(resumo.entradas).toBe(100);
+    expect(resumo.ordensDistintas).toBe(0);
+    expect(resumo.ticketMedio).toBe(0);
+  });
+
   it("desconta as saídas lançadas à mão do lucro", () => {
     const resumo = resumirMovimentos(
       [...diaComPagamentoDividido, saida("s1", 485)],

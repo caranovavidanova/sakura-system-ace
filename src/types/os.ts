@@ -2,6 +2,22 @@ import type { TipoVeiculo } from "@/types/cliente";
 
 export type StatusOS = "em_andamento" | "concluida" | "faturada";
 
+/**
+ * "os" é a ordem de serviço de sempre; "venda_balcao" é a venda de peça no
+ * balcão, sem veículo (migration 0064, item FN-09). As duas moram na mesma
+ * tabela, de propósito: baixa de estoque, caixa, nota e garantia são as
+ * mesmas. O que muda é a tela e onde cada uma aparece.
+ */
+export type TipoOrdem = "os" | "venda_balcao";
+
+/**
+ * `tipo` pode chegar ausente: banco anterior à migration 0064 não tem a
+ * coluna. Ausente é OS — que é o que toda ordem era antes de a venda existir.
+ */
+export function ehVendaBalcao(ordem: { tipo?: TipoOrdem | null } | null | undefined): boolean {
+  return ordem?.tipo === "venda_balcao";
+}
+
 export type TipoItemOS = "peca" | "servico";
 
 export interface ItemOS {
@@ -30,6 +46,8 @@ export interface OrdemServico {
   id: string;
   numero: number;
   loja_id: string;
+  /** Ausente em banco anterior à migration 0064 — ver `ehVendaBalcao`. */
+  tipo?: TipoOrdem;
   cliente_id: string;
   veiculo_id: string | null;
   status: StatusOS;
@@ -62,6 +80,14 @@ export interface NovaOrdemServico {
   km_entrada: number | null;
   descricao_problema: string | null;
   vendedor_id: string | null;
+  /**
+   * Só a venda de balcão manda estes dois: ela é "venda_balcao" e já nasce
+   * "concluida" (não existe "em andamento" numa venda de balcão). A OS de
+   * sempre não manda nenhum — e assim continua funcionando num banco
+   * anterior à migration 0064, que nem tem a coluna `tipo`.
+   */
+  tipo?: TipoOrdem;
+  status?: StatusOS;
 }
 
 export type PatchOrdemServico = Partial<
@@ -98,8 +124,10 @@ export const STATUS_COR: Record<StatusOS, string> = {
 
 // Nome curto e amigável da OS pra exibir em qualquer lugar do app — nunca o
 // UUID (`ordem.id`), que não tem nenhum sentido pra quem usa o sistema.
-export function nomeOrdem(numero: number): string {
-  return `OS ${numero}`;
+// Venda de balcão usa o MESMO contador de número (migration 0064), então o
+// número sozinho já é único na loja; o tipo só troca a palavra.
+export function nomeOrdem(numero: number, tipo?: TipoOrdem | null): string {
+  return `${tipo === "venda_balcao" ? "Venda" : "OS"} ${numero}`;
 }
 
 export const FORMA_PAGAMENTO_LABEL: Record<string, string> = {

@@ -23,6 +23,28 @@ export interface Veiculo {
 
 export type TipoPessoa = "fisica" | "juridica";
 
+/**
+ * O cliente fixo "Consumidor" (migration 0064): é em nome dele que a venda
+ * de balcão nasce quando quem compra não se identifica. UUID fixo, no mesmo
+ * espírito da "Loja 1" — é assim que o programa o reconhece sem procurar pelo
+ * nome.
+ *
+ * Três regras giram em volta dele, e as três existem pelo mesmo motivo — ele
+ * não é uma pessoa, é "ninguém em particular":
+ *   • ele NÃO aparece no cadastro de clientes nem nas listas de escolha
+ *     (`listarClientes()` o deixa de fora), então ninguém o edita por engano;
+ *   • a NFC-e NUNCA leva documento dele (`montarDestinatarioNFCe`), mesmo que
+ *     alguém grave um CPF nele — senão toda venda anônima sairia no CPF
+ *     dessa pessoa;
+ *   • venda no nome dele não pode ficar "a receber depois": não há de quem
+ *     cobrar.
+ */
+export const CLIENTE_CONSUMIDOR_ID = "00000000-0000-0000-0000-00000000c000";
+
+export function ehConsumidor(clienteId: string | null | undefined): boolean {
+  return clienteId === CLIENTE_CONSUMIDOR_ID;
+}
+
 export interface Cliente {
   id: string;
   nome: string;

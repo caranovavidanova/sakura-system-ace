@@ -10,6 +10,7 @@
 import { somar } from "./dinheiro";
 import type { ComissaoFuncionario } from "./comissoes";
 import type { ComissaoFechamento, ItemRetratoComissao } from "@/types/comissaoFechamento";
+import type { TipoOrdem } from "@/types/os";
 
 const chave = (i: Pick<ItemRetratoComissao, "ordemId" | "papel">) => `${i.ordemId}|${i.papel}`;
 
@@ -19,12 +20,14 @@ export function retratoDaLinha(linha: ComissaoFuncionario): ItemRetratoComissao[
     ...linha.comoVendedor.ordens.map((o) => ({
       ordemId: o.ordemId,
       numero: o.numero,
+      ...(o.tipo === "venda_balcao" ? { tipo: o.tipo } : {}),
       papel: "vendedor" as const,
       comissao: o.comissao,
     })),
     ...linha.comoTecnico.ordens.map((o) => ({
       ordemId: o.ordemId,
       numero: o.numero,
+      ...(o.tipo === "venda_balcao" ? { tipo: o.tipo } : {}),
       papel: "tecnico" as const,
       comissao: o.comissao,
     })),
@@ -47,6 +50,8 @@ export function pagamentoDoPeriodo(
 
 export interface MudancaDeOs {
   numero: number;
+  /** Só pro rótulo ("Venda 17"); ausente = OS. */
+  tipo?: TipoOrdem;
   papel: "vendedor" | "tecnico";
   /** A comissão no retrato do pagamento. `null` = a OS não estava lá. */
   antes: number | null;
@@ -82,11 +87,11 @@ export function compararComPagamento(
   for (const [k, a] of antes) {
     const n = agora.get(k);
     if (!n || somar([n.comissao, -a.comissao]) !== 0) {
-      mudancas.push({ numero: a.numero, papel: a.papel, antes: a.comissao, agora: n ? n.comissao : null });
+      mudancas.push({ numero: a.numero, tipo: a.tipo, papel: a.papel, antes: a.comissao, agora: n ? n.comissao : null });
     }
   }
   for (const [k, n] of agora) {
-    if (!antes.has(k)) mudancas.push({ numero: n.numero, papel: n.papel, antes: null, agora: n.comissao });
+    if (!antes.has(k)) mudancas.push({ numero: n.numero, tipo: n.tipo, papel: n.papel, antes: null, agora: n.comissao });
   }
   mudancas.sort((x, y) => x.numero - y.numero || x.papel.localeCompare(y.papel));
 

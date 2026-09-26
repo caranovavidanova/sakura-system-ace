@@ -105,7 +105,7 @@ export const CARTAO_METRICA_DESCRICAO: Record<CartaoMetrica, string> = {
   lucro_mes:
     "Vendas menos o custo das peças e serviços vendidos, menos as saídas lançadas no caixa.",
   ticket_medio_mes:
-    "Quanto rendeu, em média, cada ordem de serviço faturada no mês — a média é por ordem, não por pagamento, então dividir em duas formas não muda o número.",
+    "Quanto rendeu, em média, cada ordem de serviço faturada no mês — a média é por ordem, não por pagamento, então dividir em duas formas não muda o número. Venda de balcão não entra: ela conta nas vendas e no lucro, mas não é um carro atendido.",
   contas_pagar_vencendo: `Soma das contas ainda não pagas que vencem nos próximos ${DIAS_DE_CONTAS_VENCENDO} dias, já incluindo as que passaram do vencimento.`,
 };
 

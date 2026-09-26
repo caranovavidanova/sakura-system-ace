@@ -235,6 +235,7 @@ Três fases, nessa ordem, sem pressa de pular etapa:
 | Multi-loja: o que é compartilhado entre lojas vs. o que é por loja | Compartilhado: `clientes`/`veiculos`, `pecas`, `servicos`, `categorias`/`categorias_servicos`/`categorias_caixa`, `fornecedores`. Por loja: estoque, caixa, OS, contas a pagar, notas fiscais, funcionários, `pedidos_compra`, as 4 configurações | Pedido explícito da usuária: catálogo único pra empresa toda (evita recadastro duplicado, cliente que frequenta 2 lojas fica com histórico único); só o que é fisicamente de cada loja fica separado |
 | Token da Focus NFe (25/09/2026, item TR-04.2) | Mora num **cofre** (`segredos_fiscais_loja`, sem policy nenhuma) e quem usa é o **porteiro** — a Edge Function `focus-nfe`, que confere quem pede e só **repassa** a nota que o programa montou. A tela só sabe SE a loja tem token; trocar é só de escrita | O token emite e cancela nota no CNPJ da loja e ia até o computador de todo operador. **Tabela, e não secret da função** como o guia sugeria: secret é um por projeto Supabase (uma empresa), e duas lojas em CNPJs diferentes precisam de dois tokens. **Repassar, e não remontar a nota lá**: remontar seria a sexta vez de uma conta de dinheiro divergindo entre dois lugares. Escolha dela entre as opções, 25/09/2026. Ver item 71 da seção 6 |
 | Cadastro mensal da alíquota da NFS-e no portal da prefeitura (26/09/2026) | **Responsabilidade da contabilidade de cada empresa**; o sistema só lembra (faixa no Início, o mês inteiro, só em loja que emite NFS-e) | É cadastro no site da prefeitura, por CNPJ, sem API — o sistema não tem como fazer. Em loja de terceiro, trocar o texto da faixa (Configurações → Dados fiscais) pra dizer a quem avisar. Ver o marco de 26/09/2026 |
+| Venda de balcão (26/09/2026, item FN-09, migration 0064) | Uma OS marcada `tipo = 'venda_balcao'`, **não** um módulo de PDV à parte; cliente que não se identifica vira o cliente fixo **"Consumidor"** (UUID `…c000`); o número é o **mesmo contador** das OS | Reaproveita estoque, caixa, NFC-e e garantia sem reescrever nada. "Consumidor" em vez de cliente opcional: escolha dela entre as opções — opcional mexeria em ~20 telas e quebraria a versão anterior ao abrir uma venda sem cliente. Contador compartilhado pra o número nunca repetir na loja ("OS 3" e "Venda 3"), porque ele aparece sozinho em estoque e referência de nota. Ver seção 7, "Ordens de Serviço" |
 | Gerenciamento de formulário | `react-hook-form` + `zod` — **migração concluída**, todo formulário do app já está nesse padrão | Pedido da usuária, baseado num plano de refatoração de outra IA (Gemini) — decisão explícita de que é o padrão geral, não um teste isolado. Ver "Padrão de formulário" na seção 4 |
 
 ## 4. Estrutura de pastas
@@ -421,6 +422,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                   # seção 4) + FaturamentoCard.tsx (faturamento com parcelas calculadas, ainda
 │   │                   # não migrado) + FechamentoTab.tsx (NFC-e/NFS-e + garantia, só aparece com
 │   │                   # status concluída/faturada) + GarantiaVisualModal.tsx
+│   │                   # + VendaBalcaoForm.tsx (a venda de balcão — leitor de código de barras,
+│   │                   # peças, pagamento com o mesmo FaturamentoCard; FN-09, migration 0064)
+│   │                   # + VendaBalcaoDetalhe.tsx (uma venda já registrada: fechamento + Faturar)
 │   │   configuracoes/  # JurosParcelasSection.tsx, CategoriasSection.tsx, CategoriasCaixaSection.tsx,
 │   │                   # CategoriasServicoSection.tsx, TextoGarantiaSection.tsx,
 │   │                   # ModelosWhatsappSection.tsx (os textos que o sistema abre no WhatsApp),
@@ -483,6 +487,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # máquina (sem import nenhum: roda também no main.ts);
 │   │                             # computadores.ts — versão comparada como número, "em uso"
 │   │                             # (30 dias) e quem está numa versão mais antiga (0063);
+│   │                             # vendaBalcao.ts — a venda de balcão: incluir peça (o
+│   │                             # leitor soma na mesma linha), o Enter da busca, total,
+│   │                             # "a receber" só com cliente de verdade (FN-09);
 │   │                             # whatsapp.ts — telefone no formato do wa.me, marcadores das
 │   │                             # mensagens e os textos padrão;
 │   │                             # diagnostico.ts — mascararSegredos (esconde a chave deste
@@ -505,7 +512,7 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │                                  # notaFiscalXmlFornecedor.ts (item extraído do XML de NFe do
 │                                  # fornecedor — não confundir com itemNotaFiscal.ts, que é o
 │                                  # item da leitura por foto/IA)
-├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0063), todas idempotentes
+├── supabase/migrations/          # SQL numerado sequencialmente (0001 a 0064), todas idempotentes
 ├── supabase/instalacao/          # instalacao-completa.sql (as 54 migrations concatenadas num
 │                                  # arquivo só, pra instalar empresa nova colando UMA vez — GERADO
 │                                  # por `npm run gerar-instalacao`, não editar à mão) +
@@ -1211,6 +1218,23 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   **Ordem de subir: a de sempre** (migration primeiro), mas aqui qualquer ordem é segura: a
   versão nova sem a migration só não registra (e mostra a faixa de banco desatualizado); a
   migration sem a versão nova só fica vazia.
+- `0064` (criada em 26/09/2026, fim da noite, validada num Postgres local — a instalação inteira
+  rodada três vezes do zero, e a migration sozinha duas vezes num banco no estado `0063` **com
+  dado plantado** — **AINDA NÃO APLICADA no Supabase dela**): a **venda de balcão**, item
+  `FN-09`. Duas coisas só: a coluna `ordens_servico.tipo` (`'os'`/`'venda_balcao'`, padrão
+  `'os'`, trava `ck_ordens_servico_tipo`) e o cliente fixo **"Consumidor"**, com UUID fixo
+  `00000000-0000-0000-0000-00000000c000` (mesmo espírito da "Loja 1"). Três decisões:
+  (a) **o número é o mesmo contador das OS** — o gatilho da `0037` não mudou; uma venda pode ser
+  a "Venda 17" entre a "OS 16" e a "OS 18". Contador próprio deixaria "OS 3" e "Venda 3" na
+  mesma loja, e esse número aparece sozinho na movimentação de estoque e na referência da nota;
+  (b) **"Consumidor" em vez de cliente opcional** (escolha dela) — a regra em uso não muda;
+  (c) **nada de versão mínima**: a versão anterior do programa só mostra a venda como se fosse
+  uma OS. `supabase/scripts/limpar-dados-de-teste.sql` passou a **preservar** o Consumidor.
+  Teste repetível em `supabase/scripts/testar-venda-balcao.sql` (6 blocos, as duas metades —
+  o que já existe continua igual, e o balconista só-OS vende no Consumidor), conferido com três
+  mutações, todas vermelhas. **Ordem de subir: qualquer uma é segura** (a versão nova sem a
+  migration funciona em tudo, menos em registrar uma venda — e a faixa de banco desatualizado
+  avisa), mas o certo continua sendo a migration primeiro.
 
 **Inventário de tipos de coluna (conferido em 11/09/2026 — não precisa checar de novo)**. Feito
 rodando a instalação completa num Postgres local e consultando o `information_schema`, a pedido
@@ -1311,7 +1335,9 @@ outro projeto Supabase do zero (ver seção 9).
   uma saída numa loja e uma entrada na outra). Das três, a visão somada é a que um dono de 2 lojas
   deve pedir primeiro. Nenhuma impede uma empresa assim de começar a usar.
 
-- **`clientes`**: id, nome (vira "Razão social" na tela quando `tipo_pessoa` é jurídica, mesmo
+- **`clientes`** (tem um cliente fixo, **"Consumidor"**, UUID `…c000`, migration `0064` — é
+  nele que a venda de balcão nasce quando ninguém se identifica; `listarClientes()` o deixa FORA
+  do cadastro e das listas de escolha, e a NFC-e nunca leva documento dele): id, nome (vira "Razão social" na tela quando `tipo_pessoa` é jurídica, mesmo
   campo), tipo_pessoa (`fisica`/`juridica`, default `fisica`), cpf_cnpj (rótulo muda pra "CPF" ou
   "CNPJ" conforme o tipo), telefone, email, cep, rua, numero, bairro, cidade, uf,
   data_nascimento (usada pro calendário do Início marcar aniversário do mês), criado_em
@@ -1369,7 +1395,9 @@ outro projeto Supabase do zero (ver seção 9).
   tela. Decisão de escopo pra manter o v1 do Depósito enxuto — se um dia fizer falta escolher
   depósito também nesses fluxos automáticos, é extensão aditiva.
 - **`ordens_servico`**: id, **numero** (int, sequencial **por loja** — 1, 2, 3..., atribuído
-  sozinho por trigger no insert; é como a OS aparece pra usuária em todo o app, nunca o `id`), loja_id
+  sozinho por trigger no insert; é como a OS aparece pra usuária em todo o app, nunca o `id`),
+  **tipo** (`os`/`venda_balcao`, migration `0064` — a venda de balcão usa o MESMO contador de
+  número; na tela vira "Venda 17" em vez de "OS 17", pelo `nomeOrdem(numero, tipo)`), loja_id
   (FK lojas), cliente_id (FK), veiculo_id (FK, opcional), status
   (`em_andamento`/`concluida`/`faturada` — sem "aberta" desde a migration 0037; toda OS nova já
   nasce "em_andamento"), km_entrada, descricao_problema (rótulo "Observação"), forma_pagamento
@@ -3059,6 +3087,20 @@ própria, o resultado só passa pela tela de revisão em memória antes de salva
     **A lição comum**: o teste só prova o que se viu ele reprovar. Os três passaram na primeira
     rodada, e "passou de primeira" continua sendo motivo pra desconfiar (itens 53, 58 e 73).
 
+77. **Duas armadilhas de teste da venda de balcão (26/09/2026, migration `0064`)**, as duas
+    achadas quebrando o código de propósito:
+    - **O atalho global do Enter é invisível no jsdom.** `useEnterParaProximoCampo` só
+      considera campo com `offsetParent !== null`, e o jsdom não calcula layout — pra ele
+      `offsetParent` é sempre `null`. Resultado: o teste "o Enter do leitor de código de barras
+      não pula de campo" passou **com o `stopPropagation` tirado** (a mutação), porque o atalho
+      nunca fazia nada. Corrigido simulando `offsetParent` só naquele teste
+      (`VendaBalcaoForm.test.tsx`). Vale pra qualquer teste futuro que dependa desse atalho.
+    - **`pkill -f` com o texto do servidor mata o próprio shell** (é o item 73 outra vez):
+      parar o vite das telas se faz pelo PID, ou conferindo com `curl` que a porta 5199 caiu.
+    **E uma coisa de desenho que vale pra quem mexer na venda**: o React 17+ escuta eventos na
+    raiz, então um `e.stopPropagation()` no `onKeyDown` impede o evento de chegar no `document`
+    — é o que faz o Enter do leitor ficar na busca em vez de pular de campo.
+
 ## 7. Estado atual por módulo
  (tudo confirmado rodando de verdade pela usuária, salvo indicação contrária)
 
@@ -3484,6 +3526,38 @@ Quatro coisas que valem saber:
   passou a mostrar o **total da linha** (quantidade × preço − desconto) além do preço unitário, pra
   não haver confusão em par de peça (2x pneu, por exemplo).
 
+- **Venda de balcão** (26/09/2026, item `FN-09`, migration `0064` — **ainda não aplicada nem
+  publicada; não vista por ela**): vender uma peça pra quem não vai deixar o carro, numa tela
+  só. Botão **"+ Venda de balcão"** na tela de Ordens de Serviço (mesma permissão do módulo). O
+  que a tela faz:
+  - **Cliente começa no "Consumidor"** ("não se identificou"). Pra CPF na nota, escolhe-se um
+    cliente ou cadastra ali mesmo ("+ Cadastrar cliente (CPF na nota)" — nome, pessoa
+    física/empresa, CPF/CNPJ e telefone, sem veículo). A linha embaixo do campo diz como a nota
+    vai sair.
+  - **Leitor de código de barras**: o campo de busca já abre focado; Enter com o código exato
+    (ou uma peça só na busca) põe a peça; **passar de novo soma 1 na mesma linha**. Com várias
+    parecidas, o Enter não escolhe — aparece a lista. O Enter do leitor **não** pula de campo
+    (segura o atalho global — ver item 77 da seção 6).
+  - **Só peça**, de propósito: serviço pede NFS-e com tomador identificado — é o mundo da OS.
+  - **Pagamento** é o mesmo `FaturamentoCard` da OS (dividir em formas, parcelar cartão). Enquanto
+    ele está aberto, as peças travam ("Mudar as peças" destrava). **No Consumidor não existe "a
+    receber depois"**: não há de quem cobrar.
+  - **Gravar e faturar é um clique só** (`registrarVendaBalcao` em `lib/ordensServico.ts`). Se
+    falhar antes de o pagamento entrar, a venda é **desfeita inteira** e tentar de novo é seguro;
+    se falhar NO pagamento, a venda fica (o estoque já baixou) e a tela diz pra **faturar a que
+    existe**, nunca registrar outra (`VendaSemFaturamentoError`).
+  - **Depois de registrada, a NFC-e abre sozinha** — nada é emitido sem o "Confirmar emissão"
+    dela. A NFC-e do Consumidor sai sempre **sem identificação**, mesmo que alguém grave um CPF
+    nele (`montarDestinatarioNFCe`).
+  - **Na lista, uma aba própria** ("Vendas de balcão (N)"), sem as colunas de veículo e serviço;
+    abrir uma venda mostra o fechamento (NFC-e, DANFE, garantia) e, se o pagamento não entrou, o
+    botão Faturar. Sem "Avisar" no WhatsApp (não há carro pronto).
+  - **Nos números**: a venda entra em vendas, custo e lucro (Início, Caixa, Relações) e na
+    comissão do vendedor, mas **fica fora do ticket médio** (que responde "quanto rende cada carro
+    atendido") — o "?" do cartão diz isso. O rótulo é "Venda 17" no caixa, na movimentação de
+    estoque, nas comissões, no recibo de comissão e na garantia.
+  **Sem migration aplicada, o botão aparece mas registrar dá erro** — por isso a migration vem
+  antes da versão, como sempre.
 - **Funcionários** (duas abas desde 03/09/2026): **"Cadastro"** — RH completo (documentos,
   endereço, cargo/admissão, família/filhos; o formulário em si tem as sub-abas "Dados
   gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente. E
@@ -4885,6 +4959,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
 | 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. A `0063` entrou pelo botão (banco na **`0063`**) e o programa saiu na **`v0.9.44`**, publicada e liberada no mesmo dia. |
+| 26/09 (fim da noite) | **Venda de balcão** (item `FN-09`, migration `0064`): vender peça pra quem não deixa o carro, numa tela só, com leitor de código de barras, pagamento e NFC-e; cliente "Consumidor" fixo pra quem não se identifica (escolha dela), mesmo contador de número das OS, aba própria na lista e fora do ticket médio. **Migration não aplicada e versão não publicada** — esperando o "pode" dela. |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4920,6 +4995,11 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 `configuracoes_fiscais_loja` pra NFS-e — código do município, item da lista de serviço, alíquota
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
+
+**Estado em 26/09/2026, fim da noite: `0001` a `0063` aplicadas; a `0064` (venda de balcão)
+está no repositório e AINDA NÃO foi aplicada** — é pelo botão "Atualizar o banco de todas as
+empresas", ensaio e depois aplicação, antes da versão que levar a tela (ver o marco mais recente,
+no fim do arquivo).
 
 **Estado em 26/09/2026, noite: `0001` a `0063` estão aplicadas no Supabase real dela.** A `0063`
 (computadores) entrou pelo botão — ensaio e depois aplicação, `0062` → `0063` —, **antes** da
@@ -5520,8 +5600,9 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.44"` — **publicada e liberada em 26/09/2026, à noite** (a
-  versão de cada computador, migration `0063`, que entrou no banco antes). A `main` está em dia
-  com ela. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
+  versão de cada computador, migration `0063`, que entrou no banco antes). A `main` está **à frente**
+  dela desde 26/09/2026, fim da noite: leva a venda de balcão (migration `0064`), ainda sem tag
+  — ver o marco "LEIA ISTO PRIMEIRO". Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
   migration dela, de propósito). E antes: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
@@ -6254,7 +6335,94 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 26/09/2026, à noite — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 26/09/2026, fim da noite — LEIA ISTO PRIMEIRO
+
+**Saiu a venda de balcão** (item `FN-09` do guia, P0), no sábado à noite. Ela disse "vamos
+continuar, como é sábado ainda, nada do PC da loja por enquanto" e escolheu, entre as opções, a
+venda de balcão — e, na decisão que o guia manda levar, o **cliente "Consumidor" fixo** em vez de
+tornar o cliente opcional.
+
+**Estado: código na `main`, migration `0064` NÃO aplicada, versão NÃO publicada.** Nada disso foi
+feito sem ela: aplicar mexe no banco de produção e publicar chega nas lojas.
+
+#### O que saiu, em uma linha cada
+
+- **Migration `0064`**: `ordens_servico.tipo` (`os`/`venda_balcao`) e o cliente fixo
+  "Consumidor". O número é o mesmo contador das OS. Entrada completa na seção 5.
+- **A tela**: "+ Venda de balcão" em Ordens de Serviço — leitor de código de barras, peças,
+  pagamento (o mesmo da OS) e a NFC-e abrindo sozinha no fim. Detalhe em "Venda de balcão", seção 7.
+- **A lista**: abas "Ordens de serviço" / "Vendas de balcão".
+- **Os números**: a venda entra em vendas, custo, lucro e comissão, e **sai do ticket médio**.
+- **A NFC-e do Consumidor nunca leva documento**, mesmo com CPF gravado nele.
+- **Falha pela metade**: antes do pagamento, a venda é desfeita; no pagamento, a venda fica e a
+  tela manda faturar a que existe (nunca registrar de novo).
+
+#### Como foi conferido
+
+- A `0064` num Postgres local: instalação inteira três vezes do zero, e ela sozinha duas vezes
+  num banco no estado `0063` com dado. `testar-venda-balcao.sql` (as duas metades) com três
+  mutações, todas vermelhas. Os 11 testes de migration, a matriz de RLS (760 células, sem
+  mudança) e o teste do botão de atualizar bancos, todos num Postgres de verdade.
+- **769 testes** nos dois fusos (eram 727), `tsc`, lint e contraste. Os novos: as contas da venda
+  (`schemas/vendaBalcao.test.ts`), a gravação com as falhas pela metade
+  (`lib/vendaBalcao.test.ts`), a tela (`VendaBalcaoForm.test.tsx`, 9 casos — inclusive o Enter do
+  leitor com o atalho global ligado), o Consumidor na NFC-e e o ticket médio. **Sete mutações**
+  no código novo, todas vermelhas — uma delas só depois de consertar o teste (item 77 da seção 6).
+- A varredura de contraste nas telas (agora **59**, com quatro cenas novas da venda) sem nenhuma
+  reprovação nova, as telas olhadas uma a uma, e o teste do Electron de verdade (31 checagens).
+
+**O que não dá pra conferir daqui**: o Supabase de verdade, a NFC-e de verdade (a Focus NFe) e o
+leitor de código de barras de verdade.
+
+#### O que falta, e é dela (na ordem)
+
+1. **Aplicar a `0064`** pelo botão "Atualizar o banco de todas as empresas" — `ensaiar`, depois
+   `aplicar` (seção 9). Não tem versão mínima.
+2. **Publicar a versão com a tela** (será a `0.9.45`) — e decidir se libera direto ou se fica no
+   canal de teste (só o computador dela está em Teste; o da loja não).
+3. **Na loja, quando der**: fazer uma venda de balcão de verdade com o leitor, emitir a NFC-e dela
+   e conferir o caixa do dia. **É o único teste que falta**, e é também o primeiro teste real do
+   leitor de código de barras neste sistema.
+
+#### Pontos que valem ela saber (não são decisão pendente, são consequência)
+
+- **Comissão**: o vendedor de uma venda de balcão leva comissão sobre ela, como numa OS (é o
+  mesmo campo "vendedor"). Se a loja não paga comissão de balcão, é só deixar a venda "Sem
+  vendedor" — ou pedir pra mudar a regra.
+- **O número pula nas OS**: com uma venda no meio, a lista de OS vai de "OS 16" pra "OS 18". É o
+  preço do número nunca repetir na loja.
+- **O "Consumidor" não aparece em Clientes**, de propósito — ninguém consegue editá-lo por engano.
+
+#### Tudo que está pendente, numa lista só (atualizada em 26/09/2026, fim da noite)
+
+**Da venda de balcão**: os três passos acima.
+
+**Com data**: **1º/10/2026** — cadastrar a alíquota de 10/2026 no portal da prefeitura, antes da
+primeira NFS-e do mês (o Início lembra).
+
+**Na loja do pai dela, quando ela tiver acesso ao computador de lá** (nada mudou desde o marco
+logo abaixo): conferir que o computador da loja apareceu em "Computadores desta empresa" e dar o
+apelido; marcar o computador da loja como Teste; conferir o que a `v0.9.42`/`v0.9.43` trouxeram;
+e emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
+
+**Sem prazo, fora do código**: o valor da fase 2; o `ANTES-DA-PRIMEIRA-VENDA.md` com advogado ou
+contabilidade; trocar as três credenciais expostas; a pergunta do CSOSN 500/ICMS-ST; o formato do
+CNPJ com letras na Focus NFe; atualizar o Electron; marcar o CI como obrigatório.
+
+#### Estado do código
+
+`main` com a venda de balcão, à frente da `v0.9.44`; banco dela na `0063`. `tsc`, lint e
+contraste limpos; **769 testes** nos dois fusos; matriz de RLS em 760 células; 11 testes de
+migration passando.
+
+#### Por onde a próxima sessão começa
+
+Perguntar se é pra aplicar a `0064` e publicar a versão — e, se ela já tiver feito, se a venda de
+balcão foi usada na loja. Se ela quiser seguir o guia, o que sobra de P0/P1 com mais valor no
+balcão: **ficha do veículo** (`FN-04`, sem migration — base do lembrete de revisão `FN-06`),
+**sugestão de compra** (`FN-07`, sem migration) e o **lote 4 do `TR-04.1`** (Ordens de Serviço).
+
+### Onde parou em 26/09/2026, à noite (histórico — o marco mais recente está logo acima)
 
 **Saiu a "versão de cada computador"** — a proposta do marco logo abaixo ("o que falta pra
 conferir é saber em que versão cada computador está"), escolhida por ela entre as opções quando

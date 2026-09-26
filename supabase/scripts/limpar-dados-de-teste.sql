@@ -12,7 +12,8 @@
 -- se já tiver dado real de verdade em qualquer loja, não rode isto sem
 -- adaptar (avise antes de rodar às cegas).
 --
--- O que NÃO é apagado: seu(s) login(s) de operador, as lojas em si (ver
+-- O que NÃO é apagado: o cliente "Consumidor" da venda de balcão, seu(s)
+-- login(s) de operador, as lojas em si (ver
 -- "Excluir uma loja de teste" no fim deste arquivo), os depósitos, as
 -- configurações da loja (juros de parcelamento, texto de garantia, dados
 -- fiscais, cartões do Início), as categorias de caixa, e qualquer
@@ -75,7 +76,11 @@ where descricao not in (
   'Serviço técnico – Outros'
 );
 
-delete from clientes; -- cascata: apaga também veiculos (contas_receber já foi limpa acima)
+-- O cliente "Consumidor" (migration 0064) fica: é nele que a venda de balcão
+-- nasce quando o cliente não se identifica, e sem ele registrar uma venda
+-- daria erro. Ele não é dado de teste, é parte do sistema.
+delete from clientes -- cascata: apaga também veiculos (contas_receber já foi limpa acima)
+where id <> '00000000-0000-0000-0000-00000000c000';
 
 delete from categorias
 where nome not in ('Pneus', 'Suspensão', 'Amortecedores', 'Freios', 'Outras Peças');

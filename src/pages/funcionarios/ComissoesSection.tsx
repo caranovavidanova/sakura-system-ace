@@ -22,6 +22,7 @@ import {
 import type { ContaReceber } from "@/types/contaReceber";
 import type { Funcionario } from "@/types/funcionario";
 import type { OrdemServico } from "@/types/os";
+import { nomeOrdem } from "@/types/os";
 import type { Peca } from "@/types/peca";
 import type { Servico } from "@/types/servico";
 
@@ -216,7 +217,7 @@ export function ComissoesSection({
           <ul className="mt-1 list-inside list-disc text-rotulo">
             {comparacao.mudancas.map((m) => (
               <li key={`${m.numero}-${m.papel}`}>
-                OS {m.numero} ({m.papel === "vendedor" ? "vendedor" : "técnico"}):{" "}
+                {nomeOrdem(m.numero, m.tipo)} ({m.papel === "vendedor" ? "vendedor" : "técnico"}):{" "}
                 {m.antes === null ? "entrou no período" : formatarMoeda(m.antes)} →{" "}
                 {m.agora === null ? "saiu do período" : formatarMoeda(m.agora)}
               </li>
@@ -427,7 +428,7 @@ function BlocoDoPapel({
           <tbody>
             {papel.ordens.map((ordem) => (
               <tr key={`${ordem.ordemId}-${titulo}`} className="border-t border-sakura-gray/20">
-                <td className="py-1.5">OS {ordem.numero}</td>
+                <td className="py-1.5">{nomeOrdem(ordem.numero, ordem.tipo)}</td>
                 <td className="py-1.5">{formatarData(ordem.data)}</td>
                 <td className="py-1.5">{ordem.cliente}</td>
                 <td className="py-1.5">{formatarMoeda(ordem.vendido)}</td>

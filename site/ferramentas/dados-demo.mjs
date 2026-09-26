@@ -39,6 +39,9 @@ export const clientes = [
   { id: "c3", nome: "Juliana Prado", tipo_pessoa: "fisica", cpf_cnpj: "987.654.321-00", telefone: "(16) 98111-2233", email: "juliana@exemplo.com.br", cep: "14801-300", rua: "Rua Sete de Setembro", numero: "88", bairro: "Vila Xavier", cidade: "Araraquara", uf: "SP", data_nascimento: "1992-09-03", criado_em: dia(-180) },
   { id: "c4", nome: "Eduardo Salles", tipo_pessoa: "fisica", cpf_cnpj: "456.789.123-00", telefone: "(16) 99777-8899", email: "eduardo@exemplo.com.br", cep: "14803-200", rua: "Rua Padre Duarte", numero: "742", bairro: "Jardim Nova", cidade: "Araraquara", uf: "SP", data_nascimento: "1978-12-21", criado_em: dia(-120) },
   { id: "c5", nome: "Camila Rocha", tipo_pessoa: "fisica", cpf_cnpj: "321.654.987-00", telefone: "(16) 98222-3344", email: "camila@exemplo.com.br", cep: "14805-000", rua: "Rua Gonçalves Dias", numero: "56", bairro: "Santa Angelina", cidade: "Araraquara", uf: "SP", data_nascimento: "1996-06-30", criado_em: dia(-60) },
+  // O cliente fixo da venda de balcão (migration 0064). O app o deixa de
+  // fora das listas com um filtro `neq` — que o banco-falso sabe aplicar.
+  { id: "00000000-0000-0000-0000-00000000c000", nome: "Consumidor", tipo_pessoa: "fisica", cpf_cnpj: null, telefone: null, email: null, cep: null, rua: null, numero: null, bairro: null, cidade: null, uf: null, data_nascimento: null, criado_em: dia(-400) },
 ].map((c) => ({ ...c, veiculos: veiculos.filter((v) => v.cliente_id === c.id) }));
 
 const vlk = (id) => veiculos.find((v) => v.id === id);
@@ -83,6 +86,21 @@ export const ordens = [
   };
 });
 
+// Uma venda de balcão (item FN-09): mesmo contador de número das OS, sem
+// veículo, no nome do Consumidor. Aparece na aba "Vendas de balcão".
+ordens.unshift({
+  id: "os149", numero: 149, loja_id: LOJA, tipo: "venda_balcao",
+  cliente_id: "00000000-0000-0000-0000-00000000c000", veiculo_id: null,
+  status: "faturada", km_entrada: null, descricao_problema: null,
+  forma_pagamento: "Dinheiro", parcelas: 1,
+  data_abertura: dia(-0.1), data_fechamento: dia(-0.1),
+  vendedor_id: "f2", criado_por_id: OP, atualizado_por_id: OP,
+  cliente: { nome: "Consumidor" }, veiculo: null,
+  vendedor: { nome: "Bruna Tavares" },
+  criado_por: { nome: "Bruna Tavares" }, atualizado_por: { nome: "Bruna Tavares" },
+  itens: [{ ...item("peca", "p5", "Bateria 60Ah", 1, 549), tecnico_id: null, tecnico: null }],
+});
+
 const totalOrdem = (o) =>
   o.itens.reduce((s, i) => s + i.quantidade * i.preco_unitario - i.desconto, 0);
 
@@ -116,7 +134,7 @@ export const caixa = [
     id: "cx-os" + o.numero, loja_id: LOJA, data: o.data_fechamento,
     ordem_servico_id: o.id, tipo: "entrada",
     forma_pagamento: ["Pix", "Cartão de crédito", "Dinheiro"][i % 3],
-    valor: totalItens(o), descricao: "OS " + o.numero, categoria_id: null,
+    valor: totalItens(o), descricao: (o.tipo === "venda_balcao" ? "Venda " : "OS ") + o.numero, categoria_id: null,
   })),
   ...TICKETS.map((valor, i) => ({
     id: "cx-e" + i, loja_id: LOJA, data: dia(-(1 + (i % 26))),
@@ -345,7 +363,7 @@ export const ordensItens = ordens.flatMap((o) =>
       id: o.id,
       data_fechamento: o.data_fechamento ?? dia(-1),
       cliente: { nome: o.cliente.nome },
-      veiculo: { placa: o.veiculo.placa },
+      veiculo: o.veiculo ? { placa: o.veiculo.placa } : null,
     },
     peca: i.peca_id
       ? {

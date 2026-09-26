@@ -48,9 +48,16 @@ export async function instalarBancoFalso(contexto) {
         linhas = [];
       }
 
-      // aplica os filtros ".eq()" que viram "campo=eq.valor" na URL
+      // aplica os filtros ".eq()" e ".neq()" que viram "campo=eq.valor" /
+      // "campo=neq.valor" na URL (o ".neq()" é o que tira o cliente
+      // Consumidor das listas de clientes — migration 0064)
       for (const [campo, valor] of url.searchParams.entries()) {
         if (["select", "order", "limit", "offset"].includes(campo)) continue;
+        if (valor.startsWith("neq.")) {
+          const fora = valor.slice(4);
+          linhas = linhas.filter((l) => l[campo] === undefined || String(l[campo]) !== fora);
+          continue;
+        }
         if (!valor.startsWith("eq.")) continue;
         const alvo = valor.slice(3);
         linhas = linhas.filter((l) => l[campo] === undefined || String(l[campo]) === alvo);

@@ -1,6 +1,6 @@
 import { custoDosItens, type MapaCusto } from "./metricasCaixa";
 import { arredondarCentavo as arredondar } from "./dinheiro";
-import type { ItemOS, OrdemServico } from "@/types/os";
+import type { ItemOS, OrdemServico, TipoOrdem } from "@/types/os";
 
 /**
  * Comissão por funcionário, pra tela Relações → Comissões.
@@ -28,6 +28,8 @@ export const SEM_FUNCIONARIO = "sem-funcionario";
 export interface OrdemDaComissao {
   ordemId: string;
   numero: number;
+  /** Só pra o rótulo ("Venda 17"); ausente = OS. */
+  tipo?: TipoOrdem;
   data: string;
   cliente: string;
   vendido: number;
@@ -211,6 +213,7 @@ export function resumirComissoes({
     papel.ordens.push({
       ordemId: ordem.id,
       numero: ordem.numero,
+      ...(ordem.tipo ? { tipo: ordem.tipo } : {}),
       data: ordem.data_fechamento ?? ordem.data_abertura,
       cliente: ordem.cliente?.nome ?? "—",
       vendido,

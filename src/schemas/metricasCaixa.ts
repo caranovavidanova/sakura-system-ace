@@ -1,7 +1,7 @@
 import { arredondarCentavo } from "./dinheiro";
 import type { MovimentoCaixa } from "@/types/caixa";
 import type { ItemOS } from "@/types/os";
-import { totalOrdem } from "@/types/os";
+import { ehVendaBalcao, totalOrdem } from "@/types/os";
 
 /**
  * Contas de Caixa usadas em mais de uma tela (Início, Caixa Diário e
@@ -16,6 +16,12 @@ import { totalOrdem } from "@/types/os";
  *    lançamento infla o resultado.
  * 2. Custo não é só o `preco_custo` da peça: o serviço também tem `custo`
  *    (mão de obra). Ignorar isso faz o lucro parecer maior do que é.
+ *
+ * E uma regra de 26/09/2026 (venda de balcão, migration 0064): a venda de
+ * balcão é dinheiro de verdade, então entra em vendas, custo e lucro como
+ * qualquer OS — mas NÃO entra no ticket médio. Ticket médio responde "quanto
+ * rende cada carro que passa pela oficina", e um par de palhetas vendido no
+ * balcão puxaria essa média pra baixo sem ter nada a ver com a pergunta.
  */
 
 export type MapaCusto = Map<string, number>;
@@ -52,9 +58,12 @@ export interface ResumoCaixa {
   custoDeAquisicao: number;
   /** entradas − saídas − custo do que foi vendido. */
   lucro: number;
-  /** Quantas OS distintas geraram entrada no período. */
+  /** Quantas OS distintas geraram entrada no período (sem venda de balcão). */
   ordensDistintas: number;
-  /** Média por OS — por ORDEM, não por lançamento. */
+  /**
+   * Média por OS — por ORDEM, não por lançamento, e só de OS: venda de
+   * balcão fica de fora (ver o topo do arquivo).
+   */
   ticketMedio: number;
 }
 
@@ -70,6 +79,9 @@ export function resumirMovimentos(
   // Uma OS com pagamento dividido aparece em vários lançamentos: o custo
   // dela entra uma vez só, e ela conta como uma OS só no ticket médio.
   const ordensJaContadas = new Set<string>();
+  // O ticket médio conta à parte porque a venda de balcão entra no custo
+  // (acima) mas não na média.
+  const ordensDoTicket = new Set<string>();
 
   for (const movimento of movimentos) {
     if (movimento.tipo === "saida") {
@@ -82,7 +94,10 @@ export function resumirMovimentos(
     const ordemId = movimento.ordem_servico_id;
     if (!ordemId) continue;
 
-    totalDeOrdens += movimento.valor;
+    if (!ehVendaBalcao(movimento.ordem_servico)) {
+      totalDeOrdens += movimento.valor;
+      ordensDoTicket.add(ordemId);
+    }
     if (ordensJaContadas.has(ordemId)) continue;
     ordensJaContadas.add(ordemId);
     custoDeAquisicao += custoDosItens(
@@ -92,7 +107,7 @@ export function resumirMovimentos(
     );
   }
 
-  const ordensDistintas = ordensJaContadas.size;
+  const ordensDistintas = ordensDoTicket.size;
 
   return {
     entradas,

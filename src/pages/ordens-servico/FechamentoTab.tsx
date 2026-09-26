@@ -7,7 +7,7 @@ import { situacaoFiscalOrdem } from "@/schemas/situacaoFiscal";
 import { VerDanfeModal } from "@/pages/notas-fiscais/VerDanfeModal";
 import type { NotaFiscalArquivo } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
-import { totalOrdem } from "@/types/os";
+import { ehVendaBalcao, totalOrdem } from "@/types/os";
 import { EmitirNotaFiscalModal } from "./EmitirNotaFiscalModal";
 import { GarantiaVisualModal } from "./GarantiaVisualModal";
 
@@ -60,6 +60,11 @@ function BotaoEmitir({
 
 export function FechamentoTab({ ordem }: FechamentoTabProps) {
   const itens = ordem.itens ?? [];
+  // Venda de balcão (migration 0064) usa esta mesma aba: muda só a palavra,
+  // e no lugar do veículo (que ela não tem) aparece quem vendeu.
+  const ehVenda = ehVendaBalcao(ordem);
+  const estaOrdem = ehVenda ? "Esta venda" : "Esta OS";
+  const desta = ehVenda ? "desta venda" : "desta OS";
   const [templateGarantia, setTemplateGarantia] = useState("");
   const [notaParaEmitir, setNotaParaEmitir] = useState<"NFC-e" | "NFS-e" | null>(null);
   const [previewGarantiaAberta, setPreviewGarantiaAberta] = useState(false);
@@ -120,12 +125,19 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <p className="text-sakura-purple-dark/80">Cliente</p>
           <p className="font-medium text-sakura-purple-dark">{ordem.cliente?.nome ?? "—"}</p>
         </div>
+        {ehVenda ? (
+          <div>
+            <p className="text-sakura-purple-dark/80">Vendedor</p>
+            <p className="font-medium text-sakura-purple-dark">{ordem.vendedor?.nome ?? "—"}</p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sakura-purple-dark/80">Veículo</p>
+            <p className="font-medium text-sakura-purple-dark">{ordem.veiculo?.placa ?? "—"}</p>
+          </div>
+        )}
         <div>
-          <p className="text-sakura-purple-dark/80">Veículo</p>
-          <p className="font-medium text-sakura-purple-dark">{ordem.veiculo?.placa ?? "—"}</p>
-        </div>
-        <div>
-          <p className="text-sakura-purple-dark/80">Aberta em</p>
+          <p className="text-sakura-purple-dark/80">{ehVenda ? "Registrada em" : "Aberta em"}</p>
           <p className="font-medium text-sakura-purple-dark">
             {formatarData(ordem.data_abertura)}
           </p>
@@ -167,9 +179,9 @@ export function FechamentoTab({ ordem }: FechamentoTabProps) {
           <p className="text-rotulo text-sakura-muted">
             {situacao.pendentes.length === 0
               ? situacao.completa
-                ? "Todas as notas desta OS já foram emitidas."
-                : "Esta OS não tem peça nem serviço lançado."
-              : `Esta OS precisa de ${situacao.pendentes.join(" e ")}.`}
+                ? `Todas as notas ${desta} já foram emitidas.`
+                : `${estaOrdem} não tem peça nem serviço lançado.`
+              : `${estaOrdem} precisa de ${situacao.pendentes.join(" e ")}.`}
           </p>
           <div className="flex gap-2">
             {situacao.precisaNfce && (

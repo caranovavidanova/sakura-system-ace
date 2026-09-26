@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 import { arredondarCentavo as arredondar } from "@/schemas/dinheiro";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { Cliente } from "@/types/cliente";
+import { ehConsumidor } from "@/types/cliente";
 import type {
   FormaPagamentoNFCe,
   ItemNFCe,
@@ -291,6 +292,11 @@ function montarItemNFCe(item: ItemParaNFCe, numeroItem: number): ItemNFCe {
  * comportamento válido de sempre — mandar um documento pela metade seria pior,
  * porque a SEFAZ rejeita a nota inteira. Quem avisa a usuária desse caso é a
  * tela de emissão, antes de mandar.
+ *
+ * O cliente "Consumidor" da venda de balcão (migration 0064) sai SEMPRE como
+ * não identificado, mesmo que alguém tenha gravado um documento nele: ele é
+ * "ninguém em particular", e um CPF parado nele iria parar em toda venda
+ * anônima da loja.
  */
 export function montarDestinatarioNFCe(
   cliente: Cliente | null,
@@ -301,6 +307,8 @@ export function montarDestinatarioNFCe(
   | "cnpj_destinatario"
   | "indicador_inscricao_estadual_destinatario"
 > {
+  if (ehConsumidor(cliente?.id)) return { nome_destinatario: "", cpf_destinatario: "" };
+
   const documento = (cliente?.cpf_cnpj ?? "").replace(/\D/g, "");
 
   if (cliente?.tipo_pessoa === "juridica") {

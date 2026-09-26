@@ -35,6 +35,8 @@ export const MENSAGEM_DA_TRAVA: Record<string, string> = {
   ck_computadores_versao: "A versão do programa informada por este computador não está no formato 0.9.43.",
   ck_computadores_canal: 'O canal de atualização deste computador precisa ser "normal" ou "teste".',
   ck_computadores_tamanhos: "O nome ou o apelido do computador está comprido demais (apelido: até 60 letras).",
+  // Migration 0064 (venda de balcão). Quem grava o tipo é o próprio programa.
+  ck_ordens_servico_tipo: 'O tipo da ordem precisa ser "os" ou "venda_balcao".',
 };
 
 /** A frase da trava, se a mensagem do banco for de uma trava conhecida. */

@@ -4270,7 +4270,9 @@ Quatro coisas que valem saber:
     atualizar os bancos passa a esperar os atrasados quando uma migration declara versão mínima.
     **Na ordem de sempre**: a `0063` entrou pelo botão primeiro (ensaio e aplicação, `0062` →
     `0063`), e só depois a versão. Publicada via `workflow_dispatch` e **liberada em 26/09/2026,
-    à noite**, a pedido dela ("pode fazer" e, perguntada, "liberar já"). A partir dela, o
+    à noite**, a pedido dela ("pode fazer" e, perguntada, "liberar já"). Conferido de fora: o
+    endereço "mais recente" que o app usa responde `version: 0.9.44`, e o instalador baixado de
+    lá tem a impressão digital sha512 **idêntica** à do `latest.yml`. A partir dela, o
     computador da loja aparece na lista na primeira vez que alguém entrar nele.
 
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as

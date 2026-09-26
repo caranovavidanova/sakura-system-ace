@@ -99,14 +99,20 @@ contagens_estoque,select,2,1,1,0,0,
 contagens_estoque,insert,1,1,1,0,0,
 contagens_estoque,update,2,1,1,0,0,
 contagens_estoque,delete,2,1,1,0,0,
-contas_pagar,select,2,1,1,0,0,
-contas_pagar,insert,1,1,1,0,0,
-contas_pagar,update,2,1,1,0,0,
-contas_pagar,delete,2,1,1,0,0,
-contas_receber,select,2,1,1,0,0,
-contas_receber,insert,1,1,1,0,0,
-contas_receber,update,2,1,1,0,0,
-contas_receber,delete,2,1,1,0,0,
+#
+# TR-04.1 etapa 2, lote 2 (migration 0061): as contas exigem o módulo, e não
+# só acesso à loja. O balconista só-Caixa zerou nas oito linhas. As duas
+# portas estreitas de contas_receber (quem fatura OS cria a conta da OS; quem
+# tem Funcionários lê, pra aba Comissões) não aparecem aqui porque nenhum dos
+# cinco papéis as usa — quem prova as duas é testar-contas-permissao.sql.
+contas_pagar,select,2,1,0,0,0,só com o módulo Contas a Pagar
+contas_pagar,insert,1,1,0,0,0,
+contas_pagar,update,2,1,0,0,0,
+contas_pagar,delete,2,1,0,0,0,
+contas_receber,select,2,1,0,0,0,o módulo, ou Funcionários (aba Comissões)
+contas_receber,insert,1,1,0,0,0,o módulo, ou quem fatura OS — amarrada a uma OS
+contas_receber,update,2,1,0,0,0,
+contas_receber,delete,2,1,0,0,0,
 notas_fiscais_arquivos,select,2,1,1,0,0,
 notas_fiscais_arquivos,insert,1,1,1,0,0,
 notas_fiscais_arquivos,update,2,1,1,0,0,

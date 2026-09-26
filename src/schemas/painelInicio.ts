@@ -4,6 +4,7 @@ import { DIAS_DE_CONTAS_VENCENDO } from "@/types/configuracao";
 import type { CartaoMetrica } from "@/types/configuracao";
 import type { ContaPagar } from "@/types/contaPagar";
 import type { MovimentoCaixa } from "@/types/caixa";
+import type { ModuloChave } from "@/types/operador";
 
 /**
  * As contas da tela Início, como funções puras.
@@ -177,6 +178,33 @@ export function variacoesPorCartao(
     // comparar com o mês passado não quer dizer nada aqui.
     contas_pagar_vencendo: null,
   };
+}
+
+/**
+ * O módulo que um cartão precisa pra ter número (TR-04.1, migration 0061).
+ *
+ * Sem o módulo, o banco devolve ZERO linha — sem erro nenhum — e zero linha
+ * somada vira R$ 0,00: um número com cara de verdade dizendo "nenhuma conta
+ * vencendo" pra quem simplesmente não pode vê-las. Pra esse operador o cartão
+ * mostra "—" e diz por quê. Decisão dela, 26/09/2026.
+ *
+ * Só o cartão de contas está aqui por enquanto. Os outros quatro saem do
+ * Caixa, que ainda não foi fechado por módulo; quando for, eles entram nesta
+ * mesma tabela — e a tela não precisa mudar.
+ */
+export const MODULO_DO_CARTAO: Partial<Record<CartaoMetrica, ModuloChave>> = {
+  contas_pagar_vencendo: "contas_pagar",
+};
+
+/**
+ * O módulo que falta pra este cartão ter número, ou `null` se não falta nada.
+ */
+export function moduloQueFaltaAoCartao(
+  cartao: CartaoMetrica,
+  podeVer: (modulo: ModuloChave) => boolean,
+): ModuloChave | null {
+  const modulo = MODULO_DO_CARTAO[cartao];
+  return modulo && !podeVer(modulo) ? modulo : null;
 }
 
 /**

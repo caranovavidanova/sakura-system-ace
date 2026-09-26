@@ -5,6 +5,7 @@ import {
   janelaDoMesAteODia,
   mesmaJanelaNoMesAnterior,
   metricasDoPeriodo,
+  moduloQueFaltaAoCartao,
   movimentosDaJanela,
   rotuloDeIdade,
   valoresPorCartao,
@@ -178,5 +179,29 @@ describe("idade de uma OS", () => {
     expect(rotuloDeIdade(0)).toBe("hoje");
     expect(rotuloDeIdade(1)).toBe("ontem");
     expect(rotuloDeIdade(3)).toBe("há 3 dias");
+  });
+});
+
+// TR-04.1 (migration 0061): sem o módulo, o banco devolve zero conta, e zero
+// conta somada seria um "R$ 0,00" com cara de verdade. O cartão tem que saber
+// que falta o módulo — e só aquele cartão.
+describe("moduloQueFaltaAoCartao", () => {
+  const soCaixa = (m: string) => m === "painel" || m === "caixa";
+  const tudo = () => true;
+
+  it("contas a pagar vencendo pede o módulo Contas a Pagar", () => {
+    expect(moduloQueFaltaAoCartao("contas_pagar_vencendo", soCaixa)).toBe("contas_pagar");
+  });
+
+  it("com o módulo (ou admin), não falta nada", () => {
+    expect(moduloQueFaltaAoCartao("contas_pagar_vencendo", tudo)).toBeNull();
+  });
+
+  it("os cartões que saem do Caixa não mudam — o Caixa ainda não foi fechado por módulo", () => {
+    const nenhum = () => false;
+    expect(moduloQueFaltaAoCartao("vendas_mes", nenhum)).toBeNull();
+    expect(moduloQueFaltaAoCartao("custos_mes", nenhum)).toBeNull();
+    expect(moduloQueFaltaAoCartao("lucro_mes", nenhum)).toBeNull();
+    expect(moduloQueFaltaAoCartao("ticket_medio_mes", nenhum)).toBeNull();
   });
 });

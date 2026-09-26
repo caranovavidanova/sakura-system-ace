@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MENSAGEM_DA_TRAVA, mensagemDeErro, traduzirTrava } from "./errors";
+import { MENSAGEM_DA_TRAVA, MENSAGEM_SEM_PERMISSAO, mensagemDeErro, traduzirTrava } from "./errors";
 
 const PASTA = "supabase/migrations";
 
@@ -44,5 +44,18 @@ describe("mensagemDeErro", () => {
     expect(mensagemDeErro({ message: "falhou a rede" })).toBe("falhou a rede");
     expect(mensagemDeErro(new Error("x"))).toBe("x");
     expect(mensagemDeErro(null)).toMatch(/Erro desconhecido/);
+  });
+});
+
+// Desde a 0056/0061 a permissão de módulo é conferida no banco. Quando ele
+// recusa uma gravação, a frase crua do Postgres não diz o que fazer.
+describe("recusa por permissão", () => {
+  it("vira uma frase que diz a quem pedir", () => {
+    const erro = {
+      code: "42501",
+      message: 'new row violates row-level security policy for table "contas_receber"',
+    };
+    expect(mensagemDeErro(erro)).toBe(MENSAGEM_SEM_PERMISSAO);
+    expect(MENSAGEM_SEM_PERMISSAO).toMatch(/Configurações → Operadores/);
   });
 });

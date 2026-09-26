@@ -6317,13 +6317,56 @@ máquina que aparece é o que o Windows dá).
    depois de atualizar — `0.9.44`, canal de teste, marcado "este computador", loja e operador
    certos (print dela). Ou seja, o caminho inteiro funciona no Supabase e no Windows de verdade;
    o que falta é só o da loja, que depende de a loja abrir a versão nova.
-3. O resto continua como no marco abaixo (alíquota em 1º/10, conferir na loja o que a `v0.9.43`
-   e a `v0.9.42` trouxeram, emitir e cancelar uma nota pelo porteiro).
+3. **Opcional**: dar um apelido pro computador dela na mesma tela (hoje aparece como
+   "DESKTOP-PKJ2A3B"), pra lista continuar legível quando tiver mais computadores.
+
+#### Tudo que está pendente, numa lista só (conferida em 26/09/2026, à noite)
+
+Os marcos mais antigos repetem partes disto; **esta é a lista que vale**. Nenhum item bloqueia o
+uso do sistema, e nada está pendente de código, SQL ou publicação.
+
+**Com data:**
+- **1º/10/2026**: cadastrar a alíquota de 10/2026 no portal da prefeitura, antes da primeira
+  NFS-e do mês (o Início lembra).
+
+**Na loja do pai dela, quando ela tiver acesso ao computador de lá:**
+- Conferir que o computador da loja apareceu na lista (item 2 acima) e dar o apelido "Balcão".
+- **Marcar o computador da loja como Teste** (Configurações → "Atualizações deste computador").
+  Até isso, versão publicada e não liberada não chega na loja.
+- Conferir o que a `v0.9.42` e a `v0.9.43` trouxeram: aba Fechamento do Caixa, "Registrar
+  pagamento" de comissão, a trava do desconto maior que o item, pagar e desfazer o pagamento de
+  uma conta, e faturar uma OS (recebido agora e a receber depois).
+- **Emitir e cancelar uma nota pelo porteiro** — é o que libera a parte 2 do `TR-04.2` (apagar a
+  cópia antiga do token da Focus NFe).
+
+**Decisões e tarefas fora do código, sem prazo:**
+- O **valor da fase 2** (o pai sugeriu R$ 250/loja; ver o marco de 25/09, fim da noite).
+- Levar o `ANTES-DA-PRIMEIRA-VENDA.md` a advogado ou contabilidade (contrato com cláusula de
+  dados) — antes da primeira loja de terceiro.
+- Trocar as três credenciais expostas no histórico público (CSC da SEFAZ, token do portal Giap,
+  senha do portal da prefeitura).
+- Perguntar à contabilidade sobre o CSOSN 500 e o ICMS-ST; e à Focus NFe, o formato do CNPJ
+  com letras.
+- Decidir sobre atualizar o Electron (a linha 33 não recebe mais correção de segurança).
+- Marcar o CI como obrigatório pra mesclar (Settings → Branches).
+
+**Saíram da lista** (aparecem como pendentes em marcos antigos, mas estão resolvidos): publicar o
+"Importar por foto" desligado (foi na `v0.9.42`), a verificação em duas etapas do GitHub (feita
+em 26/09) e fixar o Ubuntu do backup (feito em 26/09, à noite).
+
+#### Estado do código
+
+`main` em dia com a **`v0.9.44`** (publicada e liberada), banco dela na **`0063`**. `tsc`, lint e
+contraste limpos; **727 testes** nos dois fusos; matriz de RLS em **760 células**; os 10 testes de
+migration passando no CI.
 
 #### Por onde a próxima sessão começa
 
-Perguntar se o computador da loja já apareceu em Configurações → "Computadores desta empresa"
-(o dela já apareceu em 26/09/2026). Se ela quiser seguir o guia depois disso, as opções de 26/09 continuam de pé:
+Ela fechou esta sessão com *"atualiza o projeto status, volto em outra sessão"*. Nada ficou
+pela metade. Então: perguntar se o computador da loja já apareceu em Configurações →
+"Computadores desta empresa" (o dela já apareceu em 26/09/2026) e, se a sessão cair depois de
+1º/10, se a alíquota do mês foi cadastrada. Se ela quiser seguir o guia depois disso, as
+opções de 26/09 continuam de pé:
 **venda de balcão sem OS** (`FN-09`, P0 — com a decisão "cliente opcional na OS ou cliente fixo
 'Consumidor'"), **ficha do veículo** (`FN-04`, sem migration) e **permissão nas Ordens de
 Serviço** (`TR-04.1`, lote 4 — ganho menor que os anteriores, porque quase todo módulo lê as OS).
@@ -6414,7 +6457,8 @@ Clientes (é o que mais tela lê, e é o dado pessoal que mais importa proteger)
   comissão, a trava do desconto).
 - Emitir e cancelar uma nota pelo porteiro (libera a parte 2 do `TR-04.2`).
 - **1º/10/2026**: a alíquota de 10/2026 no portal da prefeitura, antes da primeira NFS-e do mês.
-- Fixar `runs-on: ubuntu-24.04` no backup antes de 19/10 (ver o marco anterior).
+- ~~Fixar `runs-on: ubuntu-24.04` no backup antes de 19/10~~ — feito em 26/09/2026, à noite
+  (no backup e no botão de atualizar os bancos).
 - E o resto da lista do marco anterior (valor da fase 2, marcar a loja como Teste, credenciais,
   contrato, CSOSN 500, Electron, CI obrigatório).
 
@@ -6531,7 +6575,11 @@ em **740 células**; os **7 testes de migration** passando no CI, cada um num ba
   versão do Ubuntu (`$(lsb_release -cs)-pgdg`), e um Ubuntu recém-lançado pode ainda não ter esse
   repositório. Se a rodada das 3h ficar vermelha depois de 19/10, é isso — o conserto é fixar
   `runs-on: ubuntu-24.04` no job do backup (e, se precisar, no do botão de atualizar os bancos).
-  **Não mexido ainda**, de propósito: ela pediu só pra atualizar este arquivo.
+  ✅ **Resolvido em 26/09/2026, à noite**: backup e botão de atualizar os bancos presos em
+  `ubuntu-24.04`. O CI (`ci.yml`) continua em `ubuntu-latest`, de propósito — ele instala o
+  `postgresql-client` do próprio Ubuntu, sem codinome, e não depende disso. Se ele ficar
+  vermelho logo depois de 19/10 sem mudança de código, é a troca de máquina: fixar
+  `ubuntu-24.04` nele também.
 - **Continua valendo do marco abaixo**: valor da fase 2, marcar o computador da loja como Teste,
   trocar as três credenciais expostas, o contrato com a cláusula de dados, a pergunta do CSOSN
   500, a decisão sobre o Electron e marcar o CI como obrigatório.

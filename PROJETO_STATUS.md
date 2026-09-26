@@ -1220,7 +1220,9 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   migration sem a versão nova só fica vazia.
 - `0064` (criada em 26/09/2026, fim da noite, validada num Postgres local — a instalação inteira
   rodada três vezes do zero, e a migration sozinha duas vezes num banco no estado `0063` **com
-  dado plantado** — **AINDA NÃO APLICADA no Supabase dela**): a **venda de balcão**, item
+  dado plantado** — **aplicada em 26/09/2026, fim da noite, pelo botão "Atualizar o banco de
+  todas as empresas"**, ensaio e depois aplicação, Pneus Amigão `0063` → `0064`, antes da
+  `v0.9.45`): a **venda de balcão**, item
   `FN-09`. Duas coisas só: a coluna `ordens_servico.tipo` (`'os'`/`'venda_balcao'`, padrão
   `'os'`, trava `ck_ordens_servico_tipo`) e o cliente fixo **"Consumidor"**, com UUID fixo
   `00000000-0000-0000-0000-00000000c000` (mesmo espírito da "Loja 1"). Três decisões:
@@ -3526,8 +3528,8 @@ Quatro coisas que valem saber:
   passou a mostrar o **total da linha** (quantidade × preço − desconto) além do preço unitário, pra
   não haver confusão em par de peça (2x pneu, por exemplo).
 
-- **Venda de balcão** (26/09/2026, item `FN-09`, migration `0064` — **ainda não aplicada nem
-  publicada; não vista por ela**): vender uma peça pra quem não vai deixar o carro, numa tela
+- **Venda de balcão** (26/09/2026, item `FN-09`, migration `0064` — **aplicada, e publicada na
+  `v0.9.45` só no canal de teste; ainda não liberada pras lojas nem vista por ela**): vender uma peça pra quem não vai deixar o carro, numa tela
   só. Botão **"+ Venda de balcão"** na tela de Ordens de Serviço (mesma permissão do módulo). O
   que a tela faz:
   - **Cliente começa no "Consumidor"** ("não se identificou"). Pra CPF na nota, escolhe-se um
@@ -4959,7 +4961,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
 | 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. A `0063` entrou pelo botão (banco na **`0063`**) e o programa saiu na **`v0.9.44`**, publicada e liberada no mesmo dia. |
-| 26/09 (fim da noite) | **Venda de balcão** (item `FN-09`, migration `0064`): vender peça pra quem não deixa o carro, numa tela só, com leitor de código de barras, pagamento e NFC-e; cliente "Consumidor" fixo pra quem não se identifica (escolha dela), mesmo contador de número das OS, aba própria na lista e fora do ticket médio. **Migration não aplicada e versão não publicada** — esperando o "pode" dela. |
+| 26/09 (fim da noite) | **Venda de balcão** (item `FN-09`, migration `0064`): vender peça pra quem não deixa o carro, numa tela só, com leitor de código de barras, pagamento e NFC-e; cliente "Consumidor" fixo pra quem não se identifica (escolha dela), mesmo contador de número das OS, aba própria na lista e fora do ticket médio. Com o "pode" dela: a `0064` entrou pelo botão (banco na **`0064`**) e a **`v0.9.45`** saiu publicada **só no canal de teste** (não liberada). |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
 
@@ -4996,10 +4998,9 @@ Contas a Pagar, rodada e confirmada por ela numa sessão anterior). **`0044`** (
 ISS, código tributário do município) e **`0045`** (`clientes.codigo_municipio`, pro tomador da
 NFS-e) **também já foram rodadas e confirmadas no Supabase real dela**.
 
-**Estado em 26/09/2026, fim da noite: `0001` a `0063` aplicadas; a `0064` (venda de balcão)
-está no repositório e AINDA NÃO foi aplicada** — é pelo botão "Atualizar o banco de todas as
-empresas", ensaio e depois aplicação, antes da versão que levar a tela (ver o marco mais recente,
-no fim do arquivo).
+**Estado em 26/09/2026, fim da noite: `0001` a `0064` estão aplicadas no Supabase real dela.**
+A `0064` (venda de balcão) entrou pelo botão — ensaio ("✅ passaria") e depois aplicação,
+`0063` → `0064` —, **antes** da `v0.9.45`, na ordem de sempre. Nada pendente de SQL.
 
 **Estado em 26/09/2026, noite: `0001` a `0063` estão aplicadas no Supabase real dela.** A `0063`
 (computadores) entrou pelo botão — ensaio e depois aplicação, `0062` → `0063` —, **antes** da
@@ -5600,9 +5601,10 @@ isso que existe a regra abaixo.
   sessão específica do episódio acima — sessões seguintes já usam suas próprias branches
   designadas pelo ambiente (padrão: criar/reusar, commitar, abrir PR, mesclar direto), nada fixo.
 - `package.json` em `"version": "0.9.44"` — **publicada e liberada em 26/09/2026, à noite** (a
-  versão de cada computador, migration `0063`, que entrou no banco antes). A `main` está **à frente**
-  dela desde 26/09/2026, fim da noite: leva a venda de balcão (migration `0064`), ainda sem tag
-  — ver o marco "LEIA ISTO PRIMEIRO". Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
+  versão de cada computador, migration `0063`, que entrou no banco antes). **Em 26/09/2026, fim da
+  noite, saiu a `v0.9.45`** (a venda de balcão, migration `0064` aplicada antes), **publicada só
+  no canal de teste — NÃO liberada**: as lojas continuam recebendo a `v0.9.44` até ela pedir o
+  Liberar. `package.json` agora em `"0.9.45"`, e a `main` em dia com ela. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
   migration dela, de propósito). E antes: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
@@ -6342,8 +6344,12 @@ continuar, como é sábado ainda, nada do PC da loja por enquanto" e escolheu, e
 venda de balcão — e, na decisão que o guia manda levar, o **cliente "Consumidor" fixo** em vez de
 tornar o cliente opcional.
 
-**Estado: código na `main`, migration `0064` NÃO aplicada, versão NÃO publicada.** Nada disso foi
-feito sem ela: aplicar mexe no banco de produção e publicar chega nas lojas.
+**Estado: migration `0064` APLICADA (banco na `0064`) e `v0.9.45` PUBLICADA só no canal de
+teste — NÃO liberada.** Ela disse "pode rodar no banco e publicar": o botão ensaiou ("✅
+passaria") e aplicou (Pneus Amigão `0063` → `0064`); depois a `v0.9.45` saiu, com os três
+arquivos na release e o `latest.yml` por último, marcada como pré-lançamento. Conferido de fora:
+o endereço "mais recente" que as lojas usam ainda responde `0.9.44`. Ou seja, **só o computador
+dela (canal de teste) recebe a 0.9.45** — o da loja, não.
 
 #### O que saiu, em uma linha cada
 
@@ -6376,13 +6382,14 @@ leitor de código de barras de verdade.
 
 #### O que falta, e é dela (na ordem)
 
-1. **Aplicar a `0064`** pelo botão "Atualizar o banco de todas as empresas" — `ensaiar`, depois
-   `aplicar` (seção 9). Não tem versão mínima.
-2. **Publicar a versão com a tela** (será a `0.9.45`) — e decidir se libera direto ou se fica no
-   canal de teste (só o computador dela está em Teste; o da loja não).
-3. **Na loja, quando der**: fazer uma venda de balcão de verdade com o leitor, emitir a NFC-e dela
-   e conferir o caixa do dia. **É o único teste que falta**, e é também o primeiro teste real do
-   leitor de código de barras neste sistema.
+1. ~~Aplicar a `0064`~~ e ~~publicar a `0.9.45`~~ — feitos em 26/09/2026, fim da noite.
+2. **Liberar a `v0.9.45` pras lojas** (workflow "Liberar versão para todas as lojas", seção 9) —
+   quando ela quiser. Até lá, a loja do pai dela continua na `v0.9.44` e **não vê** a venda de
+   balcão. Ela pode antes abrir a tela no computador dela (que está no canal de teste) e ver se
+   gosta.
+3. **Na loja, depois de liberada**: fazer uma venda de balcão de verdade com o leitor, emitir a
+   NFC-e dela e conferir o caixa do dia. **É o único teste que falta**, e é também o primeiro
+   teste real do leitor de código de barras neste sistema.
 
 #### Pontos que valem ela saber (não são decisão pendente, são consequência)
 
@@ -6395,7 +6402,7 @@ leitor de código de barras de verdade.
 
 #### Tudo que está pendente, numa lista só (atualizada em 26/09/2026, fim da noite)
 
-**Da venda de balcão**: os três passos acima.
+**Da venda de balcão**: liberar a `v0.9.45` e testar na loja (os passos acima).
 
 **Com data**: **1º/10/2026** — cadastrar a alíquota de 10/2026 no portal da prefeitura, antes da
 primeira NFS-e do mês (o Início lembra).
@@ -6411,14 +6418,15 @@ CNPJ com letras na Focus NFe; atualizar o Electron; marcar o CI como obrigatóri
 
 #### Estado do código
 
-`main` com a venda de balcão, à frente da `v0.9.44`; banco dela na `0063`. `tsc`, lint e
+`main` em dia com a **`v0.9.45`** (publicada no canal de teste, não liberada); banco dela na
+**`0064`**. `tsc`, lint e
 contraste limpos; **769 testes** nos dois fusos; matriz de RLS em 760 células; 11 testes de
 migration passando.
 
 #### Por onde a próxima sessão começa
 
-Perguntar se é pra aplicar a `0064` e publicar a versão — e, se ela já tiver feito, se a venda de
-balcão foi usada na loja. Se ela quiser seguir o guia, o que sobra de P0/P1 com mais valor no
+Perguntar se ela já viu a venda de balcão no computador dela e se é pra **liberar a `v0.9.45`**
+pras lojas — e, se já tiver liberado, se a venda foi usada na loja. Se ela quiser seguir o guia, o que sobra de P0/P1 com mais valor no
 balcão: **ficha do veículo** (`FN-04`, sem migration — base do lembrete de revisão `FN-06`),
 **sugestão de compra** (`FN-07`, sem migration) e o **lote 4 do `TR-04.1`** (Ordens de Serviço).
 

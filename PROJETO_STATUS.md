@@ -134,7 +134,7 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 ## 4. Onde parou (o marco mais recente — os anteriores estão em `docs/historico.md`)
 
 
-### 27/09/2026, à noite: como a equipe vai trabalhar (temas 2 e 3), domínio e e-mail da empresa
+### 27/09/2026, à noite: como a equipe vai trabalhar (temas 2 e 3), domínio, e-mail e custos da empresa
 
 Conversa de alinhamento, **sem código de app**. O plano de equipe inteiro, os custos e as
 pendências da empresa estão no repositório **privado** `caranovavidanova/sakura-corp`, em
@@ -156,10 +156,14 @@ SSACE precisa saber.
   verde + revisão de um colega; a aprovação dela fica no relatório da leva. Pra ela, continua
   igual.
 - **Amigos sem acesso** ao banco de verdade da Pneus Amigão e ao `sakura-corp`, por enquanto.
-- **Claude Team** (4 lugares comuns, por mês), assinado com um e-mail do domínio novo
-  **`sakuracorp.com.br`**, registrado hoje no registro.br (DNS do próprio registro.br, modo
-  avançado). O e-mail está sendo montado no **Zoho Mail**: parou esperando publicar o TXT de
-  verificação.
+- **Claude Team** (4 lugares comuns, por mês), **antes do primeiro cliente** (a data é dela),
+  assinado com **`contato@sakuracorp.com.br`**. O domínio `sakuracorp.com.br` foi registrado
+  hoje no registro.br, e o **e-mail ficou pronto e testado** no Zoho Mail (plano grátis).
+- **Abrir o CNPJ no começo de outubro** (recomendado; ela pareceu de acordo, confirmar): a
+  Pneus Amigão passa a ser cliente pagante em outubro e precisa de nota de serviço. Detalhe da
+  contabilidade, custos e prazos no `sakura-corp` (`EMPRESA.md` e `PRECOS-E-CUSTOS.md`).
+- **O leitor de nota por IA fica fora das primeiras versões** pras lojas novas (tabela de
+  decisões em `docs/decisoes.md`).
 - Apresentação **"Como a Sakura vai trabalhar"** (12 slides) feita e enviada ao grupo:
   `https://claude.ai/artifact/4UL1gjKV6r1S1JrjrxY5SQ`.
 
@@ -180,5 +184,12 @@ SSACE precisa saber.
    equipe. **Onde a interface mora já está decidido** (repositório privado novo, mesma base do
    SSACE, Supabase numa conta nova com o e-mail da Sakura; detalhe no `EQUIPE.md`). Não começar
    antes de ela pedir.
+
+4. **Focus NFe: trocar do plano Solo pro Start antes de cadastrar o CNPJ da primeira loja
+   nova** (o Solo aceita 1 CNPJ só). A primeira fatura da Focus deve vencer em 10/10.
+5. **Perguntar à contabilidade da Pneus Amigão** se a migração das empresas do Simples pro
+   Ambiente Nacional da NFS-e, adiada pra **1º/11/2026** (citada pelo suporte da Focus em
+   26/08), vale pra loja. Se valer, é um fato novo pro item 3 do playbook fiscal em
+   `docs/pendencias-e-futuro.md`, que tinha descartado essa hipótese.
 
 Com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.

@@ -3571,10 +3571,10 @@ Quatro coisas que valem saber:
     estoque, nas comissões, no recibo de comissão e na garantia.
   **Sem migration aplicada, o botão aparece mas registrar dá erro** — por isso a migration vem
   antes da versão, como sempre.
-- **Ficha do veículo** (27/09/2026, item `FN-04` — **sem migration; ainda não publicada em tag
-  nem vista por ela**): tudo que já foi feito num carro, por placa. Rota `/veiculos/:id`, sem
-  entrada no menu — abre **clicando na placa** em Clientes, na lista de OS e em Garantias. É a
-  pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
+- **Ficha do veículo** (27/09/2026, item `FN-04` — **sem migration; publicada e liberada na
+  `v0.9.46` no mesmo dia; ainda não vista por ela na loja**): tudo que já foi feito num carro,
+  por placa. Rota `/veiculos/:id`, sem entrada no menu — abre **clicando na placa** em
+  Clientes, na lista de OS e em Garantias. É a pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
   está na garantia?"), e é a base do lembrete de revisão (`FN-06`). O que a tela mostra:
   - **Dono atual** (o cliente em cujo cadastro o carro está hoje) e telefone;
   - **KM mais recente** — o da OS mais recente, nunca o maior já digitado (mesma regra do
@@ -4408,6 +4408,15 @@ Quatro coisas que valem saber:
     pré-lançamento, e o instalador baixado de lá tem a impressão digital sha512 **idêntica** à do
     `latest.yml`.
 
+  - `v0.9.46`: **a ficha do veículo** (item `FN-04`) — a história de um carro por placa, aberta
+    clicando na placa em Clientes, OS e Garantias. **Sem migration** (banco continua na `0064`),
+    então não havia ordem a cumprir. Publicada via `workflow_dispatch` e **liberada em
+    27/09/2026**, a pedido dela ("pode publicar", em resposta a "publique e libere?"), pra entrar
+    no teste de segunda na loja — o computador da loja está no canal normal, e só publicar não
+    chegaria lá. Conferido de fora: o endereço "mais recente" que o app usa responde
+    `version: 0.9.46`, e o instalador baixado de lá tem a impressão digital sha512 **idêntica** à
+    do `latest.yml`.
+
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
   "Liberar versão para todas as lojas" (ver seção 9). Uma versão publicada e nunca liberada fica
@@ -5015,7 +5024,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
 | 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. A `0063` entrou pelo botão (banco na **`0063`**) e o programa saiu na **`v0.9.44`**, publicada e liberada no mesmo dia. |
-| 27/09 | **Ficha do veículo** (item `FN-04`, sem migration): a história de um carro por placa — dono, KM mais recente e rodagem estimada, total faturado, visitas, peças na garantia e todas as OS. Abre pela placa em Clientes, OS e Garantias. Mesclada na `main`, **sem tag**. |
+| 27/09 | **Ficha do veículo** (item `FN-04`, sem migration): a história de um carro por placa — dono, KM mais recente e rodagem estimada, total faturado, visitas, peças na garantia e todas as OS. Abre pela placa em Clientes, OS e Garantias. Saiu na **`v0.9.46`**, publicada e liberada no mesmo dia. |
 | 26/09 (fim da noite) | **Venda de balcão** (item `FN-09`, migration `0064`): vender peça pra quem não deixa o carro, numa tela só, com leitor de código de barras, pagamento e NFC-e; cliente "Consumidor" fixo pra quem não se identifica (escolha dela), mesmo contador de número das OS, aba própria na lista e fora do ticket médio. Com o "pode" dela: a `0064` entrou pelo botão (banco na **`0064`**) e a **`v0.9.45`** saiu publicada no canal de teste — e foi **liberada pras lojas em 27/09**. |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
@@ -5659,8 +5668,8 @@ isso que existe a regra abaixo.
   versão de cada computador, migration `0063`, que entrou no banco antes). **Em 26/09/2026, fim da
   noite, saiu a `v0.9.45`** (a venda de balcão, migration `0064` aplicada antes), publicada no
   canal de teste — e **liberada pra todas as lojas em 27/09/2026**. `package.json` agora em
-  `"0.9.45"`. **Em 27/09/2026 a `main` ficou uma leva à frente dela** (a ficha do veículo,
-  `FN-04`, sem migration), esperando ela decidir se publica. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
+  `"0.9.45"`. **Em 27/09/2026 saiu a `v0.9.46`** (a ficha do veículo, `FN-04`, sem migration),
+  publicada e liberada no mesmo dia. `package.json` agora em `"0.9.46"`. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
   migration dela, de propósito). E antes: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
@@ -6400,10 +6409,12 @@ e avisou: **"os testes faço todos no PC da loja na segunda-feira"** (28/09/2026
 opções (ficha do veículo, sugestão de compra, clientes que sumiram, permissão nas OS), escolheu a
 recomendada.
 
-**Estado: mesclada na `main`, SEM tag e SEM migration.** O banco continua na `0064` e a última
-versão publicada e liberada continua sendo a `v0.9.45`. **Não publicar sem ela pedir** — se ela
-quiser a ficha no teste de segunda, é publicar a `0.9.46` e liberar (o computador da loja ainda
-está no canal normal, então só publicar não chega lá).
+**Estado: publicada e LIBERADA na `v0.9.46`, SEM migration.** O banco continua na `0064`.
+Perguntada "publique e libere a 0.9.46 pra ficha entrar no teste de segunda?", ela respondeu
+"pode publicar" — e foi feito os dois, porque o computador da loja está no canal normal e só
+publicar não chegaria lá. Conferido de fora: o endereço "mais recente" responde `0.9.46` e o
+instalador bate com o `latest.yml`. **A loja recebe a ficha na próxima vez que o programa for
+fechado e aberto.** Se precisar voltar atrás: rodar o Liberar com `v0.9.45` (seção 9).
 
 #### O que saiu, em uma linha cada
 
@@ -6442,21 +6453,30 @@ Ela vai testar tudo de uma vez. O que está esperando teste de verdade:
    comissão, a trava do desconto maior que o item, pagar e desfazer o pagamento de uma conta,
    faturar uma OS (recebido agora e a receber depois).
 5. **Emitir e cancelar uma nota pelo porteiro** — libera a parte 2 do `TR-04.2`.
-6. **A ficha do veículo** — só se ela mandar publicar antes.
+6. **A ficha do veículo** (`v0.9.46`, já liberada): abrir pela placa em Clientes, na lista de
+   OS e em Garantias; conferir que o histórico e as peças na garantia batem com o que ela sabe do
+   carro. É a única parte que fala com o Supabase de verdade e não deu pra testar daqui.
+
+**E na conferência do item 2, o computador da loja deve aparecer com `0.9.46`** (não mais
+`0.9.45`), se o programa foi fechado e aberto depois da liberação.
 
 E, com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.
 
 #### Estado do código
 
-`main` **uma leva à frente da `v0.9.45`** (a ficha do veículo); banco na **`0064`**. `tsc`, lint
-e contraste limpos; **801 testes** nos dois fusos; matriz de RLS em 760 células (não mudou).
+`main` em dia com a **`v0.9.46`** (publicada e liberada); banco na **`0064`**. Nada pendente de
+SQL nem de publicação. `tsc`, lint e contraste limpos; **801 testes** nos dois fusos; matriz de
+RLS em 760 células (não mudou).
 
 #### Por onde a próxima sessão começa
 
+Ela fechou esta sessão com *"te chamo numa próxima sessão, para alinharmos algumas coisas"* —
+ou seja, **a próxima sessão começa por uma conversa de alinhamento, puxada por ela**. Não chegar
+propondo trabalho novo: ouvir o que ela quer alinhar primeiro.
+
 1. Perguntar como foram os testes de segunda na loja (a lista acima) e resolver o que aparecer —
    bug relatado da loja é pra fazer na hora.
-2. Perguntar se é pra publicar a ficha do veículo (`0.9.46`), se ainda não foi.
-3. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
+2. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
    ficha — a rodagem média já existe (`rodagemEstimada`). Pede migration e uma decisão dela
    (o "não avisar este cliente" e o tom das mensagens). Os outros sem migration: **sugestão de
    compra** (`FN-07`) e **clientes que sumiram** (`FN-11`).

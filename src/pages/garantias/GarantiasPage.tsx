@@ -1,22 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
+import { LinkPlaca } from "@/components/LinkPlaca";
+import { useAuth } from "@/contexts/AuthContext";
+import { diaBrasileiro, hojeLocal } from "@/lib/datas";
 import { mensagemDeErro } from "@/lib/errors";
 import { listarItensComGarantia, type ItemGarantia } from "@/lib/garantias";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { garantiaVencida, vencimentoDaGarantia } from "@/schemas/garantia";
+import { temPermissao } from "@/types/operador";
 
 type FiltroStatus = "todos" | "dentro_do_prazo" | "vencida";
-
-function calcularVencimento(dataFechamento: string, prazoDias: number): Date {
-  const vencimento = new Date(dataFechamento);
-  vencimento.setDate(vencimento.getDate() + prazoDias);
-  return vencimento;
-}
 
 export function GarantiasPage() {
   const [itens, setItens] = useState<ItemGarantia[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>("todos");
+  const { operador } = useAuth();
+  // A ficha do veículo é de Clientes e de Ordens de Serviço; quem só tem
+  // Garantias vê a placa como texto, em vez de um atalho que daria em
+  // "sem permissão".
+  const podeVerFicha =
+    temPermissao(operador, "clientes") || temPermissao(operador, "ordens_servico");
 
   useEffect(() => {
     async function carregar() {
@@ -36,17 +41,19 @@ export function GarantiasPage() {
     carregar();
   }, []);
 
+  // A conta do vencimento é a mesma da ficha do veículo (schemas/garantia.ts)
+  // — em dia de calendário, valendo o último dia inteiro.
   const linhas = useMemo(() => {
-    const hoje = new Date();
+    const hoje = hojeLocal();
     return itens
       .map((item) => {
         const prazoDias = item.peca?.prazo_garantia_dias ?? 0;
         const dataFechamento = item.ordem?.data_fechamento ?? "";
-        const vencimento = calcularVencimento(dataFechamento, prazoDias);
-        const vencida = vencimento < hoje;
+        const vencimento = vencimentoDaGarantia(dataFechamento, prazoDias);
+        const vencida = garantiaVencida(vencimento, hoje);
         return { item, vencimento, vencida };
       })
-      .sort((a, b) => b.vencimento.getTime() - a.vencimento.getTime());
+      .sort((a, b) => b.vencimento.localeCompare(a.vencimento));
   }, [itens]);
 
   const linhasFiltradas = linhas.filter(({ vencida }) => {
@@ -123,13 +130,22 @@ export function GarantiasPage() {
                 <tr key={item.id} className="border-t border-sakura-gray/20">
                   <td className="px-4 py-3">{item.peca?.descricao ?? "—"}</td>
                   <td className="px-4 py-3">{item.ordem?.cliente?.nome ?? "—"}</td>
-                  <td className="px-4 py-3">{item.ordem?.veiculo?.placa ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {item.ordem?.veiculo && podeVerFicha ? (
+                      <LinkPlaca
+                        veiculoId={item.ordem.veiculo.id}
+                        placa={item.ordem.veiculo.placa}
+                      />
+                    ) : (
+                      (item.ordem?.veiculo?.placa ?? "—")
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     {item.ordem?.data_fechamento
                       ? new Date(item.ordem.data_fechamento).toLocaleDateString("pt-BR")
                       : "—"}
                   </td>
-                  <td className="px-4 py-3">{vencimento.toLocaleDateString("pt-BR")}</td>
+                  <td className="px-4 py-3">{diaBrasileiro(vencimento)}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-rotulo font-medium ${

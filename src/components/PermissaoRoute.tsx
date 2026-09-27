@@ -13,15 +13,19 @@ function AcessoNegado() {
   );
 }
 
+// Com uma lista, basta ter UM dos módulos — é o caso de tela que pertence a
+// mais de um (a ficha do veículo é tanto de Clientes quanto de Ordens de
+// Serviço).
 export function PermissaoRoute({
   modulo,
   children,
 }: {
-  modulo: ModuloChave;
+  modulo: ModuloChave | ModuloChave[];
   children: ReactNode;
 }) {
   const { operador } = useAuth();
-  if (!temPermissao(operador, modulo)) return <AcessoNegado />;
+  const modulos = Array.isArray(modulo) ? modulo : [modulo];
+  if (!modulos.some((m) => temPermissao(operador, m))) return <AcessoNegado />;
   return <>{children}</>;
 }
 

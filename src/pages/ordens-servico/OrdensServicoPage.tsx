@@ -10,6 +10,7 @@ import {
   mapaCustoServicos,
 } from "@/schemas/metricasCaixa";
 import { BotaoWhatsapp } from "@/components/BotaoWhatsapp";
+import { LinkPlaca } from "@/components/LinkPlaca";
 import { criarCliente, criarVeiculo, listarClientes } from "@/lib/clientes";
 import {
   listarModelosWhatsapp,
@@ -714,7 +715,15 @@ export function OrdensServicoPage() {
                     {nomeOrdem(ordem.numero, ordem.tipo)}
                   </td>
                   <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
-                  {lista === "os" && <td className="px-4 py-3">{ordem.veiculo?.placa ?? "—"}</td>}
+                  {lista === "os" && (
+                    <td className="px-4 py-3">
+                      {ordem.veiculo_id && ordem.veiculo?.placa ? (
+                        <LinkPlaca veiculoId={ordem.veiculo_id} placa={ordem.veiculo.placa} />
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
                   </td>

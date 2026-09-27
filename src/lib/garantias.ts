@@ -8,7 +8,7 @@ export interface ItemGarantia {
     id: string;
     data_fechamento: string | null;
     cliente: { nome: string } | null;
-    veiculo: { placa: string } | null;
+    veiculo: { id: string; placa: string } | null;
   } | null;
 }
 
@@ -20,7 +20,7 @@ export async function listarItensComGarantia(): Promise<ItemGarantia[]> {
     .from("ordens_servico_itens")
     .select(
       "id, quantidade, peca:pecas(descricao, prazo_garantia_dias), " +
-        "ordem:ordens_servico(id, data_fechamento, cliente:clientes(nome), veiculo:veiculos(placa))",
+        "ordem:ordens_servico(id, data_fechamento, cliente:clientes(nome), veiculo:veiculos(id, placa))",
     )
     .eq("tipo", "peca");
 

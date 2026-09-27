@@ -35,6 +35,10 @@ export const CENAS = [
     rota: "/clientes", passos: [{ clicar: "+ Novo cliente" }],
     descricao: "Cadastro de pessoa física ou jurídica (os rótulos mudam sozinhos entre CPF/CNPJ e nome/razão social), endereço preenchido pelo CEP e a lista de veículos do cliente — cada um com placa, marca, modelo, cor e tipo, que é o que desenha o ícone do carro na tela de início." },
 
+  { arquivo: "06b-ficha-veiculo", modulo: "Clientes", titulo: "Ficha do veículo",
+    rota: "/veiculos/v1",
+    descricao: "Tudo que já foi feito num carro, por placa: dono atual, KM mais recente e quanto ele costuma rodar por mês, quanto já foi gasto nele, de quanto em quanto tempo ele volta, as peças que ainda estão na garantia e a linha do tempo de todas as OS, com data, KM, itens e total. Abre clicando na placa em Clientes, na lista de OS ou em Garantias." },
+
   // -------------------------------------------------------- ordens de serviço
   { arquivo: "07-ordens", modulo: "Ordens de Serviço", titulo: "Lista de ordens de serviço",
     rota: "/ordens-servico",

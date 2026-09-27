@@ -256,7 +256,9 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # onClick vira seta), SecaoRecolhivel.tsx (acordeão, usado em
 │   │                             # Configurações), GraficoBarras.tsx / GraficoRadar.tsx (SVG puro,
 │   │                             # usados em Relações), VeiculoIcone.tsx (ícone por tipo de
-│   │                             # veículo, pintado com a cor cadastrada), AreaRolavel.tsx (barra
+│   │                             # veículo, pintado com a cor cadastrada), LinkPlaca.tsx (a placa
+│   │                             # como botão que abre a ficha do veículo — em Clientes, na lista
+│   │                             # de OS e em Garantias; FN-04), AreaRolavel.tsx (barra
 │   │                             # de rolagem 100% customizada, ver seção 2), AcoesDaLinha.tsx
 │   │                             # (ações de linha de lista: botão de ícone de 32x32 pro que é
 │   │                             # do dia a dia + menu de três pontinhos pro que não dá pra
@@ -352,6 +354,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # + computadores.ts (migration 0063: registra ESTE computador no
 │   │                             # banco a cada login — nunca lança erro nem trava o login — e
 │   │                             # lista/apelida/esquece os computadores pro admin)
+│   │                             # + veiculos.ts (a ficha do veículo: o carro, o dono e TODAS as
+│   │                             # OS dele, de todas as lojas que a RLS deixa ver — FN-04)
 │   │                             # fornecedores.ts + pedidosCompra.ts + cotacoesPecas.ts (histórico
 │   │                             # de preço por fornecedor, ver "Cotação de peças" na seção 7) +
 │   │                             # notaFiscalXmlFornecedor.ts (lê o XML de NFe que o fornecedor
@@ -411,6 +415,8 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                   # 7)
 │   │   garantias/      # GarantiasPage.tsx é só lista (deriva de ordens_servico_itens +
 │   │                   # pecas.prazo_garantia_dias, sem tabela própria)
+│   │   veiculos/       # FichaVeiculoPage.tsx — a ficha do veículo, rota /veiculos/:id, só
+│   │                   # leitura (FN-04). Sem entrada no menu: abre pela placa
 │   │   servicos/       # catálogo de serviços, só lista + form (com categoria via
 │   │                   # categorias_servicos), sem abas
 │   │   ordens-servico/ # OrdemServicoForm.tsx (orquestrador, ~240 linhas — quarto módulo migrado
@@ -487,6 +493,11 @@ amigao/                        (raiz do repositório GitHub: caranovavidanova/sa
 │   │                             # máquina (sem import nenhum: roda também no main.ts);
 │   │                             # computadores.ts — versão comparada como número, "em uso"
 │   │                             # (30 dias) e quem está numa versão mais antiga (0063);
+│   │                             # fichaVeiculo.ts — as contas da ficha do veículo (KM mais
+│   │                             # recente, rodagem média ESTIMADA, visitas, total faturado,
+│   │                             # peças na garantia; FN-04) + garantia.ts (o vencimento da
+│   │                             # garantia, em dia de calendário — usado pela ficha E pela tela
+│   │                             # de Garantias, pra as duas darem o mesmo dia);
 │   │                             # vendaBalcao.ts — a venda de balcão: incluir peça (o
 │   │                             # leitor soma na mesma linha), o Enter da busca, total,
 │   │                             # "a receber" só com cliente de verdade (FN-09);
@@ -3560,6 +3571,40 @@ Quatro coisas que valem saber:
     estoque, nas comissões, no recibo de comissão e na garantia.
   **Sem migration aplicada, o botão aparece mas registrar dá erro** — por isso a migration vem
   antes da versão, como sempre.
+- **Ficha do veículo** (27/09/2026, item `FN-04` — **sem migration; ainda não publicada em tag
+  nem vista por ela**): tudo que já foi feito num carro, por placa. Rota `/veiculos/:id`, sem
+  entrada no menu — abre **clicando na placa** em Clientes, na lista de OS e em Garantias. É a
+  pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
+  está na garantia?"), e é a base do lembrete de revisão (`FN-06`). O que a tela mostra:
+  - **Dono atual** (o cliente em cujo cadastro o carro está hoje) e telefone;
+  - **KM mais recente** — o da OS mais recente, nunca o maior já digitado (mesma regra do
+    `ultimoKmConhecido` da abertura de OS) — e **quanto o carro roda por mês, escrito como
+    estimativa**. A estimativa se recusa, dizendo o motivo, com menos de duas visitas com KM,
+    visitas a menos de um mês uma da outra, KM que desceu ou KM igual em todas;
+  - **Total em OS faturadas** (soma dos itens, com desconto, sem os juros do cartão — o mesmo
+    "Total" da lista de OS);
+  - **Visitas** (dias diferentes — duas OS no mesmo dia são uma visita), a última e a média de
+    dias entre uma e outra;
+  - **Peças na garantia**, da que vence primeiro, com os dias que faltam, e quantas já venceram;
+  - **Histórico**: cada OS com data, "há quanto tempo", número, KM, itens, status e total, e um
+    aviso quando o KM desceu em relação à visita anterior. **"Abrir OS"** leva pra OS — só
+    aparece pra quem tem o módulo de OS **e** quando a OS é da loja ativa (a lista de OS só
+    carrega a loja ativa; o atalho numa OS da outra loja não abriria nada).
+  Quatro coisas que valem saber:
+  - **As OS não são filtradas pela loja ativa, de propósito**: a ficha é a história do CARRO, e o
+    cadastro de clientes/veículos é compartilhado justamente pra um cliente que passa nas duas
+    lojas ter um histórico só. A RLS decide o que cada operador vê. Quando o carro passou em mais
+    de uma loja, cada visita diz de qual.
+  - **Permissão**: abre pra quem tem **Clientes ou Ordens de Serviço** (o `PermissaoRoute`
+    passou a aceitar uma lista, "basta um"). Em Garantias, quem só tem Garantias vê a placa como
+    texto, sem o atalho.
+  - **A tela de Garantias mudou um detalhe junto**: o vencimento passou a ser conta de dia de
+    calendário (`schemas/garantia.ts`, a mesma da ficha) — a garantia **vale o dia do vencimento
+    inteiro**. Antes comparava o instante exato, e uma peça vendida às 15h saía da garantia às 15h
+    do último dia.
+  - **Não abre de dentro do formulário da OS** — sair da OS no meio perderia o que foi digitado.
+    Se fizer falta ver o histórico na hora de abrir a OS, o caminho é a ficha numa janela
+    (modal), não um link. Não foi pedido.
 - **Funcionários** (duas abas desde 03/09/2026): **"Cadastro"** — RH completo (documentos,
   endereço, cargo/admissão, família/filhos; o formulário em si tem as sub-abas "Dados
   gerais"/"Família"). Todo operador ganha um `funcionarios` espelhado automaticamente. E
@@ -4970,6 +5015,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 25/09 (tarde) | `TR-09.1` — **canal de teste**: versão nova nasce como pré-lançamento e só chega no resto das lojas pelo workflow "Liberar versão para todas as lojas". Cada computador escolhe o canal em Configurações. **Sem migration.** Saiu na **`v0.9.40`**, publicada e liberada no mesmo minuto (a primeira rodada de verdade do Liberar). Etapa 4 em 11 de 12. |
 | 26/09 | **TR-04.1, lote 2**: Contas a Pagar e Contas a Receber protegidas no banco (migration `0061`), com as duas portas estreitas (faturar OS, aba Comissões) e o Início mostrando "—" pra quem não tem o módulo. |
 | 26/09 (noite) | **A versão de cada computador** (migration `0063`): cada computador se registra no banco a cada login, o admin vê a lista em Configurações, e o botão de atualizar os bancos passa a esperar os computadores atrasados quando uma migration declara versão mínima. Junto, backup e botão presos no Ubuntu 24.04 antes da troca de 19/10. A `0063` entrou pelo botão (banco na **`0063`**) e o programa saiu na **`v0.9.44`**, publicada e liberada no mesmo dia. |
+| 27/09 | **Ficha do veículo** (item `FN-04`, sem migration): a história de um carro por placa — dono, KM mais recente e rodagem estimada, total faturado, visitas, peças na garantia e todas as OS. Abre pela placa em Clientes, OS e Garantias. Mesclada na `main`, **sem tag**. |
 | 26/09 (fim da noite) | **Venda de balcão** (item `FN-09`, migration `0064`): vender peça pra quem não deixa o carro, numa tela só, com leitor de código de barras, pagamento e NFC-e; cliente "Consumidor" fixo pra quem não se identifica (escolha dela), mesmo contador de número das OS, aba própria na lista e fora do ticket médio. Com o "pode" dela: a `0064` entrou pelo botão (banco na **`0064`**) e a **`v0.9.45`** saiu publicada no canal de teste — e foi **liberada pras lojas em 27/09**. |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
@@ -5613,7 +5659,8 @@ isso que existe a regra abaixo.
   versão de cada computador, migration `0063`, que entrou no banco antes). **Em 26/09/2026, fim da
   noite, saiu a `v0.9.45`** (a venda de balcão, migration `0064` aplicada antes), publicada no
   canal de teste — e **liberada pra todas as lojas em 27/09/2026**. `package.json` agora em
-  `"0.9.45"`, e a `main` em dia com ela. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
+  `"0.9.45"`. **Em 27/09/2026 a `main` ficou uma leva à frente dela** (a ficha do veículo,
+  `FN-04`, sem migration), esperando ela decidir se publica. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
   migration dela, de propósito). E antes: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,
@@ -6346,7 +6393,75 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
-### ⏸ Onde parou em 26-27/09/2026 — LEIA ISTO PRIMEIRO
+### ⏸ Onde parou em 27/09/2026 — LEIA ISTO PRIMEIRO
+
+**Saiu a ficha do veículo** (item `FN-04` do guia, P1), num domingo. Ela disse "vamos continuar"
+e avisou: **"os testes faço todos no PC da loja na segunda-feira"** (28/09/2026). Entre as
+opções (ficha do veículo, sugestão de compra, clientes que sumiram, permissão nas OS), escolheu a
+recomendada.
+
+**Estado: mesclada na `main`, SEM tag e SEM migration.** O banco continua na `0064` e a última
+versão publicada e liberada continua sendo a `v0.9.45`. **Não publicar sem ela pedir** — se ela
+quiser a ficha no teste de segunda, é publicar a `0.9.46` e liberar (o computador da loja ainda
+está no canal normal, então só publicar não chega lá).
+
+#### O que saiu, em uma linha cada
+
+- **A tela** `/veiculos/:id`: dono, KM mais recente e rodagem estimada, total faturado, visitas,
+  peças na garantia e o histórico de OS. Detalhe em "Ficha do veículo", seção 7.
+- **Onde abre**: a placa virou botão em Clientes, na lista de OS e em Garantias
+  (`components/LinkPlaca.tsx`).
+- **As contas** em `schemas/fichaVeiculo.ts` e `schemas/garantia.ts`, testadas; `diasEntre` em
+  `lib/datas.ts`.
+- **Garantias** passou a usar a mesma conta de vencimento — e a garantia vale o último dia
+  inteiro (antes vencia no mesmo horário da venda).
+
+#### Como foi conferido
+
+- **801 testes** nos dois fusos (eram 769), `tsc`, lint, `npm run contraste`, e a varredura de
+  contraste nas **60 telas** (uma cena nova, `06b-ficha-veiculo`) sem reprovação nova.
+- **Nove mutações** no código novo (ordem da linha do tempo, "Abrir OS" sem conferir loja ou
+  permissão, placa sem `stopPropagation`, total com OS não faturada, KM "maior" em vez de "mais
+  recente", garantia vencendo no último dia, rodagem com KM que desceu, visita duplicada) —
+  todas vermelhas.
+- A tela olhada no app de verdade, com os dados de exemplo (o Gol `RTA-4B71` ganhou duas
+  passagens antigas em `dados-demo.mjs`, pra ficha ter linha do tempo).
+
+**O que não dá pra conferir daqui**: o Supabase de verdade (a consulta das OS do carro com os
+itens e o prazo de garantia da peça).
+
+#### Segunda-feira, 28/09/2026, no PC da loja — a lista dela
+
+Ela vai testar tudo de uma vez. O que está esperando teste de verdade:
+1. **Venda de balcão** (`v0.9.45`): uma venda com o leitor de código de barras, a NFC-e dela e o
+   caixa do dia batendo.
+2. **Computadores desta empresa**: conferir que o computador da loja apareceu (com `0.9.45`) e
+   dar o apelido "Balcão".
+3. **Marcar o computador da loja como Teste** (Configurações → "Atualizações deste computador").
+4. **O que a `v0.9.42`/`v0.9.43` trouxeram**: aba Fechamento do Caixa, "Registrar pagamento" de
+   comissão, a trava do desconto maior que o item, pagar e desfazer o pagamento de uma conta,
+   faturar uma OS (recebido agora e a receber depois).
+5. **Emitir e cancelar uma nota pelo porteiro** — libera a parte 2 do `TR-04.2`.
+6. **A ficha do veículo** — só se ela mandar publicar antes.
+
+E, com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.
+
+#### Estado do código
+
+`main` **uma leva à frente da `v0.9.45`** (a ficha do veículo); banco na **`0064`**. `tsc`, lint
+e contraste limpos; **801 testes** nos dois fusos; matriz de RLS em 760 células (não mudou).
+
+#### Por onde a próxima sessão começa
+
+1. Perguntar como foram os testes de segunda na loja (a lista acima) e resolver o que aparecer —
+   bug relatado da loja é pra fazer na hora.
+2. Perguntar se é pra publicar a ficha do veículo (`0.9.46`), se ainda não foi.
+3. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
+   ficha — a rodagem média já existe (`rodagemEstimada`). Pede migration e uma decisão dela
+   (o "não avisar este cliente" e o tom das mensagens). Os outros sem migration: **sugestão de
+   compra** (`FN-07`) e **clientes que sumiram** (`FN-11`).
+
+### Onde parou em 26-27/09/2026 (histórico — o marco mais recente está logo acima)
 
 **Saiu a venda de balcão** (item `FN-09` do guia, P0), no sábado à noite. Ela disse "vamos
 continuar, como é sábado ainda, nada do PC da loja por enquanto" e escolheu, entre as opções, a

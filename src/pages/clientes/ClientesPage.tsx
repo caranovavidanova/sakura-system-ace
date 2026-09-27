@@ -11,6 +11,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Cliente, NovoCliente, VeiculoFormulario } from "@/types/cliente";
 import { ClienteForm } from "./ClienteForm";
 import { AcoesDaLinha } from "@/components/AcoesDaLinha";
+import { LinkPlaca } from "@/components/LinkPlaca";
 
 export function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -135,7 +136,15 @@ export function ClientesPage() {
                   <td className="px-4 py-3">{cliente.nome}</td>
                   <td className="px-4 py-3">{cliente.telefone || "—"}</td>
                   <td className="px-4 py-3">
-                    {cliente.veiculos?.map((v) => v.placa).join(", ") || "—"}
+                    {cliente.veiculos && cliente.veiculos.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {cliente.veiculos.map((v) => (
+                          <LinkPlaca key={v.id} veiculoId={v.id} placa={v.placa} />
+                        ))}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {cliente.cidade ? `${cliente.cidade}/${cliente.uf ?? ""}` : "—"}

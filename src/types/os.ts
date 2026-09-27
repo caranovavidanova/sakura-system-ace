@@ -137,7 +137,12 @@ export const FORMA_PAGAMENTO_LABEL: Record<string, string> = {
   cartao_credito: "Cartão de crédito",
 };
 
-export function totalOrdem(itens: ItemOS[]): number {
+// Só precisa dos três campos da conta — e aceitar só eles deixa quem busca
+// uma versão enxuta do item (a ficha do veículo, por exemplo) usar a MESMA
+// conta, em vez de escrever outra igual.
+export function totalOrdem(
+  itens: readonly Pick<ItemOS, "quantidade" | "preco_unitario" | "desconto">[],
+): number {
   return itens.reduce(
     (total, item) => total + item.quantidade * item.preco_unitario - item.desconto,
     0,

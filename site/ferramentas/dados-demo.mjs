@@ -65,13 +65,21 @@ export const ordens = [
     itens: [item("servico", "s2", "Troca de óleo e filtro", 1, 165)] },
   { numero: 143, cliente: "c1", veiculo: "v1", status: "faturada", abertura: -0.80,
     itens: [item("peca", "p5", "Bateria 60Ah", 1, 549), item("servico", "s5", "Instalação de bateria", 1, 40)] },
+  // Duas passagens antigas do mesmo Gol (v1), pra ficha do veículo (FN-04)
+  // ter uma linha do tempo de verdade: KM subindo, uma peça ainda na
+  // garantia e outra já vencida. São antigas o bastante pra ficar fora do
+  // filtro "este mês" da lista de OS e das comissões.
+  { numero: 109, cliente: "c1", veiculo: "v1", status: "faturada", abertura: -75, km: 81300,
+    itens: [item("peca", "p4", "Pastilha de freio dianteira", 1, 189.5), item("servico", "s4", "Troca de pastilha de freio", 1, 90), item("servico", "s2", "Troca de óleo e filtro", 1, 165)] },
+  { numero: 97, cliente: "c1", veiculo: "v1", status: "faturada", abertura: -262, km: 74320,
+    itens: [item("peca", "p1", "Pneu 175/70 R14", 4, 369.9), item("servico", "s1", "Alinhamento e balanceamento", 1, 110)] },
 ].map((o) => {
   const cli = clientes.find((c) => c.id === o.cliente);
   const v = vlk(o.veiculo);
   return {
     id: "os" + o.numero, numero: o.numero, loja_id: LOJA,
     cliente_id: o.cliente, veiculo_id: o.veiculo,
-    status: o.status, km_entrada: v.km_atual,
+    status: o.status, km_entrada: o.km ?? v.km_atual,
     descricao_problema: "", forma_pagamento: o.status === "faturada" ? "Pix" : null,
     parcelas: 1, data_abertura: dia(o.abertura),
     data_fechamento: o.status === "faturada" ? dia(o.abertura + 0.3) : null,
@@ -352,6 +360,16 @@ export const funcionarios = [
     operador: null, filhos: [] },
 ];
 
+// A ficha do veículo lê o prazo de garantia pelo item da OS
+// (`itens:ordens_servico_itens(..., peca:pecas(prazo_garantia_dias))`).
+for (const o of ordens) {
+  for (const i of o.itens) {
+    if (i.peca_id) {
+      i.peca = { prazo_garantia_dias: pecas.find((p) => p.id === i.peca_id)?.prazo_garantia_dias ?? 90 };
+    }
+  }
+}
+
 // Tabela "achatada" dos itens das OS — é o que a tela de Garantias consulta
 // direto (a garantia não tem tabela própria: sai do item de peça + o prazo
 // cadastrado na peça + a data em que a OS foi fechada).
@@ -473,7 +491,15 @@ const computadores = [
 export const TABELAS = {
   computadores,
   schema_versao: schemaVersao,
-  lojas, clientes, veiculos, pecas, servicos, depositos,
+  lojas, clientes, pecas, servicos, depositos,
+  // Cópia com o dono embutido (a ficha do veículo pede
+  // `cliente:clientes(...)`). Cópia, e não o próprio objeto: o cliente já
+  // carrega a lista de veículos dele, e os dois apontando um pro outro não
+  // viram JSON.
+  veiculos: veiculos.map((v) => {
+    const c = clientes.find((cl) => cl.id === v.cliente_id);
+    return { ...v, cliente: c ? { id: c.id, nome: c.nome, telefone: c.telefone } : null };
+  }),
   ordens_servico: ordens,
   ordens_servico_itens: ordensItens,
   caixa_movimentos: caixa,

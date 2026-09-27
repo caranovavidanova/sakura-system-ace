@@ -85,6 +85,10 @@ vai pro arquivo de `docs/` certo, nunca aqui. Se este índice passar de ~30 KB, 
   perguntas de alinhamento dela **não** é o mesmo que ela mandar executar. Vale principalmente pra
   coisa grande e nova (um site, um módulo) — correção de bug e ajuste pequeno que ela relatou
   continuam sendo pra fazer na hora.
+- **Conversa de alinhamento: ela revisa antes de eu documentar** (27/09/2026). Em conversa de
+  planejamento, ela prefere que eu junte no fim o que foi decidido, o que está aberto e o que vou
+  anotar, e ela confirma antes. O que ela mandar "deixar na gaveta" é anotado como adiado, não
+  como decidido.
 - **Sempre que eu aprender uma preferência de trabalho nova**, documentar aqui — não só nas
   decisões técnicas da seção 3, mas qualquer coisa sobre *como* ela quer que eu trabalhe. Sessões
   futuras não têm memória da conversa, só deste arquivo.
@@ -129,99 +133,48 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 ## 4. Onde parou (o marco mais recente — os anteriores estão em `docs/historico.md`)
 
-### 27/09/2026, manhã: ficha do veículo
 
-**Saiu a ficha do veículo** (item `FN-04` do guia, P1), num domingo. Ela disse "vamos continuar"
-e avisou: **"os testes faço todos no PC da loja na segunda-feira"** (28/09/2026). Entre as
-opções (ficha do veículo, sugestão de compra, clientes que sumiram, permissão nas OS), escolheu a
-recomendada.
+### 27/09/2026, à noite: como a equipe vai trabalhar (temas 2 e 3), domínio e e-mail da empresa
 
-**Estado: publicada e LIBERADA na `v0.9.46`, SEM migration.** O banco continua na `0064`.
-Perguntada "publique e libere a 0.9.46 pra ficha entrar no teste de segunda?", ela respondeu
-"pode publicar" — e foi feito os dois, porque o computador da loja está no canal normal e só
-publicar não chegaria lá. Conferido de fora: o endereço "mais recente" responde `0.9.46` e o
-instalador bate com o `latest.yml`. **A loja recebe a ficha na próxima vez que o programa for
-fechado e aberto.** Se precisar voltar atrás: rodar o Liberar com `v0.9.45` (seção 9).
+Conversa de alinhamento, **sem código de app**. O plano de equipe inteiro, os custos e as
+pendências da empresa estão no repositório **privado** `caranovavidanova/sakura-corp`, em
+`EQUIPE.md` (adicionar à sessão quando o assunto for equipe). Aqui fica só o que uma sessão do
+SSACE precisa saber.
 
-#### O que saiu, em uma linha cada
+**Decidido por ela:**
+- **Linha de produção por levas**: ela planeja comigo → as tarefas saem juntas numa leva → cada
+  um faz a sua e solta no canal de teste → a leva **congela**, todos testam → **eu escrevo o
+  relatório** → **ela aprova** → banco e Liberar. Bug de loja não espera a leva.
+- **As tarefas nascem nas conversas dela comigo** e moram no GitHub (onde os Claudes trabalham).
+  Pegar só tarefa sem dono, pôr o nome antes de começar, um PR por tarefa.
+- **Trabalho medido em horas por semana** (estimativa por tarefa), não em dinheiro.
+- **Primeiro projeto da equipe**: uma interface própria de organização (lê o GitHub, não o
+  substitui), planejada por ela comigo e programada pelos amigos em tarefas. Vem antes de vender.
+- **"Estruturar a base"** = ter lucro estável no SSACE antes de investir tempo e dinheiro em
+  outro projeto. Não abrir produto novo antes disso.
+- **Quando os amigos entrarem, muda a regra de mesclar da seção 3** pra eles: PR entra com CI
+  verde + revisão de um colega; a aprovação dela fica no relatório da leva. Pra ela, continua
+  igual.
+- **Amigos sem acesso** ao banco de verdade da Pneus Amigão e ao `sakura-corp`, por enquanto.
+- **Claude Team** (4 lugares comuns, por mês), assinado com um e-mail do domínio novo
+  **`sakuracorp.com.br`**, registrado hoje no registro.br (DNS do próprio registro.br, modo
+  avançado). O e-mail está sendo montado no **Zoho Mail**: parou esperando publicar o TXT de
+  verificação.
+- Apresentação **"Como a Sakura vai trabalhar"** (12 slides) feita e enviada ao grupo:
+  `https://claude.ai/artifact/4UL1gjKV6r1S1JrjrxY5SQ`.
 
-- **A tela** `/veiculos/:id`: dono, KM mais recente e rodagem estimada, total faturado, visitas,
-  peças na garantia e o histórico de OS. Detalhe em "Ficha do veículo", seção 7.
-- **Onde abre**: a placa virou botão em Clientes, na lista de OS e em Garantias
-  (`components/LinkPlaca.tsx`).
-- **As contas** em `schemas/fichaVeiculo.ts` e `schemas/garantia.ts`, testadas; `diasEntre` em
-  `lib/datas.ts`.
-- **Garantias** passou a usar a mesma conta de vencimento — e a garantia vale o último dia
-  inteiro (antes vencia no mesmo horário da venda).
-
-#### Como foi conferido
-
-- **801 testes** nos dois fusos (eram 769), `tsc`, lint, `npm run contraste`, e a varredura de
-  contraste nas **60 telas** (uma cena nova, `06b-ficha-veiculo`) sem reprovação nova.
-- **Nove mutações** no código novo (ordem da linha do tempo, "Abrir OS" sem conferir loja ou
-  permissão, placa sem `stopPropagation`, total com OS não faturada, KM "maior" em vez de "mais
-  recente", garantia vencendo no último dia, rodagem com KM que desceu, visita duplicada) —
-  todas vermelhas.
-- A tela olhada no app de verdade, com os dados de exemplo (o Gol `RTA-4B71` ganhou duas
-  passagens antigas em `dados-demo.mjs`, pra ficha ter linha do tempo).
-
-**O que não dá pra conferir daqui**: o Supabase de verdade (a consulta das OS do carro com os
-itens e o prazo de garantia da peça).
-
-#### Segunda-feira, 28/09/2026, no PC da loja — a lista dela
-
-Ela vai testar tudo de uma vez. O que está esperando teste de verdade:
-1. **Venda de balcão** (`v0.9.45`): uma venda com o leitor de código de barras, a NFC-e dela e o
-   caixa do dia batendo.
-2. **Computadores desta empresa**: conferir que o computador da loja apareceu (com `0.9.45`) e
-   dar o apelido "Balcão".
-3. **Marcar o computador da loja como Teste** (Configurações → "Atualizações deste computador").
-4. **O que a `v0.9.42`/`v0.9.43` trouxeram**: aba Fechamento do Caixa, "Registrar pagamento" de
-   comissão, a trava do desconto maior que o item, pagar e desfazer o pagamento de uma conta,
-   faturar uma OS (recebido agora e a receber depois).
-5. **Emitir e cancelar uma nota pelo porteiro** — libera a parte 2 do `TR-04.2`.
-6. **A ficha do veículo** (`v0.9.46`, já liberada): abrir pela placa em Clientes, na lista de
-   OS e em Garantias; conferir que o histórico e as peças na garantia batem com o que ela sabe do
-   carro. É a única parte que fala com o Supabase de verdade e não deu pra testar daqui.
-
-**E na conferência do item 2, o computador da loja deve aparecer com `0.9.46`** (não mais
-`0.9.45`), se o programa foi fechado e aberto depois da liberação.
-
-E, com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.
-
-#### Estado do código
-
-`main` em dia com a **`v0.9.46`** (publicada e liberada); banco na **`0064`**. Nada pendente de
-SQL nem de publicação. `tsc`, lint e contraste limpos; **801 testes** nos dois fusos; matriz de
-RLS em 760 células (não mudou).
+**Estado do código**: não mudou. `main` na **`v0.9.46`** (publicada e liberada), banco na **`0064`**.
 
 #### Por onde a próxima sessão começa
 
-Ela fechou esta sessão com *"te chamo numa próxima sessão, para alinharmos algumas coisas"* —
-ou seja, **a próxima sessão começa por uma conversa de alinhamento, puxada por ela**. Não chegar
-propondo trabalho novo: ouvir o que ela quer alinhar primeiro.
+1. **Perguntar como foram os testes de segunda (28/09) na loja**. A lista (venda de balcão,
+   computadores da empresa, canal de teste, Fechamento do Caixa, porteiro da Focus NFe, ficha do
+   veículo) está no marco "27/09/2026, de manhã", em `docs/historico.md`. Bug da loja é pra
+   fazer na hora.
+2. **Se o e-mail do Zoho não ficou pronto**, ajudar com prints: verificar o TXT, criar o e-mail,
+   e as linhas MX, SPF e DKIM no registro.br ("Configurar endereçamento" → zona DNS → "Nova
+   entrada"; o campo Nome em branco é o próprio domínio, e não aceita `@`).
+3. **Quando o Team estiver perto**: planejar a interface com ela (a leva 0) e escrever o
+   `docs/equipe.md` com as regras pros Claudes da equipe. Não começar antes de ela pedir.
 
-1. Perguntar como foram os testes de segunda na loja (a lista acima) e resolver o que aparecer —
-   bug relatado da loja é pra fazer na hora.
-2. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
-   ficha — a rodagem média já existe (`rodagemEstimada`). Pede migration e uma decisão dela
-   (o "não avisar este cliente" e o tom das mensagens). Os outros sem migration: **sugestão de
-   compra** (`FN-07`) e **clientes que sumiram** (`FN-11`).
-
-
-### 27/09/2026, à tarde: organização pra venda e pro trabalho em equipe
-
-Conversa de alinhamento, sem código de app. Ela vai abrir a empresa e chamar 3 amigos pra
-vibecodar junto. O que ficou:
-- **Assuntos da empresa** (sócios, porcentagens, abertura do CNPJ, contador, contrato com as lojas,
-  preço) passaram a morar no repositório **privado** `caranovavidanova/sakura-corp`, criado por ela
-  e preenchido em 27/09/2026: `EMPRESA.md` (tudo que foi decidido) e `PRECOS-E-CUSTOS.md` (os
-  trechos de preço tirados daqui). Tem `CLAUDE.md` próprio: adicionado à sessão, carrega o
-  `EMPRESA.md` sozinho.
-- **Contrato com as lojas: de adesão** (termos aceitos pela loja, só o nome da empresa aparece).
-  Ideia anotada, não pedida: o SSACE mostrar os termos no primeiro login do admin e gravar o aceite.
-- **Este arquivo foi dividido** no índice + `docs/` (ver a tabela acima).
-- **Fechar o código do SSACE** (repositório privado + um público só com instaladores): **pendente,
-  decisão dela pra depois** — custo de minutos de CI e uma sessão de trabalho.
-- **Próximos temas combinados** (ela quer ir aos poucos): 2) como codar em grupo; 3) a "linha de
-  produção" de atualizações e projetos novos.
+Com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.

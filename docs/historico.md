@@ -677,6 +677,102 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
+### Onde parou em 27/09/2026, à tarde: organização pra venda e pro trabalho em equipe (histórico — o marco mais recente está logo acima)
+
+Conversa de alinhamento, sem código de app. Ela vai abrir a empresa e chamar 3 amigos pra
+vibecodar junto. O que ficou:
+- **Assuntos da empresa** (sócios, porcentagens, abertura do CNPJ, contador, contrato com as lojas,
+  preço) passaram a morar no repositório **privado** `caranovavidanova/sakura-corp`, criado por ela
+  e preenchido em 27/09/2026: `EMPRESA.md` (tudo que foi decidido) e `PRECOS-E-CUSTOS.md` (os
+  trechos de preço tirados daqui). Tem `CLAUDE.md` próprio: adicionado à sessão, carrega o
+  `EMPRESA.md` sozinho.
+- **Contrato com as lojas: de adesão** (termos aceitos pela loja, só o nome da empresa aparece).
+  Ideia anotada, não pedida: o SSACE mostrar os termos no primeiro login do admin e gravar o aceite.
+- **Este arquivo foi dividido** no índice + `docs/` (ver a tabela acima).
+- **Fechar o código do SSACE** (repositório privado + um público só com instaladores): **pendente,
+  decisão dela pra depois** — custo de minutos de CI e uma sessão de trabalho.
+- **Próximos temas combinados** (ela quer ir aos poucos): 2) como codar em grupo; 3) a "linha de
+  produção" de atualizações e projetos novos.
+
+### Onde parou em 27/09/2026, de manhã: ficha do veículo (histórico — o marco mais recente está logo acima)
+
+**Saiu a ficha do veículo** (item `FN-04` do guia, P1), num domingo. Ela disse "vamos continuar"
+e avisou: **"os testes faço todos no PC da loja na segunda-feira"** (28/09/2026). Entre as
+opções (ficha do veículo, sugestão de compra, clientes que sumiram, permissão nas OS), escolheu a
+recomendada.
+
+**Estado: publicada e LIBERADA na `v0.9.46`, SEM migration.** O banco continua na `0064`.
+Perguntada "publique e libere a 0.9.46 pra ficha entrar no teste de segunda?", ela respondeu
+"pode publicar" — e foi feito os dois, porque o computador da loja está no canal normal e só
+publicar não chegaria lá. Conferido de fora: o endereço "mais recente" responde `0.9.46` e o
+instalador bate com o `latest.yml`. **A loja recebe a ficha na próxima vez que o programa for
+fechado e aberto.** Se precisar voltar atrás: rodar o Liberar com `v0.9.45` (seção 9).
+
+#### O que saiu, em uma linha cada
+
+- **A tela** `/veiculos/:id`: dono, KM mais recente e rodagem estimada, total faturado, visitas,
+  peças na garantia e o histórico de OS. Detalhe em "Ficha do veículo", seção 7.
+- **Onde abre**: a placa virou botão em Clientes, na lista de OS e em Garantias
+  (`components/LinkPlaca.tsx`).
+- **As contas** em `schemas/fichaVeiculo.ts` e `schemas/garantia.ts`, testadas; `diasEntre` em
+  `lib/datas.ts`.
+- **Garantias** passou a usar a mesma conta de vencimento — e a garantia vale o último dia
+  inteiro (antes vencia no mesmo horário da venda).
+
+#### Como foi conferido
+
+- **801 testes** nos dois fusos (eram 769), `tsc`, lint, `npm run contraste`, e a varredura de
+  contraste nas **60 telas** (uma cena nova, `06b-ficha-veiculo`) sem reprovação nova.
+- **Nove mutações** no código novo (ordem da linha do tempo, "Abrir OS" sem conferir loja ou
+  permissão, placa sem `stopPropagation`, total com OS não faturada, KM "maior" em vez de "mais
+  recente", garantia vencendo no último dia, rodagem com KM que desceu, visita duplicada) —
+  todas vermelhas.
+- A tela olhada no app de verdade, com os dados de exemplo (o Gol `RTA-4B71` ganhou duas
+  passagens antigas em `dados-demo.mjs`, pra ficha ter linha do tempo).
+
+**O que não dá pra conferir daqui**: o Supabase de verdade (a consulta das OS do carro com os
+itens e o prazo de garantia da peça).
+
+#### Segunda-feira, 28/09/2026, no PC da loja — a lista dela
+
+Ela vai testar tudo de uma vez. O que está esperando teste de verdade:
+1. **Venda de balcão** (`v0.9.45`): uma venda com o leitor de código de barras, a NFC-e dela e o
+   caixa do dia batendo.
+2. **Computadores desta empresa**: conferir que o computador da loja apareceu (com `0.9.45`) e
+   dar o apelido "Balcão".
+3. **Marcar o computador da loja como Teste** (Configurações → "Atualizações deste computador").
+4. **O que a `v0.9.42`/`v0.9.43` trouxeram**: aba Fechamento do Caixa, "Registrar pagamento" de
+   comissão, a trava do desconto maior que o item, pagar e desfazer o pagamento de uma conta,
+   faturar uma OS (recebido agora e a receber depois).
+5. **Emitir e cancelar uma nota pelo porteiro** — libera a parte 2 do `TR-04.2`.
+6. **A ficha do veículo** (`v0.9.46`, já liberada): abrir pela placa em Clientes, na lista de
+   OS e em Garantias; conferir que o histórico e as peças na garantia batem com o que ela sabe do
+   carro. É a única parte que fala com o Supabase de verdade e não deu pra testar daqui.
+
+**E na conferência do item 2, o computador da loja deve aparecer com `0.9.46`** (não mais
+`0.9.45`), se o programa foi fechado e aberto depois da liberação.
+
+E, com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.
+
+#### Estado do código
+
+`main` em dia com a **`v0.9.46`** (publicada e liberada); banco na **`0064`**. Nada pendente de
+SQL nem de publicação. `tsc`, lint e contraste limpos; **801 testes** nos dois fusos; matriz de
+RLS em 760 células (não mudou).
+
+#### Por onde a próxima sessão começa
+
+Ela fechou esta sessão com *"te chamo numa próxima sessão, para alinharmos algumas coisas"* —
+ou seja, **a próxima sessão começa por uma conversa de alinhamento, puxada por ela**. Não chegar
+propondo trabalho novo: ouvir o que ela quer alinhar primeiro.
+
+1. Perguntar como foram os testes de segunda na loja (a lista acima) e resolver o que aparecer —
+   bug relatado da loja é pra fazer na hora.
+2. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
+   ficha — a rodagem média já existe (`rodagemEstimada`). Pede migration e uma decisão dela
+   (o "não avisar este cliente" e o tom das mensagens). Os outros sem migration: **sugestão de
+   compra** (`FN-07`) e **clientes que sumiram** (`FN-11`).
+
 ### Onde parou em 26-27/09/2026 (histórico — o marco mais recente está logo acima)
 
 **Saiu a venda de balcão** (item `FN-09` do guia, P0), no sábado à noite. Ela disse "vamos

@@ -45,3 +45,19 @@ export function diaBrasileiro(dia: string): string {
   const [ano, mes, d] = dia.split("-");
   return `${d}/${mes}/${ano}`;
 }
+
+/**
+ * Quantos dias de calendário vão de `inicio` até `fim`, os dois como
+ * "YYYY-MM-DD" (negativo se `fim` vier antes).
+ *
+ * Monta meia-noite LOCAL de cada dia, em vez de `new Date("2026-09-01")` —
+ * que leria a string como UTC e, no Brasil, cairia no dia anterior. O
+ * `Math.round` absorve o dia de 23 ou 25 horas do horário de verão.
+ */
+export function diasEntre(inicio: string, fim: string): number {
+  const [a1, m1, d1] = inicio.split("-").map(Number);
+  const [a2, m2, d2] = fim.split("-").map(Number);
+  return Math.round(
+    (new Date(a2, m2 - 1, d2).getTime() - new Date(a1, m1 - 1, d1).getTime()) / 86_400_000,
+  );
+}

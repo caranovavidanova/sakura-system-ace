@@ -33,6 +33,7 @@ import { OrdensServicoPage } from "./pages/ordens-servico/OrdensServicoPage";
 import { PainelPage } from "./pages/painel/PainelPage";
 import { RelatoriosPage } from "./pages/relatorios/RelatoriosPage";
 import { ServicosPage } from "./pages/servicos/ServicosPage";
+import { FichaVeiculoPage } from "./pages/veiculos/FichaVeiculoPage";
 import { MODULOS, temPermissao } from "./types/operador";
 
 // Se o operador não tiver permissão pro Início (o "/" padrão),
@@ -156,6 +157,16 @@ export default function App() {
                 element={
                   <PermissaoRoute modulo="clientes">
                     <ClientesPage />
+                  </PermissaoRoute>
+                }
+              />
+              {/* A ficha do veículo (FN-04) é tanto de Clientes quanto de
+                  Ordens de Serviço: basta ter um dos dois. */}
+              <Route
+                path="/veiculos/:id"
+                element={
+                  <PermissaoRoute modulo={["clientes", "ordens_servico"]}>
+                    <FichaVeiculoPage />
                   </PermissaoRoute>
                 }
               />

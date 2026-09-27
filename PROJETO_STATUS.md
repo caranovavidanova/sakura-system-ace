@@ -214,10 +214,10 @@ propondo trabalho novo: ouvir o que ela quer alinhar primeiro.
 Conversa de alinhamento, sem código de app. Ela vai abrir a empresa e chamar 3 amigos pra
 vibecodar junto. O que ficou:
 - **Assuntos da empresa** (sócios, porcentagens, abertura do CNPJ, contador, contrato com as lojas,
-  preço) passaram a morar no repositório **privado** `caranovavidanova/sakura-corp`. Esta sessão não
-  tinha permissão pra criar repositório — **ela cria** (github.com/new, privado, com README) e a
-  próxima sessão adiciona (`add_repo`) e sobe as anotações. Até lá, o que foi conversado está só no
-  chat daquela sessão e no histórico do Git deste arquivo (os trechos de preço tirados daqui).
+  preço) passaram a morar no repositório **privado** `caranovavidanova/sakura-corp`, criado por ela
+  e preenchido em 27/09/2026: `EMPRESA.md` (tudo que foi decidido) e `PRECOS-E-CUSTOS.md` (os
+  trechos de preço tirados daqui). Tem `CLAUDE.md` próprio: adicionado à sessão, carrega o
+  `EMPRESA.md` sozinho.
 - **Contrato com as lojas: de adesão** (termos aceitos pela loja, só o nome da empresa aparece).
   Ideia anotada, não pedida: o SSACE mostrar os termos no primeiro login do admin e gravar o aceite.
 - **Este arquivo foi dividido** no índice + `docs/` (ver a tabela acima).

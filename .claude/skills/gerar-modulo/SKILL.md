@@ -18,7 +18,8 @@ testáveis, com opções + recomendação antes de decisões estruturais.
 
 ## Antes de gerar qualquer código
 
-1. **Leia `PROJETO_STATUS.md` inteiro (ou pelo menos as seções 1, 3, 4, 5 e 6)** — é onde estão as
+1. **Leia o `PROJETO_STATUS.md` (índice) e, em `docs/`, `decisoes.md`, `estrutura.md`, `banco.md` e
+   `licoes.md` (as antigas seções 3, 4, 5 e 6)** — é onde estão as
    decisões técnicas já tomadas, o padrão de pastas, a modelagem de dados atual e as dívidas técnicas
    conhecidas (sem testes automatizados, etc). Não repita decisões que já foram tomadas (ex: não
    proponha Prisma/ORM — este projeto usa o client `supabase-js` direto). O projeto **já é

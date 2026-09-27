@@ -49,8 +49,8 @@
   versão de cada computador, migration `0063`, que entrou no banco antes). **Em 26/09/2026, fim da
   noite, saiu a `v0.9.45`** (a venda de balcão, migration `0064` aplicada antes), publicada no
   canal de teste — e **liberada pra todas as lojas em 27/09/2026**. `package.json` agora em
-  `"0.9.45"`. **Em 27/09/2026 a `main` ficou uma leva à frente dela** (a ficha do veículo,
-  `FN-04`, sem migration), esperando ela decidir se publica. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
+  `"0.9.45"`. **Em 27/09/2026 saiu a `v0.9.46`** (a ficha do veículo, `FN-04`, sem migration),
+  publicada e liberada no mesmo dia. `package.json` agora em `"0.9.46"`. Histórico: a `v0.9.43` foi publicada e liberada em 26/09/2026, à tarde (antes da
   migration dela, de propósito). E antes: a `v0.9.40` foi publicada **e liberada** em 25/09/2026 (o `TR-09.1`,
   canal de teste). **A `v0.9.41` (o porteiro da Focus NFe, `TR-04.2`) foi publicada e
   liberada em 25/09/2026**. **E a `v0.9.42` (fechamento de caixa, comissão paga, travas de dado,

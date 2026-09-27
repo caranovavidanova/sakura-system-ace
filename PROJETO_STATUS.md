@@ -136,10 +136,12 @@ e avisou: **"os testes faço todos no PC da loja na segunda-feira"** (28/09/2026
 opções (ficha do veículo, sugestão de compra, clientes que sumiram, permissão nas OS), escolheu a
 recomendada.
 
-**Estado: mesclada na `main`, SEM tag e SEM migration.** O banco continua na `0064` e a última
-versão publicada e liberada continua sendo a `v0.9.45`. **Não publicar sem ela pedir** — se ela
-quiser a ficha no teste de segunda, é publicar a `0.9.46` e liberar (o computador da loja ainda
-está no canal normal, então só publicar não chega lá).
+**Estado: publicada e LIBERADA na `v0.9.46`, SEM migration.** O banco continua na `0064`.
+Perguntada "publique e libere a 0.9.46 pra ficha entrar no teste de segunda?", ela respondeu
+"pode publicar" — e foi feito os dois, porque o computador da loja está no canal normal e só
+publicar não chegaria lá. Conferido de fora: o endereço "mais recente" responde `0.9.46` e o
+instalador bate com o `latest.yml`. **A loja recebe a ficha na próxima vez que o programa for
+fechado e aberto.** Se precisar voltar atrás: rodar o Liberar com `v0.9.45` (seção 9).
 
 #### O que saiu, em uma linha cada
 
@@ -178,21 +180,30 @@ Ela vai testar tudo de uma vez. O que está esperando teste de verdade:
    comissão, a trava do desconto maior que o item, pagar e desfazer o pagamento de uma conta,
    faturar uma OS (recebido agora e a receber depois).
 5. **Emitir e cancelar uma nota pelo porteiro** — libera a parte 2 do `TR-04.2`.
-6. **A ficha do veículo** — só se ela mandar publicar antes.
+6. **A ficha do veículo** (`v0.9.46`, já liberada): abrir pela placa em Clientes, na lista de
+   OS e em Garantias; conferir que o histórico e as peças na garantia batem com o que ela sabe do
+   carro. É a única parte que fala com o Supabase de verdade e não deu pra testar daqui.
+
+**E na conferência do item 2, o computador da loja deve aparecer com `0.9.46`** (não mais
+`0.9.45`), se o programa foi fechado e aberto depois da liberação.
 
 E, com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.
 
 #### Estado do código
 
-`main` **uma leva à frente da `v0.9.45`** (a ficha do veículo); banco na **`0064`**. `tsc`, lint
-e contraste limpos; **801 testes** nos dois fusos; matriz de RLS em 760 células (não mudou).
+`main` em dia com a **`v0.9.46`** (publicada e liberada); banco na **`0064`**. Nada pendente de
+SQL nem de publicação. `tsc`, lint e contraste limpos; **801 testes** nos dois fusos; matriz de
+RLS em 760 células (não mudou).
 
 #### Por onde a próxima sessão começa
 
+Ela fechou esta sessão com *"te chamo numa próxima sessão, para alinharmos algumas coisas"* —
+ou seja, **a próxima sessão começa por uma conversa de alinhamento, puxada por ela**. Não chegar
+propondo trabalho novo: ouvir o que ela quer alinhar primeiro.
+
 1. Perguntar como foram os testes de segunda na loja (a lista acima) e resolver o que aparecer —
    bug relatado da loja é pra fazer na hora.
-2. Perguntar se é pra publicar a ficha do veículo (`0.9.46`), se ainda não foi.
-3. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
+2. Se ela quiser seguir o guia: o **lembrete de revisão** (`FN-06`) é o passo natural depois da
    ficha — a rodagem média já existe (`rodagemEstimada`). Pede migration e uma decisão dela
    (o "não avisar este cliente" e o tom das mensagens). Os outros sem migration: **sugestão de
    compra** (`FN-07`) e **clientes que sumiram** (`FN-11`).

@@ -462,10 +462,10 @@ Quatro coisas que valem saber:
     estoque, nas comissões, no recibo de comissão e na garantia.
   **Sem migration aplicada, o botão aparece mas registrar dá erro** — por isso a migration vem
   antes da versão, como sempre.
-- **Ficha do veículo** (27/09/2026, item `FN-04` — **sem migration; ainda não publicada em tag
-  nem vista por ela**): tudo que já foi feito num carro, por placa. Rota `/veiculos/:id`, sem
-  entrada no menu — abre **clicando na placa** em Clientes, na lista de OS e em Garantias. É a
-  pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
+- **Ficha do veículo** (27/09/2026, item `FN-04` — **sem migration; publicada e liberada na
+  `v0.9.46` no mesmo dia; ainda não vista por ela na loja**): tudo que já foi feito num carro,
+  por placa. Rota `/veiculos/:id`, sem entrada no menu — abre **clicando na placa** em
+  Clientes, na lista de OS e em Garantias. É a pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
   está na garantia?"), e é a base do lembrete de revisão (`FN-06`). O que a tela mostra:
   - **Dono atual** (o cliente em cujo cadastro o carro está hoje) e telefone;
   - **KM mais recente** — o da OS mais recente, nunca o maior já digitado (mesma regra do
@@ -1298,6 +1298,15 @@ Quatro coisas que valem saber:
     "mais recente" que o app usa responde `version: 0.9.45`, a release não tem mais a marca de
     pré-lançamento, e o instalador baixado de lá tem a impressão digital sha512 **idêntica** à do
     `latest.yml`.
+
+  - `v0.9.46`: **a ficha do veículo** (item `FN-04`) — a história de um carro por placa, aberta
+    clicando na placa em Clientes, OS e Garantias. **Sem migration** (banco continua na `0064`),
+    então não havia ordem a cumprir. Publicada via `workflow_dispatch` e **liberada em
+    27/09/2026**, a pedido dela ("pode publicar", em resposta a "publique e libere?"), pra entrar
+    no teste de segunda na loja — o computador da loja está no canal normal, e só publicar não
+    chegaria lá. Conferido de fora: o endereço "mais recente" que o app usa responde
+    `version: 0.9.46`, e o instalador baixado de lá tem a impressão digital sha512 **idêntica** à
+    do `latest.yml`.
 
   **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
   lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o

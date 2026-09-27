@@ -174,7 +174,11 @@ SSACE precisa saber.
 2. **Se o e-mail do Zoho não ficou pronto**, ajudar com prints: verificar o TXT, criar o e-mail,
    e as linhas MX, SPF e DKIM no registro.br ("Configurar endereçamento" → zona DNS → "Nova
    entrada"; o campo Nome em branco é o próprio domínio, e não aceita `@`).
-3. **Quando o Team estiver perto**: planejar a interface com ela (a leva 0) e escrever o
-   `docs/equipe.md` com as regras pros Claudes da equipe. Não começar antes de ela pedir.
+3. **Quando o Team estiver perto**: primeiro as pendências da empresa que ela deixou pra essa
+   hora (no `sakura-corp`, começando pelo acordo de que o código é da empresa). Depois, planejar a
+   interface com ela (a leva 0) e escrever o `docs/equipe.md` com as regras pros Claudes da
+   equipe. **Onde a interface mora já está decidido** (repositório privado novo, mesma base do
+   SSACE, Supabase numa conta nova com o e-mail da Sakura; detalhe no `EQUIPE.md`). Não começar
+   antes de ela pedir.
 
 Com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.

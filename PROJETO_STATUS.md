@@ -171,10 +171,27 @@ SSACE precisa saber.
 
 #### Por onde a próxima sessão começa
 
-1. **Perguntar como foram os testes de segunda (28/09) na loja**. A lista (venda de balcão,
-   computadores da empresa, canal de teste, Fechamento do Caixa, porteiro da Focus NFe, ficha do
-   veículo) está no marco "27/09/2026, de manhã", em `docs/historico.md`. Bug da loja é pra
-   fazer na hora.
+1. **Testes de segunda (28/09) na loja** (a lista está no marco "27/09/2026, de manhã", em
+   `docs/historico.md`). **Já feitos**: o computador da loja aparece como **"Balcão"**, na
+   `0.9.46`, no **canal de teste**; o outro da lista (`DESKTOP-PKJ2A3B`, `0.9.44`, teste) deve ser
+   o computador da casa dela (ela vai confirmar abrindo o programa lá, e dar um apelido); **NFS-e
+   emitida e cancelada pelo porteiro** (número 22, aparece "cancelada") → **a parte 2 do
+   `TR-04.2` está liberada** (a migration que apaga a cópia antiga do token; só fazer quando ela
+   pedir). **Faltavam**: venda de balcão com o leitor, ficha do veículo, Fechamento do Caixa e o
+   resto da `v0.9.42`/`0.9.43`. Perguntar como foram. Bug da loja é pra fazer na hora.
+   **Três ajustes que ela pediu e deixou pendentes** (28/09):
+   - **Modais com o fundo vazando**: o texto da tela de trás aparece através do pop-up e atrapalha
+     a leitura (ela viu no "Nota fiscal" de Notas Fiscais, e disse que vale pros outros). Causa:
+     o `Modal` (`src/components/Modal.tsx`) usa o `sakura-card`, que é vidro translúcido
+     (`rgba(20,15,20,0.35)` + blur), sobre uma sobreposição de só `bg-black/40`. Caminho
+     provável: painel do modal opaco e sobreposição mais escura; os dois modais que têm
+     sobreposição própria (`ImportarNotaFiscalXmlModal`, `ImportarNotasFiscaisModal`) também.
+     Conferir contraste (`npm run contraste` e a varredura nas telas) e olhar renderizado.
+   - **Status da nota na própria lista** de Notas Fiscais (`ArquivosSection.tsx`): hoje
+     "cancelada" só aparece dentro do modal da nota. Mostrar o `status` (autorizada, cancelada,
+     etc.) numa coluna ou selo na linha.
+   - **Texto desatualizado no topo de Notas Fiscais** (`NotasFiscaisPage.tsx`): ainda diz que "a
+     emissão automática ainda não existe". Ela existe desde a Focus NFe.
 2. **Se o e-mail do Zoho não ficou pronto**, ajudar com prints: verificar o TXT, criar o e-mail,
    e as linhas MX, SPF e DKIM no registro.br ("Configurar endereçamento" → zona DNS → "Nova
    entrada"; o campo Nome em branco é o próprio domínio, e não aceita `@`).

@@ -172,6 +172,10 @@ Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pr
 1. **Trocar o endereço no programa** (`package.json` → `build.publish`, e o endereço reserva em
    `scripts/liberar-versao.mjs`) → versão no canal de teste → ela testa no PC da casa dela →
    liberar pro Balcão. Se algum dos dois não atualizar sozinho, reinstalar à mão.
+   **Feito até aqui**: a troca vai na **`v0.9.47`** (só isso muda; o `app-update.yml` gerado num
+   build local saiu com `owner: sakura-corp`). Os PCs na `0.9.46` ou antes chegam nela pelo
+   redirecionamento do endereço antigo. **Atenção**: em 28/09 o Balcão estava no **canal de
+   teste**; se ainda estiver, recebe a `0.9.47` junto com o PC da casa, não depois.
 2. **Travas**: cofre (environment) `backup` só pra `main`; cofre `lojas` só pra `main` + aprovação
    dela, pros workflows "Liberar versão" e "Atualizar bancos"; `main` só por PR com aprovação (ela
    isenta); só ela cria tag `v*`. **Risco que fica**: quem tem escrita consegue editar uma release
@@ -180,9 +184,12 @@ Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pr
    não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
 4. **Convidar o Gustavo.**
 
-#### Pedido novo, no meio do passo 1: deixar o `sakura-system-ace` privado (AINDA NÃO DECIDIDO)
-Ela pediu "fazer o que precisa pra deixar o repositório privado também". Apresentei o que isso
-exige e **o passo 1 ficou parado**, porque ser privado muda pra onde o programa aponta:
+#### Deixar o `sakura-system-ace` privado: decidido que FICA PÚBLICO por enquanto (29/09)
+Ela pediu isso no meio do passo 1. Apresentei três caminhos (A: privado com o plano Team, uns
+US$ 4 por pessoa/mês; B: privado no gratuito, com o Gustavo trabalhando por fork; C: fechar mais
+pra frente) e **ela escolheu C: "sem custo a mais no momento"**. O repositório continua público; a
+hora de fechar é junto com o CNPJ ou antes do primeiro cliente, e a decisão volta pra ela. O que
+fechar vai exigir, pra não refazer a conta:
 - **Atualização**: o atualizador baixa o `latest.yml` sem login, então com o código privado as
   versões precisam morar num **repositório público só de versões** na organização (só o instalador
   e o `latest.yml`, sem código). O workflow Release passa a publicar lá com um token dela restrito
@@ -205,7 +212,6 @@ exige e **o passo 1 ficou parado**, porque ser privado muda pra onde o programa 
 - Se ela tem guardados os valores das senhas (secrets) que estão no GitHub. Importa pro passo 2:
   pôr um secret dentro de um cofre é cadastrar o valor de novo, e o GitHub nunca mostra o valor
   depois de salvo.
-- A decisão sobre o repositório privado (acima).
 
 #### Continua valendo do marco de 28/09 (em `docs/historico.md`)
 Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota

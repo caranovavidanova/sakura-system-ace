@@ -260,7 +260,7 @@ if (process.argv[1] && process.argv[1].endsWith("liberar-versao.mjs")) {
     const { tag, devolvidasAoTeste } = await liberarVersao(process.argv[2], {
       gh: ghDeVerdade,
       publico: publicoDeVerdade,
-      repositorio: process.env.GITHUB_REPOSITORY ?? "caranovavidanova/sakura-system-ace",
+      repositorio: process.env.GITHUB_REPOSITORY ?? "sakura-corp/sakura-system-ace",
     });
     if (resumo) {
       const linhas = [

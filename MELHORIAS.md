@@ -1,7 +1,7 @@
 # Sakura System — AutoCenter Edition — Guia de Melhorias
 
 > **Este arquivo é um prompt.** Ele foi escrito para ser lido por uma sessão do Claude Code
-> apontada para o repositório `caranovavidanova/sakura-system-ace`, junto de `CLAUDE.md`,
+> apontada para o repositório `sakura-corp/sakura-system-ace`, junto de `CLAUDE.md`,
 > `AGENTS.md` e `PROJETO_STATUS.md` (que já carregam sozinhos).
 >
 > Gerado em 10/09/2026, a partir de três fontes: o `PROJETO_STATUS.md` completo, o guia em PDF

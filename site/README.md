@@ -49,7 +49,7 @@ adicioná-lo em **Settings → Domains** — não muda nada no código.
 Os botões apontam para:
 
 ```
-https://github.com/caranovavidanova/sakura-system-ace/releases/latest/download/SakuraSystem-Setup.exe
+https://github.com/sakura-corp/sakura-system-ace/releases/latest/download/SakuraSystem-Setup.exe
 ```
 
 Esse endereço entrega **sempre a última versão liberada**, sem precisar mexer no site a cada

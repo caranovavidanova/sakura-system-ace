@@ -8,7 +8,7 @@
 ## 9. Como rodar / configurar (resumo)
 
 ```bash
-git clone https://github.com/caranovavidanova/sakura-system-ace.git
+git clone https://github.com/sakura-corp/sakura-system-ace.git
 cd sakura-system-ace
 npm install
 cp .env.example .env   # preencher com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (chave anon/publishable)
@@ -340,7 +340,7 @@ lugar de colar cada arquivo no SQL Editor de cada projeto Supabase. Usa a mesma 
 (o secret `BACKUP_EMPRESAS`), então empresa que está no backup está aqui também.
 
 **Pra rodar** (uns 2 minutos, pelo navegador):
-1. `github.com/caranovavidanova/sakura-system-ace` → aba **Actions**.
+1. `github.com/sakura-corp/sakura-system-ace` → aba **Actions**.
 2. Na lista da esquerda: **"Atualizar o banco de todas as empresas"**.
 3. **"Run workflow"** → no campo "modo", deixe **`ensaiar`** → botão verde **"Run workflow"**.
 4. Espere a bolinha ficar verde e clique nela: aparece uma tabela com cada empresa, em que
@@ -381,7 +381,7 @@ Builda automaticamente no GitHub e publica o instalador `.exe` pronto pra baixar
 `TR-09.1`, publicar põe a versão só no canal de teste** — as outras lojas recebem quando ela for
 liberada (ver "Liberar uma versão para todas as lojas", logo abaixo).
 
-**Passo único (só na primeira vez, já feito)**: `github.com/caranovavidanova/sakura-system-ace` →
+**Passo único (só na primeira vez, já feito)**: `github.com/sakura-corp/sakura-system-ace` →
 Settings → Actions → General → "Workflow permissions" → "Read and write permissions".
 
 **Os secrets `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` não são mais usados pelo build** (desde
@@ -449,7 +449,7 @@ seção 7); **não existe hoje um jeito confiável de checar isso por API** (`ge
 `list_releases` não enxergam rascunho não publicado) — na dúvida, pular pro próximo número de
 versão em vez de tentar reusar um nome antigo.
 
-O instalador aparece em `github.com/caranovavidanova/sakura-system-ace/releases`. O
+O instalador aparece em `github.com/sakura-corp/sakura-system-ace/releases`. O
 Windows/SmartScreen deve avisar "editor desconhecido" (normal sem certificado pago — "Mais
 informações → Executar assim mesmo"). PCs já atualizados se atualizam sozinhos na próxima tag.
 
@@ -490,7 +490,7 @@ nada — é a mesma versão, o mesmo instalador; só muda quem pode receber.
 - **Normal**: todo o resto. Computador novo já nasce assim — não precisa mexer.
 
 **Pra liberar** (uns 2 minutos, pelo navegador — não precisa de terminal):
-1. Abra `github.com/caranovavidanova/sakura-system-ace` → aba **Actions**.
+1. Abra `github.com/sakura-corp/sakura-system-ace` → aba **Actions**.
 2. Na lista da esquerda, clique em **"Liberar versão para todas as lojas"**.
 3. À direita, clique em **"Run workflow"**, escreva a versão (ex: `v0.9.40`) e clique no botão
    verde **"Run workflow"**.
@@ -559,7 +559,7 @@ ela é, por dentro, a `0.9.34` que funcionava. **Nunca republicar o número que 
 mesmo motivo de sempre: número de versão que já circulou não se reusa.
 
 **Metade 2, caminho de emergência (uma máquina só, sem esperar build).** Baixar o instalador da
-versão boa direto pela release dela — `github.com/caranovavidanova/sakura-system-ace/releases`,
+versão boa direto pela release dela — `github.com/sakura-corp/sakura-system-ace/releases`,
 abrir a release antiga e pegar o `.exe` — e instalar por cima. Não precisa desinstalar antes.
 **O `conexao.json` NÃO se perde**: ele mora em `%APPDATA%\Sakura System - AutoCenter Edition\`,
 fora da pasta do programa, e o desinstalador não mexe em dado de aplicativo. O `erros.log` e o
@@ -600,7 +600,7 @@ continuar em qualquer computador com internet. Dois passos manuais em cada compu
 nunca ficam salvos no Git (por segurança):
 
 ```bash
-git clone https://github.com/caranovavidanova/sakura-system-ace.git
+git clone https://github.com/sakura-corp/sakura-system-ace.git
 cd sakura-system-ace
 npm install
 cp .env.example .env   # editar com VITE_SUPABASE_URL=https://rlgdjiowvnfzsedehyga.supabase.co

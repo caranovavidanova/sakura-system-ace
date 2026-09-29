@@ -125,7 +125,7 @@ descobrir no dia.
 
 Backup que ninguém olha tem o costume de estar quebrado justo no dia em que precisa:
 
-1. Abrir https://github.com/caranovavidanova/sakura-system-ace/actions → **Backup do banco**
+1. Abrir https://github.com/sakura-corp/sakura-system-ace/actions → **Backup do banco**
 2. Ver se as últimas rodadas estão verdes
 3. Uma vez por mês, baixar a cópia mais recente e fazer a **parte 1** acima (abrir o arquivo). Se
    abriu e o `banco.sql` tem conteúdo, está tudo certo — pode apagar o que baixou

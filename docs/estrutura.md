@@ -8,7 +8,7 @@
 ## 4. Estrutura de pastas
 
 ```
-amigao/                        (raiz do repositório GitHub: caranovavidanova/sakura-system-ace —
+amigao/                        (raiz do repositório GitHub: sakura-corp/sakura-system-ace —
                                  renomeado nesta sessão, era "amigao"; a pasta local pode continuar
                                  se chamando "amigao" sem problema, é só o nome no GitHub que mudou)
 ├── electron/main.ts            # processo principal (janela, autoUpdater, abre DevTools em modo dev)

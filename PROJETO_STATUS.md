@@ -27,6 +27,7 @@ sessão. O resto mora em `docs/` e **só é aberto quando o assunto pede**:
 | `docs/pendencias-e-futuro.md` | o que não existe, parte fiscal (playbook por loja nova), linha do tempo (antiga seção 8) | ao planejar próximo passo |
 | `docs/operacao.md` | rodar, instalar empresa nova, **publicar/liberar versão**, backup, atualizar bancos, voltar versão (antigas seções 9 e 11) | ao publicar, rodar migration ou instalar loja |
 | `docs/historico.md` | estado do Git e todos os marcos "onde parou" antigos (antiga seção 10) | quase nunca |
+| `docs/comparativo-anexar.md` | o que o concorrente Anexar anuncia × o que temos, e o que falta (29/09/2026) | ao planejar funcionalidade nova ou falar de venda |
 | `MELHORIAS.md` | o guia de melhorias (TR-/TL-/FN-), 227 KB | só quando ela citar um item |
 
 **Referências antigas continuam valendo**: código e documentos citam "item 33 da seção 6" — a seção 6

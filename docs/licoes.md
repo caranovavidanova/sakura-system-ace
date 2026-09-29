@@ -324,7 +324,12 @@
     vez que uma tag é publicada — deixar apontando pro nome antigo arriscaria depender do
     redirecionamento indefinidamente. **Se `git pull`/`git push` local parar de funcionar depois
     dessa mudança**, rodar `git remote set-url origin
-    https://github.com/caranovavidanova/sakura-system-ace.git` no terminal.
+    https://github.com/sakura-corp/sakura-system-ace.git` no terminal.
+    **Segunda mudança de endereço, 29/09/2026**: ela transferiu o repositório da conta pessoal pra
+    organização `sakura-corp` (`caranovavidanova/sakura-system-ace` → `sakura-corp/sakura-system-ace`).
+    Mesmo cuidado: `build.publish.owner` foi trocado na `v0.9.47`, e os programas instalados antes
+    dela chegam na atualização pelo redirecionamento. Esse redirecionamento some se alguém criar um
+    repositório `sakura-system-ace` na conta pessoal dela, então isso nunca pode ser feito.
 23. **Continuação do item 15: operador sem loja vinculada trava "Inativar"/"Excluir" em silêncio** —
     mesma família de bug (RLS sem policy cobrindo o caso vira "botão não faz nada", sem erro).
     Editar/inativar/excluir um operador exige `operador_administra(id)`, que só é verdadeiro se

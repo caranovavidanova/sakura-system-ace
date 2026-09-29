@@ -1,6 +1,6 @@
 {
   "name": "sakura-system-autocenter",
-  "version": "0.9.46",
+  "version": "0.9.47",
   "private": true,
   "type": "module",
   "description": "Sakura System — AutoCenter Edition",
@@ -85,7 +85,7 @@
     "artifactName": "SakuraSystem-Setup.exe",
     "publish": {
       "provider": "github",
-      "owner": "caranovavidanova",
+      "owner": "sakura-corp",
       "repo": "sakura-system-ace",
       "releaseType": "release"
     },

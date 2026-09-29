@@ -142,8 +142,8 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 ### 29/09/2026, continuação: o repositório foi pra organização `sakura-corp`, e o plano do painel
 
 Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pro topo de
-`docs/historico.md`). **Estado do código** no começo desta parte: `main` na **`v0.9.46`**
-(publicada e liberada), banco na **`0064`**.
+`docs/historico.md`). **Estado do código** no fim: `main` na **`v0.9.47`** (publicada no canal de
+teste, **não liberada**; a liberada pra todas as lojas continua a `v0.9.46`), banco na **`0064`**.
 
 #### Decidido por ela (29/09)
 - **Organização `sakura-corp` no GitHub**, criada por ela (pertence à conta pessoal dela até
@@ -172,10 +172,13 @@ Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pr
 1. **Trocar o endereço no programa** (`package.json` → `build.publish`, e o endereço reserva em
    `scripts/liberar-versao.mjs`) → versão no canal de teste → ela testa no PC da casa dela →
    liberar pro Balcão. Se algum dos dois não atualizar sozinho, reinstalar à mão.
-   **Feito até aqui**: a troca vai na **`v0.9.47`** (só isso muda; o `app-update.yml` gerado num
-   build local saiu com `owner: sakura-corp`). Os PCs na `0.9.46` ou antes chegam nela pelo
-   redirecionamento do endereço antigo. **Atenção**: em 28/09 o Balcão estava no **canal de
-   teste**; se ainda estiver, recebe a `0.9.47` junto com o PC da casa, não depois.
+   **Feito até aqui**: a **`v0.9.47`** (só a troca de endereço; o `app-update.yml` gerado num build
+   local saiu com `owner: sakura-corp`) foi **publicada no canal de teste** em 29/09, completa
+   (`SakuraSystem-Setup.exe` + `latest.yml`, tamanhos batendo) e **ainda não liberada**. O
+   `latest.yml` dela pelo endereço antigo responde `301` pro novo. **Falta**: ela abrir o programa
+   no PC da casa, conferir que atualizou pra `0.9.47`, e depois pedir o Liberar. **Atenção**: em
+   28/09 o Balcão estava no **canal de teste**; se ainda estiver, recebe a `0.9.47` junto com o PC
+   da casa, não depois.
 2. **Travas**: cofre (environment) `backup` só pra `main`; cofre `lojas` só pra `main` + aprovação
    dela, pros workflows "Liberar versão" e "Atualizar bancos"; `main` só por PR com aprovação (ela
    isenta); só ela cria tag `v*`. **Risco que fica**: quem tem escrita consegue editar uma release

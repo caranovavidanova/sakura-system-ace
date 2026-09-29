@@ -64,7 +64,7 @@ importação da nota do fornecedor por XML.
 | Contas a pagar e receber | ✅ | Os dois módulos, com recorrência e desfazer |
 | Renegociações | ❌ | Refazer uma conta a receber atrasada em novas parcelas |
 | Convênio | ❌ | Empresa/frota que abastece a conta no mês e paga tudo junto (fatura mensal por cliente) |
-| DRE e DRO | ❌ | Relações tem vendas × custo × lucro. Falta o **DRE** de verdade (receita → custo → despesas por categoria → resultado do mês) |
+| DRE e DRO | ❌ | Relações tem vendas × custo × lucro. Falta o **DRE** de verdade (receita → custo → despesas por categoria → resultado do mês). Explicação e um DRE real de modelo no repositório privado `sakura-corp`, pasta `dre/` |
 | Controle de cartões | 🟡 | Parcelas e juros do cartão na venda. Falta **taxa da maquininha** e "quando cai na conta" (recebíveis) |
 | Controle de cheque | ❌ | Cadastro de cheque recebido, data pra depositar, devolvido |
 | Plano de contas | 🟡 | As categorias do Caixa são um plano simples (um nível). Falta hierarquia (grupo → subgrupo), que é o que alimenta o DRE |

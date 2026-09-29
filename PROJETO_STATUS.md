@@ -210,9 +210,15 @@ fechar vai exigir, pra não refazer a conta:
 
 #### Em aberto
 - O usuário do Gustavo no GitHub.
-- Se ela tem guardados os valores das senhas (secrets) que estão no GitHub. Importa pro passo 2:
-  pôr um secret dentro de um cofre é cadastrar o valor de novo, e o GitHub nunca mostra o valor
-  depois de salvo.
+- **Os valores das senhas (secrets) do GitHub**: ela **não tinha guardado** e decidiu pegar todos
+  de novo (29/09) e guardar num gerenciador de senhas (sugeri o Bitwarden). Passei o passo a passo
+  dos 8 que as automações usam: `BACKUP_REPO` e `R2_BUCKET` já se sabem; a chave pública sai do
+  `C:\age\chave-do-backup.txt`; o token R2 e o token do GitHub são **novos** (só aparecem uma vez;
+  os velhos são apagados depois que os novos funcionarem); a senha do banco é **resetada** (só
+  letras e números), e por isso o `BACKUP_EMPRESAS` atual precisa ser trocado **no mesmo dia**, senão
+  o backup das 3h falha. **Parte 2** (quando ela terminar): cadastrar direto nos cofres `backup` e
+  `lojas` do passo 2, eu pôr o `environment:` nos workflows, testar o backup na hora, e só então
+  apagar os secrets soltos do repositório e os tokens velhos.
 
 #### Continua valendo do marco de 28/09 (em `docs/historico.md`)
 Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota

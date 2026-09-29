@@ -96,7 +96,8 @@ vai pro arquivo de `docs/` certo, nunca aqui. Se este índice passar de ~30 KB, 
 - **Este arquivo carrega sozinho em toda sessão nova** — `CLAUDE.md` importa `AGENTS.md` e
   `PROJETO_STATUS.md` (`@AGENTS.md` / `@PROJETO_STATUS.md`), então não é preciso a usuária colar
   ou anexar este arquivo de novo pra eu ter esse contexto. Basta abrir uma sessão nova apontando
-  pro repositório `caranovavidanova/sakura-system-ace`.
+  pro repositório `sakura-corp/sakura-system-ace` (era `caranovavidanova/sakura-system-ace` até
+  29/09/2026; o endereço antigo redireciona).
 
 
 ## 2. O projeto em um parágrafo
@@ -131,31 +132,82 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
   olhar renderizada; mudança de Electron → `npm run test:electron`. Teste só prova o que se viu
   ele reprovar (quebrar de propósito).
 - **Validação incerta é aviso, nunca tranca** (`docs/licoes.md`, item 33).
+- **Endereço**: `sakura-corp/sakura-system-ace` desde 29/09/2026. **Nunca criar um repositório
+  `sakura-system-ace` na conta pessoal dela** (quebra o redirecionamento do endereço antigo).
 
 ## 4. Onde parou (o marco mais recente — os anteriores estão em `docs/historico.md`)
 
 
-### 29/09/2026: comparativo com o concorrente e o exemplo de DRE
 
-Sessão de documentação, **sem código de app**. O marco anterior (28/09: testes na loja, os três
-ajustes pendentes, a preparação do painel da equipe) está em `docs/historico.md`, e **tudo o que
-ele deixou em aberto continua valendo**.
+### 29/09/2026, continuação: o repositório foi pra organização `sakura-corp`, e o plano do painel
 
-**Estado do código**: não mudou. `main` na **`v0.9.46`** (publicada e liberada), banco na **`0064`**.
+Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pro topo de
+`docs/historico.md`). **Estado do código** no começo desta parte: `main` na **`v0.9.46`**
+(publicada e liberada), banco na **`0064`**.
 
-- **Comparativo com o Anexar** (`docs/comparativo-anexar.md`): ela mandou 8 prints do site do
-  concorrente. Dos 56 recursos que eles anunciam, temos 12, temos em parte 10 e faltam 34. Os que
-  mais pesam: orçamento (`FN-01`), checklist com fotos e assinatura (`FN-02`), agenda (`FN-05`),
-  devolução (`FN-08`), DRE, curva ABC, fluxo de caixa projetado e o app de celular. **É lista de
-  consulta, não plano**: nada é pra construir antes de ela pedir.
-- **Exemplo de DRE** (no privado, `sakura-corp`, pasta `dre/`): a explicação de DRE que o pai dela
-  escreveu, os números dos prints transcritos e os 2 PDFs. **Os números são de uma das lojas do
-  pai dela, tirados do sistema daquela loja: só exemplo de como um DRE funciona, sem relação com
-  o SSACE nem com a Pneus Amigão.** Serve de modelo quando o SSACE ganhar o DRE (a seção 4 do
-  `dre/README.md` lista o que faltaria: taxa da maquininha, grupos de despesa etc.).
+#### Decidido por ela (29/09)
+- **Organização `sakura-corp` no GitHub**, criada por ela (pertence à conta pessoal dela até
+  existir CNPJ), com o app do Claude instalado em todos os repositórios. **O `sakura-system-ace`
+  foi transferido pra lá**: o endereço agora é `sakura-corp/sakura-system-ace`, e o antigo
+  (`caranovavidanova/sakura-system-ace`) redireciona. Conferido: o `latest.yml` pelo endereço
+  antigo responde `301` pro novo.
+- **Ficam na conta pessoal**: `caranovavidanova/ssace-backups` e `caranovavidanova/sakura-corp`
+  (o privado). **Cuidado com o nome**: a organização `sakura-corp` e o repositório privado
+  `sakura-corp` são coisas diferentes. Se o privado for pra organização um dia, **antes** desligar
+  a leitura dos membros (senão todo membro lê preço, margem e sócios).
+- **Nunca criar na conta pessoal dela um repositório chamado `sakura-system-ace`**: isso quebra o
+  redirecionamento, que é por onde os programas instalados procuram atualização até receberem a
+  versão com o endereço novo.
+- **Gustavo** (tem Claude Pro) entra como colaborador do `sakura-system-ace` pra construir o
+  painel da equipe, no PC dele e com os tokens dele. **O acordo provisório não é pré-requisito**
+  (isso muda a ordem do marco de 28/09).
+- **O painel mora dentro do `sakura-system-ace`**: pasta `painel/`, manual em `docs/painel.md`.
+  Isso substitui o repositório separado `sakura-painel` do marco de 28/09. Formato: página web
+  React + Vite, tarefas nas **issues do GitHub** com uma etiqueta por leva, login pelo GitHub.
+  **1ª versão**: a lista de tarefas da leva e quem está com cada uma.
+- O `EQUIPE.md` do privado ainda descreve o `sakura-painel` separado: corrigir quando o privado
+  estiver na sessão.
 
-#### Por onde a próxima sessão começa
-Igual ao marco de 28/09 (em `docs/historico.md`): perguntar dos testes que faltavam na loja e
-juntar com os três ajustes pendentes (modais com fundo vazando, status da nota na lista, texto
-velho em Notas Fiscais); depois, o painel da equipe; e as datas de outubro (CNPJ, Focus
-Solo → Start, fatura da Focus em 10/10, alíquota de 10/2026 no portal em 1º/10).
+#### Próximos passos, na ordem dela
+1. **Trocar o endereço no programa** (`package.json` → `build.publish`, e o endereço reserva em
+   `scripts/liberar-versao.mjs`) → versão no canal de teste → ela testa no PC da casa dela →
+   liberar pro Balcão. Se algum dos dois não atualizar sozinho, reinstalar à mão.
+2. **Travas**: cofre (environment) `backup` só pra `main`; cofre `lojas` só pra `main` + aprovação
+   dela, pros workflows "Liberar versão" e "Atualizar bancos"; `main` só por PR com aprovação (ela
+   isenta); só ela cria tag `v*`. **Risco que fica**: quem tem escrita consegue editar uma release
+   publicada na mão. Isso fica protegido só pela regra na memória.
+3. **Memória**: o trecho "quando quem está trabalhando não é a Carol" (abre PR e **não mescla**,
+   não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
+4. **Convidar o Gustavo.**
+
+#### Pedido novo, no meio do passo 1: deixar o `sakura-system-ace` privado (AINDA NÃO DECIDIDO)
+Ela pediu "fazer o que precisa pra deixar o repositório privado também". Apresentei o que isso
+exige e **o passo 1 ficou parado**, porque ser privado muda pra onde o programa aponta:
+- **Atualização**: o atualizador baixa o `latest.yml` sem login, então com o código privado as
+  versões precisam morar num **repositório público só de versões** na organização (só o instalador
+  e o `latest.yml`, sem código). O workflow Release passa a publicar lá com um token dela restrito
+  a esse repositório. A versão de transição sai **nos dois lugares**; só depois de o PC da casa e
+  o Balcão estarem nela o código vira privado (item 21 de `docs/licoes.md`: rever o mecanismo
+  **antes** de fechar, não depois).
+- **Minutos do Actions**: repositório público não paga. Privado no plano gratuito tem uma cota por
+  mês (eram 2.000 minutos; conferir na tela de cobrança). Medido em 29/09: cada rodada do CI gasta
+  **~12 minutos cobráveis** (5 tarefas), e foram **83 rodadas em 3 dias** (cada PR roda duas vezes,
+  no `push` e no `pull_request`). Nesse ritmo passa da cota.
+- **As travas do passo 2**: pelo que eu sei dos planos (não deu pra abrir a documentação do GitHub
+  desta sessão, conferir), regra de branch/tag e cofre (environment) em repositório **privado**
+  pedem o plano **Team**, e "aprovação obrigatória" num cofre privado pede o Enterprise. No
+  gratuito, fechar o código tira as travas justamente quando o Gustavo entra.
+- **O que fechar NÃO resolve**: o que já vazou no histórico (CSC, token do Giap, senha do portal)
+  continua precisando ser trocado, e uma cópia (fork) feita enquanto era público continua pública.
+
+#### Em aberto
+- O usuário do Gustavo no GitHub.
+- Se ela tem guardados os valores das senhas (secrets) que estão no GitHub. Importa pro passo 2:
+  pôr um secret dentro de um cofre é cadastrar o valor de novo, e o GitHub nunca mostra o valor
+  depois de salvo.
+- A decisão sobre o repositório privado (acima).
+
+#### Continua valendo do marco de 28/09 (em `docs/historico.md`)
+Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota
+na lista, texto velho em Notas Fiscais) e as datas de outubro (CNPJ, Focus Solo → Start, fatura da
+Focus em 10/10, alíquota de 10/2026 no portal em 1º/10).

@@ -7,7 +7,9 @@
 
 ## 10. Estado do Git
 
-- Repositório: `caranovavidanova/sakura-system-ace` (era um projeto antigo "Pneus Amigão" em
+- Repositório: `sakura-corp/sakura-system-ace` desde 29/09/2026, quando ela o transferiu da conta
+  pessoal (`caranovavidanova/sakura-system-ace`, que redireciona) pra organização `sakura-corp`
+  (era um projeto antigo "Pneus Amigão" em
   Next.js, completamente substituído; o nome do repositório era `amigao` e foi renomeado, além de
   **tornado público** — ver "Auto-update via GitHub Releases não funciona com repositório privado"
   logo abaixo). **Ser público tem uma consequência que já mordeu**: nada de credencial neste
@@ -676,6 +678,31 @@ Se ela pedir sugestão, as duas respostas honestas são:
   porque a fase 2 (as duas lojas do amigo do pai dela) está no horizonte, e três desses doze já
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
+
+### Onde parou em 29/09/2026: comparativo com o concorrente e o exemplo de DRE (histórico — o marco mais recente está logo acima)
+
+Sessão de documentação, **sem código de app**. O marco anterior (28/09: testes na loja, os três
+ajustes pendentes, a preparação do painel da equipe) está em `docs/historico.md`, e **tudo o que
+ele deixou em aberto continua valendo**.
+
+**Estado do código**: não mudou. `main` na **`v0.9.46`** (publicada e liberada), banco na **`0064`**.
+
+- **Comparativo com o Anexar** (`docs/comparativo-anexar.md`): ela mandou 8 prints do site do
+  concorrente. Dos 56 recursos que eles anunciam, temos 12, temos em parte 10 e faltam 34. Os que
+  mais pesam: orçamento (`FN-01`), checklist com fotos e assinatura (`FN-02`), agenda (`FN-05`),
+  devolução (`FN-08`), DRE, curva ABC, fluxo de caixa projetado e o app de celular. **É lista de
+  consulta, não plano**: nada é pra construir antes de ela pedir.
+- **Exemplo de DRE** (no privado, `sakura-corp`, pasta `dre/`): a explicação de DRE que o pai dela
+  escreveu, os números dos prints transcritos e os 2 PDFs. **Os números são de uma das lojas do
+  pai dela, tirados do sistema daquela loja: só exemplo de como um DRE funciona, sem relação com
+  o SSACE nem com a Pneus Amigão.** Serve de modelo quando o SSACE ganhar o DRE (a seção 4 do
+  `dre/README.md` lista o que faltaria: taxa da maquininha, grupos de despesa etc.).
+
+#### Por onde a próxima sessão começa
+Igual ao marco de 28/09 (em `docs/historico.md`): perguntar dos testes que faltavam na loja e
+juntar com os três ajustes pendentes (modais com fundo vazando, status da nota na lista, texto
+velho em Notas Fiscais); depois, o painel da equipe; e as datas de outubro (CNPJ, Focus
+Solo → Start, fatura da Focus em 10/10, alíquota de 10/2026 no portal em 1º/10).
 
 ### Onde parou em 28/09/2026: testes na loja e preparação do painel da equipe (histórico — o marco mais recente está logo acima)
 

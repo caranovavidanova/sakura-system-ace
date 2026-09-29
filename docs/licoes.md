@@ -328,8 +328,10 @@
     **Segunda mudança de endereço, 29/09/2026**: ela transferiu o repositório da conta pessoal pra
     organização `sakura-corp` (`caranovavidanova/sakura-system-ace` → `sakura-corp/sakura-system-ace`).
     Mesmo cuidado: `build.publish.owner` foi trocado na `v0.9.47`, e os programas instalados antes
-    dela chegam na atualização pelo redirecionamento. Esse redirecionamento some se alguém criar um
-    repositório `sakura-system-ace` na conta pessoal dela, então isso nunca pode ser feito.
+    dela chegam na atualização pelo redirecionamento. **Confirmado na prática**: o PC da casa dela,
+    na `0.9.46` e no canal de teste, atualizou sozinho pra `0.9.47` pelo endereço antigo. Esse
+    redirecionamento some se alguém criar um repositório `sakura-system-ace` na conta pessoal dela,
+    então isso nunca pode ser feito.
 23. **Continuação do item 15: operador sem loja vinculada trava "Inativar"/"Excluir" em silêncio** —
     mesma família de bug (RLS sem policy cobrindo o caso vira "botão não faz nada", sem erro).
     Editar/inativar/excluir um operador exige `operador_administra(id)`, que só é verdadeiro se

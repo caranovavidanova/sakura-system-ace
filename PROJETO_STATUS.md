@@ -134,79 +134,61 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 ## 4. Onde parou (o marco mais recente — os anteriores estão em `docs/historico.md`)
 
 
-### 27/09/2026, à noite: como a equipe vai trabalhar (temas 2 e 3), domínio, e-mail e custos da empresa
+### 28/09/2026: testes na loja e preparação do painel da equipe
 
-Conversa de alinhamento, **sem código de app**. O plano de equipe inteiro, os custos e as
-pendências da empresa estão no repositório **privado** `caranovavidanova/sakura-corp`, em
-`EQUIPE.md` (adicionar à sessão quando o assunto for equipe). Aqui fica só o que uma sessão do
-SSACE precisa saber.
-
-**Decidido por ela:**
-- **Linha de produção por levas**: ela planeja comigo → as tarefas saem juntas numa leva → cada
-  um faz a sua e solta no canal de teste → a leva **congela**, todos testam → **eu escrevo o
-  relatório** → **ela aprova** → banco e Liberar. Bug de loja não espera a leva.
-- **As tarefas nascem nas conversas dela comigo** e moram no GitHub (onde os Claudes trabalham).
-  Pegar só tarefa sem dono, pôr o nome antes de começar, um PR por tarefa.
-- **Trabalho medido em horas por semana** (estimativa por tarefa), não em dinheiro.
-- **Primeiro projeto da equipe**: uma interface própria de organização (lê o GitHub, não o
-  substitui), planejada por ela comigo e programada pelos amigos em tarefas. Vem antes de vender.
-- **"Estruturar a base"** = ter lucro estável no SSACE antes de investir tempo e dinheiro em
-  outro projeto. Não abrir produto novo antes disso.
-- **Quando os amigos entrarem, muda a regra de mesclar da seção 3** pra eles: PR entra com CI
-  verde + revisão de um colega; a aprovação dela fica no relatório da leva. Pra ela, continua
-  igual.
-- **Amigos sem acesso** ao banco de verdade da Pneus Amigão e ao `sakura-corp`, por enquanto.
-- **Claude Team** (4 lugares comuns, por mês), **antes do primeiro cliente** (a data é dela),
-  assinado com **`contato@sakuracorp.com.br`**. O domínio `sakuracorp.com.br` foi registrado
-  hoje no registro.br, e o **e-mail ficou pronto e testado** no Zoho Mail (plano grátis).
-- **Abrir o CNPJ no começo de outubro** (recomendado; ela pareceu de acordo, confirmar): a
-  Pneus Amigão passa a ser cliente pagante em outubro e precisa de nota de serviço. Detalhe da
-  contabilidade, custos e prazos no `sakura-corp` (`EMPRESA.md` e `PRECOS-E-CUSTOS.md`).
-- **O leitor de nota por IA fica fora das primeiras versões** pras lojas novas (tabela de
-  decisões em `docs/decisoes.md`).
-- Apresentação **"Como a Sakura vai trabalhar"** (12 slides) feita e enviada ao grupo:
-  `https://claude.ai/artifact/4UL1gjKV6r1S1JrjrxY5SQ`.
+Sessão de conversa, **sem código de app**. O marco anterior (27/09, à noite: levas, horas, Team,
+domínio, e-mail `contato@sakuracorp.com.br` pronto, CNPJ em outubro, custos) está em
+`docs/historico.md`; o detalhe privado (equipe, custos, empresa) no `sakura-corp`, em `EQUIPE.md`,
+`EMPRESA.md`, `PRECOS-E-CUSTOS.md` e `ACORDO-PROVISORIO.md` (adicionar à sessão quando o assunto for
+equipe ou empresa).
 
 **Estado do código**: não mudou. `main` na **`v0.9.46`** (publicada e liberada), banco na **`0064`**.
 
+#### Testes na loja (28/09)
+- **Feitos**: o computador da loja aparece como **"Balcão"**, na `0.9.46`, no **canal de teste**.
+  O outro da lista (`DESKTOP-PKJ2A3B`, `0.9.44`, teste) deve ser o da casa dela: ela vai abrir o
+  programa lá, confirmar e dar um apelido (se o dela tiver outro nome, esse pode ser esquecido).
+  **NFS-e emitida e cancelada pelo porteiro** (número 22, aparece "cancelada") → **a parte 2 do
+  `TR-04.2` está liberada** (a migration que apaga a cópia antiga do token; só quando ela pedir).
+- **Faltavam**: venda de balcão com o leitor, ficha do veículo, Fechamento do Caixa, "Registrar
+  pagamento" de comissão, trava do desconto, pagar/desfazer conta, faturar OS (recebido agora e a
+  receber). Ela ia juntar o que achar estranho (fotos) pra resolver tudo de uma vez **quando o
+  limite de uso dela resetar**.
+
+#### Três ajustes que ela pediu e deixou PENDENTES (não fazer antes de ela pedir)
+- **Modais com o fundo vazando**: o texto da tela de trás aparece através do pop-up (ela viu no
+  "Nota fiscal" de Notas Fiscais; vale pros outros). Causa: o `Modal` (`src/components/Modal.tsx`)
+  usa o `sakura-card`, vidro translúcido (`rgba(20,15,20,0.35)` + blur), sobre uma sobreposição de
+  só `bg-black/40`. Caminho provável: painel opaco e sobreposição mais escura; os dois modais com
+  sobreposição própria (`ImportarNotaFiscalXmlModal`, `ImportarNotasFiscaisModal`) também. Conferir
+  contraste (`npm run contraste` + varredura nas telas) e olhar renderizado.
+- **Status da nota na própria lista** de Notas Fiscais (`ArquivosSection.tsx`): "cancelada" só
+  aparece dentro do modal. Mostrar o `status` numa coluna ou selo na linha.
+- **Texto desatualizado no topo de Notas Fiscais** (`NotasFiscaisPage.tsx`): ainda diz que "a
+  emissão automática ainda não existe".
+
+#### O painel da equipe: preparação (nada criado ainda)
+Um amigo que já tem o Claude Pro vai começar o painel antes do Team. Ordem combinada (detalhe no
+`EQUIPE.md` do `sakura-corp`): **acordo provisório assinado** (rascunho pronto, faltam três
+respostas dela) → **planejar a leva 0** com ela (proposta: 1ª versão = lista de tarefas da leva e
+quem está com cada uma, lendo do GitHub) → ela cria a **organização `sakura-corp` no GitHub**
+(recomendado em vez de conta nova) e, dentro dela, o repositório privado **`sakura-painel`** → eu
+ligo o repositório à sessão e escrevo o manual (`CLAUDE.md`) e as tarefas → convite ao amigo
+(falta o usuário do GitHub dele). **O `sakura-system-ace` NÃO muda de endereço por enquanto**: os
+programas instalados buscam as atualizações em `caranovavidanova/sakura-system-ace`; mudar exige um
+plano próprio (junto com a decisão de "fechar o código"). E-mails da equipe: um por pessoa no Zoho
+grátis (faltam os nomes); no GitHub, quem já tem conta adiciona o e-mail da Sakura na conta que já
+tem, sem criar outra.
+
 #### Por onde a próxima sessão começa
-
-1. **Testes de segunda (28/09) na loja** (a lista está no marco "27/09/2026, de manhã", em
-   `docs/historico.md`). **Já feitos**: o computador da loja aparece como **"Balcão"**, na
-   `0.9.46`, no **canal de teste**; o outro da lista (`DESKTOP-PKJ2A3B`, `0.9.44`, teste) deve ser
-   o computador da casa dela (ela vai confirmar abrindo o programa lá, e dar um apelido); **NFS-e
-   emitida e cancelada pelo porteiro** (número 22, aparece "cancelada") → **a parte 2 do
-   `TR-04.2` está liberada** (a migration que apaga a cópia antiga do token; só fazer quando ela
-   pedir). **Faltavam**: venda de balcão com o leitor, ficha do veículo, Fechamento do Caixa e o
-   resto da `v0.9.42`/`0.9.43`. Perguntar como foram. Bug da loja é pra fazer na hora.
-   **Três ajustes que ela pediu e deixou pendentes** (28/09):
-   - **Modais com o fundo vazando**: o texto da tela de trás aparece através do pop-up e atrapalha
-     a leitura (ela viu no "Nota fiscal" de Notas Fiscais, e disse que vale pros outros). Causa:
-     o `Modal` (`src/components/Modal.tsx`) usa o `sakura-card`, que é vidro translúcido
-     (`rgba(20,15,20,0.35)` + blur), sobre uma sobreposição de só `bg-black/40`. Caminho
-     provável: painel do modal opaco e sobreposição mais escura; os dois modais que têm
-     sobreposição própria (`ImportarNotaFiscalXmlModal`, `ImportarNotasFiscaisModal`) também.
-     Conferir contraste (`npm run contraste` e a varredura nas telas) e olhar renderizado.
-   - **Status da nota na própria lista** de Notas Fiscais (`ArquivosSection.tsx`): hoje
-     "cancelada" só aparece dentro do modal da nota. Mostrar o `status` (autorizada, cancelada,
-     etc.) numa coluna ou selo na linha.
-   - **Texto desatualizado no topo de Notas Fiscais** (`NotasFiscaisPage.tsx`): ainda diz que "a
-     emissão automática ainda não existe". Ela existe desde a Focus NFe.
-2. **Se o e-mail do Zoho não ficou pronto**, ajudar com prints: verificar o TXT, criar o e-mail,
-   e as linhas MX, SPF e DKIM no registro.br ("Configurar endereçamento" → zona DNS → "Nova
-   entrada"; o campo Nome em branco é o próprio domínio, e não aceita `@`).
-3. **Quando o Team estiver perto**: primeiro as pendências da empresa que ela deixou pra essa
-   hora (no `sakura-corp`, começando pelo acordo de que o código é da empresa). Depois, planejar a
-   interface com ela (a leva 0) e escrever o `docs/equipe.md` com as regras pros Claudes da
-   equipe. **Onde a interface mora já está decidido** (repositório privado novo, mesma base do
-   SSACE, Supabase numa conta nova com o e-mail da Sakura; detalhe no `EQUIPE.md`). Não começar
-   antes de ela pedir.
-
-4. **Focus NFe: trocar do plano Solo pro Start antes de cadastrar o CNPJ da primeira loja
-   nova** (o Solo aceita 1 CNPJ só). A primeira fatura da Focus deve vencer em 10/10.
-5. **Perguntar à contabilidade da Pneus Amigão** se a migração das empresas do Simples pro
-   Ambiente Nacional da NFS-e, adiada pra **1º/11/2026** (citada pelo suporte da Focus em
-   26/08), vale pra loja. Se valer, é um fato novo pro item 3 do playbook fiscal em
-   `docs/pendencias-e-futuro.md`, que tinha descartado essa hipótese.
+1. **Perguntar como foram os testes que faltavam** e juntar o que ela trouxe com os três ajustes
+   pendentes. Bug da loja é pra fazer na hora (quando ela pedir).
+2. **O painel**: pegar as três respostas do acordo e gerar o PDF; fechar a leva 0; seguir a ordem
+   acima conforme ela for criando a organização e o repositório.
+3. **Continua valendo do marco anterior**: Claude Team antes do primeiro cliente (a data é dela);
+   **abrir o CNPJ no começo de outubro** (confirmar com ela); trocar a **Focus do Solo pro Start**
+   antes do CNPJ da primeira loja nova; primeira fatura da Focus em **10/10**; perguntar à
+   contabilidade da Pneus Amigão sobre a migração do Simples pro Ambiente Nacional da NFS-e em
+   **1º/11** (se valer, é fato novo pro item 3 do playbook em `docs/pendencias-e-futuro.md`).
 
 Com data: **1º/10/2026**, a alíquota de 10/2026 no portal da prefeitura.

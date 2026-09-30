@@ -375,6 +375,19 @@
     Conferido com 13 testes de `psql` de mentira (seis mutações, todas vermelhas) e no teste de
     integração com Postgres de verdade (passo 8).
 
+12. **Repositório só de versões (a trava de verdade das versões, e o primeiro passo pra fechar o
+    código)** — combinado em 30/09/2026 pra **depois**. As versões (instalador + `latest.yml`)
+    passam a ser publicadas num repositório público separado, onde colaborador não escreve, com um
+    token dela guardado no cofre `lojas`. Fecha o furo do item 78 da seção 6 e é o pré-requisito
+    pra deixar o `sakura-system-ace` privado. A transição e os custos estão no marco de 29-30/09 do
+    `docs/historico.md`. **Cuidado barato até lá**: o Balcão no canal normal, pra versão de teste
+    só chegar no PC dela.
+13. **Painel da equipe** (`docs/painel.md`) — a **leva 0** foi criada em 30/09/2026 (issues #350 a
+    #355): o painel no ar, login, a leva com contador e tempo real. Depois: a **leva 1** (a linha
+    de produção completa: botão de pegar tarefa, fases da leva, horas por pessoa, relatório e
+    aprovação) e o **financeiro com DRE**, que precisa de um banco privado (nunca no GitHub). O
+    exemplo de DRE está no repositório privado (`dre/`).
+
 Funcionalidades explicitamente **futuras** (não implementar sem pedido explícito, mas manter
 arquitetura aberta): integração com maquininha de cartão (TEF), assistente de IA para estoque,
 importador universal de dados de outros sistemas, versão mobile, outras edições do Sakura System
@@ -427,6 +440,7 @@ uso real, só testes) e, todo mês, o cadastro da alíquota da competência no p
 | 26/09 (fim da noite) | **Venda de balcão** (item `FN-09`, migration `0064`): vender peça pra quem não deixa o carro, numa tela só, com leitor de código de barras, pagamento e NFC-e; cliente "Consumidor" fixo pra quem não se identifica (escolha dela), mesmo contador de número das OS, aba própria na lista e fora do ticket médio. Com o "pode" dela: a `0064` entrou pelo botão (banco na **`0064`**) e a **`v0.9.45`** saiu publicada no canal de teste — e foi **liberada pras lojas em 27/09**. |
 | 26/09 (tarde) | **TR-04.1, lote 3**: o Caixa protegido no banco (migration `0062`), com portas estreitas pra Relações, OS e as duas contas, e os cartões de dinheiro do Início mostrando "—" pra quem não tem Caixa nem Relações. Saíram na **`v0.9.43`** (publicada e liberada **antes** da migration, de propósito) e a `0061`+`0062` foram aplicadas pelo botão no mesmo dia — banco na **`0062`**. |
 | 13/09 | Começa a **Etapa 4**, a que o guia trata como pré-requisito da venda: auditoria cobrindo criação e mais cinco tabelas (`TR-04.9`), o procedimento de voltar uma versão (`TR-09.2`) e a função de permissão por módulo (`TR-04.1`, etapa 1 de 3). Migrations `0053`/`0054` rodadas por ela e tag `v0.9.35` publicada. Depois da tag, sem precisar de outra: a **matriz de RLS** (`TR-07.3`), que confere 640 combinações de tabela × comando × papel e é o que faltava pra etapa 2 do `TR-04.1` deixar de ser feita no escuro. |
+| 29-30/09 | Repositório transferido pra organização **`sakura-corp`** (`v0.9.47` só troca o endereço do atualizador; liberada). Senhas das automações refeitas e guardadas no Bitwarden; **cofres** `backup` e `lojas`, rulesets `main protegida` e `versões`; Release, Liberar e Atualizar bancos com aprovação dela. Memória com a seção 0 (quem não é a Sofia) e o **manual do painel**; leva 0 criada (#350 a #355). |
 
 
 **Duas lições de trabalho que saíram dessas sessões e continuam valendo** (as duas já estão na

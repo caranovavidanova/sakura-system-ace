@@ -1552,3 +1552,35 @@
     raiz, então um `e.stopPropagation()` no `onKeyDown` impede o evento de chegar no `document`
     — é o que faz o Enter do leitor ficar na busca em vez de pular de campo.
 
+78. **Travas do GitHub contra quem tem escrita: o que protege de verdade e o que não (29-30/09/2026).**
+    Aprendido ao preparar o repositório pro primeiro colaborador (o Gustavo), com a organização
+    `sakura-corp` no plano grátis e o repositório público.
+    - **Protege de verdade**: segredo dentro de um **cofre (environment) restrito à `main`**. Um
+      workflow modificado e rodado a partir da branch de alguém não recebe esse segredo. Banco e
+      backup ficam protegidos assim. E um **ruleset na `main`** (PR + aprovação) impede mesclar
+      sozinho.
+    - **Não protege**: quem tem escrita pode rodar um workflow **modificado na própria branch**
+      com o token automático do Actions (`contents: write`). Com ele dá pra **criar ou editar
+      release, subir arquivo e mudar a marca de pré-lançamento**, ou seja, publicar e liberar sem
+      passar pela aprovação. A aprovação do cofre `lojas` só vale pro workflow oficial. A trava
+      de verdade é as versões morarem num **repositório onde o colaborador não escreve**.
+    - **Ruleset de tag que bloqueia CRIAR `v*` quebra o Release**, porque quem cria a tag é o
+      próprio workflow, com esse token, e o GitHub não deixa isentá-lo da regra. Por isso o
+      ruleset `versões` só bloqueia mudar e apagar.
+    - **Cofre com aprovação obrigatória e ruleset são grátis em repositório público.** Em
+      repositório privado, pelo que se sabia em 29/09 (sem ter conseguido abrir a documentação do
+      GitHub), pedem plano pago. **Conferir antes de fechar o código.**
+    - **Na hora de montar, três escorregões reais**:
+      - o nome do cofre é o do cofre (`backup`), e não o de um segredo: ela criou um environment
+        chamado `BACKUP_EMPRESAS` por engano;
+      - o token do R2 se cria **dentro do R2** ("Account API Tokens"), e não em "My Profile → API
+        Tokens", que não gera Access Key ID nem Secret;
+      - "Prevent self-review" no cofre `lojas` tem que ficar **desmarcado**, senão ela não
+        consegue aprovar o que ela mesma disparou.
+    - **Ordem que evitou susto**:
+      1. criar os cofres com os valores novos;
+      2. ligar `environment:` nos workflows (segredo do cofre vence o solto de mesmo nome);
+      3. rodar o backup e um ensaio;
+      4. só então apagar os segredos soltos e os tokens antigos;
+      5. rodar o backup de novo.
+

@@ -324,11 +324,12 @@ Cinco armadilhas, todas já vividas (§6 item 67):
 4. **A caixa de editar um secret no GitHub aparece SEMPRE VAZIA** — ele nunca mostra o que está
    guardado. Editar ali é digitar tudo de novo; colar só um pedaço substitui a lista inteira. Já
    aconteceu. Monte o texto no Bloco de Notas e cole pronto.
-5. **O `supabase_url` é só `https://<código>.supabase.co`, sem nada depois** (29/09/2026). A tela
-   "Data API" do Supabase mostra também o endereço da API REST, que termina em `/rest/v1/`; com
-   ele, o pedido do Storage cai na API REST e volta `PGRST125 "Invalid path specified in request
-   URL"`, que não fala em endereço. Desde então o job corta um `/rest/v1` do fim sozinho (e
-   avisa). O código é o mesmo que aparece na linha do `banco`, depois de `postgres.`.
+5. **O `supabase_url` é só `https://<código>.supabase.co`, sem nada depois, nem barra**
+   (29/09/2026). Com um pedaço a mais no fim (o `/rest/v1/` que a tela "Data API" mostra, ou
+   só uma `/`), o pedido do Storage cai na API REST e volta `PGRST125 "Invalid path specified
+   in request URL"`, que não fala em endereço. Desde então o job tira as barras do fim e corta
+   um `/rest/v1` sozinho (esse com aviso). O código é o mesmo que aparece na linha do `banco`,
+   depois de `postgres.`.
 
 #### Conferir de vez em quando (5 minutos por mês)
 

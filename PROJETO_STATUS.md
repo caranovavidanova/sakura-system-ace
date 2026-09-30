@@ -210,15 +210,19 @@ fechar vai exigir, pra não refazer a conta:
 
 #### Em aberto
 - O usuário do Gustavo no GitHub.
-- **Os valores das senhas (secrets) do GitHub**: ela **não tinha guardado** e decidiu pegar todos
-  de novo (29/09) e guardar num gerenciador de senhas (sugeri o Bitwarden). Passei o passo a passo
-  dos 8 que as automações usam: `BACKUP_REPO` e `R2_BUCKET` já se sabem; a chave pública sai do
-  `C:\age\chave-do-backup.txt`; o token R2 e o token do GitHub são **novos** (só aparecem uma vez;
-  os velhos são apagados depois que os novos funcionarem); a senha do banco é **resetada** (só
-  letras e números), e por isso o `BACKUP_EMPRESAS` atual precisa ser trocado **no mesmo dia**, senão
-  o backup das 3h falha. **Parte 2** (quando ela terminar): cadastrar direto nos cofres `backup` e
-  `lojas` do passo 2, eu pôr o `environment:` nos workflows, testar o backup na hora, e só então
-  apagar os secrets soltos do repositório e os tokens velhos.
+- **As senhas (secrets) do GitHub, parte 1 FEITA (29-30/09)**: ela não tinha guardado os valores e
+  pegou todos de novo, **um por um, no Bitwarden** (pasta "Sakura System"): os 8 secrets + a
+  `chave-do-backup.txt` inteira (como Anotação, com "resolicitar senha principal"). Tokens
+  **novos** criados: R2 `backup-ssace-github` e GitHub fine-grained `backup-ssace-30-09-2026`. A
+  senha do banco foi **resetada** e o `BACKUP_EMPRESAS` do GitHub, trocado. **Backup rodado à mão
+  e verde** em 30/09 00:52 UTC (4.825 linhas, 25 de 25 XMLs), depois de três tentativas com erro
+  de montagem do texto (item 67 de `docs/licoes.md`) e de uma correção no job (PR #337).
+  **Atenção**: no GitHub, o R2 e o `BACKUP_REPO_TOKEN` **ainda são os antigos** (o token R2
+  `backup-ssace` de 18/09 e o token velho do GitHub). Os novos estão só no Bitwarden. **Não apagar
+  os antigos** antes da parte 2.
+  **Parte 2** (próxima): criar os cofres `backup` e `lojas` com os valores do Bitwarden, eu pôr o
+  `environment:` nos workflows, rodar o backup de novo, e só então apagar os secrets soltos do
+  repositório e os tokens antigos (R2 e GitHub).
 
 #### Continua valendo do marco de 28/09 (em `docs/historico.md`)
 Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota

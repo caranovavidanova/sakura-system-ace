@@ -1309,9 +1309,13 @@
     seguidas, cada uma por um erro de montagem do `BACKUP_EMPRESAS` na mão, e cada mensagem
     apontava pra outro lugar: `invalid integer value "postgresql:" for connection option "port"`
     (a linha de conexão colada no lugar da senha), `fe_sendauth: no password supplied` (senha
-    vazia entre o `:` e o `@`) e `PGRST125 Invalid path` (o `supabase_url` com `/rest/v1/` no
-    fim). O último virou correção no job (corta sozinho e avisa); os dois primeiros ficam como
-    tradução do erro, porque a linha de conexão é segredo e o log deste repositório é público.
+    vazia entre o `:` e o `@`) e `PGRST125 Invalid path` (o `supabase_url` com um pedaço a mais
+    no fim). O último virou correção no job: tirar as barras do fim e cortar um `/rest/v1`. Na
+    rodada que passou, o aviso de `/rest/v1` **não** apareceu, então o que sobrava era
+    provavelmente só a barra final: a correção cobriu uma causa que o diagnóstico não tinha
+    visto, e fica registrado pra não contar como confirmado o que não foi. Os dois primeiros
+    ficam como tradução do erro, porque a linha de conexão é segredo e o log deste repositório
+    é público.
 
 68. **Um campo vazio se disfarçou de "bucket não existe" por três rodadas (18/09/2026).** Ainda
     no `TR-12.1`: com o banco já sendo copiado direito, os 18 XMLs de nota fiscal falhavam

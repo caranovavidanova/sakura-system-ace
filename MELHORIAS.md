@@ -11,6 +11,23 @@
 > **Nada aqui é ordem de execução.** É um cardápio priorizado. A usuária decide o que entra em
 > cada sessão. Ver "Regras invioláveis" abaixo.
 
+## Situação em 30/09/2026 (ler antes de escolher um item)
+
+O guia foi escrito em 10/09, quando a memória era um arquivo só. **Onde ele diz "§3/§5/§6/§7/§8
+do `PROJETO_STATUS.md`"**, hoje é `docs/decisoes.md`, `docs/banco.md`, `docs/licoes.md`,
+`docs/modulos.md` e `docs/pendencias-e-futuro.md`, com a mesma numeração de itens.
+
+| Etapa (Parte 4) | Situação |
+|---|---|
+| 0. Antes de tudo | A `v0.9.29` saiu (11/09) e o gerador das 54 telas está na `main` (a branch `claude/cool-lamport-uzyh8w` sobrou e pode ser apagada). **Falta trocar as três credenciais expostas** (`TR-04.7`, lista "O que depende dela" da seção 8) |
+| 1. Fundação | **Feita** (11/09) |
+| 2. O que dói no balcão | **Feita** (12/09) |
+| 3. Confiança nos números | 6 de 7. Falta o `TR-05.2` (uma nota por OS), **adiado de propósito**: ver "O que ainda está frágil na parte fiscal", item 3, na seção 8 |
+| 4. Antes da segunda empresa | Todos começados. Em aberto: `TR-04.1` (no banco já estão RH, contas e Caixa; faltam clientes, peças/estoque e OS), a parte 2 do `TR-04.2` (liberada, quando ela pedir) e o resto do `TR-08.3` (a trilha das últimas ações) |
+| 5. Escala e produto | `FN-09` (venda de balcão) feito. Fora do roteiro, também feitos: `FN-04` (ficha do veículo) e `TL-46.1` |
+
+O detalhe de cada entrega está na linha do tempo da seção 8 e nos módulos da seção 7.
+
 ---
 
 ## 1. Como usar este arquivo
@@ -21,7 +38,8 @@ explicar de novo o contexto.
 
 **Para o Claude Code:**
 
-1. Leia primeiro `PROJETO_STATUS.md` §3 (decisões travadas) e §6 (dívidas técnicas). **Se um
+1. Leia primeiro `docs/decisoes.md` (§3, decisões travadas) e `docs/licoes.md` (§6, dívidas e
+   padrões de bug). **Se um
    item deste guia contradisser uma decisão da §3, a §3 vence** — traga a contradição para a
    usuária em vez de executar.
 2. Um item por vez, com PR próprio. Item marcado `E3` quase sempre precisa ser quebrado em
@@ -3792,6 +3810,9 @@ para digitar tudo de novo.
 
 ## Etapa 0 — Antes de qualquer item deste guia
 
+> **Situação em 30/09/2026**: os itens 1 e 2 já foram resolvidos; o 3 continua pendente (ver o
+> quadro no topo deste arquivo).
+
 1. **Perguntar se é para publicar a `v0.9.29`.** Está pronta, validada e segurada por decisão
    dela. Enquanto isso, o PC da loja está na `v0.9.28`: a edição de item já chegou lá, o aviso
    de código fiscal e a correção da importação ainda não.
@@ -3870,7 +3891,7 @@ Colar no corpo do PR, com uma resposta por linha. Item que não se aplica leva "
 [ ] Validação nova? É AVISO, não tranca — ou é certeza absoluta e está documentado o porquê
 [ ] Segredo? Nenhuma credencial no código, no PROJETO_STATUS.md, no log ou no diagnóstico
 [ ] Mexeu no preload/main do Electron? Testado no Electron REAL (Playwright + xvfb-run)
-[ ] O PROJETO_STATUS.md foi atualizado (seção 6, 7 ou 8, conforme o caso)
+[ ] A memória foi atualizada (docs/licoes.md, docs/modulos.md ou docs/pendencias-e-futuro.md, conforme o caso)
 [ ] O que este PR NÃO faz está escrito, para a próxima sessão não achar que está pronto
 ```
 

@@ -12,6 +12,52 @@ balcão, estoque, caixa, contas, comissões, fornecedores), **com NFC-e e NFS-e 
 A fase atual é preparar a venda pra outras empresas (seção 2). Os itens abaixo mantêm a numeração
 antiga porque outros arquivos citam "item N da seção 8".
 
+### O que depende dela, numa lista só (juntada em 30/09/2026)
+
+Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs/historico.md`.
+**Manter aqui**: quando uma sair, riscar ou apagar; quando surgir outra, acrescentar.
+
+**Testes na loja que faltam** (lista de 28/09; nada disso dá pra testar daqui):
+- venda de balcão com o leitor, a NFC-e dela e o caixa do dia batendo;
+- ficha do veículo; Fechamento do Caixa; "Registrar pagamento" de comissão; a trava do desconto;
+- pagar e desfazer uma conta; faturar OS "recebido agora" e "a receber";
+- conferir que o Balcão chegou na `0.9.47` (se não, reinstalar pelo
+  `releases/latest/download/SakuraSystem-Setup.exe` do endereço novo);
+- confirmar que o `DESKTOP-PKJ2A3B` (`0.9.44`, canal de teste) é o PC da casa dela e dar um
+  apelido (senão, esquecer esse computador).
+
+**Com data**: **1º/10** a alíquota de 10/2026 no portal da prefeitura; **começo de outubro** o
+CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
+(os três últimos estão no repositório privado).
+
+**Decisões dela, sem prazo:**
+- o valor da mensalidade das lojas novas (privado);
+- levar o `ANTES-DA-PRIMEIRA-VENDA.md` a um advogado ou à contabilidade (item 10);
+- atualizar o Electron (item 14);
+- os próximos lotes de permissão no banco: clientes, peças/estoque e OS (item 1 da seção 6);
+- a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; seção 9);
+- **cancelar uma nota deveria estornar estoque e Caixa?** (pergunta de desenho nunca respondida,
+  desde 03/09);
+- os três ajustes que ela pediu em 28/09 e deixou pra depois (modais com o fundo vazando, o status
+  da nota na lista de Notas Fiscais, o texto velho no topo de Notas Fiscais; detalhe no marco de
+  28/09 do `docs/historico.md`);
+- o repositório só de versões e fechar o código (item 12).
+
+**Segurança, fora do código:**
+- **trocar as três credenciais fiscais expostas** no histórico público (CSC da SEFAZ, token do
+  Giap, senha do portal da prefeitura; passo a passo no item 1). A varredura automática não pega
+  essas (item 50 da seção 6);
+- trocar a chave `sb_secret_...` do Supabase que um dia foi colada no chat, se ainda não trocou
+  (item 3 da seção 6);
+- conferir se o ruleset `main protegida` exige o CI verde pra mesclar; se não, ligar "Require
+  status checks to pass" (pendente desde 11/09 como "marcar o CI como obrigatório").
+
+**Perguntas pra fora:**
+- **contabilidade**: com CSOSN `500`, as peças deveriam levar ICMS-ST retido? (item 1, "frágil"
+  2); a migração do Simples pro Ambiente Nacional da NFS-e em **1º/11/2026** vale pra loja?;
+- **Focus NFe**: o formato do CNPJ com letras na API ("frágil" 6);
+- **prefeitura**: o "Processado: Não" das notas e o `cNBS` errado no cadastro da empresa.
+
 ### 1. Parte fiscal: funcionando em produção desde 27/08/2026
 
 NFC-e (peça) e NFS-e (serviço) emitem de ponta a ponta pela Focus NFe, na conta dela. O caminho até
@@ -172,7 +218,7 @@ nem perguntar; só retomar se ela trouxer.
 
 Conforme o uso real e o que ela pedir. O cardápio de ideias é o `MELHORIAS.md`, e o que o
 concorrente tem e nós não está em `docs/comparativo-anexar.md`. **Nada disso é pra construir sem
-ela pedir.** Três ajustes que ela pediu em 28/09 e deixou pra depois estão no "Onde parou".
+ela pedir.** Os três ajustes que ela pediu em 28/09 estão em "O que depende dela", acima.
 
 ### 5. Fornecedores: completo
 

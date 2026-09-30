@@ -181,6 +181,8 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    dela, pros workflows "Liberar versão" e "Atualizar bancos"; `main` só por PR com aprovação (ela
    isenta); só ela cria tag `v*`. **Risco que fica**: quem tem escrita consegue editar uma release
    publicada na mão. Isso fica protegido só pela regra na memória.
+   **Os dois cofres: FEITOS (30/09)**, ver "As senhas" abaixo. **Falta**: as duas regras (rulesets)
+   da `main` e da tag `v*`.
 3. **Memória**: o trecho "quando quem está trabalhando não é a Carol" (abre PR e **não mescla**,
    não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
 4. **Convidar o Gustavo.**
@@ -210,19 +212,20 @@ fechar vai exigir, pra não refazer a conta:
 
 #### Em aberto
 - O usuário do Gustavo no GitHub.
-- **As senhas (secrets) do GitHub, parte 1 FEITA (29-30/09)**: ela não tinha guardado os valores e
-  pegou todos de novo, **um por um, no Bitwarden** (pasta "Sakura System"): os 8 secrets + a
-  `chave-do-backup.txt` inteira (como Anotação, com "resolicitar senha principal"). Tokens
-  **novos** criados: R2 `backup-ssace-github` e GitHub fine-grained `backup-ssace-30-09-2026`. A
-  senha do banco foi **resetada** e o `BACKUP_EMPRESAS` do GitHub, trocado. **Backup rodado à mão
-  e verde** em 30/09 00:52 UTC (4.825 linhas, 25 de 25 XMLs), depois de três tentativas com erro
-  de montagem do texto (item 67 de `docs/licoes.md`) e de uma correção no job (PR #337).
-  **Atenção**: no GitHub, o R2 e o `BACKUP_REPO_TOKEN` **ainda são os antigos** (o token R2
-  `backup-ssace` de 18/09 e o token velho do GitHub). Os novos estão só no Bitwarden. **Não apagar
-  os antigos** antes da parte 2.
-  **Parte 2** (próxima): criar os cofres `backup` e `lojas` com os valores do Bitwarden, eu pôr o
-  `environment:` nos workflows, rodar o backup de novo, e só então apagar os secrets soltos do
-  repositório e os tokens antigos (R2 e GitHub).
+- **As senhas (secrets) do GitHub e os cofres: FEITO (29-30/09)**. Ela não tinha guardado os
+  valores e pegou todos de novo, **um por um, no Bitwarden** (pasta "Sakura System"): os 8
+  secrets + a `chave-do-backup.txt` inteira (Anotação, com "resolicitar senha principal"). Tokens
+  **novos**: R2 `backup-ssace-github` e GitHub fine-grained `backup-ssace-30-09-2026`; a senha do
+  banco foi **resetada**. Criados os cofres **`backup`** (8 secrets, só `main`, sem aprovação) e
+  **`lojas`** (só o `BACKUP_EMPRESAS`, só `main`, **aprovação dela obrigatória**); os workflows
+  passaram a usá-los (PR #339). **Testado**: backup verde lendo do cofre, e "Atualizar bancos" em
+  `ensaiar` parou em "Waiting", ela aprovou, e passou (Pneus Amigão na `0064`, em dia). Depois
+  ela apagou os secrets soltos do repositório, o token R2 antigo (`backup-ssace`, 18/09) e o token
+  antigo do GitHub, e o backup rodou verde de novo, **nos dois destinos**, sem eles (30/09 01:23
+  UTC). No caminho: três erros de montagem do `BACKUP_EMPRESAS` e uma correção no job (PR #337,
+  item 67 de `docs/licoes.md`). **A partir de agora**: todo "Liberar versão" e "Atualizar bancos"
+  para em "Waiting" até ela clicar em "Review deployments" → `lojas` → "Approve and deploy",
+  inclusive quando eu disparo por API. **Trocar o `BACKUP_EMPRESAS` é trocar nos dois cofres.**
 
 #### Continua valendo do marco de 28/09 (em `docs/historico.md`)
 Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota

@@ -7,14 +7,12 @@
 
 ## 5. Modelagem de dados (Supabase / Postgres) — como está hoje
 
-Migrations `0001` a `0036` em `supabase/migrations/` já estão confirmadas rodando sem erro no
-projeto Supabase da usuária (ref `rlgdjiowvnfzsedehyga`) — incluindo a fundação multi-loja
-(`0031`-`0033`, que ela testou de verdade: criou uma 2ª loja, foi quando apareceu o bug de RLS
-descrito no `0034` abaixo) e a correção + módulos novos (`0034` a `0036`, criadas e validadas
-localmente nesta sessão — Postgres local, `service postgresql start` + `sudo -u postgres psql`,
-rodando a sequência inteira do zero e confirmando idempotência — e já rodadas por ela no Supabase
-real logo em seguida). **`0037`, criada e validada localmente na mesma sessão, também já foi
-confirmada rodando no Supabase real dela.** Resumo das últimas:
+**Estado (30/09/2026)**: as migrations `0001` a `0064` estão aplicadas no banco da Pneus Amigão,
+a única empresa até agora. Todas são idempotentes; migration nova entra pelo botão "Atualizar o
+banco de todas as empresas" (seção 9). As `0001` a `0027` criam a base (cadastros, OS, estoque,
+caixa, operadores, RLS de login) e estão descritas tabela por tabela mais abaixo. O que cada uma
+das seguintes trouxe, e as decisões que valem saber antes de mexer:
+
 - `0028`: migra quem só tinha a permissão "Lucratividade" liberada (sem "Relações").
 - `0029`: cria `categorias_servicos` + coluna `servicos.categoria_id`.
 - `0030`: semeia categorias de peça/serviço padrão e ~17 serviços padrão (sem preço), baseados
@@ -53,10 +51,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   (`operadores`, `pecas`, `servicos`, `caixa_movimentos`, `contas_pagar`, `contas_receber`,
   `ordens_servico`, `clientes`, `fornecedores`, `pedidos_compra`, `lojas`). Ver "Auditoria" na
   seção 7.
-- `0041` (criada e validada localmente nesta sessão — Postgres local, rodada duas vezes pra provar
-  idempotência, e com um teste manual de RLS trocando de papel/`auth.uid()` simulado pra confirmar
-  que balconista só vê depósito da própria loja e só admin cria/edita; **já rodada e confirmada por
-  ela no Supabase real**): cria o cadastro de Depósito — tabela `depositos` (locais físicos de
+- `0041`: cria o cadastro de Depósito — tabela `depositos` (locais físicos de
   estoque dentro de uma loja, ex: "Depósito Principal", "Fundos") + `deposito_id` em
   `estoque_movimentos` e `contagens_estoque` (mesmo padrão nullable → backfill → not null das
   migrations 0031-0033 pra `loja_id`). Toda loja (já existente, via backfill dinâmico por loja —
@@ -64,20 +59,16 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   `lib/lojas.ts` → `criarLoja()`) já nasce com um "Depósito Principal" sozinho, então nada muda pra
   quem usa um só lugar físico. Ver "Depósitos" na seção 7 e a subseção logo abaixo dos tipos de
   `estoque_movimentos`/`contagens_estoque`.
-- `0042` (criada e validada localmente numa sessão anterior — Postgres local, rodada duas vezes pra
-  provar idempotência, RLS conferida com `authenticated`/`auth.uid()` simulado; **já confirmada
-  rodando no Supabase real dela**): cria `cotacoes_pecas` — histórico de preço por fornecedor
+- `0042`: cria `cotacoes_pecas` — histórico de preço por fornecedor
   (peça, fornecedor, preço, data), compartilhado entre lojas (mesmo padrão RLS de `fornecedores`:
   qualquer logado lê/grava, sem escopo de loja). Gravado sozinho pelo app a cada Pedido de Compra
   com preço (não tem formulário próprio) — ver "Cotação de peças" na seção 7.
-- `0043` (criada nesta sessão, validada localmente num Postgres local — rodada duas vezes pra
-  provar idempotência — e **já confirmada rodando no Supabase real dela**): adiciona
+- `0043`: adiciona
   `contas_pagar.recorrente_ate` (date, opcional). Sem valor, uma conta recorrente continua sendo
   recriada pra sempre ao pagar (comportamento de sempre); preenchido, `pagarConta()`
   (`lib/contasPagar.ts`) para de criar a próxima ocorrência quando o próximo vencimento passar
   dessa data. Ver "Contas a Pagar" na seção 7.
-- `0044` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
-  idempotência —, **já confirmada rodando no Supabase real dela**): adiciona 4 colunas opcionais a
+- `0044`: adiciona 4 colunas opcionais a
   `configuracoes_fiscais_loja`, só usadas na emissão de NFS-e — `codigo_municipio` (IBGE da
   cidade da loja), `item_lista_servico` (código da LC 116/2003, default `'14.01'`),
   `aliquota_iss`, `codigo_tributario_municipio`. NFC-e não depende de nenhuma delas. Ver item 1 da
@@ -85,18 +76,14 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
 - `0045`: adiciona `clientes.codigo_municipio` (código IBGE), preenchido sozinho junto com o resto
   do endereço quando o CEP é buscado — evita digitar esse código toda vez que emite uma NFS-e pro
   mesmo cliente.
-- `0046` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
-  idempotência — **já rodada por ela**): adiciona `notas_fiscais_arquivos.focus_nfe_ref` —
+- `0046`: adiciona `notas_fiscais_arquivos.focus_nfe_ref` —
   guarda a referência que a Focus NFe usa pra identificar a nota, gerada na hora da emissão
   automática. Sem essa coluna, não tinha como cancelar uma nota emitida automaticamente depois
   (ver botão "Cancelar nota" na seção 7, módulo "Notas Fiscais").
-- `0047` (criada nesta sessão, validada num Postgres local — rodada duas vezes pra provar
-  idempotência — **já rodada por ela**): adiciona `configuracoes_fiscais_loja.codigo_cnae`
+- `0047`: adiciona `configuracoes_fiscais_loja.codigo_cnae`
   — campo exigido por Araraquara (e provavelmente outras prefeituras) pra autorizar a NFS-e, que o
   Sakura System não pedia nem mandava. Ver item 1 da seção 8.
-- `0048` (criada em 11/09/2026, validada num Postgres local — a sequência inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado 0047 **com dado plantado**
-  — **rodada e confirmada por ela no Supabase real em 11/09/2026**): declara a precisão de 5 colunas de valor que eram `numeric`
+- `0048`: declara a precisão de 5 colunas de valor que eram `numeric`
   "solto", sem casas decimais — `contas_pagar.valor`, `contas_receber.valor`,
   `funcionarios.salario`, `servicos.custo` (todas pra `numeric(12,2)`) e
   `configuracoes_fiscais_loja.aliquota_iss` (pra `numeric(5,2)`). **Não é mudança cosmética**:
@@ -105,10 +92,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   o efeito no teste que foi feito: um `1234.5600000000002` foi gravado inteiro, com as 13 casas.
   Depois da migration ele vira `1234.56`. Ver item 49 da seção 6 pro lado do aplicativo, que foi
   corrigido junto.
-- `0049` (criada em 11/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado 0048 **com dado plantado**
-  — **rodada e confirmada por ela no Supabase real em 11/09/2026**, antes da tag, como manda a
-  ordem descrita abaixo): duas colunas em `configuracoes_fiscais_loja` pro lembrete da
+- `0049`: duas colunas em `configuracoes_fiscais_loja` pro lembrete da
   alíquota da competência (NFS-e) — `competencia_aliquota_confirmada` (date: o mês, sempre no dia
   1º, cuja alíquota já foi cadastrada no portal da prefeitura) e `aliquota_passo_a_passo` (text: o
   caminho dentro do portal, editável porque muda de município; em branco vale o padrão de
@@ -116,10 +100,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   seção 7. **Ordem importa**: essa migration precisa estar rodada ANTES de a versão nova chegar no
   computador da loja — sem as colunas, salvar em Configurações → Dados fiscais dá erro de "coluna
   não existe".
-- `0050` (criada em 11/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0049` **com dado plantado**,
-  inclusive uma categoria "Outros" criada à mão — **rodada e confirmada por ela no Supabase real em
-  11/09/2026**, antes da tag `v0.9.32`, como essa migration exigia): semeia a categoria
+- `0050`: semeia a categoria
   **"Outros"** em `categorias_caixa`, uma para cada tipo (entrada e saída).
   **Por que isso não é detalhe**: `categorias_caixa` (migration `0020`) nunca foi semeada por
   migration nenhuma — diferente de `categorias` e `categorias_servicos`, que a `0030` semeia. Ou
@@ -129,12 +110,9 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   **Não torna `caixa_movimentos.categoria_id` NOT NULL**, de propósito: o faturamento de uma OS
   entra no caixa sem categoria e deve continuar assim, e o histórico já gravado não pode ser
   recusado pelo banco. A obrigatoriedade é do formulário, não da tabela.
-  **A ordem foi cumprida**: ela rodou a migration primeiro e a `v0.9.32` só saiu depois. Numa loja
-  nova, a ordem continua valendo (a migration antes da versão) — a menos que já exista pelo menos
-  uma categoria de caixa de cada tipo, caso em que ela deixa de importar.
-- `0051` (criada em 12/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` **com peça
-  plantada** — **rodada e confirmada por ela em 12/09/2026**, antes da tag `v0.9.33`): quatro
+  **Ordem**: a migration antes da versão (a menos que já exista uma categoria de caixa de cada
+  tipo).
+- `0051`: quatro
   colunas opcionais em `pecas`. O **estoque
   mínimo** (`estoque_minimo numeric(12,2)`, item TL-11 do guia) é o campo que faltava pro sistema
   responder "o que eu preciso comprar?"; e o **bloco de pneu** (`medida`,
@@ -146,9 +124,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   Um backfill com zero transformaria cada peça sem saldo num alarme no dia em que a coluna
   nascesse. `pecas` é compartilhada entre as lojas, então nada aqui precisa de backfill por loja
   nem de policy nova.
-- `0052` (criada em 12/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0050` — **rodada e
-  confirmada por ela em 12/09/2026**, antes da tag `v0.9.33`): as duas tabelas do WhatsApp (item FN-03). `configuracoes_whatsapp` (PK composta
+- `0052`: as duas tabelas do WhatsApp (item FN-03). `configuracoes_whatsapp` (PK composta
   `loja_id, chave`, mesma forma de `configuracoes_juros_parcelas`) guarda os textos editáveis de
   cada loja — **uma linha por modelo, e não uma coluna por modelo**, pra que um modelo novo seja
   uma linha e não uma migration. **Nada é semeado**: sem linha, vale o texto padrão de
@@ -156,9 +132,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   (o contrário do que aconteceu com as categorias de caixa na `0050`). E `whatsapp_mensagens`
   registra que uma conversa foi **aberta** — nunca "enviada", que é uma coisa que este sistema não
   tem como saber (ver "WhatsApp" na seção 7).
-- `0053` (criada em 13/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0052` **com dado
-  plantado** — **rodada por ela em 13/09/2026**, antes da tag `v0.9.35`): a trilha de auditoria passa a cobrir o que
+- `0053`: a trilha de auditoria passa a cobrir o que
   escapava. `INSERT` vira `acao = 'criar'`; entram `ordens_servico_itens` (o buraco mais grave —
   desde a `v0.9.28` dá pra corrigir o **valor** de um item de OS pela tela, e isso não deixava
   rastro nenhum), `notas_fiscais_arquivos`, `configuracoes_fiscais_loja`,
@@ -182,7 +156,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   de 6 meses; o padrão sugerido é 24 (`select expurgar_auditoria(24);`).
   (d) **a máscara é por NOME DE COLUNA, não por tabela** — coluna nova com esse nome já nasce
   protegida. Teste repetível em `supabase/scripts/testar-auditoria.sql` (7 checagens).
-- `0054` (criada em 13/09/2026, mesma validação — **rodada por ela em 13/09/2026**): a função
+- `0054`: a função
   `operador_tem_permissao(modulo text)`, **etapa 1 de 3** do item `TR-04.1` (RLS por módulo).
   **Nenhuma policy usa ela ainda, e rodar esta migration não muda comportamento nenhum** — as
   policies são a etapa 2, que é mudança de arquitetura de segurança e precisa ser decidida com
@@ -191,9 +165,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   em `select`, que são desempenho medido e documentado pelo Supabase, não estilo. Teste em
   `supabase/scripts/testar-permissao-modulo.sql` (5 perfis).
 
-- `0055` (criada em 15/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0054` — **rodada e
-  confirmada por ela em 15/09/2026** ("Success. No rows returned"), antes da tag `v0.9.37`): cria
+- `0055`: cria
   `schema_versao`, o item `TR-05.7`. Uma linha por migration já aplicada neste
   banco; o app compara o maior número daqui com o que a build dele espera e avisa, em português,
   qual arquivo falta rodar — em vez de estourar `column ... does not exist` numa tela qualquer.
@@ -208,10 +180,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   rodou as anteriores, porque elas rodam em ordem (e a instalação única é a ordem inteira).
   (d) **a ordem "migration antes da tag" continua valendo, mas aqui ela deixa de ser armadilha**:
   se a versão nova chegar primeiro, o próprio app explica o que falta, em vez de quebrar.
-- `0056` (criada em 18/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0055` **com dado
-  plantado** — **rodada e confirmada por ela em 25/09/2026** ("Success. No rows returned"),
-  antes da tag `v0.9.39`): dado de RH só pra quem tem o módulo. É o item
+- `0056`: dado de RH só pra quem tem o módulo. É o item
   `TR-04.3`, e é a **primeira tabela da etapa 2 do `TR-04.1`** — ou seja, a primeira vez que a
   função `operador_tem_permissao()` da `0054` é usada por uma policy de verdade.
   `funcionarios` e `funcionario_filhos` passam a exigir a permissão `funcionarios` nos quatro
@@ -233,10 +202,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   `security definer`: criar operador não passou a exigir o módulo Funcionários.
   Teste repetível em `supabase/scripts/testar-rh-permissao.sql` (11 checagens, as duas metades —
   o que o balconista não alcança **e** o que ele ainda consegue fazer).
-- `0057` (criada em 25/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0056` **com um token
-  plantado** — **rodada e confirmada por ela em 25/09/2026** ("Success. No rows returned"),
-  junto com a Edge Function `focus-nfe` publicada, **antes** da tag `v0.9.41`): o cofre do
+- `0057`: o cofre do
   token da Focus NFe, item `TR-04.2`,
   **parte 1 de 2**. Cria `segredos_fiscais_loja` (loja_id, focus_nfe_token, atualizado_em) **sem
   policy nenhuma** — nenhum operador lê nem escreve, nem admin; só a service role, que existe
@@ -261,8 +227,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   Teste repetível em `supabase/scripts/testar-porteiro-focus-nfe.sql` (17 checagens), conferido
   com nove mutações — inclusive uma policy de leitura plantada no cofre, que a matriz de RLS
   também pega.
-- `0058` (criada em 25/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero — **rodada em 25/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação): o **fechamento de caixa do dia**, item
+- `0058`: o **fechamento de caixa do dia**, item
   `TR-06.4`. Cria `fechamentos_caixa` (uma linha por loja por dia: troco, esperado em espécie,
   contado, diferença, os totais de cada forma de pagamento), semeia as categorias de caixa
   "Quebra de caixa" (saída) e "Sobra de caixa" (entrada), e as funções `fechar_caixa()` e
@@ -283,8 +248,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   permissão só da policy de INSERT não era pego (o teste agora insere direto, sem `returning`);
   e `mov.forma_pagamento <> 'dinheiro'` com forma NULA dá nulo, e a checagem passava calada
   (virou `is distinct from`).
-- `0059` (criada em 25/09/2026, mesma validação: instalação inteira três vezes do zero e a
-  migration sozinha duas vezes num banco no estado `0058` — **rodada em 25/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação): a
+- `0059`: a
   **comissão paga**, item `TL-46.1`. Cria `comissoes_fechamentos` — um registro por funcionário
   por período, com o retrato das OS (`snapshot`). Leitura e registro exigem o módulo
   **Funcionários** no banco (é onde a aba Comissões mora, e `funcionarios` já exige o mesmo desde
@@ -294,8 +258,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   de novo uma migration idempotente sobre um banco que já tem a tabela **não aplica mudança de
   tabela** (`create table if not exists` pula), então "tirar a unique" e "trocar o `on delete`"
   só foram de fato testadas derrubando a tabela antes.
-- `0060` (criada em 25/09/2026 — **rodada em 25/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação, **sem nenhum aviso**: as 17 travas foram
-  criadas no banco da Pneus Amigão): as **travas de dado impossível**,
+- `0060`: as **travas de dado impossível**,
   item `TR-05.1`. São 17 `check` com nome `ck_<tabela>_<regra>`: preço e desconto de item de OS
   (o desconto nunca maior que a própria linha), preços/custo/garantia/ICMS de peça, preço e custo
   de serviço, valor de conta a pagar/receber, preço e quantidade recebida de pedido de compra,
@@ -324,8 +287,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   exercitado num banco no estado `0059`.
   **O `TR-05.2` (uma nota por OS por tipo) NÃO entrou aqui, de propósito** — ver o item 3 de "O
   que ainda está frágil na parte fiscal", seção 8.
-- `0061` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes — **aplicada em 26/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação, **depois** de a `v0.9.43` ser liberada): **Contas a
+- `0061`: **Contas a
   Pagar e Contas a Receber só pra quem tem o módulo**, o segundo lote da etapa 2 do `TR-04.1`
   (o primeiro foi o RH, `0056`). Decisão dela, 26/09/2026, entre as opções. Quatro policies por
   tabela, e duas **portas estreitas** em `contas_receber`, que são o que evita quebrar outro
@@ -349,9 +311,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   com 20 mil contas por loja: 77–78 ms antes, 80–81 ms depois (a checagem de permissão vira
   `InitPlan`, roda uma vez por consulta). As checagens de "não altera / não apaga" foram
   reescritas junto com a `0062` (comando sem filtro + `get diagnostics`, item 74 da seção 6).
-- `0062` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0061` **com dado
-  plantado** — **aplicada em 26/09/2026 pelo botão "Atualizar o banco de todas as empresas"**, ensaio e depois aplicação, **depois** de a `v0.9.43` ser liberada): **o Caixa só pra quem tem o módulo**, o terceiro
+- `0062`: **o Caixa só pra quem tem o módulo**, o terceiro
   lote da etapa 2 do `TR-04.1`. Decisões dela, 26/09/2026: o Início mostra "—" nos cartões de
   dinheiro pra quem não tem Caixa nem Relações, e Relações continua lendo tudo. É a tabela mais
   "atravessada" até aqui, então cada módulo que grava ou lê nela ganhou uma **porta estreita**:
@@ -390,11 +350,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   o Caixa abrindo a lista: 76 ms antes, 76–77 ms depois.
   **Em 26/09/2026 a `0062` ganhou no cabeçalho a linha `-- versao-minima-do-programa: 0.9.43`**
   (ver `0063` logo abaixo) — só comentário, o SQL é o mesmo, e ela já está aplicada em todo banco.
-- `0063` (criada em 26/09/2026, validada num Postgres local — a instalação inteira rodada três
-  vezes do zero, e a migration sozinha duas vezes num banco no estado `0062` **com dado
-  plantado** — **aplicada em 26/09/2026 pelo botão "Atualizar o banco de todas as empresas"**,
-  ensaio e depois aplicação, Pneus Amigão `0062` → `0063`, e o programa saiu na `v0.9.44`,
-  publicada e liberada no mesmo dia): **cada computador diz ao banco em que
+- `0063`: **cada computador diz ao banco em que
   versão está.** Pedido dela entre as opções (26/09/2026), e a proposta registrada no marco
   anterior: sem isso, "posso rodar uma migration que quebra a versão velha?" só se respondia
   conferindo à mão, como na `0062`. Cria a tabela `computadores` (ver abaixo), a função
@@ -414,11 +370,7 @@ confirmada rodando no Supabase real dela.** Resumo das últimas:
   **Ordem de subir: a de sempre** (migration primeiro), mas aqui qualquer ordem é segura: a
   versão nova sem a migration só não registra (e mostra a faixa de banco desatualizado); a
   migration sem a versão nova só fica vazia.
-- `0064` (criada em 26/09/2026, fim da noite, validada num Postgres local — a instalação inteira
-  rodada três vezes do zero, e a migration sozinha duas vezes num banco no estado `0063` **com
-  dado plantado** — **aplicada em 26/09/2026, fim da noite, pelo botão "Atualizar o banco de
-  todas as empresas"**, ensaio e depois aplicação, Pneus Amigão `0063` → `0064`, antes da
-  `v0.9.45`): a **venda de balcão**, item
+- `0064`: a **venda de balcão**, item
   `FN-09`. Duas coisas só: a coluna `ordens_servico.tipo` (`'os'`/`'venda_balcao'`, padrão
   `'os'`, trava `ck_ordens_servico_tipo`) e o cliente fixo **"Consumidor"**, com UUID fixo
   `00000000-0000-0000-0000-00000000c000` (mesmo espírito da "Loja 1"). Três decisões:
@@ -449,29 +401,12 @@ do guia de melhorias (TR-05.3 e TR-05.5):
   que devia ser `date` ("a data do movimento"), mas o Caixa Diário mostra a **hora** de cada
   lançamento e já converte pro dia local ao filtrar. Não trocar pra `date` — perderia a hora.
 
-**`0038`, `0039` e `0040` já foram confirmadas rodando no Supabase real dela** — a `0040`
-(auditoria) já foi testada de verdade (editou/excluiu algo e conferiu que apareceu na tela).
-Falta só, pra redefinição de senha funcionar de ponta a ponta, publicar a Edge Function
-`redefinir-senha-operador` (a migration `0038` sozinha não é suficiente pra essa — passo a passo
-na seção 9).
-
-Depois dessas, tem também `supabase/scripts/limpar-dados-de-teste.sql` — não é migration
-(não faz parte da sequência de setup), é um script de **uso único** que a usuária pode rodar pra
-apagar os dados de negócio de teste (clientes, veículos, peças, serviços, OS, caixa, estoque,
-contas a pagar, contas a receber, notas fiscais, fornecedores, pedidos de compra, cotações de
-peças) mantendo o login de operador, as lojas/depósitos e as configurações da loja. **Atualizado
-nesta sessão** pra cobrir as tabelas que não existiam quando foi escrito originalmente
-(Fornecedores/Pedidos de Compra/Cotação de Peças, migrations `0039`/`0042`) — sem isso, rodar o
-script antigo quebraria com erro de chave estrangeira assim que tocasse em `pecas`/`fornecedores`
-com pedido ou cotação vinculada. Validado num Postgres local com dado de teste inserido em todas
-as tabelas novas, rodando o script de verdade e conferindo zero erro + contagem final exata (só os
-17 serviços/5 categorias/6 categorias de serviço padrão sobrando). Usado nesta sessão pra limpar o
-resquício de teste da loja real dela (Pneus Amigão) antes do lançamento de verdade, e pra deixar a
-"Loja 2" de teste sem nenhum dado vinculado — depois de rodar, ela conseguiu excluir a "Loja 2"
-direto pela tela (Configurações → Lojas → 🗑), sem precisar de SQL manual pra isso (a única exceção
-documentada no próprio arquivo é se a exclusão pela tela continuar reclamando de dado vinculado,
-sinal de algo não coberto pelo script). Ver comentário no topo do próprio arquivo pra ordem exata
-de execução.
+**`supabase/scripts/limpar-dados-de-teste.sql`** não é migration: é um script de uso único que
+apaga o dado de negócio de teste (clientes, veículos, peças, serviços, OS, caixa, estoque, contas,
+notas, fornecedores, pedidos, cotações) e mantém login, lojas, depósitos, configurações e o cliente
+"Consumidor". **Tabela nova com FK pra `pecas`, `clientes` ou `fornecedores` precisa entrar nele**,
+senão ele quebra com erro de chave estrangeira. A ordem de execução está no topo do arquivo. Foi
+usado pra limpar a Pneus Amigão antes do lançamento de verdade.
 
 Todas as migrations são idempotentes — seguro rodar de novo caso precise reconectar ou montar
 outro projeto Supabase do zero (ver seção 9).
@@ -528,7 +463,7 @@ outro projeto Supabase do zero (ver seção 9).
 - **Fora de escopo desta fase** (não construído, mas arquitetura não trava pra depois): relatórios
   consolidando 2+ lojas numa visão só (cada `listar*()` per-loja recebe 1 `lojaId`, não uma lista);
   preço por peça/serviço variando por loja (extensão puramente aditiva se um dia precisar — ver
-  comentário na migration 0031/PROJETO_STATUS anterior a esta sessão); e **transferir peça de uma
+  comentário na migration 0031); e **transferir peça de uma
   loja pra outra** (conferido em 25/09/2026: não existe — hoje seriam duas movimentações à mão,
   uma saída numa loja e uma entrada na outra). Das três, a visão somada é a que um dono de 2 lojas
   deve pedir primeiro. Nenhuma impede uma empresa assim de começar a usar.
@@ -654,8 +589,8 @@ outro projeto Supabase do zero (ver seção 9).
 - **`notas_fiscais_arquivos`**: id, loja_id (FK lojas), tipo (`nfe`/`nfse`), competencia (date, 1º
   dia do mês), nome_arquivo, storage_path, ordem_servico_id (FK opcional), operador_id (FK
   operadores), criado_em, origem (`manual`/`automatica`, default `manual`),
-  numero/chave_acesso/status (opcionais, preenchidos só quando `origem = automatica`, sem uso real
-  ainda). O XML em si fica no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path`:
+  numero/chave_acesso/status (opcionais, preenchidos nas notas emitidas pelo sistema,
+  `origem = automatica`). O XML em si fica no **Supabase Storage**, bucket privado `notas-fiscais` (`storage_path`:
   `<tipo>/<ano>-<mes>/<uuid>-<nome original>`, **não segmentado por loja** — ver subseção
   "Multi-loja" acima).
 - **`configuracoes_fiscais_loja`**: 1 linha **por loja** (`loja_id` é a PK) com cnpj, razao_social,
@@ -718,7 +653,7 @@ outro projeto Supabase do zero (ver seção 9).
   recebido), operador_id (FK operadores), criado_em. Nasce de dois jeitos: (a) **automaticamente**,
   ao faturar uma OS (`FaturamentoCard.tsx`) escolhendo "A receber depois" em vez de "Recebido
   agora" — não lança Entrada no Caixa na hora, cria uma linha aqui, pendente; marcar como recebido
-  (`ReceberContaModal.tsx`) é que gera a Entrada; (b) **à mão** (desde esta sessão), pelo botão
+  (`ReceberContaModal.tsx`) é que gera a Entrada; (b) **à mão**, pelo botão
   "+ Nova conta" da própria tela (`ContaReceberForm.tsx`, mesmo padrão do Contas a Pagar), pra
   cobrança que não passou por OS nenhuma. **Detalhe que valeu conferir antes de construir (b)**: a
   tabela tem `constraint contas_receber_ordem_id_unique unique (ordem_servico_id)`, que à primeira

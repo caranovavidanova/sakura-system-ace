@@ -223,10 +223,9 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
     `docs/comparativo-anexar.md`.
 
 #### Por onde a próxima sessão começa
-1. **Convite do Gustavo**: ela traz o usuário dele no GitHub. Guiar passo a passo: convidar pra
-   organização `sakura-corp` (membro) e dar **Write** no `sakura-system-ace` (Settings →
-   Collaborators and teams). Depois ele segue o "Primeiro dia" do `docs/painel.md` e começa pela
-   #350.
+1. **Gustavo (`kalendoscope`) já está dentro** (30/09, à noite): membro da `sakura-corp`, **Write**
+   no `sakura-system-ace`, convite aceito, seguindo o "Primeiro dia" do `docs/painel.md`. Depois
+   ele começa pela #350.
 2. **Quando ele abrir um PR**, ela diz *"revisa o PR da tarefa N"*: conferir o CI, o código e o
    "Pronto quando", explicar em português, e ela decide. Se ela aprovar, eu mesclo.
 3. **A parte dela no painel**, na hora de cada tarefa (`docs/painel.md`, "O que a Sofia faz"):

@@ -53,6 +53,7 @@ sessão. O resto mora em `docs/` e **só é aberto quando o assunto pede**:
 | `docs/operacao.md` | rodar, instalar empresa nova, **publicar/liberar versão**, backup, atualizar bancos, voltar versão (antigas seções 9 e 11) | ao publicar, rodar migration ou instalar loja |
 | `docs/historico.md` | estado do Git e todos os marcos "onde parou" antigos (antiga seção 10) | quase nunca |
 | `docs/comparativo-anexar.md` | o que o concorrente Anexar anuncia × o que temos, e o que falta (29/09/2026) | ao planejar funcionalidade nova ou falar de venda |
+| `docs/painel.md` | o painel da equipe: o que é, como a equipe trabalha (levas, tarefas), decisões técnicas, 1ª versão, andamento | ao mexer no painel ou planejar leva |
 | `MELHORIAS.md` | o guia de melhorias (TR-/TL-/FN-), 227 KB | só quando ela citar um item |
 
 **Referências antigas continuam valendo**: código e documentos citam "item 33 da seção 6" — a seção 6
@@ -229,8 +230,11 @@ pra todas as lojas em 29/09), banco na **`0064`**.
 3. **Memória**: o trecho "quando quem está trabalhando não é a Sofia" (abre PR e **não mescla**,
    não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
    **Parte 1 FEITA (30/09)**: é a seção 0, no topo deste arquivo, revisada por ela. Escopo de quem
-   não é ela, por enquanto: **só o painel** ("depois todos vão mexer no sistema"). Faltam o
-   `docs/painel.md` e as issues da leva 0.
+   não é ela, por enquanto: **só o painel** ("depois todos vão mexer no sistema").
+   **Parte 2 FEITA (30/09)**: `docs/painel.md`. Decidido por ela nesta parte: **Cloudflare** (página
+   + login, plano grátis; não Supabase), **login pelo GitHub já na 1ª versão** (GitHub App da
+   organização, só membros da `sakura-corp`), e nas tarefas **a pessoa pega uma livre, uma por
+   vez**. Falta a parte 3: as issues da leva 0.
 4. **Convidar o Gustavo.**
 
 #### Deixar o `sakura-system-ace` privado: decidido que FICA PÚBLICO por enquanto (29/09)

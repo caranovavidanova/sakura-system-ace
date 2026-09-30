@@ -5,11 +5,24 @@
 > abaixo são da Sofia (29 e 30/09/2026). Mudar alguma delas é conversa com ela, não escolha de
 > quem está programando.
 
-## O que é
+## O que é, e aonde ele vai
 
-Uma página web **interna da equipe da Sakura Corp**. A 1ª versão mostra as **tarefas da leva** e
-**quem está com cada uma**. O painel **lê o GitHub, não o substitui**: as tarefas são as issues
-deste repositório (`sakura-corp/sakura-system-ace`), e o que o painel mostra vem de lá.
+Nas palavras da Sofia (30/09/2026): uma **interface de autogestão**, com um **design parecido com
+o do Claude**. Por enquanto ela tem que fazer **toda a linha de produção que já decidimos**, com
+**contador de tarefas** e o resto. As expansões serão o **financeiro da Sakura Corp, com DRE**.
+Ou seja, **um sistema nosso**, que permita administrar a empresa toda, da forma mais automatizada
+possível. E **ligado em tempo real ao GitHub**: tempo real é importante pra organização.
+
+Na prática, hoje:
+- O painel **lê o GitHub, não o substitui**: as tarefas são as issues deste repositório
+  (`sakura-corp/sakura-system-ace`), e o que o painel mostra vem de lá.
+- **Tempo real**: quando alguém pega, entrega ou fecha uma tarefa no GitHub, o painel de todo
+  mundo muda sozinho, em segundos, sem recarregar a página.
+- **Financeiro e DRE ficam pra depois**, e com um cuidado: dinheiro da empresa **não pode morar
+  no GitHub**, que é público. Quando chegar a hora, o financeiro vai precisar de um banco próprio
+  e privado; aí sim um Supabase faz sentido. Decidir com a Sofia quando chegar.
+- O desenho já nasce preparado pra crescer: uma barra lateral com uma seção por assunto ("Levas"
+  hoje; "Financeiro" aparece desativado, escrito "em breve").
 
 **Tudo aqui é público**, porque o repositório é público: o código do painel, as issues, os PRs.
 Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente ou senha.
@@ -22,7 +35,8 @@ Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente 
   **um PR**, que fecha a issue quando entra (`Closes #N` na descrição do PR).
 - **Estado de uma tarefa**:
   - **livre** = aberta e sem responsável;
-  - **com fulano** = aberta, com responsável;
+  - **em andamento** = aberta, com responsável, ainda sem PR aberto;
+  - **em revisão** = aberta, com um PR aberto que a fecha (`Closes #N`), esperando a Sofia;
   - **feita** = fechada.
 - **Pegar tarefa**: a pessoa pega **uma livre** (ninguém distribui), **põe o nome dela antes de
   começar**, e segura **uma por vez**. Só pega outra depois que o PR da atual foi aberto.
@@ -31,6 +45,53 @@ Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente 
 - **Fim da leva**: ela **congela**, todo mundo testa, o Claude da Sofia escreve o relatório, a
   Sofia aprova, e só então vem banco e "Liberar versão". **Bug de loja não espera a leva.**
 - **As tarefas nascem nas conversas da Sofia com o Claude dela**, que cria as issues.
+
+## Como começar uma tarefa
+
+A pessoa abre o Claude dela e diz só o nome ou o número da tarefa (ex: *"quero fazer a tarefa
+#12"*). A partir daí, o Claude:
+1. **Confere quem é** (seção 0 do `PROJETO_STATUS.md`) e **lê a issue inteira** e este manual.
+2. **Explica em português simples**, antes de mexer em qualquer coisa:
+   - o que é a tarefa e pra que ela serve no painel;
+   - o que o Claude vai fazer sozinho (o código);
+   - o que a pessoa vai precisar fazer (instalar, testar, abrir o PR), e quanto tempo deve levar.
+3. **Guia a pessoa a pôr o nome dela na tarefa** no GitHub, se ainda não pôs, passo a passo.
+4. Programa. Sempre que a pessoa precisar fazer alguma coisa que não seja só esperar o código
+   (rodar um comando, abrir o navegador, testar, clicar numa tela), o Claude **guia um passo por
+   vez, com calma**: onde clicar, o que digitar, o que deve aparecer, e espera ela confirmar
+   antes do próximo passo. Nada de despejar dez passos de uma vez.
+5. No fim, confere o "Pronto quando" da tarefa com a pessoa, item por item, e guia a abertura do
+   PR (com `Closes #N`) e o pedido de revisão da Sofia. **Não mescla.**
+
+## Design (parecido com o do Claude)
+
+Inspiração de estilo, não cópia: **nada de logotipo, nome, fonte proprietária ou ícone da
+Anthropic ou do Claude**. O que se copia é o jeito: calmo, claro, muito espaço, tipografia boa.
+- **Layout**: barra lateral fixa à esquerda (no celular vira uma barra no topo), conteúdo no meio
+  com largura máxima de ~960 px, cartões com borda fina e cantos de 12 px, sem sombra forte, sem
+  vidro nem neon (o visual do programa das lojas não vale aqui).
+- **Fontes** (grátis, instaladas pelo npm, sem CDN): **Inter** na interface
+  (`@fontsource-variable/inter`) e **Source Serif 4** nos títulos
+  (`@fontsource-variable/source-serif-4`). Ícones: `lucide-react`.
+- **Cores**: claro por padrão, escuro quando o computador estiver no modo escuro
+  (`prefers-color-scheme`). Todas as combinações abaixo foram conferidas: passam no contraste
+  WCAG AA (4,5:1 ou mais pra texto).
+
+| Papel | Claro | Escuro |
+|---|---|---|
+| Fundo | `#FAF9F5` | `#1F1E1D` |
+| Cartão / superfície | `#FFFFFF` | `#2A2927` |
+| Borda | `#E6E3DA` | `#3A3936` |
+| Texto | `#1F1E1D` | `#F2F0EA` |
+| Texto secundário | `#6B6963` | `#A8A59C` |
+| Destaque (rosa Sakura, escurecido pra ler bem) | `#B8237F` (texto branco em cima) | `#F07CC4` (texto `#1F1E1D` em cima) |
+
+| Estado da tarefa | Claro (texto / fundo) | Escuro (texto / fundo) |
+|---|---|---|
+| Livre | `#5F5D57` / `#EFEDE6` | `#C9C6BD` / `#34332F` |
+| Em andamento | `#A81F74` / `#FBE7F3` | `#F59BD2` / `#43243A` |
+| Em revisão | `#7A4F00` / `#FBEFD9` | `#F2C46B` / `#3F3322` |
+| Feita | `#2B6534` / `#E4F1E6` | `#8FD19C` / `#233A28` |
 
 ## Decisões técnicas (já tomadas)
 
@@ -61,10 +122,15 @@ Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente 
 
 ## 1ª versão (leva 0)
 
-1. **Login pelo GitHub**, só pra membros da `sakura-corp`.
-2. **A lista das tarefas da leva atual**, com o estado de cada uma: livre / com fulano / feita.
+1. **No ar na Cloudflare**, atualizando sozinho a cada mudança do painel na `main`.
+2. **Login pelo GitHub**, só pra membros da `sakura-corp`.
+3. **A leva atual**: o contador (livres, em andamento, em revisão, feitas, horas) e a lista das
+   tarefas agrupadas por estado, com os dados de verdade das issues.
+4. **Tempo real**: o painel de todo mundo muda sozinho quando uma tarefa muda no GitHub.
 
-As tarefas da leva 0, em pedaços pequenos (um PR cada), ficam nas issues com a etiqueta `leva-0`.
+As 6 tarefas da leva 0, com o passo a passo de cada uma, ficam nas issues com a etiqueta `leva-0`.
+A **leva 1** é a linha de produção completa (botão de pegar tarefa, fases da leva, horas por
+pessoa, relatório e aprovação); depois vem o financeiro.
 
 ## Regras pra quem trabalha no painel (resumo da seção 0)
 

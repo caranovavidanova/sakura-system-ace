@@ -240,8 +240,21 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    **Parte 2 FEITA (30/09)**: `docs/painel.md`. Decidido por ela nesta parte: **Cloudflare** (página
    + login, plano grátis; não Supabase), **login pelo GitHub já na 1ª versão** (GitHub App da
    organização, só membros da `sakura-corp`), e nas tarefas **a pessoa pega uma livre, uma por
-   vez**. Falta a parte 3: as issues da leva 0.
-4. **Convidar o Gustavo.**
+   vez**. Depois, também decidido: o Claude deles **guia passo a passo, com calma**, em tudo que não
+   for programar (virou regra da seção 0); a pessoa só diz *"quero fazer a tarefa #N"* e o Claude
+   explica antes de começar; a próxima tarefa só começa depois da anterior **aprovada** ("Depende
+   de"); aviso no fim de cada tarefa **pelo GitHub e pelo WhatsApp** (mensagem que o Claude
+   escreve); e o "Fim de uma leva". Tudo no `docs/painel.md`.
+   **Parte 3 EM REVISÃO (30/09, ela parou pra continuar no dia seguinte, na mesma sessão)**: as 6
+   tarefas da leva 0 estão escritas em **`docs/leva-0-rascunho.md`** (arquivo temporário), bem
+   guiadas, com a visão dela (autogestão, design parecido com o do Claude, contador, **tempo real**
+   com webhook + Durable Object da Cloudflare, financeiro/DRE depois e fora do GitHub). **Falta o
+   "ok" dela** pra criar a etiqueta `leva-0` e as 6 issues; depois, apagar o rascunho. No mesmo
+   arquivo está a **mensagem do primeiro dia**, que ela **aprovou**; em aberto se ela vai morar
+   no `docs/painel.md` ("Primeiro dia").
+4. **Convidar o Gustavo**: pra organização `sakura-corp` (membro, que é o que deixa entrar no
+   painel) e com escrita no `sakura-system-ace`. Falta o usuário dele no GitHub. Na hora, a Sofia
+   manda a mensagem de WhatsApp do rascunho, e ele começa pela mensagem do primeiro dia.
 
 #### Deixar o `sakura-system-ace` privado: decidido que FICA PÚBLICO por enquanto (29/09)
 Ela pediu isso no meio do passo 1. Apresentei três caminhos (A: privado com o plano Team, uns

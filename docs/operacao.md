@@ -311,7 +311,7 @@ se resolve na tela de Auditoria, em minutos.
 
 **Empresa nova = mais um bloco nessa lista.** Nada de mexer no workflow.
 
-Quatro armadilhas, todas já vividas (§6 item 67):
+Cinco armadilhas, todas já vividas (§6 item 67):
 
 1. **A conexão tem que ser a do "Session pooler"**, não a "Direct" (IPv6, que o runner não tem)
    nem a "Transaction" (não aguenta o `pg_dump`). Fica em Settings → Database → Connection string.
@@ -324,6 +324,11 @@ Quatro armadilhas, todas já vividas (§6 item 67):
 4. **A caixa de editar um secret no GitHub aparece SEMPRE VAZIA** — ele nunca mostra o que está
    guardado. Editar ali é digitar tudo de novo; colar só um pedaço substitui a lista inteira. Já
    aconteceu. Monte o texto no Bloco de Notas e cole pronto.
+5. **O `supabase_url` é só `https://<código>.supabase.co`, sem nada depois** (29/09/2026). A tela
+   "Data API" do Supabase mostra também o endereço da API REST, que termina em `/rest/v1/`; com
+   ele, o pedido do Storage cai na API REST e volta `PGRST125 "Invalid path specified in request
+   URL"`, que não fala em endereço. Desde então o job corta um `/rest/v1` do fim sozinho (e
+   avisa). O código é o mesmo que aparece na linha do `banco`, depois de `postgres.`.
 
 #### Conferir de vez em quando (5 minutos por mês)
 

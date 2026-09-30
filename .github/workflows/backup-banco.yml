@@ -164,6 +164,18 @@ jobs:
             SUPABASE_URL="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].supabase_url // empty")"
             SERVICE_KEY="$(echo "$BACKUP_EMPRESAS" | jq -r ".[$i].service_role_key // empty")"
 
+            # O endereço certo é só https://<ref>.supabase.co. A tela "Data
+            # API" do Supabase mostra também o da API REST, que termina em
+            # /rest/v1/ — colado aqui, o pedido do Storage cai na API REST e
+            # volta PGRST125 "Invalid path specified in request URL", que não
+            # fala em endereço nenhum. Aconteceu em 29/09/2026. Cortar é
+            # seguro: nenhum endereço de projeto termina assim de verdade.
+            while [[ "$SUPABASE_URL" == */ ]]; do SUPABASE_URL="${SUPABASE_URL%/}"; done
+            if [[ "$SUPABASE_URL" == */rest/v1 ]]; then
+              SUPABASE_URL="${SUPABASE_URL%/rest/v1}"
+              echo "::warning::O supabase_url de $EMPRESA no BACKUP_EMPRESAS terminava em /rest/v1 (é o endereço da API REST, não o do projeto). Usei só até .supabase.co; vale corrigir lá."
+            fi
+
             # Escondem o valor de qualquer saída, inclusive de um erro do
             # pg_dump que devolvesse a linha de conexão inteira.
             echo "::add-mask::$CONEXAO"
@@ -242,6 +254,16 @@ jobs:
 
                 if ! echo "$BUCKETS" | grep -qx "notas-fiscais"; then
                   echo "::error::O bucket 'notas-fiscais' não aparece em $EMPRESA. O que existe: $(echo "$BUCKETS" | tr '\n' ' ')"
+                  # O endereço não é mostrado (o log deste repositório é
+                  # público), só o que vem depois de ".supabase.co".
+                  if echo "$BUCKETS" | grep -q "PGRST"; then
+                    if [[ "$SUPABASE_URL" == *.supabase.co* ]]; then
+                      DEPOIS="depois de '.supabase.co' ele tem: '${SUPABASE_URL#*.supabase.co}'"
+                    else
+                      DEPOIS="ele nem tem '.supabase.co'"
+                    fi
+                    echo "::error::Quem respondeu foi a API REST, não o Storage. O supabase_url de $EMPRESA tem que ser só https://<código>.supabase.co, sem nada depois, e ${DEPOIS}."
+                  fi
                   exit 1
                 fi
 

@@ -249,11 +249,13 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    #350 a #355** foram criadas, bem guiadas, com a visão dela (autogestão, design parecido com o
    do Claude, contador, **tempo real** com webhook + Durable Object da Cloudflare, financeiro/DRE
    depois e fora do GitHub). O caminho da leva e "O que a Sofia faz" estão no `docs/painel.md`.
-   **Em aberto**: onde mora a **mensagem do primeiro dia** (aprovada por ela); por enquanto está em
-   `docs/leva-0-rascunho.md`, que é temporário.
+   A **mensagem do primeiro dia** (o texto que quem entra cola como primeira mensagem no Claude
+   Code do PC, aprovado por ela) mora no `docs/painel.md`, seção "Primeiro dia". O Gustavo usa
+   **Windows** (ela disse: não precisa perguntar), e ela **não precisa** de mensagem de WhatsApp
+   pra mandar pra ele ("já tá tudo esclarecido"). O rascunho temporário foi apagado.
 4. **Convidar o Gustavo**: pra organização `sakura-corp` (membro, que é o que deixa entrar no
-   painel) e com escrita no `sakura-system-ace`. Falta o usuário dele no GitHub. Na hora, a Sofia
-   manda a mensagem de WhatsApp do rascunho, e ele começa pela mensagem do primeiro dia.
+   painel) e com escrita no `sakura-system-ace`. Falta o usuário dele no GitHub. Depois do
+   convite, ele começa pela mensagem do "Primeiro dia" do `docs/painel.md`.
 
 #### Deixar o `sakura-system-ace` privado: decidido que FICA PÚBLICO por enquanto (29/09)
 Ela pediu isso no meio do passo 1. Apresentei três caminhos (A: privado com o plano Team, uns

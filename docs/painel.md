@@ -52,6 +52,32 @@ Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente 
   Sofia aprova, e só então vem banco e "Liberar versão". **Bug de loja não espera a leva.**
 - **As tarefas nascem nas conversas da Sofia com o Claude dela**, que cria as issues.
 
+## Primeiro dia (de quem entra na equipe)
+
+Antes da primeira tarefa, a pessoa instala o **Claude Code no PC** (não a versão pela internet:
+ela vai precisar abrir o painel no navegador pra testar), entra com a conta Claude dela, e cola
+isto como **primeira mensagem**. O texto foi aprovado pela Sofia em 30/09/2026 e é o mesmo pra
+todo mundo que entrar (o do Gustavo é Windows; pra quem usar Mac, trocar a primeira linha).
+
+> Oi, Claude. Vou trabalhar no projeto **Sakura System**, que está no GitHub no repositório
+> **`sakura-corp/sakura-system-ace`**. Meu computador é **Windows**. Me guie **um passo por vez**,
+> como se eu nunca tivesse feito isso: diga exatamente onde clicar ou o que digitar, o que deve
+> aparecer na tela, e **espere eu responder "feito"** antes do próximo passo.
+>
+> Hoje o objetivo é **só deixar meu computador pronto**, sem programar nada:
+> 1. Confira o que já tenho instalado e me ajude a instalar o que faltar: **Git**, **Node.js
+>    versão 22** e **GitHub CLI** (o programa `gh`).
+> 2. Me ajude a entrar na minha conta do GitHub pelo GitHub CLI (`gh auth login`, pelo navegador).
+> 3. **Clone** o repositório com `gh repo clone sakura-corp/sakura-system-ace`, numa pasta que você
+>    vai me ajudar a escolher. **Não baixe como ZIP.** Precisa ser clonado, pra eu conseguir
+>    entregar meu trabalho depois.
+> 4. Me explique como abrir o Claude Code **dentro dessa pasta** e espere eu abrir.
+> 5. Já dentro da pasta, leia a **seção 0 do `PROJETO_STATUS.md`** e o **`docs/painel.md`**, e me
+>    explique em português simples, em poucas linhas, como vai ser o meu trabalho.
+>
+> **Hoje não mude nada no projeto, não crie branch e não pegue tarefa.** Quando tudo estiver
+> pronto, diga "tudo pronto" e pare.
+
 ## Como começar uma tarefa
 
 A pessoa abre o Claude dela e diz só o nome ou o número da tarefa (ex: *"quero fazer a tarefa

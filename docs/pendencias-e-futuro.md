@@ -38,9 +38,9 @@ CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **a
 - a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; seção 9);
 - **cancelar uma nota deveria estornar estoque e Caixa?** (pergunta de desenho nunca respondida,
   desde 03/09);
-- os três ajustes que ela pediu em 28/09 e deixou pra depois (modais com o fundo vazando, o status
-  da nota na lista de Notas Fiscais, o texto velho no topo de Notas Fiscais; detalhe no marco de
-  28/09 do `docs/historico.md`);
+- os três ajustes que ela pediu em 28/09, **já planejados como tarefas no GitHub** (30/09): as
+  janelas com o fundo vazando (#361), a situação da nota na lista de Notas Fiscais (#362) e o
+  texto velho no topo de Notas Fiscais (#363). Pra ela fazer comigo quando quiser;
 - o repositório só de versões e fechar o código (item 12).
 
 **Segurança, fora do código:**
@@ -49,8 +49,9 @@ CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **a
   essas (item 50 da seção 6);
 - trocar a chave `sb_secret_...` do Supabase que um dia foi colada no chat, se ainda não trocou
   (item 3 da seção 6);
-- conferir se o ruleset `main protegida` exige o CI verde pra mesclar; se não, ligar "Require
-  status checks to pass" (pendente desde 11/09 como "marcar o CI como obrigatório").
+- ~~conferir se o ruleset `main protegida` exige o CI verde~~: **feito em 30/09**. Ela ligou
+  "Require status checks to pass" com os 5 testes do CI (Tipos/lint/testes, Matriz de RLS,
+  Varredura de segredo, Electron de verdade, Contraste nas telas). Admin continua isenta.
 
 **Perguntas pra fora:**
 - **contabilidade**: com CSOSN `500`, as peças deveriam levar ICMS-ST retido? (item 1, "frágil"
@@ -218,7 +219,7 @@ nem perguntar; só retomar se ela trouxer.
 
 Conforme o uso real e o que ela pedir. O cardápio de ideias é o `MELHORIAS.md`, e o que o
 concorrente tem e nós não está em `docs/comparativo-anexar.md`. **Nada disso é pra construir sem
-ela pedir.** Os três ajustes que ela pediu em 28/09 estão em "O que depende dela", acima.
+ela pedir.** Os três ajustes que ela pediu em 28/09 são as tarefas #361, #362 e #363.
 
 ### 5. Fornecedores: completo
 

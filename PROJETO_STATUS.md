@@ -55,9 +55,9 @@ sessão. O resto mora em `docs/` e **só é aberto quando o assunto pede**:
 | `docs/banco.md` | as migrations `0001`-`0064`, cada tabela, multi-loja, RLS (antiga seção 5) | antes de mexer em banco/migration |
 | `docs/licoes.md` | as dívidas técnicas e os 78 **padrões de bug** já vividos (antiga seção 6) | ao investigar bug, e antes de mexer em área sensível |
 | `docs/modulos.md` | estado de cada tela/módulo hoje (antiga seção 7) | antes de mexer num módulo |
-| `docs/pendencias-e-futuro.md` | o que não existe, parte fiscal (playbook por loja nova), linha do tempo (antiga seção 8) | ao planejar próximo passo |
+| `docs/pendencias-e-futuro.md` | **"O que depende dela", numa lista só**; o que não existe; parte fiscal (playbook por loja nova); linha do tempo (antiga seção 8) | ao planejar próximo passo, e quando ela perguntar "o que falta?" |
 | `docs/operacao.md` | rodar, instalar empresa nova, **publicar/liberar versão**, backup, atualizar bancos, voltar versão (antigas seções 9 e 11) | ao publicar, rodar migration ou instalar loja |
-| `docs/historico.md` | estado do Git e todos os marcos "onde parou" antigos (antiga seção 10) | quase nunca |
+| `docs/historico.md` | estado do Git e os marcos "onde parou" antigos, do mais novo pro mais velho (antiga seção 10) | quase nunca |
 | `docs/comparativo-anexar.md` | o que o concorrente Anexar anuncia × o que temos, e o que falta (29/09/2026) | ao planejar funcionalidade nova ou falar de venda |
 | `docs/painel.md` | o painel da equipe: o que é, como a equipe trabalha (levas, tarefas), decisões técnicas, 1ª versão, andamento | ao mexer no painel ou planejar leva |
 | `MELHORIAS.md` | o guia de melhorias (TR-/TL-/FN-), 227 KB | só quando ela citar um item |
@@ -68,7 +68,9 @@ a 9 é `docs/operacao.md`. A numeração dos itens não mudou.
 
 **Como manter**: ao fim de cada sessão, **substituir** o bloco "Onde parou" lá embaixo pelo novo e
 mover o antigo pro topo dos marcos em `docs/historico.md`. Detalhe de módulo, migration ou bug novo
-vai pro arquivo de `docs/` certo, nunca aqui. Se este índice passar de ~30 KB, é hora de enxugar.
+vai pro arquivo de `docs/` certo, nunca aqui. **O que fica dependendo dela vai pra lista "O que
+depende dela" da seção 8** (e sai de lá quando for feito), não só pro "Onde parou": marco antigo
+envelhece e ninguém relê. Se este índice passar de ~30 KB, é hora de enxugar.
 
 ## 1. Quem é a usuária e como trabalhar com ela
 
@@ -131,6 +133,13 @@ vai pro arquivo de `docs/` certo, nunca aqui. Se este índice passar de ~30 KB, 
 - **Tarefas pra equipe saem já planejadas** (30/09/2026): o papel da equipe é programar e
   ajustar, e o planejamento é dela comigo. Cada tarefa diz o que fazer, em quais arquivos, com o
   que, o "Pronto quando" e o que não fazer. Ela revisa o rascunho antes de virar issue.
+- **Faxina da memória** (30/09/2026): ela quer a memória enxuta e clara: **apagar o que não
+  acrescenta** (história de "como foi feito", "nesta sessão", status que envelheceu) e
+  **esclarecer** o que ficou ambíguo ou contraditório. O que é decisão ou lição fica; o texto antigo
+  continua no histórico do Git.
+- **Repositório privado na sessão** (30/09/2026): a trava de segurança da sessão recusa adicionar
+  o `caranovavidanova/sakura-corp` sem autorização explícita. Pedir com todas as letras ("posso
+  adicionar o sakura-corp com permissão de escrita?"); escolher uma opção num menu não conta.
 - **Sempre que eu aprender uma preferência de trabalho nova**, documentar aqui — não só nas
   decisões técnicas da seção 3, mas qualquer coisa sobre *como* ela quer que eu trabalhe. Sessões
   futuras não têm memória da conversa, só deste arquivo.
@@ -184,46 +193,42 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 
 
-### 30/09/2026: repositório na organização, travas, senhas e o painel prontos pra equipe
+### 30/09/2026, à noite: faxina da memória (privado e público)
 
-Sessão de 29 e 30/09. O bloco longo, com tudo o que foi decidido e por quê, está no topo de
-`docs/historico.md`. **Estado do código**: `main` na **`v0.9.47`** (publicada e liberada; só troca o
-endereço do atualizador), banco na **`0064`**. Repositório em **`sakura-corp/sakura-system-ace`**,
-**público** (decisão dela; o que fechar exige está no histórico e no item 12 da seção 8).
+Sessão de arrumação, **sem código de app**. **Estado do código**: não mudou. `main` na
+**`v0.9.47`** (publicada e liberada), banco na **`0064`**. O marco anterior (30/09: organização,
+travas, senhas e o painel) está no topo de `docs/historico.md`.
 
-#### O que ficou pronto
-- **Endereço novo** (`v0.9.47`): o PC da casa dela atualizou sozinho pelo redirecionamento.
-  **Falta conferir o Balcão** na próxima vez que abrirem o programa na loja.
-- **Senhas das automações**: as 8 e a `chave-do-backup.txt` estão no **Bitwarden** dela (pasta
-  "Sakura System"). Tokens novos, senha do banco resetada, backup verde nos dois destinos.
-- **Travas**: cofres `backup` (só `main`) e `lojas` (só `main` + aprovação dela); rulesets
-  `main protegida` (PR + 1 aprovação, ela isenta) e `versões` (`v*` não muda nem apaga).
-  **Release, Liberar e Atualizar bancos param em "Waiting" até ela aprovar** ("Review
-  deployments" → `lojas` → "Approve and deploy"), inclusive quando eu disparo.
-  **O `BACKUP_EMPRESAS` fica nos dois cofres.**
-- **Risco aceito por ela**: quem tem escrita consegue mexer em versões por um workflow na própria
-  branch (item 78 de `docs/licoes.md`). A trava de verdade (repositório só de versões) fica pra
-  depois.
-- **Memória pra equipe**: a seção 0, no topo deste arquivo.
-- **Painel**: `docs/painel.md` (visão, como a equipe trabalha, design, decisões técnicas, "Primeiro
-  dia", o caminho da leva 0 e "O que a Sofia faz"). **Leva 0 criada: issues #350 a #355.**
+#### O que foi feito
+- **Repositório privado** (caranovavidanova/sakura-corp#7, mesclado): `EQUIPE.md` em dia com o
+  painel dentro do `sakura-system-ace`, o Gustavo e quem aprova PR; `EMPRESA.md` sem repetição, com
+  o acordo provisório fora dos pré-requisitos (decisão de 29/09); `PRECOS-E-CUSTOS.md` começando
+  pelo que vale hoje, sem as contas substituídas.
+- **Memória pública** (PR #359): todos os arquivos de `docs/`, o `MELHORIAS.md` e o `README.md`
+  revisados. O principal:
+  - **"O que depende dela", numa lista só**, na seção 8. Juntou o que estava espalhado nos marcos
+    antigos, inclusive coisas esquecidas: **atualizar o Electron** (a linha 33 não recebe mais
+    correção de segurança, item 14), **marcar o CI como obrigatório**, **cancelar nota deveria
+    estornar estoque e Caixa?** e a troca da chave `sb_secret`.
+  - `docs/historico.md` com os marcos todos do mais novo pro mais velho; `docs/modulos.md` com a
+    tabela de versões (datas reais); `docs/estrutura.md` como um mapa; `docs/operacao.md` com o
+    único jeito de publicar.
+  - **Nomes de clientes de verdade saíram dos documentos** (o repositório é público). Ainda
+    aparecem num teste (`src/lib/focusNfe.test.ts`) e no nome de um script de uso único
+    (`supabase/scripts/excluir-os-teste-eduarda.sql`): trocar é uma mudança pequena de código,
+    quando ela quiser. No histórico do Git eles continuam.
 
 #### Por onde a próxima sessão começa
-1. **Convite do Gustavo**: ela vai trazer o usuário dele no GitHub. Guiar passo a passo:
-   convidar pra organização `sakura-corp` (membro, que é o que deixa entrar no painel) e dar
-   **Write** no `sakura-system-ace` (Settings → Collaborators and teams). Depois ele segue o
-   "Primeiro dia" do `docs/painel.md` e começa pela #350.
-2. **Quando ele abrir um PR**, ela diz *"revisa o PR da tarefa N"*: eu confiro o CI, o código e o
-   "Pronto quando", explico em português e ela decide. Se ela aprovar, eu mesclo.
-3. **A parte dela no painel** vem na hora de cada tarefa: ligar a Cloudflare antes da #352, criar
-   os dois GitHub Apps antes da #353 (o segredo do app de teste vai pro Gustavo pelo Bitwarden
-   Send), ligar o webhook antes da #355. Eu anoto cada uma em "Andamento" do `docs/painel.md`.
-4. **Conferir o Balcão na `0.9.47`.**
-5. O `EQUIPE.md` do privado ainda fala do `sakura-painel` separado: corrigir quando o privado
-   estiver na sessão.
-
-#### Continua valendo do marco de 28/09 (em `docs/historico.md`)
-Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota
-na lista, texto velho em Notas Fiscais) e as datas de outubro: **1º/10, a alíquota de 10/2026 no
-portal da prefeitura**; o CNPJ no começo de outubro; a Focus do Solo pro Start; a fatura da Focus em
-10/10.
+1. **Convite do Gustavo**: ela traz o usuário dele no GitHub. Guiar passo a passo: convidar pra
+   organização `sakura-corp` (membro) e dar **Write** no `sakura-system-ace` (Settings →
+   Collaborators and teams). Depois ele segue o "Primeiro dia" do `docs/painel.md` e começa pela
+   #350.
+2. **Quando ele abrir um PR**, ela diz *"revisa o PR da tarefa N"*: conferir o CI, o código e o
+   "Pronto quando", explicar em português, e ela decide. Se ela aprovar, eu mesclo.
+3. **A parte dela no painel**, na hora de cada tarefa (`docs/painel.md`, "O que a Sofia faz"):
+   Cloudflare antes da #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
+4. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
+   portal da prefeitura; o CNPJ no começo de outubro; a fatura da Focus em 10/10.
+5. **Perguntado a ela, sem resposta ainda**: cortar os marcos antigos de `docs/historico.md` (são
+   ~150 KB, quase nunca lidos; o que vale já foi pros outros arquivos, e o texto inteiro fica no
+   Git) ou manter como estão.

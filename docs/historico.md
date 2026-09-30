@@ -33,6 +33,49 @@ deles envelhecem** ("falta", "ainda não"). O que continua valendo foi levado pr
 `docs/`; o que depende dela está em "O que depende dela", na seção 8. Na dúvida, vale o arquivo de
 `docs/`, não o marco.
 
+### Onde parou em 30/09/2026: repositório na organização, travas, senhas e o painel prontos pra equipe
+
+Sessão de 29 e 30/09. O bloco longo, com tudo o que foi decidido e por quê, está logo abaixo. **Estado do código**: `main` na **`v0.9.47`** (publicada e liberada; só troca o
+endereço do atualizador), banco na **`0064`**. Repositório em **`sakura-corp/sakura-system-ace`**,
+**público** (decisão dela; o que fechar exige está no histórico e no item 12 da seção 8).
+
+#### O que ficou pronto
+- **Endereço novo** (`v0.9.47`): o PC da casa dela atualizou sozinho pelo redirecionamento.
+  **Falta conferir o Balcão** na próxima vez que abrirem o programa na loja.
+- **Senhas das automações**: as 8 e a `chave-do-backup.txt` estão no **Bitwarden** dela (pasta
+  "Sakura System"). Tokens novos, senha do banco resetada, backup verde nos dois destinos.
+- **Travas**: cofres `backup` (só `main`) e `lojas` (só `main` + aprovação dela); rulesets
+  `main protegida` (PR + 1 aprovação, ela isenta) e `versões` (`v*` não muda nem apaga).
+  **Release, Liberar e Atualizar bancos param em "Waiting" até ela aprovar** ("Review
+  deployments" → `lojas` → "Approve and deploy"), inclusive quando eu disparo.
+  **O `BACKUP_EMPRESAS` fica nos dois cofres.**
+- **Risco aceito por ela**: quem tem escrita consegue mexer em versões por um workflow na própria
+  branch (item 78 de `docs/licoes.md`). A trava de verdade (repositório só de versões) fica pra
+  depois.
+- **Memória pra equipe**: a seção 0, no topo deste arquivo.
+- **Painel**: `docs/painel.md` (visão, como a equipe trabalha, design, decisões técnicas, "Primeiro
+  dia", o caminho da leva 0 e "O que a Sofia faz"). **Leva 0 criada: issues #350 a #355.**
+
+#### Por onde a próxima sessão começa
+1. **Convite do Gustavo**: ela vai trazer o usuário dele no GitHub. Guiar passo a passo:
+   convidar pra organização `sakura-corp` (membro, que é o que deixa entrar no painel) e dar
+   **Write** no `sakura-system-ace` (Settings → Collaborators and teams). Depois ele segue o
+   "Primeiro dia" do `docs/painel.md` e começa pela #350.
+2. **Quando ele abrir um PR**, ela diz *"revisa o PR da tarefa N"*: eu confiro o CI, o código e o
+   "Pronto quando", explico em português e ela decide. Se ela aprovar, eu mesclo.
+3. **A parte dela no painel** vem na hora de cada tarefa: ligar a Cloudflare antes da #352, criar
+   os dois GitHub Apps antes da #353 (o segredo do app de teste vai pro Gustavo pelo Bitwarden
+   Send), ligar o webhook antes da #355. Eu anoto cada uma em "Andamento" do `docs/painel.md`.
+4. **Conferir o Balcão na `0.9.47`.**
+5. O `EQUIPE.md` do privado ainda fala do `sakura-painel` separado: corrigir quando o privado
+   estiver na sessão.
+
+#### Continua valendo do marco de 28/09 (em `docs/historico.md`)
+Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota
+na lista, texto velho em Notas Fiscais) e as datas de outubro: **1º/10, a alíquota de 10/2026 no
+portal da prefeitura**; o CNPJ no começo de outubro; a Focus do Solo pro Start; a fatura da Focus em
+10/10.
+
 ### Onde parou em 29-30/09/2026: organização `sakura-corp`, travas, senhas e o plano do painel
 
 Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pro topo de

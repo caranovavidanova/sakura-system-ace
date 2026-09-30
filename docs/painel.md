@@ -184,7 +184,7 @@ tarefa 6 → PR → Sofia aprova  →  fim da leva 0 (ver "Fim de uma leva")
 Cada coisa que ela faz, o Claude dela **anota em "Andamento" do `docs/painel.md`** (ex:
 "01/10: Cloudflare ligada"). É ali que o Claude de quem programa confere se pode começar.
 
-- **Antes da tarefa 1**: ~~criar a etiqueta `leva-0` e as issues~~ (feito em 30/09) e convidar o Gustavo.
+- **Antes da tarefa 1**: ~~criar a etiqueta `leva-0` e as issues~~ (feito em 30/09) e ~~convidar o Gustavo~~ (feito em 30/09).
 - **Antes da tarefa 3**: na Cloudflare, ligar o repositório ("Workers Builds"): pasta `painel`,
   comando de build `npm ci && npm run build`, publicar com `npx wrangler deploy`, só da `main`,
   **sem publicar branches de PR**.
@@ -232,5 +232,7 @@ login funcionar no PC.
 login criados", "webhook ligado"), com a data. É onde quem programa confere se pode começar.*
 
 - **30/09/2026**: manual criado e **leva 0 criada** (issues #350 a #355). Nenhuma linha de código
-  do painel ainda. Falta a Sofia convidar o Gustavo (membro da `sakura-corp` + Write no
-  repositório); depois disso, a tarefa #350 pode começar.
+  do painel ainda.
+- **30/09/2026, à noite**: **Gustavo (`kalendoscope`) convidado e dentro**: membro da `sakura-corp`
+  e **Write** no `sakura-system-ace`, convite aceito. Ele está seguindo o "Primeiro dia" (Claude
+  Code no PC). **A tarefa #350 já pode começar.**

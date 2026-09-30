@@ -183,6 +183,17 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    publicada na mão. Isso fica protegido só pela regra na memória.
    **Os dois cofres: FEITOS (30/09)**, ver "As senhas" abaixo. **Falta**: as duas regras (rulesets)
    da `main` e da tag `v*`.
+   **O risco que fica é maior do que o anotado acima** (achado em 30/09): quem tem escrita no
+   repositório consegue, com um workflow modificado **na própria branch**, usar o token automático
+   do Actions (`contents: write`) pra **publicar, liberar ou trocar arquivo** de uma versão. As
+   travas dos workflows oficiais não alcançam isso; os **secrets dos cofres, sim** (só `main`),
+   então banco e backup ficam protegidos de verdade. Por isso "só ela cria tag `v*`" não dá pra ser
+   uma regra de tag que bloqueia criação: quem cria a tag é o próprio Release, com esse token, e o
+   GitHub não deixa isentá-lo. **Proposta feita**: a regra de tag bloqueia mudar e apagar `v*`, e o
+   Release passa pelo cofre `lojas` (aprovação dela) — **esperando o "sim" dela**. **Decidido por
+   ela (30/09)**: aceitar o risco por enquanto; a trava de verdade (as versões num **repositório
+   separado, onde colaborador não escreve**, o mesmo "repositório só de versões" de fechar o código)
+   fica **pra depois**. Cuidado barato sugerido: o Balcão no canal normal.
 3. **Memória**: o trecho "quando quem está trabalhando não é a Carol" (abre PR e **não mescla**,
    não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
 4. **Convidar o Gustavo.**

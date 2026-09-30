@@ -19,7 +19,7 @@ Sistema de gestão para autocenters e borracharias, parte da linha Sakura System
    ```bash
    cp .env.example .env
    ```
-3. Rode as migrations em `supabase/migrations/` no seu projeto Supabase (via SQL Editor ou Supabase CLI).
+3. Num projeto Supabase novo, cole no SQL Editor o arquivo único `supabase/instalacao/instalacao-completa.sql` (todas as migrations, geradas por `npm run gerar-instalacao`). O passo a passo completo está em `supabase/instalacao/INSTALAR-LOJA-NOVA.md`.
 4. Inicie o app em modo desenvolvimento (abre a janela do Electron com hot reload):
    ```bash
    npm run dev
@@ -35,4 +35,6 @@ Gera o instalador do Windows em `release/`.
 
 ## Status
 
-Em desenvolvimento — veja o [CHANGELOG.md](./CHANGELOG.md) para o progresso por versão.
+Em uso real numa loja, com NFC-e e NFS-e em produção. As versões publicadas estão nas [releases do GitHub](https://github.com/sakura-corp/sakura-system-ace/releases), e o que cada uma trouxe, em `docs/modulos.md` ("Empacotamento e versões"). O `CHANGELOG.md` parou na 0.9.2.
+
+A memória do projeto (decisões, estado de cada módulo, pendências) começa no `PROJETO_STATUS.md`. Quem entra na equipe começa pela seção 0 dele e pelo `docs/painel.md`.

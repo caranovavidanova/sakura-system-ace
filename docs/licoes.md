@@ -7,7 +7,7 @@
 
 ## 6. Dívidas técnicas / pontos de atenção — IMPORTANTE
 
-1. **Permissão por módulo checada só na interface, não em RLS por categoria** — um operador
+1. **Permissão por módulo: no banco só em RH, contas e Caixa; nas outras tabelas, só na tela** — um operador
    logado com permissão só de "Caixa", por exemplo, ainda consegue chamar a API do Supabase
    direto pra mexer em "Clientes" se tentar de propósito. RLS exige **login** pra tudo (fecha o
    acesso sem estar logado), mas não reforça por módulo. **Enquanto quem opera é o pai dela e os
@@ -52,9 +52,8 @@
 
 2. **Autenticação**: Supabase Auth, login com usuário/senha (ver seção 3). **Redefinir senha de
    operador esquecida** já está implementado (Configurações → Operadores → "Redefinir senha",
-   migration `0038` + Edge Function `redefinir-senha-operador` — ver "Login e permissões" na seção
-   7 e o passo a passo de deploy na seção 9) — falta só ela rodar a migration e publicar a função
-   no Supabase real, mesmo processo já feito uma vez pra `ler-notas-fiscais`. **Multi-loja**: a
+   migration `0038` + Edge Function `redefinir-senha-operador`, já publicada na Pneus Amigão — ver
+   "Login e permissões" na seção 7 e "Publicar uma Edge Function" na seção 9). **Multi-loja**: a
    fundação já existe (1 projeto Supabase pode servir 2+ lojas, ver seção 5) — o que ainda não
    existe é um site externo de assinatura pra provisionar loja+admin automaticamente pra um
    cliente novo (continua manual, pelo painel do Supabase + tela de Configurações → Lojas).
@@ -63,18 +62,17 @@
    ("Must be greater or equal to 6"). Não sugerir de novo sem uma mudança de arquitetura de login
    (ex: PIN numérico em vez de senha via Supabase Auth) e sem ela pedir explicitamente.
 3. **Uma chave secreta do Supabase (`sb_secret_...`) foi colada no chat pela usuária em algum
-   momento**, por engano (só a `anon`/publishable era necessária). Não foi usada/armazenada no
-   código. Vale sugerir que ela rotacione essa chave em Settings → API Keys do Supabase, se ainda
-   não tiver feito.
-4. **Testes automatizados — começando** (Vitest). Cobre principalmente **funções puras de cálculo**
+   momento**, por engano (só a `anon`/publishable era necessária). Não foi usada nem guardada no
+   código. **Não se sabe se ela já trocou** (Settings → API Keys do Supabase): está na lista "O
+   que depende dela" da seção 8.
+4. **Testes automatizados: o que cobrem e o que não** (Vitest). Cobre principalmente **funções puras de cálculo**
    isoladas dos componentes durante a migração pro `react-hook-form` (juros/parcelas/split de
    pagamento em `schemas/faturamento.ts`, margem de peça em `schemas/peca.ts`, totais de OS/Pedido
    de Compra, saldo de estoque, cotação por fornecedor). **Desde 12/09/2026 também testa TELA**
    (item `TR-07.2`, ver item 62 desta seção): os cinco formulários que mexem em dinheiro são
    montados de verdade com `@testing-library/react` e exercitados a clique e digitação. O que
    continua fora é **qualquer coisa que dependa do Supabase** — nenhum teste fala com o banco, e
-   os cinco formulários só puderam ser testados porque recebem tudo por `props`. **612 testes**,
-   todos passando — e, desde 11/09/2026, rodando
+   os cinco formulários só puderam ser testados porque recebem tudo por `props`. Desde 11/09/2026 rodam
    nos **dois fusos** (`npm run test:fusos`), porque a máquina de teste usa UTC e é justamente em
    UTC que o pior bug de data deste projeto não aparece (item 48 desta seção). Um deles não testa
    conta nenhuma: `schemas/arquitetura.test.ts` varre `src/pages/` e reprova conta de dinheiro
@@ -121,7 +119,7 @@
    login/dados reais sem essa rede, uma alternativa que funcionou bem foi recriar a estrutura HTML
    isolada (sem app inteiro) reaproveitando o CSS já compilado do `dist/`, pra testes puramente
    visuais/CSS que não dependem de dado real.
-   **Melhor que isso (descoberto numa sessão posterior): dá pra renderizar o componente React de
+   **Melhor que isso: dá pra renderizar o componente React de
    verdade**, não uma imitação em HTML. Receita, pra qualquer componente que receba os dados por
    `props` (ou seja, que não chame o Supabase sozinho — todo `<Modulo>Form.tsx` do app se encaixa):
    criar um `preview-temp.tsx` que monta só esse componente com dados falsos (dentro de um
@@ -134,7 +132,7 @@
    bloqueia `<script type="module">` em `file://` por CORS — e o sintoma é uma página branca **sem
    erro nenhum** no console, fácil de confundir com bug do componente). Apagar os arquivos
    temporários depois, não commitar.
-   **Descoberto nesta sessão**: o sandbox já vem com um cluster **Postgres 16 local** instalado
+   **O sandbox já vem com um cluster Postgres local** instalado
    (`service postgresql start`, usuário `postgres` via `sudo -u postgres psql`) — dá pra validar
    migrations novas de verdade (não só ler o SQL): criar um banco de teste, aplicar um stub mínimo
    de `auth.users`/`auth.uid()`/`storage.buckets`/`storage.objects` (Supabase não existe num
@@ -304,7 +302,7 @@
     pra `v0.9.3`. Causa: o repositório `amigao` (hoje `sakura-system-ace`) era **privado**, e o
     `electron-updater` checa atualização baixando o `latest.yml` da release **sem nenhuma
     autenticação** — confirmado testando direto: `curl` no link de download da release dava **404**
-    sem estar logado, exatamente como o app instalado tentaria acessar. Corrigido nesta sessão
+    sem estar logado, exatamente como o app instalado tentaria acessar. Corrigido
     **tornando o repositório público** (Settings → General → "Change visibility") — depois da
     mudança, o mesmo link passou a responder **302** (redireciona pro arquivo) em vez de 404.
     **Alternativas descartadas**: embutir um token de acesso dentro do `.exe` pra continuar privado
@@ -317,11 +315,11 @@
     provider `github` **exige repositório público** pra funcionar sem configuração extra — se um dia
     o repositório precisar voltar a ser privado (ex: código sensível de verdade), rever esse
     mecanismo de atualização antes, não depois de publicar uma tag.
-22. **Repositório renomeado nesta sessão**: `amigao` → `sakura-system-ace` (pedido da usuária, nome
+22. **Repositório renomeado**: `amigao` → `sakura-system-ace` (pedido da usuária, nome
     antigo era resquício do projeto anterior em Next.js). O GitHub redireciona automaticamente o
     nome antigo pro novo por um tempo (não quebra na hora), mas `package.json` →
-    `build.publish.repo` foi atualizado pro nome novo nesta sessão porque é usado ativamente toda
-    vez que uma tag é publicada — deixar apontando pro nome antigo arriscaria depender do
+    `build.publish.repo` foi atualizado pro nome novo porque é usado ativamente toda
+    vez que uma versão é publicada — deixar apontando pro nome antigo arriscaria depender do
     redirecionamento indefinidamente. **Se `git pull`/`git push` local parar de funcionar depois
     dessa mudança**, rodar `git remote set-url origin
     https://github.com/sakura-corp/sakura-system-ace.git` no terminal.
@@ -376,11 +374,9 @@
     pelo Sakura System. **Não é bug do sistema** — é só um lembrete de que a chave configurada no
     secret `ANTHROPIC_API_KEY` (Supabase → Edge Functions) é a mesma usada em qualquer outro
     projeto/teste que compartilhe essa conta da Anthropic; um consumo em outro lugar derruba o
-    crédito do Sakura System sem aviso nenhum na hora. **Pendência em aberto**: ela ainda precisa
-    recarregar o crédito (`console.anthropic.com` → Billing → "Comprar créditos") pra destravar o
-    "Importar por foto" de novo — só isso falta pro item 24 acima ficar 100% confirmado. Se quiser
-    evitar que isso se repita, dá pra criar uma chave separada só pro Sakura System (ideia
-    oferecida, não pedida ainda).
+    crédito do Sakura System sem aviso nenhum na hora. **Hoje não importa**: o "Importar por foto" está
+    desligado desde 25/09 (seção 7, Estoque). Se ela religar, conferir o crédito
+    (`console.anthropic.com` → Billing) e considerar uma chave só pro Sakura System.
 26. **Padrão de bug: filtro client-side descarta linha parcialmente preenchida sem avisar** — em
     `ClienteForm.tsx`, a função que decide quais veículos salvar só mantinha um veículo se o campo
     Placa estivesse preenchido; um carro com Marca/Modelo já digitados mas Placa em branco era
@@ -418,9 +414,7 @@
     seção 4), nunca mandar esse campo direto pra um `upsert` sem checar se é string vazia — vale
     conferir os outros módulos que usam esse mesmo padrão (Funcionários/filhos, Ordens de
     Serviço/itens, Pedidos de Compra/itens) se algum tiver o mesmo tipo de fluxo de "editar e
-    adicionar item novo" via `upsert` batendo numa coluna `uuid`. **Corrigido no código, ainda não
-    confirmado por ela rodando de novo na loja** (só o print do erro foi visto nesta sessão) — vale
-    confirmar quando a próxima tag for publicada.
+    adicionar item novo" via `upsert` batendo numa coluna `uuid`. Corrigido no código.
     **Continuação (sessão seguinte)**: a mesma correção tinha ficado incompleta — cobria só
     `atualizarCliente()` (editar cliente existente), não `criarCliente()` (cliente novo). Como o
     hidden input de `id` é registrado pra **todo** veículo do formulário, não só em edição, cadastrar
@@ -457,7 +451,7 @@
     são pensadas pra uso servidor-a-servidor. Nesses casos, IPC pro processo principal (esse mesmo
     padrão) é o jeito certo de contornar, não um workaround improvisado.
 30. **Padrão de bug: tela "recarrega sozinha" ao voltar de alt-tab, perdendo o que estava sendo
-    digitado** — reportado pela usuária (numa sessão posterior): dar alt-tab por só alguns
+    digitado** — reportado pela usuária: dar alt-tab por só alguns
     segundos e voltar pro app fazia a mesma tela resetar sozinha. Não era o auto-updater (só
     checa uma vez na abertura do app e só instala ao fechar — não bate com "poucos segundos de
     alt-tab", e ela confirmou que é a mesma tela recarregando, não a tela de login voltando).
@@ -509,9 +503,7 @@
     **Corrigido**: escala cada forma de pagamento proporcionalmente (`totalPecas / totalGeralOrdem`),
     com a última linha absorvendo a diferença de arredondamento pra soma bater exatamente com o
     total da nota (mesmo cuidado de arredondamento já usado em `calcularValorCobrado`, ver item 4 da
-    seção 6). **Publicado na `v0.9.15`** (build disparado direto pelo `workflow_dispatch`, ver
-    "Empacotamento" na seção 7) — ainda falta ela confirmar testando de novo se resolveu de
-    verdade.
+    seção 6). **Publicado na `v0.9.15`** e em uso desde então.
 33. **Padrão de bug: a chave nova do Supabase (`sb_publishable_...`) não pode ir em
     `Authorization: Bearer`** — reportado por ela na primeira vez que usou a tela de conexão nova
     (`v0.9.16`, print da loja): "Testar conexão" acusava *"O endereço respondeu, mas a chave não foi
@@ -554,7 +546,7 @@
     conexão ao clicar nela, e o app destrava pro login.
 34. **Padrão de bug: pegar "o dia" de um timestamp com `.slice(0, 10)` pega o dia em UTC, não no
     fuso local** — reportado pela usuária testando NFS-e em produção **à noite**: faturou uma OS
-    de teste (cliente "Eduarda Cristina") e ela **sumiu da lista de Ordens de Serviço** logo depois
+    de teste e ela **sumiu da lista de Ordens de Serviço** logo depois
     de faturar — mas o lançamento apareceu certinho no Caixa Diário, confirmando que o faturamento
     funcionou, só a lista escondeu por engano. Causa: `data_abertura` vem do banco como timestamp
     em UTC; `OrdensServicoPage.tsx` e `LucratividadeSection.tsx` pegavam o "dia" pra comparar com o
@@ -569,8 +561,7 @@
     teve esse sintoma. **Lição**: qualquer comparação de "dia" que mistura uma data vinda do banco
     (sempre UTC) com uma data calculada no navegador (sempre fuso local) é suspeita — sempre
     converter as duas pro mesmo fuso antes de comparar, nunca cortar a string do timestamp direto.
-    Corrigido no código (PR mesclado), **ainda não confirmado por ela rodando de novo** — ela
-    ainda está no meio do teste de NFS-e em produção quando isso foi encontrado.
+    Corrigido na `v0.9.19`.
 35. **Padrão de bug: gráfico de Lucro contava só saída manual do Caixa como "Custos", nunca o
     custo de peça/serviço vendido** — reportado pela usuária: em Relações → Gráficos, "Lucro"
     aparecia com o mesmo valor de "Vendas". Causa: `GraficosSection.tsx` calculava "Custos" a
@@ -631,7 +622,7 @@
     nenhuma, o cartão mostra o **faturamento inteiro como se fosse lucro**. O item 35 corrigiu
     exatamente isso em `GraficosSection.tsx` (somando o custo de aquisição por OS faturada,
     deduplicado por OS — importante porque pagamento dividido gera vários `caixa_movimentos` pra
-    mesma OS), mas `PainelPage.tsx` ficou pra trás. **Não corrigido nesta sessão** — foi só
+    mesma OS), mas `PainelPage.tsx` ficou pra trás. Não foi corrigido na hora — foi só
     reportado pra ela, porque muda um número que ela olha todo dia e merece ser uma mudança
     separada, não escondida dentro do trabalho do site. **Lição que se repete**: ao corrigir um
     cálculo de negócio, procurar **todos** os lugares que fazem a mesma conta (mesma família dos

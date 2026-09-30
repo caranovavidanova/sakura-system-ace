@@ -231,5 +231,6 @@ login funcionar no PC.
 *Aqui também o Claude da Sofia anota cada parte que é dela (ex: "Cloudflare ligada", "apps de
 login criados", "webhook ligado"), com a data. É onde quem programa confere se pode começar.*
 
-- **30/09/2026**: manual criado. Nenhuma linha de código do painel ainda. A leva 0 está sendo
-  planejada pela Sofia com o Claude dela.
+- **30/09/2026**: manual criado e **leva 0 criada** (issues #350 a #355). Nenhuma linha de código
+  do painel ainda. Falta a Sofia convidar o Gustavo (membro da `sakura-corp` + Write no
+  repositório); depois disso, a tarefa #350 pode começar.

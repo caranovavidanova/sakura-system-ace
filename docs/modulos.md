@@ -25,7 +25,7 @@ usado em `App.tsx`) — não precisa de nada especial em cada tela nova, funcion
 `<form>`. Campos de texto multilinha (`<textarea>`, ex: "Observação" da OS) continuam com Enter
 normal (quebra de linha).
 
-**Backspace limpa o campo de data inteiro** (nesta sessão): campos `type="date"` usam o seletor
+**Backspace limpa o campo de data inteiro**: campos `type="date"` usam o seletor
 nativo do Chromium, dividido em "caixinhas" (dia/mês/ano) que o navegador não deixa apagar
 cruzando uma pra outra via JS — Backspace/Delete num campo de data agora limpa o campo inteiro,
 deixando redigitar sem precisar do mouse. Implementado uma única vez, globalmente
@@ -78,7 +78,7 @@ prende o Tab, fecha no `Esc`, devolve o foco pro botão que abriu e marca o fund
 foco inicial cai sempre no ✕: num modal de cancelar nota, um Enter no automático fecha, nunca
 confirma.
 
-**Auto-save de rascunho** (estendido nesta sessão): os formulários longos guardam sozinhos uma
+**Auto-save de rascunho**: os formulários longos guardam sozinhos uma
 cópia local do que está digitado, a cada 30s — **não é um "salvar" de verdade** (não manda nada pro
 banco nem substitui o botão Salvar), é rede de segurança pra quando o programa fecha de repente ou
 a tela recarrega sozinha (ver item 30 da seção 6). Ao reabrir o mesmo registro, aparece a faixa
@@ -117,9 +117,8 @@ Quatro coisas que valem saber:
   é exatamente o caso que ele descreve. Fora do Electron cai num `window.open`.
 **Ainda não visto por ela na loja.**
 
-- **Conexão com o banco (multi-empresa)** — construída nesta sessão e **confirmada funcionando de
-  verdade por ela** (instalou a `v0.9.18` no notebook dela, colou URL + chave, entrou no sistema
-  normalmente). Antes, a URL/chave do Supabase eram gravadas dentro do instalador (secrets
+- **Conexão com o banco (multi-empresa)** — **confirmada funcionando por ela** desde a `v0.9.18`
+  (instalou no notebook, colou URL + chave e entrou). Antes, a URL/chave do Supabase eram gravadas dentro do instalador (secrets
   do GitHub no `release.yml`), então **um instalador servia uma empresa só**. Agora cada computador
   escolhe a conexão na primeira abertura, numa tela própria (`pages/conexao/ConexaoPage.tsx`) que
   aparece no lugar do login enquanto não houver conexão salva; o valor fica guardado **só naquela
@@ -136,11 +135,6 @@ Quatro coisas que valem saber:
     um clique distraído e ele estaria vendo os dados dos clientes de outra empresa. Com eles fora,
     a tela nasce vazia pra todo mundo. Em `npm run dev` nada muda: o `.env` continua valendo, e a
     tela nem aparece (`import.meta.env.DEV` manda; ver `src/lib/conexao.ts`).
-  - **Consequência prática pra loja que já usa (Pneus Amigão)**: na primeira abertura **depois** de
-    atualizar pra versão que levar isso, o app vai pedir a conexão uma vez, com os campos vazios.
-    Os valores são os de sempre — URL `https://rlgdjiowvnfzsedehyga.supabase.co` e a chave `anon`
-    do painel do Supabase (Settings → API). É uma vez por computador, não toda abertura. **Avisar a
-    usuária antes de publicar a tag**, pra ela não ser pega de surpresa (ou pro pai dela não ser).
   - **Como o valor chega na tela sem IPC assíncrono**: `electron/main.ts` lê o `conexao.json` na
     abertura e joga em `process.env.SAKURA_SUPABASE_URL`/`SAKURA_SUPABASE_ANON_KEY`; o preload
     repassa isso pro app via `contextBridge`. É de propósito o **mesmo mecanismo** já usado pela
@@ -149,65 +143,48 @@ Quatro coisas que valem saber:
     síncrona — e ler arquivo direto de dentro do preload empacotado já falhou de um jeito
     silencioso antes (item 18 da seção 6). Salvar grava o arquivo e **recarrega a tela**, porque o
     cliente do Supabase é montado uma vez só.
-  - **Testado de ponta a ponta no Electron de verdade** (Playwright + `xvfb-run`, apontando pra
-    raiz do app), 11 verificações: preload roda inteiro, tela de conexão aparece no lugar do login
-    quando não há conexão salva, salvar grava o arquivo com o conteúdo certo, e depois do reload a
-    conexão chega na tela e o app passa pro login. Esse teste é o único jeito de pegar falha
-    silenciosa de preload — leitura de código não pegaria.
+  - **Testado no Electron de verdade** (hoje dentro do `npm run test:electron`): o único jeito de
+    pegar falha silenciosa de preload.
 - **Login e permissões**: usuário/senha (sem digitar e-mail), sessão não persiste entre aberturas
   do app (a pedido explícito — o programa fica aberto o dia todo, cada abertura pede login de
   novo). Menu lateral e rotas filtrados por permissão (`PermissaoRoute`/`AdminRoute`). Tela
-  Configurações (admin) gerencia operadores com checkboxes de módulo. **Redefinir senha esquecida
-  (nesta sessão)**: como o login não usa e-mail de verdade, o fluxo padrão de "esqueci minha
-  senha" por e-mail do Supabase não funciona aqui — em vez disso, qualquer admin pode clicar
-  "Redefinir senha" no card de outro operador (Configurações → Operadores), o sistema gera uma
-  senha temporária (mostrada uma vez só, num modal, pra ele repassar por WhatsApp/pessoalmente) e
-  marca que aquele operador precisa trocar a senha no próximo login — `TrocarSenhaPage.tsx`
-  aparece no lugar do app normal até ele criar uma senha nova. Por trás, uma Edge Function nova
-  (`redefinir-senha-operador`, mesmo padrão da `ler-notas-fiscais`: a service role key nunca sai
-  do Supabase) confere de novo, do lado do servidor, que quem está chamando é realmente admin
-  antes de mudar a senha de qualquer um. **Estado real do deploy incerto** — ver nota na seção 10
-  sobre duas linhas de trabalho paralelas que aconteceram no mesmo período: uma versão bem mais
-  simples desse mesmo recurso (admin define a senha nova direto, sem senha temporária) chegou a
-  ser publicada por engano no Supabase real dela numa sessão separada. **Antes de considerar isso
-  pronto, é preciso redeployar a Edge Function com o código atual** (passo a passo na seção 9) —
-  mesmo que a função já exista publicada, o código de lá ainda pode ser o da versão simples.
-  **Resolvido**: o login de dev `@sakura` já aparece renomeado como "Suporte" na lista de
+  Configurações (admin) gerencia operadores com checkboxes de módulo. **Redefinir senha esquecida**: o login não usa e-mail de verdade, então o
+  "esqueci minha senha" do Supabase não funciona. Em vez disso, um admin clica "Redefinir senha" no
+  card de outro operador (Configurações → Operadores): o sistema gera uma senha temporária (mostrada
+  uma vez, pra repassar pessoalmente ou pelo WhatsApp) e obriga a troca no próximo login
+  (`TrocarSenhaPage.tsx`). Por trás, a Edge Function `redefinir-senha-operador` confere do lado do
+  servidor que quem chama é admin (a chave de serviço nunca sai do Supabase). Uma versão mais
+  simples publicada por engano numa sessão paralela foi substituída pela atual (seção 9).
+  O login de dev `@sakura` aparece como "Suporte" na lista de
   operadores, e o "Operador Teste" (`@teste`, resíduo sem uso real) foi **excluído de verdade**
   pelo painel do Supabase (Authentication → Users) — não só inativado. Ver item 23 da seção 6 pro
   detalhe do bug que impedia excluir/inativar esse operador pela tela do app (RLS bloqueando em
   silêncio por ele não ter loja vinculada) e por que a correção foi feita direto no Supabase, sem
   mudar código.
-- **Clientes**: CRUD completo (**edição** adicionada nesta sessão — antes só criava/excluía) +
+- **Clientes**: CRUD completo (com edição) +
   múltiplos veículos por cliente, pessoa física/jurídica (rótulos de campo mudam conforme o tipo),
   aniversário do cliente no calendário do Início, tipo de veículo (ícone 2D por carroceria, pintado
   com a cor cadastrada) exibido na seção "Veículos no pátio". **Editar cliente preserva o `id` dos
   veículos já existentes** (`atualizarCliente` em `lib/clientes.ts` faz `upsert`, não
   apaga-e-recria como `funcionario_filhos`) — importante porque `ordens_servico.veiculo_id`
   referencia esse `id`; recriar do zero desconectaria OS antigas do veículo (a FK é `on delete set
-  null`, então o dado não quebraria, mas o vínculo se perderia silenciosamente). **Formulário
-  migrado nesta sessão** pro padrão `react-hook-form` + `zod` (segundo módulo, depois de
-  Funcionários — ver "Padrão de formulário" na seção 4); comportamento pro usuário não mudou.
-  **Numa sessão posterior**: corrigido um bug real onde um veículo com Marca/Modelo preenchidos
+  null`, então o dado não quebraria, mas o vínculo se perderia silenciosamente). Corrigido um bug real onde um veículo com Marca/Modelo preenchidos
   mas Placa em branco era descartado em silêncio ao salvar (ver item 26 da seção 6); campo "Marca"
   agora sugere uma lista de ~80 montadoras via Combobox, mas aceita digitar qualquer coisa que não
   esteja na lista (`permitirLivre`, ver seção 4); "Modelo" continua texto livre sem sugestão (tem
   modelo demais no mundo pra listar, pedido explícito da usuária).
 - **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
   categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
-  produto e, **desde esta sessão**, campo/coluna de Depósito), Contagem (inventário físico, agora
+  produto e campo/coluna de Depósito), Contagem (inventário físico, agora
   **por depósito** — mostra o saldo do sistema daquele depósito específico, não o total da loja —,
   gera ajuste automático na diferença), Relatórios (estoque físico-financeiro, saldo por situação,
   produtos sem movimentação — esses três continuam olhando pro saldo total da loja, somando todos
-  os depósitos, sem mudança). **Depósito (novo nesta sessão)**: cadastro em Configurações → seção
+  os depósitos, sem mudança). **Depósito**: cadastro em Configurações → seção
   "Depósitos" (locais físicos de estoque, ex: "Depósito Principal", "Fundos" — ver seção 5/8); toda
   loja já nasce com um, então quem usa um só lugar físico não percebe diferença nenhuma no dia a
   dia — só quem criar um segundo depósito passa a escolher entre eles nas telas de Movimentações e
-  Contagem. **`PecaForm.tsx` migrado nesta
-  sessão** pro padrão `react-hook-form` + `zod` (terceiro módulo — ver "Padrão de formulário" na
-  seção 4); **ganhou edição numa sessão posterior** (antes só cadastrava, nunca editava — precisou
-  ser resolvido pra corrigir cadastro de peça com CST/CSOSN errado, ver item 1 da seção 8), mesmo
-  padrão de edição já usado em Clientes. **Importar por foto/PDF**:
+  Contagem. O cadastro de produto tem edição (nasceu pra corrigir
+  peça com CST/CSOSN errado, item 1 da seção 8). **Importar por foto/PDF**:
   botão ao lado de "+ Novo produto" (ícone de câmera, SVG) — lê uma ou mais fotos **ou PDFs** de
   nota fiscal (pode ser mais de uma nota junto) via Claude (Sonnet 5, saída estruturada) através
   da Edge Function `ler-notas-fiscais`, mostra uma tabela editável com os produtos identificados e
@@ -272,20 +249,17 @@ Quatro coisas que valem saber:
   um botão "usar esse preço" que preenche o campo — sem tela própria, é gravado sozinho toda vez
   que um pedido é criado com preço numa peça (`PedidoCompraItemRow.tsx` + `lib/cotacoesPecas.ts`,
   histórico completo em `cotacoes_pecas`, nunca sobrescreve — ver seção 5). **Importar XML de nota
-  fiscal (nova nesta sessão)**: botão "Importar XML de nota fiscal" ao lado de "+ Novo pedido" —
+  fiscal**: botão "Importar XML de nota fiscal" ao lado de "+ Novo pedido" —
   lê o arquivo XML que o **fornecedor** emite (formato público/estável do governo, puro parsing
   com `DOMParser`, sem IA/Edge Function — não confundir com o "Importar por foto" de Estoque, que
-  lê a nota **por foto/PDF via IA**, nem com a emissão de nota **pra o cliente**, ainda pendente,
-  ver seção 8 item 1), acha o fornecedor pelo CNPJ (cria um novo automaticamente se não achar) e
+  lê a nota **por foto/PDF via IA**, nem com a emissão de nota **pro cliente**), acha o fornecedor pelo CNPJ (cria um novo automaticamente se não achar) e
   casa cada item com uma peça já cadastrada por código de barras/código interno (deixa escolher
   outra peça ou cadastrar nova pra quem não bateu), pede o depósito de destino uma vez só pro lote
   inteiro, e confirma criando um Pedido de Compra que já nasce **"Recebido"** (a nota já é a prova
   de que chegou) — com entrada em Estoque e cotação de cada item gravadas sozinhas
   (`ImportarNotaFiscalXmlModal.tsx` + `lib/notaFiscalXmlFornecedor.ts` +
-  `lib/pedidosCompra.ts` → `importarNotaFiscalCompra()`). Terceiro e último dos três passos
-  combinados com a usuária antes da emissão de nota fiscal (ver seção 8, item 5) — sem garantia do
-  fornecedor na compra ainda (diferente da garantia ao cliente já implementada), sem ordem
-  definida pra atacar isso. **Desde 09/09/2026 a importação não copia mais o código de ICMS do
+  `lib/pedidosCompra.ts` → `importarNotaFiscalCompra()`). Garantia do fornecedor na compra ainda não existe (item 5
+  da seção 8). **Desde 09/09/2026 a importação não copia mais o código de ICMS do
   fornecedor pras peças novas** (era o que gerava nota rejeitada, ver item 47 da seção 6): quando
   o código do XML não serve pro regime da loja, aparece um aviso e um campo "CSOSN das peças
   novas", já preenchido com o código que a própria loja mais usa no cadastro dela.
@@ -294,8 +268,7 @@ Quatro coisas que valem saber:
   o UUID cortado. Status simplificado pra só 3 etapas: **em_andamento** (nasce assim direto, sem
   "aberta" separada) → **concluída** → **faturada**. Form em duas colunas, reabre pra editar (só
   permite acrescentar itens, não editar/remover item já lançado — evita desfazer baixa de estoque).
-  **Acrescentar item só funciona até a OS estar "faturada"** (numa sessão posterior, ver item 31 da
-  seção 6) — depois de faturada, o "+ adicionar item" some e a peça/serviço esquecido vira uma OS
+  **Acrescentar item só funciona até a OS estar "faturada"** (item 31 da seção 6) — depois de faturada, o "+ adicionar item" some e a peça/serviço esquecido vira uma OS
   nova; faturar (o botão "Confirmar faturamento") agora pede confirmação explícita antes, avisando
   que essa trava passa a valer.
   **Abrir a OS sem sair dela pra cadastrar (11/09/2026, item `TL-08` do guia)** — o gesto mais
@@ -325,7 +298,6 @@ Quatro coisas que valem saber:
   (`schemas/avisosOrdemServico.ts`, `totaisDaOrdem` em `schemas/ordemServico.ts`). O saldo só é
   consultado quando o formulário abre, e recarregado a cada abertura — mesma ideia da aba
   Comissões. Ver item 57 da seção 6 pro bug de foco que só apareceu rodando o app de verdade.
-  **Ainda não publicado em tag nem visto por ela na loja.**
 
   **Corrigir um item já lançado (08/09/2026, pedido dela usando o sistema: digitou R$120 num
   alinhamento que era R$60 e não tinha como consertar pela tela)**: cada linha de "Já lançados
@@ -357,16 +329,7 @@ Quatro coisas que valem saber:
   que a SEFAZ devolve. **Não bloqueia a emissão** — ver item 47 da seção 6.
   Não existe mais seletor manual de status no form — o cabeçalho mostra o status atual (badge) e,
   enquanto "em_andamento", um botão **"Encerrar OS"** que marca como concluída e já abre a tela de
-  faturamento na sequência, num fluxo só. **`OrdemServicoForm.tsx` migrado nesta sessão** pro
-  padrão `react-hook-form` + `zod` (quarto módulo — ver "Padrão de formulário" na seção 4);
-  comportamento pro usuário não mudou (mesmos campos, mesma regra de só acrescentar item, não
-  editar/remover o que já foi lançado). **Auto-save de rascunho local** (numa sessão posterior,
-  `src/hooks/useRascunhoFormulario.ts`): salva uma cópia local do formulário a cada 30s enquanto
-  ele está aberto (não é um "salvar" de verdade, não mexe no banco nem no botão de Salvar) — se a
-  tela recarregar sozinha (ver item 30 da seção 6) ou o programa fechar de repente, reabrir a
-  mesma OS mostra "Encontramos um rascunho não salvo... Restaurar?"; ao salvar com sucesso, o
-  rascunho é descartado. **Estendido nesta sessão** pros outros formulários longos do app — ver
-  "Auto-save de rascunho" logo no começo desta seção. Técnico por item + vendedor/atendente da OS (ambos listam
+  faturamento na sequência, num fluxo só. Tem rascunho automático (ver "Auto-save de rascunho" no começo desta seção). Técnico por item + vendedor/atendente da OS (ambos listam
   `funcionarios`, não só operadores). Lista de OS tem filtro de período (De/Até) e busca por
   cliente/placa — OS em aberto sempre aparecem, não importa a data (só o histórico já faturado é
   filtrado por período, pra lista não crescer sem controle); colunas de Nº/Peças/Serviços/Total/Lucro
@@ -379,14 +342,11 @@ Quatro coisas que valem saber:
   Caixa na hora, como sempre foi) ou "A receber depois" (não lança nada no Caixa ainda, cria uma
   pendência em Contas a Receber — ver módulo abaixo; aqui não dá pra dividir forma de pagamento,
   só ao receber depois). Aba "Fechamento" (só aparece com status concluída/faturada): botões "Emitir
-  NFC-e"/"Emitir NFS-e" (nesta sessão — antes só mostravam preview do rascunho, agora abrem
-  `EmitirNotaFiscalModal.tsx` e emitem de verdade via Focus NFe, aguardando a autorização da
-  SEFAZ/prefeitura em polling — ver item 1 da seção 8 pro que ainda falta validar com uma emissão
-  de teste real; assim que autorizada, o PDF/DANFE já carrega direto num preview embutido dentro
+  NFC-e"/"Emitir NFS-e" (`EmitirNotaFiscalModal.tsx`: emitem pela Focus NFe e esperam a
+  autorização da SEFAZ/prefeitura; assim que autorizada, o PDF/DANFE já carrega direto num preview embutido dentro
   do próprio modal — mesmo padrão de `iframe` já usado em "Ver garantia"/"Versão para o cliente" —
   com botões "Baixar PDF", "Imprimir" e "OK", em vez do antigo botão único "Ver DANFE" que abria
-  numa aba separada; **já testado com emissão real de NFC-e e NFS-e em produção**, ver item 1 da
-  seção 8) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
+  numa aba separada; em produção desde 27/08, item 1 da seção 8) e "Ver garantia" (abre preview do documento completo — cabeçalho da loja, dados de
   cliente/veículo, itens, totais, forma de pagamento com parcelas reais, assinaturas — com opção de
   baixar HTML/imprimir via `iframe`).
   **Parcelar cartão dentro do pagamento dividido** (28/08/2026, pedido dela usando o sistema de
@@ -430,8 +390,8 @@ Quatro coisas que valem saber:
   passou a mostrar o **total da linha** (quantidade × preço − desconto) além do preço unitário, pra
   não haver confusão em par de peça (2x pneu, por exemplo).
 
-- **Venda de balcão** (26/09/2026, item `FN-09`, migration `0064` — **aplicada, e na `v0.9.45`,
-  liberada pras lojas em 27/09/2026; ainda não usada de verdade na loja**): vender uma peça pra quem não vai deixar o carro, numa tela
+- **Venda de balcão** (26/09/2026, item `FN-09`, migration `0064`, `v0.9.45` — **ainda não
+  testada por ela na loja**): vender uma peça pra quem não vai deixar o carro, numa tela
   só. Botão **"+ Venda de balcão"** na tela de Ordens de Serviço (mesma permissão do módulo). O
   que a tela faz:
   - **Cliente começa no "Consumidor"** ("não se identificou"). Pra CPF na nota, escolhe-se um
@@ -460,10 +420,8 @@ Quatro coisas que valem saber:
     comissão do vendedor, mas **fica fora do ticket médio** (que responde "quanto rende cada carro
     atendido") — o "?" do cartão diz isso. O rótulo é "Venda 17" no caixa, na movimentação de
     estoque, nas comissões, no recibo de comissão e na garantia.
-  **Sem migration aplicada, o botão aparece mas registrar dá erro** — por isso a migration vem
-  antes da versão, como sempre.
-- **Ficha do veículo** (27/09/2026, item `FN-04` — **sem migration; publicada e liberada na
-  `v0.9.46` no mesmo dia; ainda não vista por ela na loja**): tudo que já foi feito num carro,
+- **Ficha do veículo** (27/09/2026, item `FN-04`, sem migration, `v0.9.46` — **ainda não
+  testada por ela na loja**): tudo que já foi feito num carro,
   por placa. Rota `/veiculos/:id`, sem entrada no menu — abre **clicando na placa** em
   Clientes, na lista de OS e em Garantias. É a pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
   está na garantia?"), e é a base do lembrete de revisão (`FN-06`). O que a tela mostra:
@@ -539,8 +497,8 @@ Quatro coisas que valem saber:
     quem usa, comissão é assunto de funcionário. Consequência de permissão: quem enxerga
     Funcionários passa a enxergar comissão. Sem novidade de verdade — o cadastro de funcionário já
     mostra salário e a porcentagem de comissão de cada um.
-  - **Comissão paga fica registrada e congelada (25/09/2026, item `TL-46.1` — migration `0059`,
-    já rodada; chega na loja com a próxima versão)**. O problema: a comissão é sempre recalculada a partir
+  - **Comissão paga fica registrada e congelada (25/09/2026, item `TL-46.1`, migration `0059`,
+    `v0.9.42`)**. O problema: a comissão é sempre recalculada a partir
     das OS, e desde a `v0.9.28` dá pra corrigir o valor de um item de OS já lançado — uma
     correção numa OS antiga mudava, calada, uma comissão já paga. Agora cada linha tem
     **"Registrar pagamento"** (valor pago, data, observação), que grava junto um **retrato das
@@ -557,12 +515,8 @@ Quatro coisas que valem saber:
       **registro**, nunca mexe em dinheiro. Registrar **não lança nada no Caixa**, de propósito:
       comissão sai de jeitos diferentes em cada loja.
     As contas ficam em `src/schemas/comissoesPagas.ts`; o recibo em `src/lib/reciboComissao.ts`
-    (todo texto do banco escapado). **Não vista por ela ainda.** Dos sub-itens do `TL-46`, ficaram
+    (todo texto do banco escapado). **Ainda não testado por ela na loja.** Dos sub-itens do `TL-46`, ficaram
     de fora os links nos avisos (levar ao cadastro da peça/à OS) e o gráfico de evolução.
-  **Formulário refatorado nesta sessão** pro padrão novo `react-hook-form` + `zod` (ver "Padrão de
-  formulário" na seção 4) — primeiro do app nesse estilo, orquestrador caiu de 601 pra ~140 linhas,
-  campos organizados em `campos/*Fields.tsx` por grupo. Comportamento pro usuário final não mudou
-  em nada (mesmos campos, mesma validação de "Nome obrigatório").
 - **Caixa Diário**: abas Diário (tudo — OS faturadas + manual) / Entradas / Saídas (só
   lançamentos manuais, com categoria via `categorias_caixa`).
   **A categoria virou obrigatória em 11/09/2026** (item `TL-27` do guia): era opcional, então
@@ -587,8 +541,7 @@ Quatro coisas que valem saber:
   da seção 6): conta o custo de cada OS uma vez só mesmo com pagamento dividido, inclui o custo do
   serviço (não só o da peça) e desconta as saídas lançadas à mão. A coluna "Lucro" da tabela
   reparte o lucro da OS entre os lançamentos dela, então a coluna fecha com o total.
-  **Aba "Fechamento" (25/09/2026, item `TR-06.4` — migration `0058`, já rodada; chega na loja
-  com a próxima versão)**: no fim do dia, conta-se o dinheiro da gaveta e o sistema compara com o que ele
+  **Aba "Fechamento" (25/09/2026, item `TR-06.4`, migration `0058`, `v0.9.42`)**: no fim do dia, conta-se o dinheiro da gaveta e o sistema compara com o que ele
   esperava — **troco que estava na gaveta ao abrir + entradas em dinheiro − saídas em
   dinheiro**. Pix e cartão aparecem à parte, "confira com o extrato", porque não passam pela
   gaveta. Seis coisas que valem saber:
@@ -607,7 +560,8 @@ Quatro coisas que valem saber:
   - **Desfazer é só de admin** (o botão nem aparece pra quem não é), e o histórico embaixo
     soma as diferenças dos últimos dias — a resposta pra "está faltando dinheiro no caixa?".
   As contas ficam em `src/schemas/fechamentoCaixa.ts`, com teste (inclusive de propriedade:
-  o esperado fecha no centavo e só depende das linhas em dinheiro). **Não vista por ela ainda.**
+  o esperado fecha no centavo e só depende das linhas em dinheiro). **Ainda não testada por ela na
+  loja.**
   **Desde a migration `0062` (aplicada em 26/09/2026) o Caixa é protegido pelo BANCO**:
   sem o módulo, ninguém lê, lança, edita nem apaga lançamento pela API. Quatro portas estreitas
   mantêm o resto do sistema funcionando, cada uma do tamanho do que faz — **Relações** lê tudo
@@ -617,14 +571,13 @@ Quatro coisas que valem saber:
   nem quebra de caixa. Detalhe na entrada da `0062`, seção 5.
 - **Contas a Pagar**: contas mensais com vencimento (diferente de Entradas/Saídas manuais, que só
   registram dinheiro que já saiu). Marcar como paga gera Saída automática no Caixa; se recorrente,
-  já cria a próxima ocorrência sozinha. **"Desfazer pagamento"** (portado nesta sessão de uma
-  branch separada que trabalhou em paralelo — ver seção 10, já testado por ela de verdade): botão
+  já cria a próxima ocorrência sozinha. **"Desfazer pagamento"**: botão
   na lista "Pagas recentemente" — volta a conta pra pendente e remove a Saída gerada (se a conta
   era recorrente, a próxima
-  ocorrência já criada continua existindo, pendente). **"Recorrente até" (nesta sessão)**: campo
+  ocorrência já criada continua existindo, pendente). **"Recorrente até"**: campo
   opcional que só aparece quando "Conta mensal recorrente" está marcado — em branco, continua
   recorrendo pra sempre (como sempre foi); preenchido com um mês, `pagarConta()` para de criar a
-  próxima ocorrência depois dessa data (migration `0043`, já rodada por ela no Supabase real).
+  próxima ocorrência depois dessa data (migration `0043`).
   **Desde a migration `0061` (aplicada em 26/09/2026) o módulo é protegido pelo BANCO**, não
   só pela tela: sem a permissão, a lista chega vazia e criar/pagar/apagar é recusado. Pra quem
   não tem o módulo, o cartão "Contas a pagar vencendo" do Início mostra "—" e "Sem acesso a
@@ -638,7 +591,7 @@ Quatro coisas que valem saber:
 - **Contas a Receber**: espelha Contas a Pagar, mas do lado do que a loja tem a receber. Nasce
   automaticamente quando uma OS é faturada escolhendo "A receber depois" em vez de "Recebido
   agora" — pensado pra resolver o caso de faturar uma OS (serviço entregue/cobrado) sem o cliente
-  ter pago tudo na hora. **Desde esta sessão também aceita cadastro manual** ("+ Nova conta", igual
+  ter pago tudo na hora. **Também aceita cadastro manual** ("+ Nova conta", igual
   Contas a Pagar): cliente, descrição, valor e previsão de recebimento — pra cobrança que não
   passou por OS nenhuma. Marcar como recebido gera Entrada automática no Caixa (mesmo padrão do
   Contas a Pagar), venha a conta de qual dos dois jeitos for.
@@ -658,17 +611,14 @@ Quatro coisas que valem saber:
   descompactador perde um dos dois), nome com acento sai certo no Windows, e o download é feito
   em lotes de 5 pra um mês cheio não disparar dezenas de requisições juntas. Botão "Versão para o cliente" interpreta o XML
   e monta um recibo HTML (não é o DANFE oficial, sem código de barras/QR code). **Botão "Cancelar
-  nota" (nesta sessão)**: até aqui, cancelar uma nota emitida automaticamente (NFC-e/NFS-e via
+  nota"**: até aqui, cancelar uma nota emitida automaticamente (NFC-e/NFS-e via
   Focus NFe) só dava pra fazer direto no painel deles — as funções `cancelarNFCe`/`cancelarNFSe`
   já existiam em `lib/focusNfe.ts`, mas nenhuma tela chamava. Agora aparece um botão "Cancelar
   nota" na lista, só pra notas com `origem = "automatica"` e ainda `status = "autorizado"` — pede
   uma justificativa (mínimo 15 caracteres, exigido pela Focus NFe) num modal
   (`CancelarNotaModal.tsx`) antes de confirmar. Precisou de uma migration nova (`0046`) porque o
   `ref` que a Focus NFe usa pra identificar a nota (gerado na hora da emissão) nunca tinha sido
-  salvo em lugar nenhum — sem ele, não tem como cancelar depois. **Validado**: `tsc -b`, lint e os
-  59 testes passando; a migration foi testada num Postgres local, aplicada duas vezes seguidas pra
-  confirmar idempotência. **Não dá pra testar a chamada de verdade à Focus NFe no sandbox** (sem
-  acesso à rede) — só quando ela rodar a migration e testar na loja.
+  salvo em lugar nenhum — sem ele, não tem como cancelar depois. Usado de verdade em 28/09 (NFS-e 22 cancelada pelo porteiro).
   **Botão "Ver DANFE" (11/09/2026, item `TR-11.1` do guia de melhorias)**: reabre o PDF de uma
   nota que o sistema emitiu — o pedido de balcão mais comum que existe (o cliente volta e pede a
   nota de novo). Antes, o PDF só existia dentro da janela de emissão: fechou, acabou, e a única
@@ -679,8 +629,7 @@ Quatro coisas que valem saber:
   em que não dá (nota enviada à mão pelo XML; nota emitida antes da `0046`, sem referência) viram
   **texto explicando o que fazer**, não erro cru — a regra é função pura testada
   (`schemas/danfe.ts`). Na lista, o rótulo é "Ver DANFE" na aba NFe e "Ver PDF" na de NFS-e
-  (DANFE é nome de documento da NFe). **Não dá pra testar a chamada real à Focus NFe no sandbox**
-  — só na loja.
+  (DANFE é nome de documento da NFe).
 - **Relações** (ex-"Relatórios", label mudou antes; agora também absorveu o módulo antigo
   "Lucratividade" — um módulo só, com abas): aba "Gráficos" — gráfico de barras (Vendas x Custos x
   Lucro, **Diário/Semanal/Mensal/Anual**) + radar comparando o período atual com o anterior, sem
@@ -799,12 +748,9 @@ Quatro coisas que valem saber:
     build: é a mesma release, só sem a marca de pré-lançamento.
   - **Aparece no Diagnóstico e no resumo do WhatsApp**, junto da versão — loja no canal de teste
     pode estar numa versão que as outras ainda não receberam.
-  **Publicado e liberado na `v0.9.40`** (25/09/2026). **O computador DELA foi marcado como
-  Teste em 25/09/2026** (ela mandou print: "Teste (escolha atual)") — a seção nova foi vista
-  funcionando. **Falta o da loja do pai dela** ("faço no da loja quando der"; se a loja tiver
-  mais de um computador, marcar todos, pra loja inteira ficar na mesma versão).
-  **Consequência pra quem publica**: até a loja ser marcada, uma versão publicada e não liberada
-  chega **só no computador dela** — a loja só recebe depois do Liberar.
+  **Quem está em qual canal (28/09)**: o computador dela e o da loja ("Balcão") no **teste**.
+  Se a loja tiver mais de um computador, todos no mesmo canal, pra loja inteira ficar na mesma
+  versão. Cuidado barato sugerido: o Balcão no normal (item 12 da seção 8).
 - **Computadores desta empresa** (26/09/2026, migration `0063` — aplicada, e o programa na
   `v0.9.44`, publicada e liberada no mesmo dia; **confirmada por ela funcionando no mesmo dia**:
   o computador dela apareceu sozinho na lista, com `0.9.44`, "canal de teste", "este computador",
@@ -852,7 +798,6 @@ Quatro coisas que valem saber:
     atualização".
   A regra é função pura testada (`schemas/versaoEsquema.ts`), e a constante que diz o que esta
   build espera não envelhece sozinha: um teste reprova se ela ficar atrás da pasta de migrations.
-  **Ainda não visto por ela rodando.**
 - **Diagnóstico** (13/09/2026, item `TR-08.1`): ícone no rodapé da Sidebar, **visível pra
   qualquer operador** — e isso é a decisão que importa: quem liga pedindo socorro é quem está no
   balcão com o cliente na frente, não o admin. A tela recolhe sozinha ao abrir e mostra: as três
@@ -876,9 +821,7 @@ Quatro coisas que valem saber:
   **em branco**, sem saída a não ser fechar o programa; agora vira "Alguma coisa quebrou nesta
   tela" com "Voltar ao Início" e "Abrir diagnóstico", e o erro vai pro `erros.log` com a pilha de
   componentes. E o `erros.log` passou a gravar **rota, usuário, loja e versão** junto com a pilha.
-  **Ficou de fora, de propósito**: a trilha das últimas 20 ações do usuário (o resto do `TR-08.3`)
-  e a versão do esquema do banco no diagnóstico (depende do `TR-05.7`, que pede migration).
-  **Ainda não visto por ela rodando.**
+  **Ficou de fora, de propósito**: a trilha das últimas 20 ações do usuário (o resto do `TR-08.3`).
 - **Segurança do app em si** (17/09/2026, item `TR-04.6`): nada disso aparece na tela — é o que
   impede que um problema dentro de uma tela vire acesso à máquina de quem usa. Sete frentes, em
   `electron/main.ts`:
@@ -906,11 +849,11 @@ Quatro coisas que valem saber:
     (`scripts/ligar-fuses.mjs`), e conferidas no binário empacotado.
   - **Um teste que abre o app de verdade** (`npm run test:electron`, 22 checagens) — ver item 65
     da seção 6 pro que só apareceu medindo.
-  **Ainda não visto por ela rodando**, e é o tipo de mudança que só se percebe se algo quebrar:
-  o que vale conferir depois do auto-update é o de sempre funcionando — abrir uma OS, buscar
-  endereço por CEP, ver a garantia, emitir uma nota e abrir o WhatsApp de uma cobrança.
-- **Token da Focus NFe e o porteiro** (25/09/2026, item `TR-04.2`, **parte 1 de 2** — a `0057`
-  rodada e a Edge Function `focus-nfe` publicada por ela no mesmo dia; o app sai na `v0.9.41`): o token que emite e cancela nota no CNPJ da loja **não chega mais no computador de
+  É o tipo de mudança que só se percebe se algo quebrar: depois de mexer aqui, conferir o de
+  sempre funcionando (abrir uma OS, buscar CEP, ver a garantia, emitir nota, abrir o WhatsApp).
+- **Token da Focus NFe e o porteiro** (25/09/2026, item `TR-04.2`, **parte 1 de 2**, migration
+  `0057` + Edge Function `focus-nfe`, `v0.9.41`; emissão e cancelamento pelo porteiro conferidos na
+  loja em 28/09): o token que emite e cancela nota no CNPJ da loja **não chega mais no computador de
   ninguém**. Ele mora num cofre do banco que nenhum operador lê, e quem fala com a Focus NFe é o
   **porteiro** — a Edge Function `focus-nfe`, no Supabase de cada empresa. Pra quem usa, nada
   muda: emitir, reabrir o PDF e cancelar continuam nos mesmos botões, e a nota que sai é
@@ -924,17 +867,16 @@ Quatro coisas que valem saber:
     no endereço que a própria Focus NFe devolveu, nunca num que o pedido escolheu.
   - **Mensagens novas que podem aparecer**: "falta publicar o porteiro" (a Edge Function não foi
     publicada naquele Supabase), "você não tem permissão..." e "essa nota não é desta loja".
-  **A ordem de subir isso importa** — ver "Ativar o porteiro da Focus NFe" na seção 9. E a
-  proteção só fica completa com a **parte 2**, que limpa a cópia antiga do token que ficou na
-  tabela de configurações (item 71 da seção 6).
+  **A função tem que estar publicada antes de a loja emitir** (seção 9, "Publicar uma Edge
+  Function"). E a proteção só fica completa com a **parte 2**, que limpa a cópia antiga do token
+  na tabela de configurações (item 71 da seção 6): liberada desde 28/09, **quando ela pedir**.
 - **Auditoria**: admin-only, acesso via ícone no rodapé da Sidebar (ao lado da engrenagem de
   Configurações), não é permissão de operador comum nem entra em `MODULOS`. Lista quem **criou**,
   editou ou excluiu o quê e quando, com filtro por tabela, por **ação** e por operador, e um "Ver
   detalhes" que mostra o registro inteiro em JSON (antes/depois numa edição; só "depois" numa
   criação; só "antes" numa exclusão). É gravado por trigger de banco, não pelo código do app —
   funciona mesmo se a alteração vier de outro lugar (SQL Editor manual, por exemplo).
-  **Ampliado em 13/09/2026 (item `TR-04.9` do guia, migration `0053` — ainda NÃO rodada por
-  ela)**: passou a cobrir **criação** e mais cinco tabelas. A que mais importa é
+  **Ampliado em 13/09/2026 (item `TR-04.9` do guia, migration `0053`)**: passou a cobrir **criação** e mais cinco tabelas. A que mais importa é
   `ordens_servico_itens` — desde a `v0.9.28` dá pra corrigir o **valor** de um item de OS pela
   tela, e até aqui essa mudança não deixava rastro nenhum; era a ponta solta registrada em
   "Ordens de Serviço" e em 10/09/2026, agora fechada. Entraram junto
@@ -953,398 +895,58 @@ Quatro coisas que valem saber:
     Isso é o que permite excluir um operador pelo painel do Supabase sem a trilha travar — e é
     como registro histórico deve funcionar de qualquer forma: ele conta o que era verdade naquele
     dia, não o que o cadastro diz hoje. Ver a migration `0053` na seção 5 pro detalhe da FK.
-  **Ainda não visto por ela rodando** — depende de rodar a migration.
 - **Multi-loja** — já aplicada e testada de verdade no Supabase real da usuária (criou uma 2ª loja
-  de teste pra validar o fluxo, o que revelou o bug corrigido na migration 0034 — essa loja de teste
-  foi excluída nesta sessão, ver abaixo). 1 projeto Supabase serve 2+ lojas com um painel único (não
+  de teste pra validar o fluxo, o que revelou o bug corrigido na migration 0034; a loja de teste
+  foi excluída depois). 1 projeto Supabase serve 2+ lojas com um painel único (não
   instalações separadas). Catálogo compartilhado (clientes, peças, serviços, categorias);
   estoque/caixa/OS/contas a pagar/contas a receber/notas fiscais/funcionários/configurações
   separados por loja. Um operador pode ter acesso a 1 ou mais lojas (`operador_lojas`);
   `LojaSwitcher.tsx` na Sidebar deixa trocar de loja ativa, só aparece pra quem tem 2+. Detalhe
-  completo do desenho na seção 5, subseção "Multi-loja". **Hoje só existe uma loja de verdade no
-  Supabase real: "Pneus Amigão" (Araraquara)** — a "Loja 2" de teste (que tinha ficado com o UUID
-  original/fixo da migration 0031, sem cidade preenchida — nome enganoso, não era a mais nova) foi
-  excluída nesta sessão depois de limpar o dado de negócio vinculado e mover o funcionário
-  "Administrador" pra "Pneus Amigão".
-- **Empacotamento**: `electron-builder` (NSIS) + `electron-updater` configurados,
-  `.github/workflows/release.yml` publica o instalador no GitHub Releases quando uma tag `v*` é
-  enviada. **Decisão revista nesta sessão**: ela decidiu lançar na loja do pai dela mesmo sem a
-  emissão de nota fiscal pronta, seguindo o plano original da fase 1 (seção 1) — nota fiscal
-  continua sendo emitida por fora até a integração Focus NFe ficar pronta. **Quatro tags publicadas
-  na mesma sessão**, cada uma corrigindo algo achado testando o lançamento de verdade:
-  - `v0.9.2`: primeira versão publicada de verdade desde o início do projeto (a `v0.9.0` anterior
-    estava bem desatualizada). Inclui os 4 bugs da revisão de código (ver seção 8) mais tudo
-    construído nas sessões anteriores.
-  - `v0.9.3`: corrige o texto invisível ao editar Loja/Depósito e atualiza o script de limpeza de
-    dados de teste (ver itens 17 e a nota sobre `limpar-dados-de-teste.sql` na seção 9).
-  - `v0.9.4`: corrige o número da versão nunca aparecendo no app instalado (`VersaoApp.tsx` sempre
-    dependeu de `process.env.npm_package_version`, que só existe rodando via `npm run ...`) e
-    adiciona log do `autoUpdater` em arquivo (ver itens 18 e 19).
-  - `v0.9.5`: corrige `excluirLoja()` de vez — faltavam 4 tabelas de configuração além de
-    `depositos` (ver item 20).
-  - `v0.9.6`: corrige "Importar por foto/PDF" travando com erro genérico ao ler certos arquivos de
-    imagem (ex: `.jfif`) — ver item 24 da seção 6. **Publicada** — desta vez sem terminal: ela
-    estava longe do computador dela, então publicou direto pela tela do GitHub
-    (`github.com/.../releases/new`, digitando a tag `v0.9.6` e clicando "Publish release") —
-    confirmado que isso dispara o mesmo workflow de build que a tag por terminal, sem diferença
-    nenhuma no resultado. **Novo aprendizado sobre tag**: uma tag já publicada não se move — depois
-    de publicar a `v0.9.6`, mais dois ajustes pequenos foram feitos (menu nativo do Electron e
-    badge de status na lista de OS, ver logo abaixo) e ela tentou "postar de novo na mesma
-    versão 0.9.6", mas como a tag já existia isso não gerou build nova nenhuma — precisou virar
-    `v0.9.7`. **Lição pra sessões futuras**: cada leva de mudança que precisa chegar até o app
-    instalado exige um número de versão novo, nunca republicar a mesma tag.
-  - `v0.9.7`: remove a barra de menu nativa do Electron (File/Edit/View/Window/Help, sem função
-    nenhuma pro app, aparecia como uma faixa branca feia no topo mesmo em tela cheia —
-    `Menu.setApplicationMenu(null)`) e corrige o badge de status da lista de Ordens de Serviço
-    quebrando em duas linhas quando o rótulo tem mais de uma palavra (ex: "Em andamento") por
-    faltar `whitespace-nowrap`. **Publicada** (build confirmada com sucesso no GitHub Actions) —
-    ainda não confirmada visualmente por ela na loja.
-  - `v0.9.8`: inclui as correções de uma sessão posterior — veículo sem placa não salvava, Marca
-    do veículo com sugestão de montadoras, Backspace limpando campo de data inteiro, e "Recorrente
-    até" em Contas a Pagar (itens 26/27 da seção 6). **Publicada pela tela do GitHub** (ela estava
-    longe do terminal) e **já baixada por ela via auto-update, confirmado no chat**. **Pendência**:
-    logo depois de publicar, ela reportou que o Backspace só limpava a data quando as 3 caixinhas já
-    estavam completas — bug no próprio hook novo (`useLimparDataAoApagar.ts` checava `.value`, que
-    fica vazio até a data estar completa, ver item 27 da seção 6). Corrigido e já mesclado na
-    `main`, mas **ainda não publicado em nenhuma tag** — ela decidiu acumular com outras mudanças
-    antes da próxima versão. Depois dessa correção, também mesclado na `main` sem tag ainda: erro
-    `invalid input syntax for type uuid: ""` ao adicionar um veículo novo num cliente já existente
-    (item 28 da seção 6) e a emissão de NFC-e/NFS-e via Focus NFe (item 1 da seção 8) — ela pediu
-    explicitamente pra segurar a publicação e sair tudo junto como **`0.9.9`** (decisão registrada
-    nesta sessão). Migration `0044` já rodada e confirmada por ela no Supabase real. **Também
-    mesclado na `main` sem tag ainda, na mesma sessão da NFC-e/NFS-e**: código do município
-    preenchido sozinho no cadastro de cliente (item novo em `clientes.codigo_municipio`, migration
-    `0045`, **já rodada e confirmada por ela**), atalho "Fechamento" na lista de OS, e o fix de
-    CORS que corrigia o "Failed to fetch" da primeira tentativa de emissão (ver item 1 da seção 8
-    e item 29 da seção 6). **Antes de publicar essa tag**: ainda falta validar a emissão de
-    verdade em homologação de ponta a ponta — NFS-e está barrada esperando a Focus NFe habilitar a
-    empresa dela pra Araraquara (fora do nosso controle), e NFC-e ainda nem foi tentada (ver
-    pendências detalhadas no item 1 da seção 8, é o próximo passo).
-  - `v0.9.9`: publicou tudo isso — decidiu não esperar mais a validação completa da emissão fiscal
-    (ver item 1 da seção 8 pro estado real: habilitação da Focus NFe resolvida depois desta tag,
-    ainda com dois bloqueios abertos). **Publicada pela tela do GitHub** (ela estava longe do PC) —
-    eu preparei o bump de versão (PR mesclado) mas **não consegui empurrar a tag/criar a release
-    direto** (o ambiente onde rodo bloqueia `git push` de tag com erro 403 — parece trava de
-    segurança proposital, não bug de proxy; nenhuma ferramenta de GitHub disponível aqui também
-    permite criar tag/release diretamente). Ela publicou pela tela (mesmo fluxo de sempre quando
-    está longe do terminal) e o build passou — instalador e `latest.yml` confirmados na release.
-    **Lição pra sessões futuras**: publicar a tag/release final continua sendo sempre manual dela
-    (terminal ou tela do GitHub), mesmo com acesso de push a branches/PRs.
-  - `v0.9.10`: leva a edição de produto em Estoque (que corrigiu o CST/CSOSN, ver item 1 da seção
-    8) e a correção do erro `invalid input syntax for type uuid` ao cadastrar um cliente **novo**
-    já com veículo preenchido (reportado por ela no chat, sem print — a mesma causa do item 28 da
-    seção 6, só que faltando cobrir `criarCliente()`, não só `atualizarCliente()`; ver item 28 pro
-    detalhe completo). **Publicação teve um incidente real, resolvido na mesma sessão**: ela
-    publicou pela tela do GitHub (longe do PC de novo) digitando a tag `v0.9.10`, mas o GitHub
-    reaproveitou silenciosamente um **rascunho de release não publicado que já existia com esse
-    mesmo nome de tag**, criado 4 dias antes por uma sessão anterior (target apontando pra um
-    branch antigo, `claude/visual-adjustments-fiscal-grjker`, sem nenhuma das correções atuais) —
-    o build começou a rodar em cima do commit errado. Eu cancelei o build a tempo (`workflow_run`
-    ainda em andamento, nenhum instalador chegou a ser publicado) e orientei ela a apagar a release
-    **e** a tag manualmente (são coisas separadas no GitHub — apagar a release pela lixeirinha não
-    apaga a tag; foi preciso ir em `.../tags`, achar a `v0.9.10` e apagar por lá também) antes de
-    recriar do zero, dessa vez conferindo que o campo "Target" da tela de criar release mostrava
-    `main`. Build refeita, publicada certinho (`d1e1f17`, o commit real do bump de versão) —
-    instalador + `latest.yml` confirmados na release. **Lição nova pra sessões futuras**: antes de
-    orientar ela a criar uma release pela tela do GitHub, vale conferir por API
-    (`get_release_by_tag`) se já existe uma release/rascunho com aquele nome de tag — se existir e
-    o `target_commitish` não for `main`, é sinal de resíduo de sessão anterior, apagar antes dela
-    tentar publicar em cima.
-  - `v0.9.12`: **o mesmo incidente se repetiu numa sessão posterior, e a lição acima não foi
-    suficiente pra evitar** — eu conferi por `get_release_by_tag` antes de orientar ela a publicar
-    e recebi 404 (nenhuma release), mas ela publicou mesmo assim e o GitHub reaproveitou um
-    **rascunho não publicado que já existia com esse nome de tag** (criado quase um mês antes,
-    apontando pra uma branch antiga). **Causa raiz da lição anterior estar errada**:
-    `get_release_by_tag` **não enxerga rascunhos não publicados** — só passa a existir pra essa
-    consulta depois de publicado. Resolvido do mesmo jeito de sempre (apagar release + tag
-    separadamente, recriar conferindo "Target"), mas dessa vez **recriar a tag com o mesmo nome que
-    acabou de ser apagada não disparou o build de novo** (mais um comportamento estranho do GitHub,
-    a tag ficou correta no repositório mas nenhum `workflow_run` novo apareceu, confirmado
-    esperando e checando de novo várias vezes) — precisou pular pra `v0.9.13`, um nome de tag nunca
-    usado antes, pra sair dessa situação. **Lição corrigida**: não existe hoje um jeito confiável de
-    checar por API se uma tag vai colidir com um rascunho antes de publicar — `get_release_by_tag`
-    (só releases publicadas) e `list_releases` (também não mostrou o rascunho na listagem, mesmo
-    com push access) não pegam rascunho não publicado. Na prática, o mais seguro agora é: (a) se o
-    nome da tag nunca foi usado antes no projeto, seguir normal; (b) se já existiu antes de qualquer
-    forma (mesmo já apagada), considerar arriscado reusar o mesmo nome — preferir pular pro próximo
-    número.
-  - `v0.9.13`: leva a correção da alíquota de teste do IBS/CBS na NFC-e (rejeição SEFAZ 1026, ver
-    item 1 da seção 8). **Publicação teve mais um episódio, dessa vez de infraestrutura pura, sem
-    relação com rascunho de release**: o build da tag ficou preso em "queued" por mais de 20
-    minutos sem nenhum job atribuído (`list_workflow_jobs` retornando `total_count: 0` o tempo
-    todo), e `cancel_workflow_run` recusava com 409 ("Cannot cancel a workflow run that has not
-    been queued yet") — sinal de instabilidade do lado do GitHub Actions (achei registro de um
-    incidente parecido dias antes via busca na web, `githubstatus.com`). **Resolvido adicionando um
-    gatilho manual** (`workflow_dispatch: {}` em `.github/workflows/release.yml`, além do
-    `push: tags: v*` já existente) — com ele, dá pra rodar a Release direto por API/CLI apontando
-    pro `ref` desejado, sem depender do webhook de push de tag (que é só o que ficou travado,
-    disparar manualmente por `main` funcionou de primeira). **Detalhe de uso**: `workflow_dispatch`
-    só fica disponível quando o próprio arquivo do workflow, na branch **default** (`main`), já
-    declara esse gatilho — dispatch com `ref` apontando pra uma tag antiga (cujo arquivo não tem o
-    gatilho ainda) falha com "Workflow does not have workflow_dispatch trigger"; rodar com
-    `ref: main` funciona porque é lá que o gatilho foi declarado, e o `package.json` de `main` já
-    está na versão certa de qualquer forma.
-  - `v0.9.14`: leva a trava de item pós-fatura + confirmação ao faturar (ver item 31 da seção 6).
-    **Publicada direto via `workflow_dispatch`** (rodado por aqui mesmo, `ref: main`) — primeira
-    vez que uma tag/release nasceu sem a usuária precisar tocar na tela do GitHub, e sem nenhum
-    atraso de fila dessa vez.
-  - `v0.9.15`: leva a correção do pagamento da NFC-e em OS com peça e serviço juntos (ver item 32
-    da seção 6). **Também publicada direto via `workflow_dispatch`** — a partir daqui esse já virou
-    o jeito padrão de publicar (ver detalhe completo em "Gerar o instalador Windows e publicar uma
-    versão nova", seção 9).
-  - `v0.9.16`: a leva desta sessão — **tela de conexão com o banco** (o instalador deixa de
-    carregar a conexão de empresa nenhuma, ver "Conexão com o banco (multi-empresa)" nesta seção),
-    auto-save de rascunho em mais quatro formulários, correção do tooltip ilegível nos gráficos de
-    Relações (item 17 da seção 6) e cadastro manual em Contas a Receber. Publicada via
-    `workflow_dispatch`.
-  - `v0.9.17`: primeira tentativa de corrigir o "Testar conexão" reprovando a chave certa — mandar
-    a chave só no cabeçalho `apikey`, sem `Authorization: Bearer` (ver item 33 da seção 6).
-    **Não resolveu** — ela testou e o erro continuou igual.
-  - `v0.9.18`: a correção que importava — o teste de conexão **deixa de trancar a entrada no
-    sistema** (ganha "Salvar assim mesmo" quando reprova) e passa a usar o próprio cliente do
-    `supabase-js`, o mesmo caminho que o app usa de verdade. **Confirmada por ela**: instalou,
-    colou URL + chave e entrou normalmente ("coloquei a chave e foiii"). Também já rodando no PC
-    da loja, sem precisar avisar ninguém. Ver item 33 da seção 6 pra lição completa.
-  - `v0.9.19`: leva o botão "Cancelar nota" fiscal (migration `0046`), o código CNAE na NFS-e
-    (migration `0047`) e a correção do bug de fuso horário que fazia OS faturada à noite sumir da
-    lista (item 34 da seção 6). Publicada via `workflow_dispatch`.
-  - `v0.9.20`: corrige o recibo "Versão para o cliente" saindo em branco pra NFS-e de prefeituras
-    estilo Giap (Araraquara incluída) — ver item 1 da seção 8. **Confirmada por ela** testando a
-    NFS-e número 11: recibo saiu com os dados certos (número, emitente, chave, protocolo, link pro
-    documento oficial). Publicada via `workflow_dispatch`.
-  - `v0.9.22`: parcelar cartão dentro do pagamento dividido, "+ adicionar item" no rodapé da lista
-    e total por item na OS (ver "Ordens de Serviço" nesta seção), mais a correção do rateio do
-    pagamento na NFC-e que essa mudança destapava. **É a primeira tag com o instalador de nome
-    fixo** (`SakuraSystem-Setup.exe`) — ou seja, é a partir dela que o link de download permanente
-    do site passa a funcionar. Publicada via `workflow_dispatch`.
+  completo do desenho na seção 5, subseção "Multi-loja". **Hoje só existe uma loja de verdade: "Pneus
+  Amigão" (Araraquara).**
+- **Empacotamento e versões**: `electron-builder` (NSIS) + `electron-updater`, publicado no
+  GitHub Releases pelo workflow Release (como publicar e liberar: seção 9). A versão aparece
+  pequena no canto inferior direito de toda tela (`VersaoApp.tsx`). **Antes de dizer qual é a
+  última versão, conferir as releases reais** (`mcp__github__list_releases`): a `v0.9.21` saiu numa
+  sessão que não atualizou esta lista, e a seguinte informou a versão errada pra ela.
+  - **Auto-update**: o `electron-updater` baixa o `latest.yml` **sem login**, por isso o repositório
+    é público (item 21 da seção 6). Se parar de atualizar, o primeiro lugar pra olhar é
+    `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log`.
+  - **Instalador de nome fixo desde a `v0.9.22`** (`SakuraSystem-Setup.exe`): o endereço
+    `/releases/latest/download/SakuraSystem-Setup.exe` sempre entrega a última versão **liberada**.
+    As releases anteriores têm o número no nome.
+  - **Desde a `v0.9.40`, publicar não chega em todas as lojas**: nasce no canal de teste e só chega
+    no resto pelo "Liberar". Uma loja nova que baixa o instalador também recebe a liberada.
+  - **Incidentes que moldaram o processo** (o detalhe está no histórico do Git deste arquivo):
+    publicar pela tela `releases/new` reaproveitou duas vezes um rascunho antigo com o mesmo nome
+    de tag (`v0.9.10` e `v0.9.12`; a `v0.9.12` ficou queimada, e o `get_release_by_tag` não
+    enxerga rascunho); o gatilho por tag travou na fila do GitHub
+    (`v0.9.13`), o que trouxe o "Run workflow"; e a `v0.9.38` saiu sem o `latest.yml` (item 66 da
+    seção 6). **Número de versão que já circulou nunca se reusa.**
 
-  - `v0.9.23`: a OS passa a reconhecer de que nota ela precisa e ganha o estado **"Finalizada"**
-    (ver "Ordens de Serviço" nesta seção), e o app passa a gravar erro de tela em `erros.log`
-    (ver item 39 da seção 6 — é o arquivo a pedir pra ela se o bug de "campo parou de aceitar
-    digitação" voltar). Publicada via `workflow_dispatch`.
-
-  - `v0.9.24`: corrige os três cálculos errados de lucro/ticket médio do Caixa Diário e do Início
-    (ver item 40 da seção 6) — a conta virou uma função só, compartilhada pelas três telas que
-    mostram lucro. Publicada via `workflow_dispatch`.
-
-  - `v0.9.25`: campo numérico deixa de mudar de valor sozinho pelas setas ↑/↓ e pelo spinner (ver
-    item 41 da seção 6) e o calendário do Início passa a mostrar os dias do mês vizinho, apagados
-    (ver "Início — calendário" nesta seção). Publicada via `workflow_dispatch`.
-
-  - `v0.9.26`: a leva acumulada de 02/09/2026 — **baixar os XMLs de um mês num `.zip` só**
-    (Notas Fiscais), **aba Comissões** em Relações, e as **12 correções** das duas varreduras
-    (7 de cálculo + 5 fiscais, itens 42 a 46 da seção 6). É a primeira versão em que a conta a
-    pagar recorrente do dia 29/30/31 para de pular um mês, a nota emitida à noite para de cair na
-    competência errada, e o desconto do item deixa de sumir na NFC-e. Publicada via
-    `workflow_dispatch`.
-
-  - `v0.9.27`: a leva de 03/09/2026 — **NFC-e no CNPJ do cliente pessoa jurídica** (item 1 da
-    seção 8), período **Anual** nos gráficos de Relações, a aba **Comissões dentro de
-    Funcionários** e o botão do calendário visível em todo campo de data. Publicada via
-    `workflow_dispatch`, com o instalador e o `latest.yml` confirmados na release.
-
-  - `v0.9.28`: **corrigir um item já lançado numa OS** (08/09/2026, pedido dela: digitou R$120 num
-    alinhamento que era R$60 e não tinha conserto pela tela) — ver "Ordens de Serviço" na seção 7.
-    Publicada via `workflow_dispatch` e **confirmada por ela usando na loja** (editou os dois itens
-    e a OS fechou nos R$ 1.113,00 certos).
-
-  - `v0.9.29`: leva o aviso que lista **pelo nome** a peça com CST/CSOSN incompatível com o
-    regime da loja antes de emitir (no lugar do `[nItem:1]` da SEFAZ) e a correção que impede a
-    importação de XML do fornecedor de copiar o código de ICMS dele pro cadastro da peça (item 47
-    da seção 6). Ficou segurada a pedido dela de 10/09 a 11/09/2026 e foi publicada em 11/09 via
-    `workflow_dispatch`, depois de ela confirmar — instalador e `latest.yml` confirmados na
-    release. Chegou na máquina dela junto com a `v0.9.30` (ver abaixo).
-
-  - `v0.9.30`: leva o botão **"Ver DANFE"** (reabrir o PDF de uma nota já emitida, em Notas
-    Fiscais e na aba Fechamento da OS) e o **aviso da alíquota da competência** no Início — os
-    itens `TR-11.1` e `TR-11.2` do guia de melhorias. Publicada via `workflow_dispatch` **depois**
-    de ela rodar as migrations `0048` e `0049`, que era a ordem obrigatória (sem as colunas da
-    `0049`, "Salvar dados fiscais" daria erro de coluna inexistente). **Instalada por ela no
-    mesmo dia** ("pronto, instalado a nova versao") — o que ainda não foi testado em uso real é o
-    "Ver DANFE" numa nota de verdade (a busca do PDF na Focus NFe é justamente o que não dá pra
-    testar daqui) e o aviso da alíquota aparecendo no Início.
-
-  - `v0.9.31`: a leva de acessibilidade e ergonomia da **Etapa 2** do guia, acumulada a pedido
-    dela e publicada de uma vez — **foco de teclado visível** (`TR-02.2`), **foco preso dentro do
-    modal** (`TR-02.3`), **alvos de clique de 32px nas listas** com o "Excluir" fora da linha
-    (`TR-02.1`), a **escala tipográfica** com nome por papel (`TR-01.1`, nada encolheu) e os
-    **cartões e o calendário do Início** (`TL-04`). Sem migration: o banco dela já estava em
-    `0049`. Publicada via `workflow_dispatch`.
-
-  - `v0.9.32`: **categoria obrigatória no lançamento manual do caixa** (`TL-27`) — com a categoria
-    "Outros" semeada pela migration `0050` e o painel que categoriza em lote o histórico que ficou
-    sem categoria. Ver "Caixa Diário" nesta seção. **Publicada depois** de ela rodar a `0050`, que
-    era a ordem obrigatória — mesma disciplina da `v0.9.30` com a `0049`. Via `workflow_dispatch`.
-
-  - `v0.9.33`: **a Etapa 2 do guia inteira** — estoque mínimo e busca por código de barras na
-    lista de Produtos (`TL-11`), campos fiscais explicados e bloco de pneu no cadastro (`TL-12`),
-    botões de WhatsApp em Contas a Receber/OS/Pedidos de compra (`FN-03`) — mais o `TL-08` de
-    11/09 (cadastrar cliente e veículo sem sair da OS), que tinha ficado sem tag. **Publicada
-    depois** de ela rodar as migrations `0051` e `0052`, que era a ordem obrigatória. Via
-    `workflow_dispatch`.
-
-  - `v0.9.34`: **os três primeiros itens da Etapa 3** — a borda dos campos de formulário clareada
-    (dívida de contraste do `TR-01.3`, a única das três que ela enxerga na tela), as correções de
-    rateio achadas por teste de propriedade (`TR-06.1`, item 60 da seção 6 — é a versão em que a
-    última parcela e a última linha de pagamento da nota param de poder sair negativas), o
-    teste-ouro do corpo da nota fiscal (`TR-06.3`) e o teste de tela nos cinco formulários que
-    mexem em dinheiro (`TR-07.2`). **Sem migration nenhuma** — o banco dela continua na `0052`,
-    então aqui não havia ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`. Via
-    `workflow_dispatch`.
-
-  - `v0.9.35`: **o começo da Etapa 4** — a auditoria passando a cobrir criação, itens de OS e
-    dado fiscal (`TR-04.9`, migration `0053`) e a função de permissão por módulo (`TR-04.1` etapa
-    1 de 3, migration `0054`). Junto, sem aparecer na tela: o procedimento de **voltar uma
-    versão** (`TR-09.2`), que é documentação na seção 9. **Publicada depois** de ela rodar as duas
-    migrations, que era a ordem obrigatória da `0053` — mesma disciplina da `v0.9.30`/`0049`, da
-    `v0.9.32`/`0050` e da `v0.9.33`/`0051`+`0052`. Via `workflow_dispatch`.
-
-  - `v0.9.36`: a **tela de Diagnóstico** (`TR-08.1`) e o `ErrorBoundary` (parte do `TR-08.3`) —
-    ver "Diagnóstico" nesta seção. Leva junto a matriz de RLS (`TR-07.3`), que não precisava de
-    tag. **Sem migration**: o banco dela continua na `0054`, então não havia ordem a cumprir.
-    Via `workflow_dispatch` — mas só depois de consertar o CI: o job "segredos" ficou **vermelho
-    na `main`** por causa das credenciais de mentira do teste da máscara (item 64 da seção 6).
-    **`main` vermelha não se publica**, mesmo já tendo o "publica" dela.
-
-  - `v0.9.37`: o **aviso de banco desatualizado** (`TR-05.7`) — a faixa que diz qual migration
-    falta rodar, em vez de a tela estourar com "column does not exist"; e a versão do banco no
-    Diagnóstico. **Publicada depois** de ela rodar a migration `0055`, que era a ordem certa —
-    mesma disciplina da `v0.9.30`/`0049`, da `v0.9.32`/`0050`, da `v0.9.33`/`0051`+`0052` e da
-    `v0.9.35`/`0053`. Via `workflow_dispatch`, com instalador e `latest.yml` confirmados na
-    release.
-
-  - `v0.9.38`: **endurecer o Electron** (`TR-04.6`) — a auditoria de segurança do processo
-    principal: política de segurança de conteúdo, a ponte da Focus NFe fechada nos dois endereços
-    dela, todo pedido da tela conferido, nada navegando pra fora nem abrindo janela nova, e as
-    "chavinhas" (fuses) gravadas no executável. Ver "Segurança do app em si" nesta seção.
-    **É a primeira versão em que o instalador leva os fuses** — quem tem o programa na máquina
-    deixa de conseguir rodá-lo como um Node.js comum. **Sem migration**: o banco dela continua na
-    `0055`, então não havia ordem a cumprir, diferente da `v0.9.30`/`v0.9.32`/`v0.9.33`/`v0.9.35`.
-    Via `workflow_dispatch`, com a `main` verde nos cinco jobs do CI — inclusive o job novo, que
-    abre o app de verdade.
-    **⚠️ A publicação desta tag deu errado três vezes e deixou o canal de atualização quebrado por
-    algumas horas** — a release saiu com o instalador e **sem** o `latest.yml`, então toda loja
-    parou de conseguir se atualizar (o item 66 da seção 6 conta o caso inteiro). O instalador
-    nunca esteve corrompido. O conserto foi reescrever o passo de publicação do `release.yml`:
-    o `electron-builder` só **builda**, e quem publica é o `gh`, arquivo por arquivo, com
-    tentativa repetida e conferência — **e o `latest.yml` por último, só depois de o instalador
-    estar publicado e conferido**. A `v0.9.38` foi **completada na própria tag**, sem queimar
-    número de versão: a release já existia publicada e correta, faltava um arquivo nela.
-
-  - `v0.9.39`: **dado de RH só pra quem tem o módulo** (`TR-04.3`, migration `0056`) — salário,
-    comissão, CPF, RG, CNH e família deixam de ser escondidos só pela tela e passam a ser
-    recusados pelo banco, sem tirar do balconista nome e cargo, que é o que ele precisa pra
-    montar uma OS. Ver "Funcionários" nesta seção. **Publicada depois** de ela rodar a `0056`
-    em 25/09/2026 — a ordem obrigatória aqui, porque a tela de OS passa a ler a view
-    `funcionarios_publico`. Mesma disciplina da `v0.9.30`/`0049`, da `v0.9.32`/`0050`, da
-    `v0.9.33`/`0051`+`0052`, da `v0.9.35`/`0053` e da `v0.9.37`/`0055`. Via
-    `workflow_dispatch`.
-
-  - `v0.9.40`: **canal de teste** (`TR-09.1`) — ver "Canal de atualização" nesta seção. **É a
-    primeira versão publicada do jeito novo**, e por isso saiu em dois passos no mesmo minuto,
-    em 25/09/2026: o Release a publicou como pré-lançamento (o próprio workflow conferiu de fora:
-    "Canal de teste: v0.9.40. Todas as lojas continuam em v0.9.39"), e em seguida o Liberar
-    conferiu a impressão digital do instalador contra o `latest.yml`, liberou, e confirmou de fora
-    que o GitHub passou a responder `v0.9.40` pra todas as lojas. Liberar logo em seguida era
-    obrigatório aqui: nenhum computador estava no canal de teste, e a `v0.9.39` só enxerga versão
-    liberada. **Sem migration**: o banco dela continua na `0056`.
-
-  - `v0.9.41`: **o token da Focus NFe fora do computador** (`TR-04.2`, parte 1) — o porteiro
-    `focus-nfe` e o cofre da migration `0057`. Ver "Token da Focus NFe e o porteiro" nesta seção.
-    **Publicada depois** de ela rodar a `0057` e publicar a Edge Function, que era a ordem
-    obrigatória (esta versão só emite nota pelo porteiro). Via `workflow_dispatch`, em
-    25/09/2026, como pré-lançamento — e **liberada logo em seguida, a pedido dela** ("libera
-    direto"), sem passar por nenhum computador no canal de teste. O Liberar conferiu a impressão
-    digital do instalador, liberou e confirmou de fora que o GitHub responde `v0.9.41` pra todas
-    as lojas. Ou seja: **o primeiro teste real do porteiro acontece na loja.**
-
-  - `v0.9.42`: a leva de "pode fazer com força" — **fechamento de caixa do dia** (`TR-06.4`),
-    **comissão paga congelada** (`TL-46.1`), **travas de dado impossível** com a frase em
-    português (`TR-05.1`) e o **"Importar por foto" desligado**. **Publicada e liberada em
-    25/09/2026, a pedido dela** (opção "publicar e já liberar"), **depois** de as migrations
-    `0058`–`0060` entrarem pelo botão novo — a ordem cumprida. O Release publicou os três arquivos
-    com o `latest.yml` por último; o Liberar conferiu e liberou; e a conferência de fora baixou
-    `latest.yml` e instalador do endereço "mais recente" que o app usa: `version: 0.9.42`, e a
-    impressão digital sha512 do instalador baixado **idêntica** à anunciada.
-
-  - `v0.9.43`: **Contas a Pagar, Contas a Receber e o Caixa só com o módulo** (`TR-04.1`, lotes
-    2 e 3) — do lado do programa: o Caixa gravado sem pedir a linha de volta, "desfazer
-    pagamento" apagando a saída antes de voltar a conta pra pendente, e os cartões do Início com
-    "—" pra quem não tem o módulo. **É a primeira versão que sai ANTES da migration dela**
-    (`0061`+`0062`), porque a `0062` quebraria a `v0.9.42` pra quem paga conta sem ter o Caixa
-    (ver a entrada da `0062` na seção 5). Publicada via `workflow_dispatch` e **liberada em
-    26/09/2026**, a pedido dela ("rodar e publicar o que ficou pronto"): o Liberar conferiu a
-    impressão digital do instalador contra o `latest.yml` e confirmou de fora que o GitHub
-    responde `v0.9.43` pra todas as lojas. **Depois**, no mesmo dia, a `0061`+`0062` entraram
-    pelo botão (Pneus Amigão `0060` → `0062`) — sem esperar o computador da loja abrir a versão
-    nova, porque ela conferiu que não havia na loja nenhum operador do único perfil afetado (não
-    admin, com Contas a Pagar/Receber e sem Caixa).
-
-  - `v0.9.44`: **a versão de cada computador** — cada computador se registra no banco a cada
-    login, o admin vê a lista em Configurações → "Computadores desta empresa", e o botão de
-    atualizar os bancos passa a esperar os atrasados quando uma migration declara versão mínima.
-    **Na ordem de sempre**: a `0063` entrou pelo botão primeiro (ensaio e aplicação, `0062` →
-    `0063`), e só depois a versão. Publicada via `workflow_dispatch` e **liberada em 26/09/2026,
-    à noite**, a pedido dela ("pode fazer" e, perguntada, "liberar já"). Conferido de fora: o
-    endereço "mais recente" que o app usa responde `version: 0.9.44`, e o instalador baixado de
-    lá tem a impressão digital sha512 **idêntica** à do `latest.yml`. A partir dela, o
-    computador da loja aparece na lista na primeira vez que alguém entrar nele.
-
-  - `v0.9.45`: **a venda de balcão** (item `FN-09`) — vender peça pra quem não deixa o carro,
-    numa tela só, com leitor de código de barras, pagamento e NFC-e. **Na ordem de sempre**: a
-    `0064` entrou pelo botão primeiro (ensaio e aplicação, `0063` → `0064`), e só depois a
-    versão. Publicada via `workflow_dispatch` em 26/09/2026, fim da noite, **só no canal de
-    teste**; **liberada em 27/09/2026**, a pedido dela ("libera"). Conferido de fora: o endereço
-    "mais recente" que o app usa responde `version: 0.9.45`, a release não tem mais a marca de
-    pré-lançamento, e o instalador baixado de lá tem a impressão digital sha512 **idêntica** à do
-    `latest.yml`.
-
-  - `v0.9.46`: **a ficha do veículo** (item `FN-04`) — a história de um carro por placa, aberta
-    clicando na placa em Clientes, OS e Garantias. **Sem migration** (banco continua na `0064`),
-    então não havia ordem a cumprir. Publicada via `workflow_dispatch` e **liberada em
-    27/09/2026**, a pedido dela ("pode publicar", em resposta a "publique e libere?"), pra entrar
-    no teste de segunda na loja — o computador da loja está no canal normal, e só publicar não
-    chegaria lá. Conferido de fora: o endereço "mais recente" que o app usa responde
-    `version: 0.9.46`, e o instalador baixado de lá tem a impressão digital sha512 **idêntica** à
-    do `latest.yml`.
-
-  **⚠️ A partir da versão que levar o `TR-09.1` (25/09/2026), publicar NÃO é mais "todas as
-  lojas"**: a release nasce no canal de teste e só chega nas outras quando ela rodar o
-  "Liberar versão para todas as lojas" (ver seção 9). Uma versão publicada e nunca liberada fica
-  parada no teste pra sempre — e a loja nova que baixa o instalador pelo site também recebe a
-  **liberada**, não a mais nova.
-
-  **Cuidado que já custou um erro (28/08/2026)**: não confiar neste arquivo pra saber qual foi a
-  última versão publicada — a `v0.9.21` foi publicada numa sessão que não atualizou esta lista, e
-  numa sessão seguinte eu disse pra ela que a última era a `v0.9.20`, quando o app dela já rodava
-  a `v0.9.21`. Antes de propor um número de versão, conferir a lista real de releases
-  (`mcp__github__list_releases`), não a memória deste documento.
-
-  Fluxo confirmado funcionando de ponta a ponta tanto pelo terminal (`git tag vX.Y.Z` + `git push
-  origin vX.Y.Z`) quanto pela tela do GitHub (criar a release digitando a tag nova) — o GitHub
-  Actions builda e publica o instalador sozinho nos dois casos (~5-10 min). A versão aparece
-  pequena no canto inferior direito do app (`VersaoApp.tsx`) em toda tela, inclusive login —
-  só passou a funcionar de verdade a partir da `v0.9.4`.
-  **⚠️ MUDANÇA IMPORTANTE PRA PRÓXIMA TAG (28/08/2026)**: o instalador passou a ter **nome fixo**,
-  `SakuraSystem-Setup.exe` (`build.artifactName` no `package.json`) — antes o nome carregava a
-  versão (`Sakura-System---AutoCenter-Edition-Setup-0.9.21.exe`). Isso é o que permite o site
-  apontar pra um endereço permanente (`/releases/latest/download/SakuraSystem-Setup.exe`) que
-  sempre entrega a última versão, sem editar o site a cada lançamento. **É seguro pro
-  auto-update** — o `latest.yml` guarda o nome do arquivo, então a versão nova aponta sozinha pro
-  nome novo —, mas duas consequências valem lembrar: (a) o link de download do site **só funciona
-  a partir da `v0.9.22`**, porque as releases já publicadas têm o nome antigo; (b) quem for
-  conferir uma release nova pelo `get_release_by_tag` vai ver o nome novo, não o antigo — não é
-  bug.
-
-  **Auto-update confirmado funcionando de ponta a ponta** (validado por ela: app em `v0.9.4`
-  aberto, fechou e abriu de novo, `v0.9.5` se instalou sozinha, sem baixar `.exe` manualmente). A
-  causa de `v0.9.3`/`v0.9.4` nunca terem se instalado sozinhas não era timing/rede — era o
-  repositório estar **privado** (`electron-updater` baixa o `latest.yml` sem autenticação, e um
-  repo privado sempre devolve 404 pra isso). Corrigido tornando o repositório público e renomeando
-  pra `sakura-system-ace` (detalhe completo e alternativas descartadas no item 21 da seção 6).
-  **Confirmado de novo nesta sessão**: `v0.9.6` se instalou sozinha na loja logo depois de
-  publicada (o "Importar por foto" passou a mostrar o erro real da Anthropic em vez do genérico de
-  antes — só possível já rodando o código novo, ver item 24 da seção 6). Se
-  parar de funcionar de novo, `%APPDATA%\Sakura System - AutoCenter Edition\atualizacoes.log`
-  continua sendo o primeiro lugar pra olhar.
-
+  | Versão | Data | O que trouxe (migration, quando teve) |
+  |---|---|---|
+  | `v0.9.2`–`v0.9.7` | até 19/08 | Primeira versão de verdade na loja e as correções do lançamento: número da OS por loja, pagamento dividido, excluir loja vazia, versão aparecendo no app, log do atualizador, "Importar por foto" com erro real, sem a barra de menu do Electron |
+  | `v0.9.8`–`v0.9.10` | 19–25/08 | Veículo sem placa, marca com sugestão, Backspace na data, "Recorrente até", código do município, a primeira emissão de NFC-e/NFS-e pela Focus (`0044`, `0045`) e a edição de produto |
+  | `v0.9.11`, `v0.9.13`–`v0.9.15` | 26/08 | Alíquota de teste do IBS/CBS, trava de item depois de faturar, pagamento da NFC-e com peça e serviço |
+  | `v0.9.16`–`v0.9.18` | 26/08 | **Conexão escolhida em cada computador** (um instalador pra qualquer empresa), rascunho automático, cadastro manual em Contas a Receber |
+  | `v0.9.19`–`v0.9.20` | 27/08 | Cancelar nota (`0046`), CNAE na NFS-e (`0047`), OS faturada à noite sumindo (fuso), recibo da NFS-e do Giap |
+  | `v0.9.21`–`v0.9.25` | 27–31/08 | Cartão parcelado no pagamento dividido, OS "Finalizada", erros em `erros.log`, os três cálculos de lucro, campo numérico sem setas, calendário com os dias vizinhos |
+  | `v0.9.26` | 02/09 | XMLs do mês em `.zip`, aba Comissões, 12 correções de cálculo e fiscais |
+  | `v0.9.27` | 03/09 | NFC-e pra cliente empresa, período Anual, Comissões em Funcionários, calendário visível |
+  | `v0.9.28` | 09/09 | Corrigir um item já lançado na OS |
+  | `v0.9.29`–`v0.9.30` | 11/09 | Aviso de CST/CSOSN pelo nome, XML do fornecedor sem copiar o ICMS, Ver DANFE, aviso da alíquota (`0048`, `0049`) |
+  | `v0.9.31`–`v0.9.33` | 11–12/09 | Foco visível, modal com foco preso, ações de linha, escala tipográfica, cartões do Início, categoria obrigatória no caixa (`0050`), estoque mínimo e leitor, campos fiscais explicados, WhatsApp, cliente e veículo sem sair da OS (`0051`, `0052`) |
+  | `v0.9.34` | 12/09 | Borda dos campos, rateio sem negativo, teste-ouro da nota, teste de tela nos formulários de dinheiro |
+  | `v0.9.35` | 12/09 (noite) | Auditoria ampliada (`0053`) e função de permissão por módulo (`0054`) |
+  | `v0.9.36`–`v0.9.37` | 13 e 15/09 | Diagnóstico, `ErrorBoundary`, aviso de banco desatualizado (`0055`) |
+  | `v0.9.38` | 17/09 | Electron endurecido (CSP, pontes conferidas, fuses) |
+  | `v0.9.39` | 25/09 | Dado de RH só com o módulo (`0056`) |
+  | `v0.9.40` | 25/09 | Canal de teste e o "Liberar" |
+  | `v0.9.41` | 25/09 | O porteiro da Focus NFe (`0057`) |
+  | `v0.9.42` | 25/09 | Fechamento de caixa, comissão paga, travas de dado (`0058`–`0060`), "Importar por foto" desligado |
+  | `v0.9.43` | 25/09 (noite) | Contas e Caixa só com o módulo, do lado do programa (**saiu antes** da `0061`/`0062`) |
+  | `v0.9.44` | 26/09 | A versão de cada computador (`0063`) |
+  | `v0.9.45` | 26/09 (liberada 27/09) | Venda de balcão (`0064`) |
+  | `v0.9.46` | 27/09 | Ficha do veículo |
+  | `v0.9.47` | 29/09 | Só o endereço novo do atualizador (`sakura-corp/sakura-system-ace`) |

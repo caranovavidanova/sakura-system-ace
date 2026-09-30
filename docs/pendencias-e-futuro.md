@@ -30,17 +30,75 @@ Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs
 CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
 (os três últimos estão no repositório privado).
 
+**O que falta do guia de melhorias e o que o concorrente tem e nós não** (`docs/comparativo-anexar.md`)
+**viraram tarefa no GitHub** (30/09, etiqueta `guia`, #365 a #385 e #386 a #412), cada uma com o que fazer, onde, "Pronto quando", o que não fazer e, quando depende dela, a
+instrução de **parar e mandar mensagem pra ela** se quem estiver fazendo não for ela. Por enquanto
+só ela (com o Claude dela) mexe nessas: a equipe fica no painel até ela avisar.
+
+| Tarefa | O que é |
+|---|---|
+| #365, #366, #367 | Permissão no banco: clientes e veículos; peças e estoque; OS (`TR-04.1`, lotes 4 a 6) |
+| #368 | Apagar a cópia antiga do token da Focus (`TR-04.2` parte 2) |
+| #369 | Uma nota por OS garantida pelo banco (`TR-05.2`) |
+| #370 | Erro de tela com as últimas ações (resto do `TR-08.3`) |
+| #371 | Menu agrupado (`TR-03.1`, conversa antes) |
+| #372 | Busca geral com Ctrl+K (`TR-03.3`) |
+| #373 | Listas longas com páginas e ordenação (`TR-03.5`) |
+| #374 | Aviso quando a internet cai (`TR-10.1`) |
+| #375 | Saber que uma loja parou (`TR-08.2`) |
+| #376 | Checklist fiscal da loja nova (`TR-11.6`) |
+| #377 | Levantamento da assinatura do instalador (`TR-09.3`) |
+| #378 | Exportar os dados de uma loja (`TR-12.4`) |
+| #379 | Orçamento (`FN-01`) |
+| #380 | Checklist de entrada com fotos (`FN-02`) |
+| #381 | Lembrete de revisão (`FN-06`) |
+| #382 | Sugestão de compra (`FN-07`) |
+| #383 | Relatório mensal pra contabilidade (`FN-13`) |
+| #384 | Modo demonstração (`FN-14`) |
+| #385 | Atualizar o Electron (item 14) |
+| **Do comparativo** | |
+| #386 → #387 → #388 | **DRE**, nesta ordem: plano de contas em grupos; taxa da maquininha; a tela do DRE. O DRE de modelo, com números reais, fica só no repositório privado (`dre/`) |
+| #389 | Fluxo de caixa projetado |
+| #390 | Curva ABC |
+| #391 | Limite de crédito por cliente (aviso, nunca tranca) |
+| #392 | Vales de funcionário |
+| #393 | Tela do cliente: o que comprou, pagou e deve |
+| #394 | Mais de uma conta (gaveta, banco, maquininha) e transferência |
+| #395 | Centro de custo (melhor depois da #386) |
+| #396 | Renegociar conta a receber atrasada |
+| #397 | Resumo pro dono no WhatsApp |
+| #398 | Metas do mês (`FN-12`) |
+| #399 | Devolução e troca (`FN-08`) |
+| #400 | Agenda (`FN-05`; pro perfil de loja grande) |
+| #401 | Reserva de produto |
+| #402 | Etiqueta com código de barras, com a impressão térmica (`FN-10`) |
+| #403 | Manutenção dos equipamentos da loja |
+| #404 | Relatório por marca e modelo de veículo |
+| #405 | Relatórios com filtro livre |
+| #406 | Horas do mecânico em cada OS |
+| #407, #408 | Tabela de preço por tipo de cliente; convênio (fatura do mês). Quando aparecer loja com frota |
+| #409, #410 | NF-e modelo 55; manifestação do destinatário (MD-e). Fiscal: só com ela |
+| #411 | Boleto (levantamento) |
+| #412 | App de celular pro mecânico (levantamento; decisão estrutural) |
+
+O orçamento rápido no balcão entrou na #379, e a assinatura do cliente na #380. Ficaram **sem
+tarefa**, de propósito: MDF-e, SPED (é da contabilidade), SMS (o WhatsApp cobre), expedição e
+cheque (só se uma loja pedir).
+
+**Quando uma tarefa `guia` for feita**: o PR fecha a issue (`Closes #N`) e a linha sai desta tabela.
+
 **Decisões dela, sem prazo:**
 - o valor da mensalidade das lojas novas (privado);
 - levar o `ANTES-DA-PRIMEIRA-VENDA.md` a um advogado ou à contabilidade (item 10);
-- atualizar o Electron (item 14);
-- os próximos lotes de permissão no banco: clientes, peças/estoque e OS (item 1 da seção 6);
-- a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; seção 9);
+- atualizar o Electron (item 14, tarefa #385);
+- os próximos lotes de permissão no banco: clientes, peças/estoque e OS (item 1 da seção 6;
+  tarefas #365 a #367, cada uma diz o que ela precisa decidir);
+- a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; tarefa #368);
 - **cancelar uma nota deveria estornar estoque e Caixa?** (pergunta de desenho nunca respondida,
-  desde 03/09);
-- os três ajustes que ela pediu em 28/09 e deixou pra depois (modais com o fundo vazando, o status
-  da nota na lista de Notas Fiscais, o texto velho no topo de Notas Fiscais; detalhe no marco de
-  28/09 do `docs/historico.md`);
+  desde 03/09; conversa com a devolução, #399);
+- os três ajustes que ela pediu em 28/09, **já planejados como tarefas no GitHub** (30/09): as
+  janelas com o fundo vazando (#361), a situação da nota na lista de Notas Fiscais (#362) e o
+  texto velho no topo de Notas Fiscais (#363). Pra ela fazer comigo quando quiser;
 - o repositório só de versões e fechar o código (item 12).
 
 **Segurança, fora do código:**
@@ -49,8 +107,9 @@ CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **a
   essas (item 50 da seção 6);
 - trocar a chave `sb_secret_...` do Supabase que um dia foi colada no chat, se ainda não trocou
   (item 3 da seção 6);
-- conferir se o ruleset `main protegida` exige o CI verde pra mesclar; se não, ligar "Require
-  status checks to pass" (pendente desde 11/09 como "marcar o CI como obrigatório").
+- ~~conferir se o ruleset `main protegida` exige o CI verde~~: **feito em 30/09**. Ela ligou
+  "Require status checks to pass" com os 5 testes do CI (Tipos/lint/testes, Matriz de RLS,
+  Varredura de segredo, Electron de verdade, Contraste nas telas). Admin continua isenta.
 
 **Perguntas pra fora:**
 - **contabilidade**: com CSOSN `500`, as peças deveriam levar ICMS-ST retido? (item 1, "frágil"
@@ -218,7 +277,7 @@ nem perguntar; só retomar se ela trouxer.
 
 Conforme o uso real e o que ela pedir. O cardápio de ideias é o `MELHORIAS.md`, e o que o
 concorrente tem e nós não está em `docs/comparativo-anexar.md`. **Nada disso é pra construir sem
-ela pedir.** Os três ajustes que ela pediu em 28/09 estão em "O que depende dela", acima.
+ela pedir.** Os três ajustes que ela pediu em 28/09 são as tarefas #361, #362 e #363.
 
 ### 5. Fornecedores: completo
 
@@ -296,7 +355,7 @@ tempo real. Depois, a **leva 1** (a linha de produção completa: pegar tarefa, 
 por pessoa, relatório e aprovação) e o **financeiro com DRE**, num banco privado (nunca no GitHub).
 O exemplo de DRE está no repositório privado (`dre/`).
 
-### 14. Atualizar o Electron (decisão dela, em aberto desde 17/09/2026)
+### 14. Atualizar o Electron (decisão dela, em aberto desde 17/09/2026; tarefa #385)
 
 O programa está na **linha 33 do Electron**, que **não recebe mais correção de segurança** (em
 setembro, as linhas com suporte eram a 42, 43 e 44). Ou seja, o Chromium que desenha as telas está

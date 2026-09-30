@@ -26,7 +26,9 @@ do `PROJETO_STATUS.md`"**, hoje é `docs/decisoes.md`, `docs/banco.md`, `docs/li
 | 4. Antes da segunda empresa | Todos começados. Em aberto: `TR-04.1` (no banco já estão RH, contas e Caixa; faltam clientes, peças/estoque e OS), a parte 2 do `TR-04.2` (liberada, quando ela pedir) e o resto do `TR-08.3` (a trilha das últimas ações) |
 | 5. Escala e produto | `FN-09` (venda de balcão) feito. Fora do roteiro, também feitos: `FN-04` (ficha do veículo) e `TL-46.1` |
 
-O detalhe de cada entrega está na linha do tempo da seção 8 e nos módulos da seção 7.
+O detalhe de cada entrega está na linha do tempo da seção 8 e nos módulos da seção 7. **Tudo o que
+falta das etapas 3 a 5 virou tarefa no GitHub em 30/09** (etiqueta `guia`, #365 a #385; a tabela
+está em "O que depende dela", seção 8). Cada tarefa aponta pro item deste guia.
 
 ---
 

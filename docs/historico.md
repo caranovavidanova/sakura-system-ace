@@ -679,6 +679,135 @@ Se ela pedir sugestão, as duas respostas honestas são:
   apareciam soltos na fila dela por outro caminho — token da Focus NFe compartilhado, botão de
   diagnóstico, e o risco de uma tag ruim atualizar todas as lojas de uma vez.
 
+### Onde parou em 29-30/09/2026: organização `sakura-corp`, travas, senhas e o plano do painel (histórico — o marco mais recente está logo acima)
+
+Mesma sessão do comparativo com o Anexar e do exemplo de DRE (esse bloco foi pro topo de
+`docs/historico.md`). **Estado do código** no fim: `main` na **`v0.9.47`** (**publicada e liberada**
+pra todas as lojas em 29/09), banco na **`0064`**.
+
+#### Decidido por ela (29/09)
+- **Organização `sakura-corp` no GitHub**, criada por ela (pertence à conta pessoal dela até
+  existir CNPJ), com o app do Claude instalado em todos os repositórios. **O `sakura-system-ace`
+  foi transferido pra lá**: o endereço agora é `sakura-corp/sakura-system-ace`, e o antigo
+  (`caranovavidanova/sakura-system-ace`) redireciona. Conferido: o `latest.yml` pelo endereço
+  antigo responde `301` pro novo.
+- **Ficam na conta pessoal**: `caranovavidanova/ssace-backups` e `caranovavidanova/sakura-corp`
+  (o privado). **Cuidado com o nome**: a organização `sakura-corp` e o repositório privado
+  `sakura-corp` são coisas diferentes. Se o privado for pra organização um dia, **antes** desligar
+  a leitura dos membros (senão todo membro lê preço, margem e sócios).
+- **Nunca criar na conta pessoal dela um repositório chamado `sakura-system-ace`**: isso quebra o
+  redirecionamento, que é por onde os programas instalados procuram atualização até receberem a
+  versão com o endereço novo.
+- **Gustavo** (tem Claude Pro) entra como colaborador do `sakura-system-ace` pra construir o
+  painel da equipe, no PC dele e com os tokens dele. **O acordo provisório não é pré-requisito**
+  (isso muda a ordem do marco de 28/09).
+- **O painel mora dentro do `sakura-system-ace`**: pasta `painel/`, manual em `docs/painel.md`.
+  Isso substitui o repositório separado `sakura-painel` do marco de 28/09. Formato: página web
+  React + Vite, tarefas nas **issues do GitHub** com uma etiqueta por leva, login pelo GitHub.
+  **1ª versão**: a lista de tarefas da leva e quem está com cada uma.
+- O `EQUIPE.md` do privado ainda descreve o `sakura-painel` separado: corrigir quando o privado
+  estiver na sessão.
+
+#### Próximos passos, na ordem dela
+1. **Trocar o endereço no programa** (`package.json` → `build.publish`, e o endereço reserva em
+   `scripts/liberar-versao.mjs`) → versão no canal de teste → ela testa no PC da casa dela →
+   liberar pro Balcão. Se algum dos dois não atualizar sozinho, reinstalar à mão.
+   **FEITO (29/09)**: a **`v0.9.47`** (só a troca de endereço) foi publicada, o PC da casa dela
+   **atualizou sozinho** (então o redirecionamento do endereço antigo funciona pro canal de teste
+   também) e ela foi **liberada pra todas as lojas** a pedido dela. **Falta só confirmar** que o
+   Balcão chegou na `0.9.47` na próxima vez que o programa for aberto na loja; se não chegar,
+   reinstalar à mão pelo link `releases/latest/download/SakuraSystem-Setup.exe` do endereço novo.
+2. **Travas**: cofre (environment) `backup` só pra `main`; cofre `lojas` só pra `main` + aprovação
+   dela, pros workflows "Liberar versão" e "Atualizar bancos"; `main` só por PR com aprovação (ela
+   isenta); só ela cria tag `v*`. **Risco que fica**: quem tem escrita consegue editar uma release
+   publicada na mão. Isso fica protegido só pela regra na memória.
+   **Os dois cofres: FEITOS (30/09)**, ver "As senhas" abaixo. **Regra 1, `main protegida`: FEITA
+   (30/09)**: ruleset na branch padrão, PR obrigatório com 1 aprovação (cai com commit novo, e a do
+   último push tem que ser de outra pessoa), sem apagar nem force push; **Repository admin isento
+   (Always allow)**. **Regra 2**: o Release passou pelo cofre `lojas` (aprovação dela) e **perdeu o
+   gatilho de push de tag**, só "Run workflow" na `main` (PR #342); e o ruleset de tag **`versões`**
+   foi criado (`v*`: bloqueia mudar, apagar e force push, não criar; Repository admin isento).
+   **PASSO 2 COMPLETO (30/09).** O merge do #342, sem aprovação, confirmou a isenção dela.
+   **O risco que fica é maior do que o anotado acima** (achado em 30/09): quem tem escrita no
+   repositório consegue, com um workflow modificado **na própria branch**, usar o token automático
+   do Actions (`contents: write`) pra **publicar, liberar ou trocar arquivo** de uma versão. As
+   travas dos workflows oficiais não alcançam isso; os **secrets dos cofres, sim** (só `main`),
+   então banco e backup ficam protegidos de verdade. Por isso "só ela cria tag `v*`" não dá pra ser
+   uma regra de tag que bloqueia criação: quem cria a tag é o próprio Release, com esse token, e o
+   GitHub não deixa isentá-lo. **Ela aprovou (30/09)** a regra de tag só pra mudar e apagar `v*`, e
+   o Release pelo cofre `lojas`. **Decidido por
+   ela (30/09)**: aceitar o risco por enquanto; a trava de verdade (as versões num **repositório
+   separado, onde colaborador não escreve**, o mesmo "repositório só de versões" de fechar o código)
+   fica **pra depois**. Cuidado barato sugerido: o Balcão no canal normal.
+3. **Memória**: o trecho "quando quem está trabalhando não é a Sofia" (abre PR e **não mescla**,
+   não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
+   **Parte 1 FEITA (30/09)**: é a seção 0, no topo deste arquivo, revisada por ela. Escopo de quem
+   não é ela, por enquanto: **só o painel** ("depois todos vão mexer no sistema").
+   **Parte 2 FEITA (30/09)**: `docs/painel.md`. Decidido por ela nesta parte: **Cloudflare** (página
+   + login, plano grátis; não Supabase), **login pelo GitHub já na 1ª versão** (GitHub App da
+   organização, só membros da `sakura-corp`), e nas tarefas **a pessoa pega uma livre, uma por
+   vez**. Depois, também decidido: o Claude deles **guia passo a passo, com calma**, em tudo que não
+   for programar (virou regra da seção 0); a pessoa só diz *"quero fazer a tarefa #N"* e o Claude
+   explica antes de começar; a próxima tarefa só começa depois da anterior **aprovada** ("Depende
+   de"); aviso no fim de cada tarefa **pelo GitHub e pelo WhatsApp** (mensagem que o Claude
+   escreve); e o "Fim de uma leva". Tudo no `docs/painel.md`.
+   **Parte 3 FEITA (30/09, à tarde)**: com o "ok" dela, a etiqueta `leva-0` e as **6 issues
+   #350 a #355** foram criadas, bem guiadas, com a visão dela (autogestão, design parecido com o
+   do Claude, contador, **tempo real** com webhook + Durable Object da Cloudflare, financeiro/DRE
+   depois e fora do GitHub). O caminho da leva e "O que a Sofia faz" estão no `docs/painel.md`.
+   A **mensagem do primeiro dia** (o texto que quem entra cola como primeira mensagem no Claude
+   Code do PC, aprovado por ela) mora no `docs/painel.md`, seção "Primeiro dia". O Gustavo usa
+   **Windows** (ela disse: não precisa perguntar), e ela **não precisa** de mensagem de WhatsApp
+   pra mandar pra ele ("já tá tudo esclarecido"). O rascunho temporário foi apagado.
+4. **Convidar o Gustavo**: pra organização `sakura-corp` (membro, que é o que deixa entrar no
+   painel) e com escrita no `sakura-system-ace`. Falta o usuário dele no GitHub. Depois do
+   convite, ele começa pela mensagem do "Primeiro dia" do `docs/painel.md`.
+
+#### Deixar o `sakura-system-ace` privado: decidido que FICA PÚBLICO por enquanto (29/09)
+Ela pediu isso no meio do passo 1. Apresentei três caminhos (A: privado com o plano Team, uns
+US$ 4 por pessoa/mês; B: privado no gratuito, com o Gustavo trabalhando por fork; C: fechar mais
+pra frente) e **ela escolheu C: "sem custo a mais no momento"**. O repositório continua público; a
+hora de fechar é junto com o CNPJ ou antes do primeiro cliente, e a decisão volta pra ela. O que
+fechar vai exigir, pra não refazer a conta:
+- **Atualização**: o atualizador baixa o `latest.yml` sem login, então com o código privado as
+  versões precisam morar num **repositório público só de versões** na organização (só o instalador
+  e o `latest.yml`, sem código). O workflow Release passa a publicar lá com um token dela restrito
+  a esse repositório. A versão de transição sai **nos dois lugares**; só depois de o PC da casa e
+  o Balcão estarem nela o código vira privado (item 21 de `docs/licoes.md`: rever o mecanismo
+  **antes** de fechar, não depois).
+- **Minutos do Actions**: repositório público não paga. Privado no plano gratuito tem uma cota por
+  mês (eram 2.000 minutos; conferir na tela de cobrança). Medido em 29/09: cada rodada do CI gasta
+  **~12 minutos cobráveis** (5 tarefas), e foram **83 rodadas em 3 dias** (cada PR roda duas vezes,
+  no `push` e no `pull_request`). Nesse ritmo passa da cota.
+- **As travas do passo 2**: pelo que eu sei dos planos (não deu pra abrir a documentação do GitHub
+  desta sessão, conferir), regra de branch/tag e cofre (environment) em repositório **privado**
+  pedem o plano **Team**, e "aprovação obrigatória" num cofre privado pede o Enterprise. No
+  gratuito, fechar o código tira as travas justamente quando o Gustavo entra.
+- **O que fechar NÃO resolve**: o que já vazou no histórico (CSC, token do Giap, senha do portal)
+  continua precisando ser trocado, e uma cópia (fork) feita enquanto era público continua pública.
+
+#### Em aberto
+- O usuário do Gustavo no GitHub.
+- **As senhas (secrets) do GitHub e os cofres: FEITO (29-30/09)**. Ela não tinha guardado os
+  valores e pegou todos de novo, **um por um, no Bitwarden** (pasta "Sakura System"): os 8
+  secrets + a `chave-do-backup.txt` inteira (Anotação, com "resolicitar senha principal"). Tokens
+  **novos**: R2 `backup-ssace-github` e GitHub fine-grained `backup-ssace-30-09-2026`; a senha do
+  banco foi **resetada**. Criados os cofres **`backup`** (8 secrets, só `main`, sem aprovação) e
+  **`lojas`** (só o `BACKUP_EMPRESAS`, só `main`, **aprovação dela obrigatória**); os workflows
+  passaram a usá-los (PR #339). **Testado**: backup verde lendo do cofre, e "Atualizar bancos" em
+  `ensaiar` parou em "Waiting", ela aprovou, e passou (Pneus Amigão na `0064`, em dia). Depois
+  ela apagou os secrets soltos do repositório, o token R2 antigo (`backup-ssace`, 18/09) e o token
+  antigo do GitHub, e o backup rodou verde de novo, **nos dois destinos**, sem eles (30/09 01:23
+  UTC). No caminho: três erros de montagem do `BACKUP_EMPRESAS` e uma correção no job (PR #337,
+  item 67 de `docs/licoes.md`). **A partir de agora**: todo "Liberar versão" e "Atualizar bancos"
+  para em "Waiting" até ela clicar em "Review deployments" → `lojas` → "Approve and deploy",
+  inclusive quando eu disparo por API. **Trocar o `BACKUP_EMPRESAS` é trocar nos dois cofres.**
+
+#### Continua valendo do marco de 28/09 (em `docs/historico.md`)
+Os testes que faltavam na loja, os três ajustes pendentes (modais com fundo vazando, status da nota
+na lista, texto velho em Notas Fiscais) e as datas de outubro (CNPJ, Focus Solo → Start, fatura da
+Focus em 10/10, alíquota de 10/2026 no portal em 1º/10).
+
 ### Onde parou em 29/09/2026: comparativo com o concorrente e o exemplo de DRE (histórico — o marco mais recente está logo acima)
 
 Sessão de documentação, **sem código de app**. O marco anterior (28/09: testes na loja, os três

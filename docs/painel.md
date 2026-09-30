@@ -40,6 +40,12 @@ Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente 
   - **feita** = fechada.
 - **Pegar tarefa**: a pessoa pega **uma livre** (ninguém distribui), **põe o nome dela antes de
   começar**, e segura **uma por vez**. Só pega outra depois que o PR da atual foi aberto.
+- **"Depende de"**: tarefa que diz "Depende de: tarefa X aprovada" só começa **depois que a X
+  entrou na `main`** (a Sofia aprovou). Tarefa que depende de algo que a Sofia faz (ligar a
+  Cloudflare, criar um app) só começa quando isso aparece em "Andamento", no fim deste arquivo.
+- **Avisar a Sofia**: no fim de toda tarefa, **pelo GitHub** (o pedido de revisão do PR já avisa)
+  **e pelo WhatsApp**: o Claude escreve uma mensagem curta e informal, e a pessoa só copia e manda.
+  Também quando não der pra começar uma tarefa por falta da parte dela.
 - **Estimativa**: cada tarefa diz no texto quantas horas deve levar, numa linha
   `Estimativa: N h`. O trabalho da equipe é medido em horas por semana, não em dinheiro.
 - **Fim da leva**: ela **congela**, todo mundo testa, o Claude da Sofia escreve o relatório, a
@@ -51,6 +57,8 @@ Tarefa, comentário e código nunca levam preço, dado de loja, nome de cliente 
 A pessoa abre o Claude dela e diz só o nome ou o número da tarefa (ex: *"quero fazer a tarefa
 #12"*). A partir daí, o Claude:
 1. **Confere quem é** (seção 0 do `PROJETO_STATUS.md`) e **lê a issue inteira** e este manual.
+   **Confere o "Depende de"**: se ainda não dá pra começar, explica o motivo, escreve a mensagem
+   de WhatsApp pra Sofia e para aqui.
 2. **Explica em português simples**, antes de mexer em qualquer coisa:
    - o que é a tarefa e pra que ela serve no painel;
    - o que o Claude vai fazer sozinho (o código);
@@ -62,6 +70,8 @@ A pessoa abre o Claude dela e diz só o nome ou o número da tarefa (ex: *"quero
    antes do próximo passo. Nada de despejar dez passos de uma vez.
 5. No fim, confere o "Pronto quando" da tarefa com a pessoa, item por item, e guia a abertura do
    PR (com `Closes #N`) e o pedido de revisão da Sofia. **Não mescla.**
+6. Escreve a mensagem de WhatsApp pra Sofia (ex: *"Oi Sofia! Terminei a tarefa 2 (visual do
+   painel). O PR é o #58, tá esperando sua revisão."*), e a pessoa manda.
 
 ## Design (parecido com o do Claude)
 
@@ -143,6 +153,16 @@ pessoa, relatório e aprovação); depois vem o financeiro.
   "Andamento" abaixo e na descrição do PR.
 - Um PR por tarefa, com `Closes #N`.
 
+## Fim de uma leva
+
+Quando a última tarefa da leva é aprovada:
+1. O Claude de quem fez a última escreve o aviso de WhatsApp pra Sofia: a leva terminou.
+2. A leva **congela**: ninguém começa tarefa nova.
+3. **Todo mundo testa** o que a leva entregou, com a lista de testes que o Claude da Sofia manda.
+   O que parecer estranho vira uma issue nova (com print), e a Sofia decide o que fazer.
+4. O Claude da Sofia escreve o **relatório da leva**, a Sofia aprova, e os dois planejam a
+   próxima. Até as tarefas dela aparecerem, não tem tarefa pra pegar.
+
 ## Como rodar no PC
 
 *Ainda não existe código.* O primeiro PR do painel escreve aqui os comandos, que devem ser algo
@@ -150,6 +170,9 @@ como `cd painel`, `npm install`, `npm run dev`, e também o que precisa estar co
 login funcionar no PC.
 
 ## Andamento
+
+*Aqui também o Claude da Sofia anota cada parte que é dela (ex: "Cloudflare ligada", "apps de
+login criados", "webhook ligado"), com a data. É onde quem programa confere se pode começar.*
 
 - **30/09/2026**: manual criado. Nenhuma linha de código do painel ainda. A leva 0 está sendo
   planejada pela Sofia com o Claude dela.

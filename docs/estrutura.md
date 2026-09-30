@@ -80,7 +80,10 @@ Pro resto, um `ls` resolve. O que cada tela faz está na seção 7.
     e terminam em `TODAS AS CHECAGENS PASSARAM`. **Nunca rodar no Supabase real** (gravam e apagam
     dado de teste). O mesmo vale pro `stub-supabase-local.sql`.
   - `limpar-dados-de-teste.sql` (apaga dado de negócio, preserva login e configuração, seção 5) e
-    dois de uso único que já foram usados (`excluir-os-teste-*.sql`).
+    um de uso único já usado (`excluir-os-teste-nfse-producao.sql`).
+  - **Nada de dado de cliente de verdade** em script, teste ou exemplo: o repositório é público.
+    Em teste, usar nomes, CPF e endereço inventados (ex: "Cliente Exemplo da Silva",
+    `123.456.789-09`).
 - **`testes-rls/`**: a matriz de RLS (`npm run test:rls`, `TR-07.3`, item 63). Monta um banco do
   zero, simula cinco papéis e confere cada tabela × comando × papel. **`expectativas.csv` é a parte
   que se revisa** (mudança de segurança aparece no diff do PR); `lacunas-de-proposito.csv` lista o

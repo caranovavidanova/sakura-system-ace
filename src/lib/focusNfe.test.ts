@@ -69,15 +69,15 @@ function peca(sobrescrever: Partial<Peca> = {}): Peca {
 function clientePessoaFisica(sobrescrever: Partial<Cliente> = {}): Cliente {
   return {
     id: "cliente-1",
-    nome: "Silvio Criscolin",
+    nome: "Cliente Exemplo da Silva",
     tipo_pessoa: "fisica",
-    cpf_cnpj: "043.915.416-29",
+    cpf_cnpj: "123.456.789-09",
     telefone: null,
     email: null,
-    cep: "14802-868",
-    rua: "Rua Emília Pedraza Baena",
-    numero: "114",
-    bairro: "Jardim Bouganville",
+    cep: "14800-000",
+    rua: "Rua Exemplo",
+    numero: "100",
+    bairro: "Centro",
     cidade: "Araraquara",
     uf: "SP",
     codigo_municipio: "3503208",
@@ -173,8 +173,8 @@ describe("montarCorpoNFCe", () => {
       configuracaoFiscal: configuracaoFiscal(),
     });
 
-    expect(corpo.cpf_destinatario).toBe("04391541629");
-    expect(corpo.nome_destinatario).toBe("Silvio Criscolin");
+    expect(corpo.cpf_destinatario).toBe("12345678909");
+    expect(corpo.nome_destinatario).toBe("Cliente Exemplo da Silva");
     expect(corpo.cnpj_destinatario).toBeUndefined();
     expect(corpo.indicador_inscricao_estadual_destinatario).toBeUndefined();
   });
@@ -185,7 +185,7 @@ describe("montarCorpoNFCe", () => {
       itens: [{ peca: peca(), quantidade: 1, precoUnitario: 250, desconto: 0 }],
       cliente: clientePessoaFisica({
         tipo_pessoa: "juridica",
-        nome: "Transportadora Bouganville Ltda",
+        nome: "Transportadora Exemplo Ltda",
         cpf_cnpj: "66.217.744/0001-70",
       }),
       pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
@@ -193,7 +193,7 @@ describe("montarCorpoNFCe", () => {
     });
 
     expect(corpo.cnpj_destinatario).toBe("66217744000170");
-    expect(corpo.nome_destinatario).toBe("Transportadora Bouganville Ltda");
+    expect(corpo.nome_destinatario).toBe("Transportadora Exemplo Ltda");
     // O suporte da Focus NFe (03/09/2026) foi explícito: 9 = não contribuinte,
     // e a inscrição estadual do destinatário não vai de jeito nenhum.
     expect(corpo.indicador_inscricao_estadual_destinatario).toBe("9");
@@ -242,7 +242,7 @@ describe("montarCorpoNFCe", () => {
           id: CLIENTE_CONSUMIDOR_ID,
           nome: "Consumidor",
           tipo_pessoa,
-          cpf_cnpj: tipo_pessoa === "fisica" ? "043.915.416-29" : "66.217.744/0001-70",
+          cpf_cnpj: tipo_pessoa === "fisica" ? "123.456.789-09" : "66.217.744/0001-70",
         }),
         pagamentos: [{ formaPagamento: "dinheiro", valor: 250 }],
         configuracaoFiscal: configuracaoFiscal(),
@@ -303,8 +303,8 @@ describe("montarCorpoNFSe", () => {
       inscricao_municipal: "12345",
       codigo_municipio: "3503208",
     });
-    expect(corpo.tomador.cpf).toBe("04391541629");
-    expect(corpo.tomador.razao_social).toBe("Silvio Criscolin");
+    expect(corpo.tomador.cpf).toBe("12345678909");
+    expect(corpo.tomador.razao_social).toBe("Cliente Exemplo da Silva");
     expect(corpo.servico).toMatchObject({
       aliquota: 5,
       discriminacao: "Alinhamento e balanceamento",

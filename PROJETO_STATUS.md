@@ -218,10 +218,10 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
     apresentação comercial e o que as lojas novas precisam, em `docs/decisoes.md`). `docs/modulos.md` com a
     tabela de versões (datas reais); `docs/estrutura.md` como um mapa; `docs/operacao.md` com o
     único jeito de publicar.
-  - **Nomes de clientes de verdade saíram dos documentos** (o repositório é público). Ainda
-    aparecem num teste (`src/lib/focusNfe.test.ts`) e no nome de um script de uso único
-    (`supabase/scripts/excluir-os-teste-eduarda.sql`): trocar é uma mudança pequena de código,
-    quando ela quiser. No histórico do Git eles continuam.
+  - **Dados de clientes de verdade saíram do repositório** (é público), a pedido dela: os nomes
+    dos documentos; o nome, o **CPF e o endereço** de um cliente real que estavam num teste da
+    nota fiscal (`src/lib/focusNfe.test.ts`, trocados por dados inventados); e um script de uso
+    único com o nome de uma cliente, apagado. No histórico do Git eles continuam.
 
 #### Por onde a próxima sessão começa
 1. **Convite do Gustavo**: ela traz o usuário dele no GitHub. Guiar passo a passo: convidar pra
@@ -234,5 +234,3 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
    Cloudflare antes da #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
 4. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
    portal da prefeitura; o CNPJ no começo de outubro; a fatura da Focus em 10/10.
-5. **Nomes de clientes de verdade no código**: expliquei a ela e perguntei se pode trocar (ver
-   "O que foi feito", acima). Esperando a resposta.

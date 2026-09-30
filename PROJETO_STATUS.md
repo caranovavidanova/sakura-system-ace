@@ -232,8 +232,10 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
    "Pronto quando", explicar em português, e ela decide. Se ela aprovar, eu mesclo.
 3. **A parte dela no painel**, na hora de cada tarefa (`docs/painel.md`, "O que a Sofia faz"):
    Cloudflare antes da #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
-4. **Os três ajustes de 28/09 viraram tarefas** (#361 janelas, #362 situação da nota, #363 texto
-   de Notas Fiscais): ela disse "fazemos isso depois". Os **testes obrigatórios** na `main`
-   foram ligados por ela em 30/09.
+4. **Viraram tarefas no GitHub** (30/09), pra fazer depois: os três ajustes de 28/09 (#361
+   janelas, #362 situação da nota, #363 texto de Notas Fiscais) e **tudo o que falta do guia de
+   melhorias, mais o Electron** (etiqueta `guia`, #365 a #385; tabela na seção 8). Cada uma diz o
+   que precisa dela e, se quem estiver fazendo não for ela, pra parar e mandar mensagem. Os
+   **testes obrigatórios** na `main` foram ligados por ela em 30/09.
 5. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
    portal da prefeitura; o CNPJ no começo de outubro; a fatura da Focus em 10/10.

@@ -30,12 +30,42 @@ Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs
 CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
 (os três últimos estão no repositório privado).
 
+**O que falta do guia de melhorias virou tarefa no GitHub** (30/09, etiqueta `guia`, #365 a #385),
+cada uma com o que fazer, onde, "Pronto quando", o que não fazer e, quando depende dela, a
+instrução de **parar e mandar mensagem pra ela** se quem estiver fazendo não for ela. Por enquanto
+só ela (com o Claude dela) mexe nessas: a equipe fica no painel até ela avisar.
+
+| Tarefa | O que é |
+|---|---|
+| #365, #366, #367 | Permissão no banco: clientes e veículos; peças e estoque; OS (`TR-04.1`, lotes 4 a 6) |
+| #368 | Apagar a cópia antiga do token da Focus (`TR-04.2` parte 2) |
+| #369 | Uma nota por OS garantida pelo banco (`TR-05.2`) |
+| #370 | Erro de tela com as últimas ações (resto do `TR-08.3`) |
+| #371 | Menu agrupado (`TR-03.1`, conversa antes) |
+| #372 | Busca geral com Ctrl+K (`TR-03.3`) |
+| #373 | Listas longas com páginas e ordenação (`TR-03.5`) |
+| #374 | Aviso quando a internet cai (`TR-10.1`) |
+| #375 | Saber que uma loja parou (`TR-08.2`) |
+| #376 | Checklist fiscal da loja nova (`TR-11.6`) |
+| #377 | Levantamento da assinatura do instalador (`TR-09.3`) |
+| #378 | Exportar os dados de uma loja (`TR-12.4`) |
+| #379 | Orçamento (`FN-01`) |
+| #380 | Checklist de entrada com fotos (`FN-02`) |
+| #381 | Lembrete de revisão (`FN-06`) |
+| #382 | Sugestão de compra (`FN-07`) |
+| #383 | Relatório mensal pra contabilidade (`FN-13`) |
+| #384 | Modo demonstração (`FN-14`) |
+| #385 | Atualizar o Electron (item 14) |
+
+**Quando uma tarefa `guia` for feita**: o PR fecha a issue (`Closes #N`) e a linha sai desta tabela.
+
 **Decisões dela, sem prazo:**
 - o valor da mensalidade das lojas novas (privado);
 - levar o `ANTES-DA-PRIMEIRA-VENDA.md` a um advogado ou à contabilidade (item 10);
-- atualizar o Electron (item 14);
-- os próximos lotes de permissão no banco: clientes, peças/estoque e OS (item 1 da seção 6);
-- a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; seção 9);
+- atualizar o Electron (item 14, tarefa #385);
+- os próximos lotes de permissão no banco: clientes, peças/estoque e OS (item 1 da seção 6;
+  tarefas #365 a #367, cada uma diz o que ela precisa decidir);
+- a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; tarefa #368);
 - **cancelar uma nota deveria estornar estoque e Caixa?** (pergunta de desenho nunca respondida,
   desde 03/09);
 - os três ajustes que ela pediu em 28/09, **já planejados como tarefas no GitHub** (30/09): as
@@ -297,7 +327,7 @@ tempo real. Depois, a **leva 1** (a linha de produção completa: pegar tarefa, 
 por pessoa, relatório e aprovação) e o **financeiro com DRE**, num banco privado (nunca no GitHub).
 O exemplo de DRE está no repositório privado (`dre/`).
 
-### 14. Atualizar o Electron (decisão dela, em aberto desde 17/09/2026)
+### 14. Atualizar o Electron (decisão dela, em aberto desde 17/09/2026; tarefa #385)
 
 O programa está na **linha 33 do Electron**, que **não recebe mais correção de segurança** (em
 setembro, as linhas com suporte eram a 42, 43 e 44). Ou seja, o Chromium que desenha as telas está

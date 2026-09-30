@@ -450,24 +450,15 @@ workflow_dispatch trigger" (porque o arquivo naquele commit antigo não tem esse
 tem problema nenhum disparar sempre por `main` — o `package.json` de lá já está com a versão certa
 assim que o passo 1 acima for mesclado.
 
-**Se por algum motivo o `workflow_dispatch` não estiver disponível** (ex: outro repositório que
-ainda não tem esse gatilho no workflow) ou se for a própria usuária publicando (ela não tem esse
-bloqueio de `git push` de tag, roda numa máquina normal): os dois jeitos antigos continuam
-funcionando —
-```powershell
-git checkout main
-git pull origin main
-git tag v0.1.4
-git push origin v0.1.4
-```
-(tag tem que bater exatamente com o `"version"` do `package.json`) — ou publicar direto pela tela
-do GitHub (`releases/new`, digitar a tag nova, "Publish release"). **Nesse segundo caso**, sempre
-checar antes se o nome da tag já foi usado alguma vez no projeto (mesmo que a release tenha sido
-apagada depois) — reusar um nome de tag é arriscado (rascunho antigo pode reaparecer, ou o GitHub
-simplesmente não disparar o build de novo pra esse nome, ver os dois incidentes documentados na
-seção 7); **não existe hoje um jeito confiável de checar isso por API** (`get_release_by_tag` e
-`list_releases` não enxergam rascunho não publicado) — na dúvida, pular pro próximo número de
-versão em vez de tentar reusar um nome antigo.
+**Desde 30/09/2026, esse é o ÚNICO jeito de publicar.** O Release não dispara mais por `git push`
+de tag nem pela tela `releases/new`: a tag nasce dentro do workflow. E a rodada **para em
+"Waiting" até ela aprovar** (cofre `lojas`: "Review deployments" → `lojas` → "Approve and
+deploy"), mesmo disparada por API — avisar a ela. Motivo: qualquer pessoa com escrita no
+repositório pode enviar uma tag, e publicar põe a versão nos computadores do canal de teste,
+que podem ser de loja. A regra de tag do repositório (Settings → Rules, "versões") bloqueia
+**mudar e apagar** `v*`, mas não **criar**, porque quem cria é o próprio workflow, com o token
+automático, e o GitHub não deixa isentá-lo. (Os jeitos antigos, `git tag` + `git push` e
+`releases/new`, ficaram no histórico do Git deste arquivo; não voltar a eles sem rever isso.)
 
 O instalador aparece em `github.com/sakura-corp/sakura-system-ace/releases`. O
 Windows/SmartScreen deve avisar "editor desconhecido" (normal sem certificado pago — "Mais

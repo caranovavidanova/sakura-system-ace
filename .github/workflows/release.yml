@@ -1,7 +1,7 @@
 name: Release
 
-# Dispara quando uma tag de versão (ex: v0.1.0) é enviada ao GitHub. Builda o
-# instalador Windows e publica como GitHub Release.
+# Builda o instalador Windows e publica como GitHub Release. Roda só na mão
+# ("Run workflow", sempre na `main`), e só começa depois da aprovação dela.
 #
 # A release nasce como PRÉ-LANÇAMENTO, ou seja, no canal de TESTE (item
 # TR-09.1): só os computadores marcados como teste a recebem sozinhos — o
@@ -9,14 +9,13 @@ name: Release
 # o workflow "Liberar versão para todas as lojas" (liberar-versao.yml).
 # Até o TR-09.1, publicar aqui atualizava todas as lojas no mesmo minuto.
 #
-# workflow_dispatch é uma saída manual pra quando o gatilho automático da tag
-# não disparar (já aconteceu do GitHub Actions atrasar/travar a fila pro push
-# de uma tag) — nesse caso, dá pra rodar manualmente escolhendo a tag como
-# "Use workflow from" na aba Actions (ou via API), sem precisar recriar a tag.
+# SEM gatilho de `push` de tag, desde 30/09/2026. Antes, enviar uma tag `v*`
+# publicava sozinho — e qualquer pessoa com escrita no repositório pode
+# enviar tag. Agora a tag nasce aqui dentro, pelo `gh release create`, com o
+# número do package.json da `main`. É por isso também que a regra de tag do
+# repositório bloqueia MUDAR e APAGAR `v*`, mas não CRIAR: quem cria é este
+# workflow, com o token automático, e o GitHub não deixa isentá-lo da regra.
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch: {}
 
 permissions:
@@ -24,6 +23,10 @@ permissions:
 
 jobs:
   build-and-release:
+    # Cofre (environment) "lojas": só a `main` abre, e cada rodada espera a
+    # aprovação dela. Publicar põe a versão nos computadores do canal de
+    # teste — que podem ser de loja —, então quem aperta não decide sozinho.
+    environment: lojas
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4

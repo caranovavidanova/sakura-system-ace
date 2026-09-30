@@ -329,6 +329,15 @@ describe("workflows", () => {
     expect(ler("release.yml")).toMatch(/gh release create [^\n]*--prerelease/);
   });
 
+  // Com gatilho de tag, quem tem escrita publicaria só enviando uma `v*`,
+  // sem passar pela aprovação dela (a tag roda fora da `main`, e o cofre
+  // recusaria — mas o certo é nem disparar).
+  it("o Release só roda na mão, nunca por push de tag", () => {
+    const release = ler("release.yml");
+    expect(release).toMatch(/workflow_dispatch:/);
+    expect(release).not.toMatch(/^\s*(push|schedule|pull_request):/m);
+  });
+
   it("o Liberar só roda na mão, com a versão digitada, e usa este script", () => {
     const liberar = ler("liberar-versao.yml");
     expect(liberar).toMatch(/workflow_dispatch:/);
@@ -338,7 +347,8 @@ describe("workflows", () => {
 
   // O cofre é o que segura os secrets e a aprovação dela. Um workflow sem a
   // linha `environment:` não quebra nada à vista: só passa a rodar sem trava.
-  it("Liberar e Atualizar bancos rodam no cofre lojas, e o backup no cofre backup", () => {
+  it("Release, Liberar e Atualizar bancos rodam no cofre lojas, e o backup no cofre backup", () => {
+    expect(ler("release.yml")).toMatch(/^\s+environment: lojas$/m);
     expect(ler("liberar-versao.yml")).toMatch(/^\s+environment: lojas$/m);
     expect(ler("atualizar-bancos.yml")).toMatch(/^\s+environment: lojas$/m);
     expect(ler("backup-banco.yml")).toMatch(/^\s+environment: backup$/m);

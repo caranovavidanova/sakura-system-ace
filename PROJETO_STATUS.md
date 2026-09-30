@@ -11,6 +11,31 @@
 >   Uma loja cliente não pode ler a margem dela aqui. Não é carregado sozinho: quando o assunto for
 >   empresa, sócios ou preço, adicionar esse repositório à sessão (`add_repo`) e ler lá.
 
+## 0. Quem está trabalhando? (ler antes de tudo)
+
+A dona do projeto é a **Sofia** (conta do GitHub `caranovavidanova`), e o resto deste arquivo foi
+escrito pensando nela. **No começo de toda sessão, conferir quem é**: a conta do GitHub da sessão
+(`mcp__github__get_me`, ou `gh api user --jq .login`) ou o e-mail do Git (`git config user.email`).
+Se não der pra saber, perguntar.
+
+**Quando NÃO é a Sofia** (hoje, o Gustavo, que constrói o painel da equipe; depois, outras pessoas
+da equipe), valem estas regras, e elas passam na frente de qualquer outra deste arquivo:
+- **Escopo, por enquanto: só o painel** (pasta `painel/` e `docs/painel.md`). Depois todos vão
+  mexer no sistema; quando isso mudar, é a Sofia quem avisa, e esta linha muda.
+- **Trabalha em branch e abre PR, mas nunca mescla.** Pede a revisão da Sofia no PR e para ali. A
+  `main` nem aceita sem a aprovação dela (ruleset `main protegida`).
+- **Não publica, não libera e não mexe em banco.** Não dispara o Release, o "Liberar versão" nem o
+  "Atualizar o banco". Não roda SQL nem migration no Supabase de loja nenhuma. Migration nova pode
+  ser escrita num PR, mas quem aplica é ela.
+- **Não mexe em versão publicada, tag, senha (secret), cofre (environment), regra do repositório
+  (ruleset) nem configuração**, nem por um workflow novo ou modificado.
+- **Não substitui o "Onde parou"**, que é da Sofia. O andamento do painel vai no `docs/painel.md`
+  e na descrição do PR.
+- **Não adiciona à sessão o repositório privado `caranovavidanova/sakura-corp`** (preço, sócios,
+  contratos).
+- O jeito de explicar da seção 1 é o da Sofia. Com outra pessoa, perguntar como ela prefere.
+- Se a pessoa pedir alguma dessas coisas, explicar que é regra da Sofia e sugerir falar com ela.
+
 ## Como esta memória funciona (reorganizada em 27/09/2026)
 
 Este arquivo é **o índice**: carrega sozinho em toda sessão (`CLAUDE.md` importa ele), então precisa
@@ -114,7 +139,7 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 ## 3. Regras que valem em toda sessão (o resto está em `docs/decisoes.md` e `docs/estrutura.md`)
 
 - **Git**: branch de trabalho → PR → **mesclar direto na `main`**, sem esperar aprovação (até existir
-  uma v1.0). Depois, dizer a ela em português simples o que mudou e o que ela precisa fazer.
+  uma v1.0). **Só quando quem trabalha é a Sofia** (seção 0); os outros abrem o PR e param. Depois, dizer a ela em português simples o que mudou e o que ela precisa fazer.
 - **Migration nova**: idempotente (dropar o nome **final** do objeto antes de criar); termina com
   `insert into schema_versao (versao) values (N) on conflict do nothing;`; sobe
   `VERSAO_ESQUEMA_ESPERADA`; rodar `npm run gerar-instalacao`; ganha um
@@ -203,6 +228,9 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    fica **pra depois**. Cuidado barato sugerido: o Balcão no canal normal.
 3. **Memória**: o trecho "quando quem está trabalhando não é a Sofia" (abre PR e **não mescla**,
    não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
+   **Parte 1 FEITA (30/09)**: é a seção 0, no topo deste arquivo, revisada por ela. Escopo de quem
+   não é ela, por enquanto: **só o painel** ("depois todos vão mexer no sistema"). Faltam o
+   `docs/painel.md` e as issues da leva 0.
 4. **Convidar o Gustavo.**
 
 #### Deixar o `sakura-system-ace` privado: decidido que FICA PÚBLICO por enquanto (29/09)

@@ -58,7 +58,7 @@ sessão. O resto mora em `docs/` e **só é aberto quando o assunto pede**:
 | `docs/pendencias-e-futuro.md` | **"O que depende dela", numa lista só**; o que não existe; parte fiscal (playbook por loja nova); linha do tempo (antiga seção 8) | ao planejar próximo passo, e quando ela perguntar "o que falta?" |
 | `docs/operacao.md` | rodar, instalar empresa nova, **publicar/liberar versão**, backup, atualizar bancos, voltar versão (antigas seções 9 e 11) | ao publicar, rodar migration ou instalar loja |
 | `docs/historico.md` | estado do Git e os marcos "onde parou" antigos, do mais novo pro mais velho (antiga seção 10) | quase nunca |
-| `docs/comparativo-anexar.md` | o que o concorrente Anexar anuncia × o que temos, e o que falta (29/09/2026) | ao planejar funcionalidade nova ou falar de venda |
+| `docs/comparativo-anexar.md` | o que o concorrente Anexar anuncia × o que temos, e a tarefa de cada coisa que falta (#386 a #412) | ao planejar funcionalidade nova ou falar de venda |
 | `docs/painel.md` | o painel da equipe: o que é, como a equipe trabalha (levas, tarefas), decisões técnicas, 1ª versão, andamento | ao mexer no painel ou planejar leva |
 | `MELHORIAS.md` | o guia de melhorias (TR-/TL-/FN-), 227 KB | só quando ela citar um item |
 
@@ -196,32 +196,31 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 
 
-### 30/09/2026, à noite: faxina da memória (privado e público)
+### 30/09/2026, à noite: faxina da memória e tudo o que falta virou tarefa
 
 Sessão de arrumação, **sem código de app**. **Estado do código**: não mudou. `main` na
 **`v0.9.47`** (publicada e liberada), banco na **`0064`**. O marco anterior (30/09: organização,
 travas, senhas e o painel) está no topo de `docs/historico.md`.
 
 #### O que foi feito
-- **Repositório privado** (caranovavidanova/sakura-corp#7, mesclado): `EQUIPE.md` em dia com o
-  painel dentro do `sakura-system-ace`, o Gustavo e quem aprova PR; `EMPRESA.md` sem repetição, com
-  o acordo provisório fora dos pré-requisitos (decisão de 29/09); `PRECOS-E-CUSTOS.md` começando
-  pelo que vale hoje, sem as contas substituídas.
-- **Memória pública** (PR #359): todos os arquivos de `docs/`, o `MELHORIAS.md` e o `README.md`
-  revisados. O principal:
-  - **"O que depende dela", numa lista só**, na seção 8. Juntou o que estava espalhado nos marcos
-    antigos, inclusive coisas esquecidas: **atualizar o Electron** (a linha 33 não recebe mais
-    correção de segurança, item 14), **marcar o CI como obrigatório**, **cancelar nota deveria
-    estornar estoque e Caixa?** e a troca da chave `sb_secret`.
-  - `docs/historico.md` **cortado a pedido dela**: ficaram só os marcos de 28 a 30/09 (de 161 KB
-    pra 23 KB). O que ainda valia nos antigos foi pros arquivos certos antes (as regras da
-    apresentação comercial e o que as lojas novas precisam, em `docs/decisoes.md`). `docs/modulos.md` com a
-    tabela de versões (datas reais); `docs/estrutura.md` como um mapa; `docs/operacao.md` com o
-    único jeito de publicar.
-  - **Dados de clientes de verdade saíram do repositório** (é público), a pedido dela: os nomes
-    dos documentos; o nome, o **CPF e o endereço** de um cliente real que estavam num teste da
-    nota fiscal (`src/lib/focusNfe.test.ts`, trocados por dados inventados); e um script de uso
-    único com o nome de uma cliente, apagado. No histórico do Git eles continuam.
+- **Memória em dia nos dois repositórios**. No privado (caranovavidanova/sakura-corp#7):
+  `EQUIPE.md`, `EMPRESA.md` e `PRECOS-E-CUSTOS.md` sem repetição e começando pelo que vale hoje.
+  No público (PR #359 e #360): todos os `docs/`, o `MELHORIAS.md` e o `README.md` revisados;
+  **"O que depende dela" numa lista só** (seção 8), com o que estava esquecido (atualizar o
+  Electron, estornar ao cancelar nota, a chave `sb_secret`); `docs/historico.md` cortado pros
+  marcos de 28 a 30/09, a pedido dela.
+- **Dados de clientes de verdade saíram do repositório** (nome, CPF e endereço num teste da nota
+  fiscal, e um script de uso único). No histórico do Git eles continuam.
+- **Testes obrigatórios na `main`**: ela ligou os 5 testes do CI no ruleset `main protegida`.
+- **Tudo o que falta virou tarefa no GitHub**, cada uma com o que fazer, onde, "Pronto quando", o
+  que não fazer e, quando depende dela, a instrução de **parar e mandar mensagem pra ela** se quem
+  estiver fazendo não for ela:
+  - #361 a #363: os três ajustes de 28/09 (janelas, situação da nota, texto de Notas Fiscais);
+  - #365 a #385 (etiqueta `guia`): o que falta do guia de melhorias, mais o Electron;
+  - #386 a #412 (etiqueta `guia`): o que o concorrente tem e nós não, inclusive o **DRE em três
+    partes, nesta ordem** (#386, #387, #388). O orçamento rápido entrou na #379 e a assinatura na
+    #380. A tabela com todas está na seção 8; o número de cada uma também está em
+    `docs/comparativo-anexar.md`.
 
 #### Por onde a próxima sessão começa
 1. **Convite do Gustavo**: ela traz o usuário dele no GitHub. Guiar passo a passo: convidar pra
@@ -232,10 +231,9 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
    "Pronto quando", explicar em português, e ela decide. Se ela aprovar, eu mesclo.
 3. **A parte dela no painel**, na hora de cada tarefa (`docs/painel.md`, "O que a Sofia faz"):
    Cloudflare antes da #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
-4. **Viraram tarefas no GitHub** (30/09), pra fazer depois: os três ajustes de 28/09 (#361
-   janelas, #362 situação da nota, #363 texto de Notas Fiscais) e **tudo o que falta do guia de
-   melhorias, mais o Electron** (etiqueta `guia`, #365 a #385; tabela na seção 8). Cada uma diz o
-   que precisa dela e, se quem estiver fazendo não for ela, pra parar e mandar mensagem. Os
-   **testes obrigatórios** na `main` foram ligados por ela em 30/09.
+4. **Quando ela disser "faz a tarefa N"**: ler a issue inteira, fazer as perguntas do "Precisa da
+   Sofia?" antes de começar, e o PR fecha a issue (`Closes #N`); a linha sai da tabela da seção 8.
+   Sugestão de ordem, se ela perguntar: os ajustes rápidos (#361 a #363) e depois o
+   `docs/comparativo-anexar.md`, "Sugestão de ordem".
 5. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
    portal da prefeitura; o CNPJ no começo de outubro; a fatura da Focus em 10/10.

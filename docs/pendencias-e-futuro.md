@@ -30,8 +30,8 @@ Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs
 CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
 (os três últimos estão no repositório privado).
 
-**O que falta do guia de melhorias virou tarefa no GitHub** (30/09, etiqueta `guia`, #365 a #385),
-cada uma com o que fazer, onde, "Pronto quando", o que não fazer e, quando depende dela, a
+**O que falta do guia de melhorias e o que o concorrente tem e nós não** (`docs/comparativo-anexar.md`)
+**viraram tarefa no GitHub** (30/09, etiqueta `guia`, #365 a #385 e #386 a #412), cada uma com o que fazer, onde, "Pronto quando", o que não fazer e, quando depende dela, a
 instrução de **parar e mandar mensagem pra ela** se quem estiver fazendo não for ela. Por enquanto
 só ela (com o Claude dela) mexe nessas: a equipe fica no painel até ela avisar.
 
@@ -56,6 +56,34 @@ só ela (com o Claude dela) mexe nessas: a equipe fica no painel até ela avisar
 | #383 | Relatório mensal pra contabilidade (`FN-13`) |
 | #384 | Modo demonstração (`FN-14`) |
 | #385 | Atualizar o Electron (item 14) |
+| **Do comparativo** | |
+| #386 → #387 → #388 | **DRE**, nesta ordem: plano de contas em grupos; taxa da maquininha; a tela do DRE. O DRE de modelo, com números reais, fica só no repositório privado (`dre/`) |
+| #389 | Fluxo de caixa projetado |
+| #390 | Curva ABC |
+| #391 | Limite de crédito por cliente (aviso, nunca tranca) |
+| #392 | Vales de funcionário |
+| #393 | Tela do cliente: o que comprou, pagou e deve |
+| #394 | Mais de uma conta (gaveta, banco, maquininha) e transferência |
+| #395 | Centro de custo (melhor depois da #386) |
+| #396 | Renegociar conta a receber atrasada |
+| #397 | Resumo pro dono no WhatsApp |
+| #398 | Metas do mês (`FN-12`) |
+| #399 | Devolução e troca (`FN-08`) |
+| #400 | Agenda (`FN-05`; pro perfil de loja grande) |
+| #401 | Reserva de produto |
+| #402 | Etiqueta com código de barras, com a impressão térmica (`FN-10`) |
+| #403 | Manutenção dos equipamentos da loja |
+| #404 | Relatório por marca e modelo de veículo |
+| #405 | Relatórios com filtro livre |
+| #406 | Horas do mecânico em cada OS |
+| #407, #408 | Tabela de preço por tipo de cliente; convênio (fatura do mês). Quando aparecer loja com frota |
+| #409, #410 | NF-e modelo 55; manifestação do destinatário (MD-e). Fiscal: só com ela |
+| #411 | Boleto (levantamento) |
+| #412 | App de celular pro mecânico (levantamento; decisão estrutural) |
+
+O orçamento rápido no balcão entrou na #379, e a assinatura do cliente na #380. Ficaram **sem
+tarefa**, de propósito: MDF-e, SPED (é da contabilidade), SMS (o WhatsApp cobre), expedição e
+cheque (só se uma loja pedir).
 
 **Quando uma tarefa `guia` for feita**: o PR fecha a issue (`Closes #N`) e a linha sai desta tabela.
 
@@ -67,7 +95,7 @@ só ela (com o Claude dela) mexe nessas: a equipe fica no painel até ela avisar
   tarefas #365 a #367, cada uma diz o que ela precisa decidir);
 - a parte 2 do `TR-04.2`, apagar a cópia antiga do token (liberada desde 28/09; tarefa #368);
 - **cancelar uma nota deveria estornar estoque e Caixa?** (pergunta de desenho nunca respondida,
-  desde 03/09);
+  desde 03/09; conversa com a devolução, #399);
 - os três ajustes que ela pediu em 28/09, **já planejados como tarefas no GitHub** (30/09): as
   janelas com o fundo vazando (#361), a situação da nota na lista de Notas Fiscais (#362) e o
   texto velho no topo de Notas Fiscais (#363). Pra ela fazer comigo quando quiser;

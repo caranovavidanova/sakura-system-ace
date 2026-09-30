@@ -26,8 +26,8 @@ Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs
 - confirmar que o `DESKTOP-PKJ2A3B` (`0.9.44`, canal de teste) é o PC da casa dela e dar um
   apelido (senão, esquecer esse computador).
 
-**Com data**: **1º/10** a alíquota de 10/2026 no portal da prefeitura; **começo de outubro** o
-CNPJ; **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
+**Com data**: **1º/10** a alíquota de 10/2026 no portal da prefeitura; o **CNPJ** (contratado em
+30/09, sai em 10 a 20 dias); **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
 (os três últimos estão no repositório privado).
 
 **O que falta do guia de melhorias e o que o concorrente tem e nós não** (`docs/comparativo-anexar.md`)

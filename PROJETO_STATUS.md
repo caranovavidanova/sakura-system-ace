@@ -235,4 +235,5 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
    Sugestão de ordem, se ela perguntar: os ajustes rápidos (#361 a #363) e depois o
    `docs/comparativo-anexar.md`, "Sugestão de ordem".
 5. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
-   portal da prefeitura; o CNPJ no começo de outubro; a fatura da Focus em 10/10.
+   portal da prefeitura; o CNPJ (contratado em 30/09, sai em 10 a 20 dias; detalhe no privado); a
+   fatura da Focus em 10/10.

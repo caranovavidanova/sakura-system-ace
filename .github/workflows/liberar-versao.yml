@@ -37,6 +37,10 @@ concurrency:
 
 jobs:
   liberar:
+    # Cofre (environment) "lojas": só a `main` abre, e cada rodada espera a
+    # aprovação dela antes de começar. Liberar decide o que chega em todas
+    # as lojas, então quem aperta não decide sozinho.
+    environment: lojas
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

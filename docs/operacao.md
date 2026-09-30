@@ -284,7 +284,16 @@ disso, não existe de onde voltar.
 primeira tabela de lá manda **não** usar backup na maioria dos casos — "apaguei uma OS sem querer"
 se resolve na tela de Auditoria, em minutos.
 
-#### Os 8 secrets (Settings → Secrets and variables → Actions)
+#### Os 8 secrets: no cofre `backup` (Settings → Environments → `backup`)
+
+**Desde 30/09/2026 eles moram em cofres (environments), não soltos no repositório.** O cofre
+`backup` só abre pra `main`, sem aprovação (o backup das 3h roda sozinho). O cofre `lojas` só
+abre pra `main` **e espera a aprovação dela**: é o do "Liberar versão" e do "Atualizar o banco",
+e guarda uma cópia do `BACKUP_EMPRESAS`. Motivo: com gente de fora escrevendo no repositório,
+um secret solto pode ser lido por um workflow rodado a partir da branch de qualquer um. **Trocar
+o `BACKUP_EMPRESAS` é trocar nos dois cofres.** Os valores de todos estão no Bitwarden dela,
+pasta "Sakura System".
+
 
 | Nome | O que é |
 |---|---|
@@ -309,7 +318,7 @@ se resolve na tela de Auditoria, em minutos.
 ]
 ```
 
-**Empresa nova = mais um bloco nessa lista.** Nada de mexer no workflow.
+**Empresa nova = mais um bloco nessa lista**, nos dois cofres (`backup` e `lojas`). Nada de mexer no workflow.
 
 Cinco armadilhas, todas já vividas (§6 item 67):
 
@@ -343,12 +352,15 @@ o único aviso que existe.
 
 Um botão no GitHub que roda, no banco de **cada empresa**, as migrations que ainda faltam — no
 lugar de colar cada arquivo no SQL Editor de cada projeto Supabase. Usa a mesma lista do backup
-(o secret `BACKUP_EMPRESAS`), então empresa que está no backup está aqui também.
+(o secret `BACKUP_EMPRESAS`, a cópia do cofre `lojas`), então empresa que está no backup está
+aqui também.
 
 **Pra rodar** (uns 2 minutos, pelo navegador):
 1. `github.com/sakura-corp/sakura-system-ace` → aba **Actions**.
 2. Na lista da esquerda: **"Atualizar o banco de todas as empresas"**.
 3. **"Run workflow"** → no campo "modo", deixe **`ensaiar`** → botão verde **"Run workflow"**.
+   A rodada fica parada, amarela, em **"Waiting"**: clique nela → **"Review deployments"** →
+   marque **`lojas`** → **"Approve and deploy"**. Toda rodada deste botão pede isso, até o ensaio.
 4. Espere a bolinha ficar verde e clique nela: aparece uma tabela com cada empresa, em que
    versão o banco está, o que falta e se passaria. **O ensaio não muda nada** — ele roda e desfaz.
 5. Estando tudo "✅ passaria": rode de novo, agora com o modo **`aplicar`**. No fim a tabela
@@ -363,7 +375,7 @@ lugar de colar cada arquivo no SQL Editor de cada projeto Supabase. Usa a mesma 
   novo mais tarde (de noite é o melhor horário).
 - **"MAIS NOVO que a última migration deste código"** → o botão foi rodado de uma branch que não
   é a `main`. Em "Use workflow from", escolha `main`.
-- **Empresa que não aparece na tabela** → falta o bloco dela no `BACKUP_EMPRESAS`.
+- **Empresa que não aparece na tabela** → falta o bloco dela no `BACKUP_EMPRESAS` do cofre `lojas`.
 
 **Se aparecer ⏸ "passaria, mas espera N computador(es)"** (desde a `0063`): alguma migration que
 falta só funciona com o programa numa versão mínima, e aquele computador, usado nos últimos 30
@@ -415,6 +427,8 @@ seguidas, sem ela tocar no terminal nem na tela do GitHub nenhuma vez):
    `mcp__github__actions_run_trigger` com `workflow_id: "liberar-versao.yml"`, `ref: "main"` e
    `inputs: { "versao": "vX.Y.Z" }`. **Não liberar sem ela pedir**: decidir que uma versão já
    rodou o bastante no teste é justamente a decisão que o canal existe pra devolver a ela.
+   Desde 30/09/2026 a rodada fica esperando **a aprovação dela no GitHub** (cofre `lojas`), mesmo
+   disparada por API: avisar que ela precisa clicar em "Review deployments" → "Approve and deploy".
 
 **Por que esse é o jeito preferido agora, e não `git tag` + `git push`**: numa sessão do Claude
 Code na nuvem (não é a máquina da usuária), `git push` de uma **tag** é bloqueado com erro 403 —
@@ -499,7 +513,8 @@ nada — é a mesma versão, o mesmo instalador; só muda quem pode receber.
 1. Abra `github.com/sakura-corp/sakura-system-ace` → aba **Actions**.
 2. Na lista da esquerda, clique em **"Liberar versão para todas as lojas"**.
 3. À direita, clique em **"Run workflow"**, escreva a versão (ex: `v0.9.40`) e clique no botão
-   verde **"Run workflow"**.
+   verde **"Run workflow"**. A rodada fica parada em **"Waiting"**: clique nela → **"Review
+   deployments"** → marque **`lojas`** → **"Approve and deploy"**.
 4. Espere a bolinha ficar verde (1 a 3 minutos). Clicando nela, aparece "✅ v0.9.40 liberada
    para todas as lojas". As lojas recebem na próxima vez que abrirem o programa.
 

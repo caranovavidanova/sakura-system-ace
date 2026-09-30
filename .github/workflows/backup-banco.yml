@@ -47,6 +47,12 @@ permissions:
 
 jobs:
   backup:
+    # Os 8 secrets moram no cofre (environment) "backup", que só a `main`
+    # abre. Sem isso, qualquer pessoa com escrita no repositório poderia
+    # rodar este workflow a partir de uma branch dela, com um passo a mais
+    # que mandasse a senha do banco pra fora. Sem aprovação de propósito:
+    # o backup das 3h roda sozinho, e uma aprovação o deixaria parado.
+    environment: backup
     # Versão FIXA do Ubuntu, não "latest": a instalação do pg_dump usa o
     # repositório do Postgres pelo codinome do Ubuntu (`lsb_release -cs`), e
     # um Ubuntu recém-lançado pode ainda não ter esse repositório — o backup

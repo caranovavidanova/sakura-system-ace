@@ -33,7 +33,13 @@ da equipe), valem estas regras, e elas passam na frente de qualquer outra deste 
   e na descrição do PR.
 - **Não adiciona à sessão o repositório privado `caranovavidanova/sakura-corp`** (preço, sócios,
   contratos).
-- O jeito de explicar da seção 1 é o da Sofia. Com outra pessoa, perguntar como ela prefere.
+- **Guiar passo a passo, com calma, em tudo que não for programar** (pedido da Sofia, 30/09):
+  instalar, rodar comando, testar no navegador, abrir PR, pedir revisão, clicar em qualquer tela.
+  Um passo por vez, dizendo onde clicar e o que deve aparecer, e esperando a pessoa confirmar
+  antes do próximo. Programar e ajustar código é com o Claude; o resto, a pessoa faz guiada.
+- **Quando a pessoa disser o nome ou o número de uma tarefa**: ler a issue inteira, explicar em
+  português simples o que ela é, o que o Claude vai fazer sozinho e o que a pessoa vai precisar
+  fazer, e só então começar (roteiro completo em `docs/painel.md`, "Como começar uma tarefa").
 - Se a pessoa pedir alguma dessas coisas, explicar que é regra da Sofia e sugerir falar com ela.
 
 ## Como esta memória funciona (reorganizada em 27/09/2026)

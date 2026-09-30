@@ -196,44 +196,31 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 
 
-### 30/09/2026, à noite: faxina da memória e tudo o que falta virou tarefa
+### 30/09/2026, fim da noite: Gustavo dentro, CNPJ encaminhado
 
-Sessão de arrumação, **sem código de app**. **Estado do código**: não mudou. `main` na
-**`v0.9.47`** (publicada e liberada), banco na **`0064`**. O marco anterior (30/09: organização,
-travas, senhas e o painel) está no topo de `docs/historico.md`.
+Sessão **sem código de app**. **Estado do código**: não mudou. `main` na **`v0.9.47`**
+(publicada e liberada), banco na **`0064`**. O marco anterior (faxina da memória e tudo o que
+falta virou tarefa, #361 a #412) está no topo de `docs/historico.md`.
 
 #### O que foi feito
-- **Memória em dia nos dois repositórios**. No privado (caranovavidanova/sakura-corp#7):
-  `EQUIPE.md`, `EMPRESA.md` e `PRECOS-E-CUSTOS.md` sem repetição e começando pelo que vale hoje.
-  No público (PR #359 e #360): todos os `docs/`, o `MELHORIAS.md` e o `README.md` revisados;
-  **"O que depende dela" numa lista só** (seção 8), com o que estava esquecido (atualizar o
-  Electron, estornar ao cancelar nota, a chave `sb_secret`); `docs/historico.md` cortado pros
-  marcos de 28 a 30/09, a pedido dela.
-- **Dados de clientes de verdade saíram do repositório** (nome, CPF e endereço num teste da nota
-  fiscal, e um script de uso único). No histórico do Git eles continuam.
-- **Testes obrigatórios na `main`**: ela ligou os 5 testes do CI no ruleset `main protegida`.
-- **Tudo o que falta virou tarefa no GitHub**, cada uma com o que fazer, onde, "Pronto quando", o
-  que não fazer e, quando depende dela, a instrução de **parar e mandar mensagem pra ela** se quem
-  estiver fazendo não for ela:
-  - #361 a #363: os três ajustes de 28/09 (janelas, situação da nota, texto de Notas Fiscais);
-  - #365 a #385 (etiqueta `guia`): o que falta do guia de melhorias, mais o Electron;
-  - #386 a #412 (etiqueta `guia`): o que o concorrente tem e nós não, inclusive o **DRE em três
-    partes, nesta ordem** (#386, #387, #388). O orçamento rápido entrou na #379 e a assinatura na
-    #380. A tabela com todas está na seção 8; o número de cada uma também está em
-    `docs/comparativo-anexar.md`.
+- **Gustavo (`kalendoscope`) entrou**: membro da `sakura-corp`, **Write** no repositório, convite
+  aceito, Claude Code no PC dele (pelo "Primeiro dia" do `docs/painel.md`). Já pegou a **#350**
+  (o nome dele está na tarefa); o PR ainda não tinha sido aberto.
+- **Empresa e financeiro** (tudo no repositório privado, caranovavidanova/sakura-corp#8 a #11): o
+  empréstimo do pai, a contratação da contabilidade e o cadastro da abertura do CNPJ, enviado em
+  30/09. Detalhe e pendências no `EMPRESA.md` de lá.
 
 #### Por onde a próxima sessão começa
-1. **Gustavo (`kalendoscope`) já está dentro** (30/09, à noite): membro da `sakura-corp`, **Write**
-   no `sakura-system-ace`, convite aceito, seguindo o "Primeiro dia" do `docs/painel.md`. Depois
-   ele começa pela #350.
-2. **Quando ele abrir um PR**, ela diz *"revisa o PR da tarefa N"*: conferir o CI, o código e o
-   "Pronto quando", explicar em português, e ela decide. Se ela aprovar, eu mesclo.
-3. **A parte dela no painel**, na hora de cada tarefa (`docs/painel.md`, "O que a Sofia faz"):
-   Cloudflare antes da #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
-4. **Quando ela disser "faz a tarefa N"**: ler a issue inteira, fazer as perguntas do "Precisa da
+1. **"Revisa o PR da tarefa 350"**: quando o Gustavo abrir o PR, conferir o CI, o código e o
+   "Pronto quando" da #350, explicar em português, e ela decide. Se ela aprovar, eu mesclo. A
+   parte dela no painel vem depois (`docs/painel.md`, "O que a Sofia faz"): Cloudflare antes da
+   #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
+2. **CNPJ**: ela está esperando a resposta da contabilidade por e-mail. Quando chegar o texto do
+   **objeto social**, conferir com ela **antes de ela assinar** (o resto está no privado).
+3. **Quando ela disser "faz a tarefa N"**: ler a issue inteira, fazer as perguntas do "Precisa da
    Sofia?" antes de começar, e o PR fecha a issue (`Closes #N`); a linha sai da tabela da seção 8.
    Sugestão de ordem, se ela perguntar: os ajustes rápidos (#361 a #363) e depois o
    `docs/comparativo-anexar.md`, "Sugestão de ordem".
-5. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
-   portal da prefeitura; o CNPJ (contratado em 30/09, sai em 10 a 20 dias; detalhe no privado); a
-   fatura da Focus em 10/10.
+4. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
+   portal da prefeitura; a fatura da Focus em 10/10; o que vem do CNPJ depois de 16/10 (no
+   privado).

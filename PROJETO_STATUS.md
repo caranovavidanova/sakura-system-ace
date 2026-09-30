@@ -245,13 +245,12 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    explica antes de começar; a próxima tarefa só começa depois da anterior **aprovada** ("Depende
    de"); aviso no fim de cada tarefa **pelo GitHub e pelo WhatsApp** (mensagem que o Claude
    escreve); e o "Fim de uma leva". Tudo no `docs/painel.md`.
-   **Parte 3 EM REVISÃO (30/09, ela parou pra continuar no dia seguinte, na mesma sessão)**: as 6
-   tarefas da leva 0 estão escritas em **`docs/leva-0-rascunho.md`** (arquivo temporário), bem
-   guiadas, com a visão dela (autogestão, design parecido com o do Claude, contador, **tempo real**
-   com webhook + Durable Object da Cloudflare, financeiro/DRE depois e fora do GitHub). **Falta o
-   "ok" dela** pra criar a etiqueta `leva-0` e as 6 issues; depois, apagar o rascunho. No mesmo
-   arquivo está a **mensagem do primeiro dia**, que ela **aprovou**; em aberto se ela vai morar
-   no `docs/painel.md` ("Primeiro dia").
+   **Parte 3 FEITA (30/09, à tarde)**: com o "ok" dela, a etiqueta `leva-0` e as **6 issues
+   #350 a #355** foram criadas, bem guiadas, com a visão dela (autogestão, design parecido com o
+   do Claude, contador, **tempo real** com webhook + Durable Object da Cloudflare, financeiro/DRE
+   depois e fora do GitHub). O caminho da leva e "O que a Sofia faz" estão no `docs/painel.md`.
+   **Em aberto**: onde mora a **mensagem do primeiro dia** (aprovada por ela); por enquanto está em
+   `docs/leva-0-rascunho.md`, que é temporário.
 4. **Convidar o Gustavo**: pra organização `sakura-corp` (membro, que é o que deixa entrar no
    painel) e com escrita no `sakura-system-ace`. Falta o usuário dele no GitHub. Na hora, a Sofia
    manda a mensagem de WhatsApp do rascunho, e ele começa pela mensagem do primeiro dia.

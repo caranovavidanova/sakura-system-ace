@@ -138,14 +138,45 @@ Anthropic ou do Claude**. O que se copia é o jeito: calmo, claro, muito espaço
    tarefas agrupadas por estado, com os dados de verdade das issues.
 4. **Tempo real**: o painel de todo mundo muda sozinho quando uma tarefa muda no GitHub.
 
-As 6 tarefas da leva 0, com o passo a passo de cada uma, ficam nas issues com a etiqueta `leva-0`.
+As 6 tarefas da leva 0, com o passo a passo de cada uma, são as issues **#350 a #355**, com a
+etiqueta `leva-0` (criadas em 30/09/2026). Nesta leva uma depende da outra, então **a próxima só
+começa depois que a anterior foi aprovada pela Sofia e entrou na `main`**.
+
+### O caminho da leva 0
+```
+tarefa 1 → PR → Sofia aprova
+tarefa 2 → PR → Sofia aprova          + Sofia liga a Cloudflare
+tarefa 3 → PR → Sofia aprova e confere o endereço no ar
+                                      + Sofia cria os apps de login
+tarefa 4 → PR → Sofia aprova
+tarefa 5 → PR → Sofia aprova          + Sofia liga o aviso automático (webhook)
+tarefa 6 → PR → Sofia aprova  →  fim da leva 0 (ver "Fim de uma leva")
+```
+
+### O que a Sofia faz (com o Claude dela guiando, na hora de cada tarefa)
+
+Cada coisa que ela faz, o Claude dela **anota em "Andamento" do `docs/painel.md`** (ex:
+"01/10: Cloudflare ligada"). É ali que o Claude de quem programa confere se pode começar.
+
+- **Antes da tarefa 1**: ~~criar a etiqueta `leva-0` e as issues~~ (feito em 30/09) e convidar o Gustavo.
+- **Antes da tarefa 3**: na Cloudflare, ligar o repositório ("Workers Builds"): pasta `painel`,
+  comando de build `npm ci && npm run build`, publicar com `npx wrangler deploy`, só da `main`,
+  **sem publicar branches de PR**.
+- **Antes da tarefa 4**: criar os dois GitHub Apps na `sakura-corp` e cadastrar
+  `GITHUB_APP_CLIENT_SECRET` e `CHAVE_DA_SESSAO` na Cloudflare. Passar o segredo do app **de
+  teste** pro Gustavo pelo **Bitwarden Send** (um link cifrado que se apaga sozinho), nunca por mensagem.
+- **Antes da tarefa 6**: no "Sakura Painel", ligar o webhook (endereço
+  `https://<painel>/api/webhook`, eventos Issues, Pull request e Label) e cadastrar
+  `GITHUB_WEBHOOK_SECRET` na Cloudflare.
+- **Depois do painel**: a conferência automática (CI) do painel, feita pelo Claude dela.
+
 A **leva 1** é a linha de produção completa (botão de pegar tarefa, fases da leva, horas por
 pessoa, relatório e aprovação); depois vem o financeiro.
 
 ## Regras pra quem trabalha no painel (resumo da seção 0)
 
-- Mexe **só no painel**: a pasta `painel/` e este arquivo. Se precisar mexer fora, avisa a
-  Sofia antes.
+- Mexe **só no painel**: a pasta `painel/` e este arquivo (mais as 3 linhas da raiz que a
+  tarefa #350 manda mudar). Se precisar mexer fora disso, avisa a Sofia antes.
 - Branch → PR → **pede a revisão da Sofia** e para. **Nunca mescla.**
 - Não publica, não libera, não mexe em banco, versão, tag, secret, cofre, ruleset nem
   configuração do repositório. Nem por um workflow novo.

@@ -62,6 +62,11 @@ permissions:
 
 jobs:
   atualizar:
+    # Cofre (environment) "lojas": só a `main` abre, e cada rodada espera a
+    # aprovação dela antes de começar. É o botão que mexe no banco de todas
+    # as empresas, então quem aperta não decide sozinho. O BACKUP_EMPRESAS
+    # que ele usa está guardado neste cofre.
+    environment: lojas
     # Versão FIXA do Ubuntu, não "latest": a instalação do psql logo abaixo usa
     # o repositório do Postgres pelo codinome do Ubuntu, e um Ubuntu
     # recém-lançado pode ainda não ter esse repositório. O GitHub troca o

@@ -335,4 +335,12 @@ describe("workflows", () => {
     expect(liberar).not.toMatch(/^\s*(push|schedule|pull_request):/m);
     expect(liberar).toMatch(/node scripts\/liberar-versao\.mjs/);
   });
+
+  // O cofre é o que segura os secrets e a aprovação dela. Um workflow sem a
+  // linha `environment:` não quebra nada à vista: só passa a rodar sem trava.
+  it("Liberar e Atualizar bancos rodam no cofre lojas, e o backup no cofre backup", () => {
+    expect(ler("liberar-versao.yml")).toMatch(/^\s+environment: lojas$/m);
+    expect(ler("atualizar-bancos.yml")).toMatch(/^\s+environment: lojas$/m);
+    expect(ler("backup-banco.yml")).toMatch(/^\s+environment: backup$/m);
+  });
 });

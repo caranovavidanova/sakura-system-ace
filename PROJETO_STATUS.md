@@ -133,6 +133,9 @@ envelhece e ninguém relê. Se este índice passar de ~30 KB, é hora de enxugar
 - **Tarefas pra equipe saem já planejadas** (30/09/2026): o papel da equipe é programar e
   ajustar, e o planejamento é dela comigo. Cada tarefa diz o que fazer, em quais arquivos, com o
   que, o "Pronto quando" e o que não fazer. Ela revisa o rascunho antes de virar issue.
+- **Mudança de aparência se decide por imagem, não por número** (12/09/2026): mostrar a mesma
+  tela renderizada em duas ou três versões e deixar ela escolher. Foi assim com a borda dos campos
+  e com ícone × palavra nas ações das listas.
 - **Faxina da memória** (30/09/2026): ela quer a memória enxuta e clara: **apagar o que não
   acrescenta** (história de "como foi feito", "nesta sessão", status que envelheceu) e
   **esclarecer** o que ficou ambíguo ou contraditório. O que é decisão ou lição fica; o texto antigo
@@ -210,7 +213,9 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
     antigos, inclusive coisas esquecidas: **atualizar o Electron** (a linha 33 não recebe mais
     correção de segurança, item 14), **marcar o CI como obrigatório**, **cancelar nota deveria
     estornar estoque e Caixa?** e a troca da chave `sb_secret`.
-  - `docs/historico.md` com os marcos todos do mais novo pro mais velho; `docs/modulos.md` com a
+  - `docs/historico.md` **cortado a pedido dela**: ficaram só os marcos de 28 a 30/09 (de 161 KB
+    pra 23 KB). O que ainda valia nos antigos foi pros arquivos certos antes (as regras da
+    apresentação comercial e o que as lojas novas precisam, em `docs/decisoes.md`). `docs/modulos.md` com a
     tabela de versões (datas reais); `docs/estrutura.md` como um mapa; `docs/operacao.md` com o
     único jeito de publicar.
   - **Nomes de clientes de verdade saíram dos documentos** (o repositório é público). Ainda
@@ -229,6 +234,5 @@ travas, senhas e o painel) está no topo de `docs/historico.md`.
    Cloudflare antes da #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
 4. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
    portal da prefeitura; o CNPJ no começo de outubro; a fatura da Focus em 10/10.
-5. **Perguntado a ela, sem resposta ainda**: cortar os marcos antigos de `docs/historico.md` (são
-   ~150 KB, quase nunca lidos; o que vale já foi pros outros arquivos, e o texto inteiro fica no
-   Git) ou manter como estão.
+5. **Nomes de clientes de verdade no código**: expliquei a ela e perguntei se pode trocar (ver
+   "O que foi feito", acima). Esperando a resposta.

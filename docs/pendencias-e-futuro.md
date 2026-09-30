@@ -249,7 +249,9 @@ está em **`ANTES-DA-PRIMEIRA-VENDA.md`**, na raiz: os seis pontos da cláusula 
 de operações de tratamento. Como toda a infraestrutura é da conta dela, na LGPD **a loja é a
 controladora** dos dados dos clientes e **ela é a operadora**. **Não escrever contrato por ela nem
 dar como aconselhamento jurídico.** O ponto mais fácil de esquecer: o que acontece quando o
-contrato acaba (cópia dos dados pra loja, exclusão do resto, e em quantos dias).
+contrato acaba (cópia dos dados pra loja, exclusão do resto, e em quantos dias). **O contrato é de
+adesão** (termos aceitos pela loja, detalhe no privado). Ideia anotada, não pedida: o sistema
+mostrar os termos no primeiro login do admin e gravar o aceite.
 
 ### 11. Botão "Atualizar o banco de todas as empresas": feito (25/09/2026)
 
@@ -313,7 +315,8 @@ isso, sem construir.
 
 ## Linha do tempo (o que cada sessão deixou pronto)
 
-O detalhe de cada sessão está em `docs/historico.md` e nos PRs; o estado de hoje, nas seções 6, 7
+O detalhe de cada sessão está nos PRs (e, dos marcos até 27/09, no Git: `git show
+0505661:docs/historico.md`); o estado de hoje, nas seções 6, 7
 e 8. Conferir a versão publicada nas releases do GitHub, nunca só por esta tabela.
 
 | Quando | O que saiu |

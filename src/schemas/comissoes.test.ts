@@ -50,7 +50,7 @@ function ordem(parcial: Partial<OrdemServico> = {}): OrdemServico {
 }
 
 const FUNCIONARIOS = [
-  { id: "vend", nome: "Silvio", comissao: 10 },
+  { id: "vend", nome: "Pedro", comissao: 10 },
   { id: "tec", nome: "Marcos", comissao: 5 },
   { id: "sem-pct", nome: "João", comissao: null },
 ];

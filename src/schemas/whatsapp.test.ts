@@ -52,10 +52,10 @@ describe("preencherModelo", () => {
   it("troca os marcadores pelo valor", () => {
     expect(
       preencherModelo("Oi {cliente}, o valor é {valor}.", {
-        cliente: "Silvio",
+        cliente: "Maria",
         valor: "R$ 250,00",
       }),
-    ).toBe("Oi Silvio, o valor é R$ 250,00.");
+    ).toBe("Oi Maria, o valor é R$ 250,00.");
   });
 
   it("troca todas as aparições do mesmo marcador", () => {

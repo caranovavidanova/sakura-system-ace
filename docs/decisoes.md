@@ -28,9 +28,15 @@ Três fases, nessa ordem, sem pressa de pular etapa:
    com 1 loja. **Cada empresa (dono diferente) tem o próprio projeto Supabase**, totalmente
    isolado; várias lojas da mesma empresa usam o multi-loja dentro do mesmo projeto (seção 5). Um
    instalador só serve qualquer empresa: cada computador escolhe a conexão na primeira abertura
-   ("Conexão com o banco", seção 7). O que falta antes da primeira venda: o contrato e a LGPD
-   (item 10 da seção 8) e a instalação de cada empresa (seção 9). **Preço, custo e contrato ficam
-   no repositório privado `caranovavidanova/sakura-corp`.**
+   ("Conexão com o banco", seção 7). **Pra começar a usar, nada de código**: cada empresa segue o
+   `INSTALAR-LOJA-NOVA.md`, e a empresa de 2 lojas é um banco só (a 2ª loja nasce em
+   Configurações → Lojas). A parte fiscal vem depois, por CNPJ (playbook no item 1 da seção 8).
+   **Recomendado antes da primeira loja de terceiro** (25/09): o contrato e a LGPD (item 10 da
+   seção 8), os lotes de permissão que faltam no banco (item 1 da seção 6), a parte 2 do porteiro
+   e a decisão sobre o Electron. O que um dono de 2 lojas deve pedir e **não existe**: ver as
+   lojas somadas, transferir peça entre elas, preço diferente por loja (seção 5, "Fora de
+   escopo"); esperar ele pedir. **Preço, custo e contrato ficam no repositório privado
+   `caranovavidanova/sakura-corp`.**
 3. **As ~30 lojas de autocenter que o pai dela conhece**: já envolve **outros estados e cidades**,
    e a emissão fiscal muda com isso (ICMS por estado, ISS e portal por município): não assumir que
    o que funciona na Pneus Amigão serve sem ajuste. É aí que entram o site de assinatura (item 2 da
@@ -57,6 +63,10 @@ Três fases, nessa ordem, sem pressa de pular etapa:
   `<main>` (App.tsx) e na `Sidebar`; não no `Modal.tsx`. **Cascata do CSS** (item 14 da seção 6):
   CSS escrito solto no `globals.css`, fora de `@layer`, ganha de qualquer classe do Tailwind;
   reset global (`*`, seletores soltos) vai dentro de `@layer base`.
+- **Borda dos campos** (12/09, escolha dela entre fotos de três versões): o token próprio
+  `--color-sakura-borda-campo` (branco a 35%), 3,13:1 contra o vidro. É **só dos campos**: o
+  `sakura-gray` continua desenhando borda de tabela, card e `iframe`, e os botões ficaram como
+  estavam. Login, conexão e troca de senha usam outra classe e foram corrigidos à parte.
 - **Campos**: checkbox e rádio usam `accent-color` da paleta. O botão do calendário do
   `input[type=date]` é o ícone nativo com `filter: invert(100%)`, com tamanho e fundo arredondado
   (desde 03/09). **Pegadinha**: o `invert` vale pro elemento inteiro, então a cor de fundo é escrita
@@ -71,6 +81,24 @@ Três fases, nessa ordem, sem pressa de pular etapa:
     sessão, só a imagem na conversa. Antes de processar, conferir com
     `find /root/.claude/uploads -type f`. Se não chegou, recriar à mão e mostrar renderizado antes
     de aplicar.
+
+### Apresentação comercial (25/09/2026)
+
+O pai dela pediu uma apresentação pra oferecer o sistema aos amigos donos de autocenter. São 17
+slides, num artifact **privado dela** no claude.ai
+(`https://claude.ai/artifact/Qgrq6KjoAJigmSXHouXien`), com um roteiro de fala nas anotações de
+cada slide. A matéria-prima é o `apresentacao/levantamento-do-sistema.md` (o que o sistema
+oferece, marcado como usado na loja, pronto ou com porém), e as fotos das telas saem do
+`apresentacao/fotografar-telas-dos-slides.mjs`, com os dados de exemplo ("Auto Center Modelo").
+**As regras dela pra qualquer versão futura**:
+- formal, em slides, **sem preço**;
+- **sem citar a Pneus Amigão pelo nome** (vira "uma autocenter em operação");
+- **sem o "Importar por foto"**, **sem a flor de cerejeira** na capa e no encerramento, e **sem
+  contato** no último slide (até ela pedir);
+- **só prometer o que é verdade hoje**: conferir slide a slide contra o sistema antes de mandar
+  (ex: a habilitação fiscal "pode levar algumas semanas"; "atualizações automáticas", sem "já
+  testadas em operação"). O quadro "Sem contratos paralelos" só vale enquanto a infraestrutura
+  continuar na conta dela.
 
 ## 3. Decisões técnicas já tomadas (não reabrir sem motivo forte)
 

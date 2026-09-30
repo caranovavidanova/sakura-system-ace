@@ -185,8 +185,9 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    (30/09)**: ruleset na branch padrão, PR obrigatório com 1 aprovação (cai com commit novo, e a do
    último push tem que ser de outra pessoa), sem apagar nem force push; **Repository admin isento
    (Always allow)**. **Regra 2**: o Release passou pelo cofre `lojas` (aprovação dela) e **perdeu o
-   gatilho de push de tag**, só "Run workflow" na `main`; falta ela criar o ruleset de tag
-   **`versões`** (`v*`: bloqueia mudar e apagar, não criar).
+   gatilho de push de tag**, só "Run workflow" na `main` (PR #342); e o ruleset de tag **`versões`**
+   foi criado (`v*`: bloqueia mudar, apagar e force push, não criar; Repository admin isento).
+   **PASSO 2 COMPLETO (30/09).** O merge do #342, sem aprovação, confirmou a isenção dela.
    **O risco que fica é maior do que o anotado acima** (achado em 30/09): quem tem escrita no
    repositório consegue, com um workflow modificado **na própria branch**, usar o token automático
    do Actions (`contents: write`) pra **publicar, liberar ou trocar arquivo** de uma versão. As

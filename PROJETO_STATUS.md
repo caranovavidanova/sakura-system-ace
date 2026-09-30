@@ -53,7 +53,9 @@ vai pro arquivo de `docs/` certo, nunca aqui. Se este índice passar de ~30 KB, 
 - **A borracharia é do pai dela** — ela é quem constrói o sistema, mas quem vai operar no dia a
   dia é o pai (e funcionários da loja dele). A primeira versão "de verdade" só vai pra lá quando
   ela achar que está pronta o suficiente (ver decisão sobre nota fiscal/lançamento na seção 8).
-- E-mail: caranovavidanova@gmail.com.
+- Nome: **Sofia** (conta do GitHub `caranovavidanova`). E-mail: caranovavidanova@gmail.com.
+  **Nunca presumir o nome dela por outra fonte**: em 29/09 uma sessão chamou ela de "Carol" por
+  engano, porque esse nome apareceu no plano que ela mandou.
 - **A organização atual de módulos/abas no menu lateral e dentro de cada tela** (ex: Caixa com
   abas Diário/Entradas/Saídas, "Contas a Pagar" como módulo próprio) **é provisória** — a usuária
   disse explicitamente que pretende repensar essa organização melhor no futuro. Não tratar a
@@ -199,7 +201,7 @@ pra todas as lojas em 29/09), banco na **`0064`**.
    ela (30/09)**: aceitar o risco por enquanto; a trava de verdade (as versões num **repositório
    separado, onde colaborador não escreve**, o mesmo "repositório só de versões" de fechar o código)
    fica **pra depois**. Cuidado barato sugerido: o Balcão no canal normal.
-3. **Memória**: o trecho "quando quem está trabalhando não é a Carol" (abre PR e **não mescla**,
+3. **Memória**: o trecho "quando quem está trabalhando não é a Sofia" (abre PR e **não mescla**,
    não publica nem libera, não mexe no banco) + `docs/painel.md` + as issues da leva 0.
 4. **Convidar o Gustavo.**
 

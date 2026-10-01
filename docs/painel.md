@@ -184,6 +184,14 @@ tarefa 6 → PR → Sofia aprova  →  fim da leva 0 (ver "Fim de uma leva")
 Cada coisa que ela faz, o Claude dela **anota em "Andamento" do `docs/painel.md`** (ex:
 "01/10: Cloudflare ligada"). É ali que o Claude de quem programa confere se pode começar.
 
+- **A cada PR do Gustavo**: o Claude dela confere o CI, o código e o "Pronto quando", e explica em
+  português. Ela aprova pelo GitHub (no computador, ou no Safari se for no celular):
+  1. no PR, aba **"Files changed"** → botão verde **"Submit review"** → **"Approve"** →
+     **"Submit review"**;
+  2. depois, na aba **"Conversation"**: setinha ▾ do **"Merge pull request"** →
+     **"Squash and merge"** → **"Confirm squash and merge"**.
+
+  Depois disso, o Claude dela anota em "Andamento" que a próxima tarefa pode começar.
 - **Antes da tarefa 1**: ~~criar a etiqueta `leva-0` e as issues~~ (feito em 30/09) e ~~convidar o Gustavo~~ (feito em 30/09).
 - **Antes da tarefa 3**: ~~na Cloudflare, ligar o repositório ("Workers Builds")~~ (feito em
   01/10; como ficou está em "Andamento").

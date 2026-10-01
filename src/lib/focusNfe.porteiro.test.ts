@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import type { ConfiguracaoFiscalLoja } from "@/types/configuracao";
 import type { OrdemServico } from "@/types/os";
@@ -16,9 +16,12 @@ const {
   baixarArquivoNota,
   cancelarNFSe,
   emitirNFCe,
+  emitirNFSe,
+  EsperaVencidaError,
   FocusNfeError,
   montarCorpoNFCe,
   motivoDaRecusa,
+  refPertenceAOrdem,
 } = await import("./focusNfe");
 
 const LOJA = "00000000-0000-0000-0000-000000000001";
@@ -173,5 +176,66 @@ describe("baixar o PDF/XML", () => {
   it("arquivo que não veio vira erro, não um PDF vazio", async () => {
     invoke.mockResolvedValue({ data: { ok: false, status: 404, conteudo_base64: null }, error: null });
     await expect(baixarArquivoNota(LOJA, "nfse", "os12-nfse-1", "xml")).rejects.toThrow(/HTTP 404/);
+  });
+});
+
+// O caso de 01/10/2026: a NFS-e saiu autorizada na Focus NFe logo depois da
+// espera vencer, e a tela não tinha como registrá-la.
+describe("quando a SEFAZ/prefeitura demora", () => {
+  const dadosNFSe = {
+    ordem: { id: "os-1", numero: 15 } as OrdemServico,
+    discriminacao: "Alinhamento",
+    valorServicos: 100,
+    cliente: { nome: "Cliente", tipo_pessoa: "fisica", cpf_cnpj: "123.456.789-09" },
+    codigoMunicipioCliente: "3503208",
+    configuracaoFiscal: {
+      ...configuracaoFiscal,
+      codigo_municipio: "3503208",
+      codigo_cnae: "4520-0/04",
+      aliquota_iss: 2,
+    } as ConfiguracaoFiscalLoja,
+  } as Parameters<typeof emitirNFSe>[0];
+
+  afterEach(() => vi.useRealTimers());
+
+  it("a espera vencida leva a ref junto — é com ela que a tela confere de novo", async () => {
+    vi.useFakeTimers();
+    invoke.mockResolvedValue(repassou({ status: "processando_autorizacao" }));
+
+    const emissao = emitirNFSe(dadosNFSe).catch((erro: unknown) => erro);
+    await vi.runAllTimersAsync();
+    const erro = await emissao;
+
+    expect(erro).toBeInstanceOf(EsperaVencidaError);
+    expect(erro).toBeInstanceOf(FocusNfeError);
+    expect((erro as InstanceType<typeof EsperaVencidaError>).ref).toMatch(/^os15-nfse-\d+$/);
+    expect((erro as Error).message).toContain("A prefeitura está demorando");
+    // A NFS-e espera o dobro da NFC-e: 1 emissão + 20 consultas.
+    expect(invoke).toHaveBeenCalledTimes(21);
+  });
+
+  it("a NFC-e continua esperando 10 consultas e fala da SEFAZ", async () => {
+    vi.useFakeTimers();
+    invoke.mockResolvedValue(repassou({ status: "processando_autorizacao" }));
+
+    const emissao = emitirNFCe(dadosNFCe).catch((erro: unknown) => erro);
+    await vi.runAllTimersAsync();
+    const erro = await emissao;
+
+    expect(erro).toBeInstanceOf(EsperaVencidaError);
+    expect((erro as Error).message).toContain("A SEFAZ está demorando");
+    expect(invoke).toHaveBeenCalledTimes(11);
+  });
+
+  it("só aceita registrar pela ref uma nota daquela OS e daquele tipo", () => {
+    expect(refPertenceAOrdem("os15-nfse-1790866567242", 15, "nfse")).toBe(true);
+    expect(refPertenceAOrdem("  os15-nfse-1790866567242 ", 15, "nfse")).toBe(true);
+    expect(refPertenceAOrdem("os15-nfce-1790866559160", 15, "nfse")).toBe(false);
+    expect(refPertenceAOrdem("os150-nfse-1790866567242", 15, "nfse")).toBe(false);
+    expect(refPertenceAOrdem("os13-nfse-1790710436120", 15, "nfse")).toBe(false);
+    expect(refPertenceAOrdem("", 15, "nfse")).toBe(false);
+    // Texto a mais antes ou depois (colado com o resto da linha do painel).
+    expect(refPertenceAOrdem("2os15-nfse-1790866567242", 15, "nfse")).toBe(false);
+    expect(refPertenceAOrdem("os15-nfse-1790866567242 NFSe", 15, "nfse")).toBe(false);
   });
 });

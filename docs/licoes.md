@@ -1587,3 +1587,20 @@
     - **Lição de processo**: PR "só de documentação" também roda o CI inteiro, e o CI depende da
       data. **Esperar o verde antes de mesclar, sempre**; nesse dia dois PRs de texto foram
       mesclados com o CI ainda rodando, e a quebra só apareceu por e-mail depois.
+
+80. **NFS-e autorizada na Focus NFe, mas "falta NFS-e" no sistema (01/10/2026, OS 15).** A
+    prefeitura demorou mais que os 30s de espera; a tela mostrou o aviso de demora e parou ali. A
+    nota saiu autorizada logo depois, e o sistema não tinha caminho nenhum pra registrá-la: o
+    aviso dizia "avise pra registrarmos aqui", e a única saída era o upload manual do XML, que
+    perde a referência (sem "Ver PDF" nem cancelamento pelo sistema).
+    - **Conserto**: a espera vencida virou um erro próprio (`EsperaVencidaError`, em
+      `src/lib/focusNfe.ts`) que leva a `ref` junto. A janela de emissão troca o "Confirmar
+      emissão" por **"Conferir de novo"**, que consulta pela `ref` e registra a nota quando sair.
+      E, pra nota que saiu com a janela já fechada, o link **"A nota já saiu na Focus NFe, mas não
+      apareceu aqui?"** registra pela referência do painel da Focus NFe (coluna "Referência"),
+      conferindo que ela é daquela OS e daquele tipo (`refPertenceAOrdem`).
+    - **A NFS-e espera o dobro** (20 consultas, ~60s; a NFC-e continua com 10): prefeitura é mais
+      lenta que a SEFAZ. E o aviso agora diz "a prefeitura", não "a SEFAZ".
+    - **Regra**: toda chamada que ENVIA algo e depois espera a resposta precisa de um caminho pra
+      retomar a espera mais tarde, com o identificador do que foi enviado. Desistir de esperar não
+      é o mesmo que a coisa não ter acontecido.

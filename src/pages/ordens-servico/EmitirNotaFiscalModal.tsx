@@ -8,9 +8,13 @@ import { avisoAliquotaCompetencia } from "@/schemas/aliquotaCompetencia";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   baixarArquivoNota,
+  consultarNFCe,
+  consultarNFSe,
   emitirNFCe,
   emitirNFSe,
+  EsperaVencidaError,
   FocusNfeError,
+  refPertenceAOrdem,
   type PagamentoParaNota,
 } from "@/lib/focusNfe";
 import { listarMovimentosCaixaPorOrdem } from "@/lib/caixa";
@@ -59,6 +63,21 @@ async function buscarPagamentosParaNota(
   return pagamentos.length > 0 ? pagamentos : [{ formaPagamento: "outros", valor: totalNota }];
 }
 
+// A Focus NFe responde 200 mesmo quando a SEFAZ/prefeitura recusa a nota —
+// só "autorizado" é sucesso de verdade.
+function erroDaResposta(resposta: RespostaFocusNfe): FocusNfeError {
+  const mensagensErros = (resposta.erros ?? [])
+    .map((e) => (e.campo ? `${e.campo}: ${e.mensagem}` : e.mensagem))
+    .filter((m): m is string => Boolean(m))
+    .join(" | ");
+  return new FocusNfeError(
+    resposta.mensagem_sefaz ??
+      (mensagensErros || undefined) ??
+      resposta.mensagem ??
+      `A nota voltou com status "${resposta.status}".`,
+  );
+}
+
 export function EmitirNotaFiscalModal({
   ordem,
   tipoNota,
@@ -77,6 +96,15 @@ export function EmitirNotaFiscalModal({
   const [danfeUrl, setDanfeUrl] = useState<string | null>(null);
   const [carregandoPreview, setCarregandoPreview] = useState(false);
   const [erroPreview, setErroPreview] = useState("");
+  // Nota enviada cuja resposta não chegou a tempo (ver EsperaVencidaError).
+  // Enquanto ela existe, o botão de emitir some: emitir de novo daria duas
+  // notas pra mesma venda.
+  const [refPendente, setRefPendente] = useState<string | null>(null);
+  const [conferindo, setConferindo] = useState(false);
+  // Pra nota que saiu na Focus NFe com esta janela já fechada: registra pela
+  // referência que aparece no painel dela.
+  const [mostrarRegistrarPorRef, setMostrarRegistrarPorRef] = useState(false);
+  const [refDigitada, setRefDigitada] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const itensPeca = (ordem.itens ?? []).filter((item) => item.tipo === "peca");
@@ -188,62 +216,105 @@ export function EmitirNotaFiscalModal({
         });
       }
 
-      if (resposta.status !== "autorizado") {
-        const mensagensErros = (resposta.erros ?? [])
-          .map((e) => (e.campo ? `${e.campo}: ${e.mensagem}` : e.mensagem))
-          .filter((m): m is string => Boolean(m))
-          .join(" | ");
-        throw new FocusNfeError(
-          resposta.mensagem_sefaz ??
-            (mensagensErros || undefined) ??
-            resposta.mensagem ??
-            `A nota voltou com status "${resposta.status}".`,
-        );
-      }
-
-      await salvarArquivoEmitido({
-        tipo: tipoNota === "NFC-e" ? "nfe" : "nfse",
-        resposta,
-        ordemServicoId: ordem.id,
-        operadorId: operador.id,
-        lojaId: lojaAtual.id,
-      });
-
-      setResultado(resposta);
-      onEmitido();
-
-      if (tipoNota === "NFS-e") {
-        try {
-          await confirmarAliquotaCompetencia(lojaAtual.id, avisoAliquota.competencia);
-        } catch (erroAliquota) {
-          // Falhar aqui não estraga nada: a nota já saiu. No pior caso o
-          // aviso do Início continua aparecendo até ela clicar em "Já
-          // cadastrei" — nunca o contrário.
-          console.error("Erro ao marcar a alíquota da competência como cadastrada:", erroAliquota);
-        }
-      }
-
-      if (resposta.caminho_danfe && resposta.ref) {
-        setCarregandoPreview(true);
-        try {
-          const blob = await baixarArquivoNota(
-            configuracaoFiscal.loja_id,
-            tipoNota === "NFC-e" ? "nfce" : "nfse",
-            resposta.ref,
-            "danfe",
-          );
-          setDanfeUrl(URL.createObjectURL(blob));
-        } catch (erroPreviewCapturado) {
-          setErroPreview(mensagemDeErro(erroPreviewCapturado));
-        } finally {
-          setCarregandoPreview(false);
-        }
-      }
+      await concluirEmissao(resposta);
     } catch (err) {
+      if (err instanceof EsperaVencidaError) setRefPendente(err.ref);
       setErro(mensagemDeErro(err));
     } finally {
       setEmitindo(false);
     }
+  }
+
+  // Tudo o que vem depois da nota autorizada — vale tanto pra emissão que
+  // respondeu na hora quanto pra nota conferida depois pela referência.
+  async function concluirEmissao(resposta: RespostaFocusNfe) {
+    if (!configuracaoFiscal || !operador || !lojaAtual) return;
+    if (resposta.status !== "autorizado") throw erroDaResposta(resposta);
+
+    await salvarArquivoEmitido({
+      tipo: tipoNota === "NFC-e" ? "nfe" : "nfse",
+      resposta,
+      ordemServicoId: ordem.id,
+      operadorId: operador.id,
+      lojaId: lojaAtual.id,
+    });
+
+    setResultado(resposta);
+    onEmitido();
+
+    if (tipoNota === "NFS-e") {
+      try {
+        await confirmarAliquotaCompetencia(lojaAtual.id, avisoAliquota.competencia);
+      } catch (erroAliquota) {
+        // Falhar aqui não estraga nada: a nota já saiu. No pior caso o
+        // aviso do Início continua aparecendo até ela clicar em "Já
+        // cadastrei" — nunca o contrário.
+        console.error("Erro ao marcar a alíquota da competência como cadastrada:", erroAliquota);
+      }
+    }
+
+    if (resposta.caminho_danfe && resposta.ref) {
+      setCarregandoPreview(true);
+      try {
+        const blob = await baixarArquivoNota(
+          configuracaoFiscal.loja_id,
+          tipoNota === "NFC-e" ? "nfce" : "nfse",
+          resposta.ref,
+          "danfe",
+        );
+        setDanfeUrl(URL.createObjectURL(blob));
+      } catch (erroPreviewCapturado) {
+        setErroPreview(mensagemDeErro(erroPreviewCapturado));
+      } finally {
+        setCarregandoPreview(false);
+      }
+    }
+  }
+
+  // Pergunta de novo à Focus NFe por uma nota já enviada. Autorizada, ela é
+  // registrada como se tivesse respondido na hora; ainda processando, nada
+  // muda; recusada, a referência é esquecida e dá pra emitir de novo.
+  async function conferirNota(ref: string) {
+    if (!configuracaoFiscal) return;
+    setErro("");
+    setConferindo(true);
+    try {
+      const lojaId = configuracaoFiscal.loja_id;
+      const consultada =
+        tipoNota === "NFC-e" ? await consultarNFCe(ref, lojaId) : await consultarNFSe(ref, lojaId);
+      const resposta = { ...consultada, ref: consultada.ref ?? ref };
+      if (resposta.status === "processando_autorizacao") {
+        setRefPendente(ref);
+        setErro(
+          `${tipoNota === "NFC-e" ? "A SEFAZ" : "A prefeitura"} ainda não respondeu. A nota ` +
+            'continua sendo processada — espere mais um pouco e clique em "Conferir de novo".',
+        );
+        return;
+      }
+      if (resposta.status !== "autorizado") {
+        setRefPendente(null);
+        throw erroDaResposta(resposta);
+      }
+      await concluirEmissao(resposta);
+      setRefPendente(null);
+    } catch (err) {
+      setErro(mensagemDeErro(err));
+    } finally {
+      setConferindo(false);
+    }
+  }
+
+  function handleRegistrarPorRef() {
+    const ref = refDigitada.trim();
+    const tipo = tipoNota === "NFC-e" ? "nfce" : "nfse";
+    if (!refPertenceAOrdem(ref, ordem.numero, tipo)) {
+      setErro(
+        `Essa referência não é de uma ${tipoNota} da OS ${ordem.numero}. No painel da Focus ` +
+          `NFe, ela fica na coluna "Referência" e começa com "os${ordem.numero}-${tipo}-".`,
+      );
+      return;
+    }
+    conferirNota(ref);
   }
 
   useEffect(() => {
@@ -368,22 +439,79 @@ export function EmitirNotaFiscalModal({
               : "Ambiente de produção — esta nota será emitida de verdade."}
           </p>
 
+          {refPendente && (
+            <p className="break-all text-rotulo text-sakura-muted">
+              Referência da nota na Focus NFe: {refPendente}
+            </p>
+          )}
+
+          {/* Nota que saiu na Focus NFe quando esta janela já estava
+              fechada (ou o programa foi reiniciado): sem isto, o único
+              caminho era o upload manual do XML, que perde a referência — e
+              com ela o "Ver PDF" e o cancelamento por aqui. */}
+          {!refPendente && (
+            <div className="text-rotulo">
+              {!mostrarRegistrarPorRef ? (
+                <button
+                  type="button"
+                  onClick={() => setMostrarRegistrarPorRef(true)}
+                  className="text-sakura-purple-dark/85 underline hover:text-sakura-purple-dark"
+                >
+                  A nota já saiu na Focus NFe, mas não apareceu aqui?
+                </button>
+              ) : (
+                <div className="space-y-2 rounded-lg bg-sakura-pink-soft/60 p-3">
+                  <label className="flex flex-col gap-1 text-sakura-purple-dark/90">
+                    Referência da nota no painel da Focus NFe (coluna "Referência")
+                    <input
+                      value={refDigitada}
+                      onChange={(e) => setRefDigitada(e.target.value)}
+                      placeholder={`os${ordem.numero}-${tipoNota === "NFC-e" ? "nfce" : "nfse"}-...`}
+                      className="w-full rounded-lg border border-sakura-borda-campo px-3 py-2 text-corpo text-sakura-purple-dark focus:border-sakura-purple"
+                    />
+                  </label>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleRegistrarPorRef}
+                      disabled={conferindo || !refDigitada.trim()}
+                      className="rounded-xl border border-sakura-gray/40 px-4 py-2 text-corpo font-medium text-sakura-purple-dark hover:bg-sakura-gray/10 disabled:opacity-50"
+                    >
+                      {conferindo ? "Conferindo..." : "Registrar esta nota"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onFechar}
               className="rounded-xl px-4 py-2 text-corpo font-medium text-sakura-purple-dark/90 hover:bg-sakura-gray/10"
             >
-              Cancelar
+              {refPendente ? "Fechar" : "Cancelar"}
             </button>
-            <button
-              type="button"
-              onClick={handleEmitir}
-              disabled={emitindo}
-              className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {emitindo ? "Emitindo..." : "Confirmar emissão"}
-            </button>
+            {refPendente ? (
+              <button
+                type="button"
+                onClick={() => conferirNota(refPendente)}
+                disabled={conferindo}
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {conferindo ? "Conferindo..." : "Conferir de novo"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleEmitir}
+                disabled={emitindo || conferindo}
+                className="rounded-xl bg-sakura-purple px-5 py-2 text-corpo font-medium text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {emitindo ? "Emitindo..." : "Confirmar emissão"}
+              </button>
+            )}
           </div>
         </div>
       )}

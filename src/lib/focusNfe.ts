@@ -144,32 +144,57 @@ function aguardar(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// A espera venceu, mas o pedido de emissão JÁ FOI ENVIADO: a nota pode sair
+// autorizada minutos depois. É um erro à parte (e não um FocusNfeError
+// qualquer) porque leva a `ref` junto — é com ela que a tela confere de novo
+// e registra a nota quando sair, em vez de deixar a pessoa emitir outra.
+export class EsperaVencidaError extends FocusNfeError {
+  constructor(
+    message: string,
+    public ref: string,
+  ) {
+    super(message);
+    this.name = "EsperaVencidaError";
+  }
+}
+
 // A emissão é assíncrona do lado da Focus NFe/SEFAZ — o POST inicial quase
 // sempre volta com status "processando_autorizacao", e é preciso consultar
-// de novo até sair desse estado. Tenta por até ~30s antes de desistir (a
+// de novo até sair desse estado. Tenta por um tempo antes de desistir (a
 // nota continua processando do lado deles; dá pra consultar de novo depois).
+// A prefeitura costuma ser mais lenta que a SEFAZ (em 01/10/2026 a NFS-e
+// passou dos 30s e saiu autorizada logo depois), por isso espera o dobro.
 async function aguardarAutorizacao(
   consultar: () => Promise<RespostaFocusNfe>,
   ref: string,
+  quemAutoriza: "A SEFAZ" | "A prefeitura",
+  tentativas: number,
 ): Promise<RespostaFocusNfe> {
-  const tentativas = 10;
   const intervaloMs = 3000;
   for (let i = 0; i < tentativas; i++) {
     const resposta = await consultar();
     if (resposta.status !== "processando_autorizacao") return resposta;
     await aguardar(intervaloMs);
   }
-  // A `ref` precisa aparecer aqui. O pedido de emissão JÁ FOI ENVIADO — a
-  // nota pode estar autorizada do lado da SEFAZ mesmo com a espera vencendo
-  // aqui —, e ela é o único jeito de achar essa nota no painel da Focus NFe.
-  // Sem esse dado na tela, o caminho natural seria clicar em "emitir" de
-  // novo e acabar com DUAS notas fiscais válidas pra mesma venda.
-  throw new FocusNfeError(
-    "A SEFAZ está demorando mais que o normal pra responder. **A nota já foi enviada** e pode " +
-      `sair autorizada — não emita de novo sem conferir antes no painel da Focus NFe pela ` +
-      `referência ${ref}. Se ela tiver saído, avise pra registrarmos aqui; se não, dá pra ` +
-      "emitir de novo com segurança.",
+  // A `ref` precisa ir junto. Sem ela, o caminho natural seria clicar em
+  // "emitir" de novo e acabar com DUAS notas fiscais válidas pra mesma venda.
+  throw new EsperaVencidaError(
+    `${quemAutoriza} está demorando mais que o normal pra responder. A nota já foi enviada e ` +
+      'deve sair autorizada em instantes — não emita de novo. Espere um pouco e clique em ' +
+      '"Conferir de novo": quando ela sair, o sistema registra aqui.',
+    ref,
   );
+}
+
+// A `ref` de toda nota emitida pelo sistema começa com o número da OS e o
+// tipo (ver montarRefNota). Conferir isso antes de registrar uma nota pela
+// referência digitada evita grudar na OS 15 a nota de outra OS.
+export function refPertenceAOrdem(
+  ref: string,
+  numeroOrdem: number,
+  tipo: TipoNotaPorteiro,
+): boolean {
+  return new RegExp(`^os${numeroOrdem}-${tipo}-\\d+$`).test(ref.trim());
 }
 
 // Tabela de formas de pagamento do layout da NFe/NFC-e (SEFAZ) — mapeia as
@@ -386,7 +411,12 @@ export async function emitirNFCe(dados: DadosEmissaoNFCe): Promise<RespostaFocus
 
   await chamarFocusNfe<RespostaFocusNfe>(lojaId, { acao: "emitir", tipo: "nfce", ref, corpo });
 
-  const resposta = await aguardarAutorizacao(() => consultarNFCe(ref, lojaId), ref);
+  const resposta = await aguardarAutorizacao(
+    () => consultarNFCe(ref, lojaId),
+    ref,
+    "A SEFAZ",
+    10,
+  );
   // A `ref` é o único jeito de achar a nota depois (reabrir o PDF, cancelar),
   // e ela é daqui, não da Focus NFe: garante que ela vá junto mesmo se a
   // resposta não a repetir.
@@ -502,7 +532,12 @@ export async function emitirNFSe(dados: DadosEmissaoNFSe): Promise<RespostaFocus
 
   await chamarFocusNfe<RespostaFocusNfe>(lojaId, { acao: "emitir", tipo: "nfse", ref, corpo });
 
-  const resposta = await aguardarAutorizacao(() => consultarNFSe(ref, lojaId), ref);
+  const resposta = await aguardarAutorizacao(
+    () => consultarNFSe(ref, lojaId),
+    ref,
+    "A prefeitura",
+    20,
+  );
   return { ...resposta, ref: resposta.ref ?? ref };
 }
 

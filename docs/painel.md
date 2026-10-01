@@ -184,10 +184,17 @@ tarefa 6 → PR → Sofia aprova  →  fim da leva 0 (ver "Fim de uma leva")
 Cada coisa que ela faz, o Claude dela **anota em "Andamento" do `docs/painel.md`** (ex:
 "01/10: Cloudflare ligada"). É ali que o Claude de quem programa confere se pode começar.
 
+- **A cada PR do Gustavo**: o Claude dela confere o CI, o código e o "Pronto quando", e explica em
+  português. Ela aprova pelo GitHub (no computador, ou no Safari se for no celular):
+  1. no PR, aba **"Files changed"** → botão verde **"Submit review"** → **"Approve"** →
+     **"Submit review"**;
+  2. depois, na aba **"Conversation"**: setinha ▾ do **"Merge pull request"** →
+     **"Squash and merge"** → **"Confirm squash and merge"**.
+
+  Depois disso, o Claude dela anota em "Andamento" que a próxima tarefa pode começar.
 - **Antes da tarefa 1**: ~~criar a etiqueta `leva-0` e as issues~~ (feito em 30/09) e ~~convidar o Gustavo~~ (feito em 30/09).
-- **Antes da tarefa 3**: na Cloudflare, ligar o repositório ("Workers Builds"): pasta `painel`,
-  comando de build `npm ci && npm run build`, publicar com `npx wrangler deploy`, só da `main`,
-  **sem publicar branches de PR**.
+- **Antes da tarefa 3**: ~~na Cloudflare, ligar o repositório ("Workers Builds")~~ (feito em
+  01/10; como ficou está em "Andamento").
 - **Antes da tarefa 4**: criar os dois GitHub Apps na `sakura-corp` e cadastrar
   `GITHUB_APP_CLIENT_SECRET` e `CHAVE_DA_SESSAO` na Cloudflare. Passar o segredo do app **de
   teste** pro Gustavo pelo **Bitwarden Send** (um link cifrado que se apaga sozinho), nunca por mensagem.
@@ -257,3 +264,18 @@ login criados", "webhook ligado"), com a data. É onde quem programa confere se 
   (Vite + React + TypeScript + Tailwind), com uma página "Painel da Sakura" e um teste.
   **Aprovada e mesclada pela Sofia em 01/10 (PR #424). A tarefa 2 já pode começar.** A parte da
   Sofia na Cloudflare só é necessária antes da tarefa 3.
+- **01/10/2026**: **Cloudflare ligada.** Worker **`sakura-painel`**, no ar em
+  **https://sakura-painel.caranovavidanova.workers.dev**. Por enquanto mostra a página da tarefa 1:
+  a Cloudflare publicou a página mesmo sem o `wrangler.jsonc`. Como ficou:
+  - a tela de criar não tinha o campo da pasta, então a pasta vai dentro dos comandos e o
+    "Root directory" fica `/`. Build: `cd painel && npm ci && npm run build`. Deploy:
+    `cd painel && npx wrangler deploy`;
+  - publica **só da `main`**: "Builds for non-production branches" está desligado, e a chave
+    "Preview" do endereço também;
+  - **Build watch paths**: só `painel/*`, então mudança no programa das lojas não dispara
+    publicação do painel;
+  - **pra tarefa 3**: o `name` do `wrangler.jsonc` tem que ser `sakura-painel`, o mesmo da
+    Cloudflare. Pôr também `"workers_dev": true` e `"preview_urls": false`, pra cada publicação
+    não religar a prévia nem desligar o endereço (a chave do endereço veio desligada no
+    começo);
+  - **a tarefa 3 já pode começar depois que a 2 for aprovada.**

@@ -33,6 +33,32 @@ deles envelhecem** ("falta", "ainda não"). O que continua valendo foi levado pr
 `docs/`; o que depende dela está em "O que depende dela", na seção 8. Na dúvida, vale o arquivo de
 `docs/`, não o marco.
 
+### 01/10/2026, à tarde: NFS-e que demorou, consertada e registrada (v0.9.48)
+
+**Estado do código**: `main` na **`v0.9.48`**, **publicada só no canal de teste** (o Balcão da
+loja já está nela, conferido em 1º/10); as outras lojas seguem na `0.9.47`. Banco na **`0064`**. O
+marco anterior (alíquota, CI do dia 1º, CNPJ) está no topo de `docs/historico.md`.
+
+#### O que foi feito
+- **A NFS-e da OS 15 demorou mais que a espera** do sistema, saiu autorizada na Focus logo
+  depois, e a OS ficou com "falta NFS-e" sem caminho pra registrar. **Conserto** (#421, `v0.9.48`):
+  botão "Conferir de novo" depois da demora, e o link "A nota já saiu na Focus NFe, mas não
+  apareceu aqui?" pra registrar pela referência. A NFS-e espera ~60s agora (`docs/licoes.md`,
+  item 80). **Usado na loja em 1º/10 e funcionou**: a OS 15 tem as duas notas.
+- **A alíquota de outubro está certa**: essa foi a primeira NFS-e do mês e saiu autorizada (o
+  "Replicar" cadastra as três atividades; seção 8, parte fiscal).
+- **Aprovar no celular**: o app do GitHub não mostra o "Review deployments". Abrir o link da
+  rodada no **Safari** (ou no computador). E **nunca tocar em "Cancelar workflow"**.
+
+#### Por onde a próxima sessão começa
+1. **CNPJ**: quando chegar o texto do **objeto social** (ou os documentos pra assinar), conferir
+   com ela **antes de ela assinar**. O resto da abertura está no privado.
+2. **"Revisa o PR da tarefa 350"** (do Gustavo): conferir o CI, o código e o "Pronto quando" da
+   #350, explicar em português, e ela decide (`docs/painel.md`, "O que a Sofia faz").
+3. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
+   CNPJ depois de 16/10 (no privado). Liberar a `v0.9.48` quando ela quiser. Sugestão de começo,
+   se ela perguntar: **trocar as três credenciais fiscais expostas**.
+
 ### 01/10/2026, de manhã: alíquota de outubro, CI do dia 1º, CNPJ andando
 
 Sessão **sem código de app**. **Estado do código**: o app não mudou. `main` na **`v0.9.47`**

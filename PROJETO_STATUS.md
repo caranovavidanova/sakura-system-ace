@@ -196,28 +196,30 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 
 
-### 01/10/2026, à tarde: NFS-e que demorou, consertada e registrada (v0.9.48)
+### 01/10/2026, à noite: painel no ar, tarefa 1 do Gustavo aprovada, tela larga anotada
 
-**Estado do código**: `main` na **`v0.9.48`**, **publicada só no canal de teste** (o Balcão da
-loja já está nela, conferido em 1º/10); as outras lojas seguem na `0.9.47`. Banco na **`0064`**. O
-marco anterior (alíquota, CI do dia 1º, CNPJ) está no topo de `docs/historico.md`.
+**Estado do código**: `main` na **`v0.9.48`**, **publicada só no canal de teste**. O Balcão da
+loja já está nela; as outras lojas seguem na `0.9.47`. Banco na **`0064`**. O marco da tarde (a
+NFS-e que demorou, consertada e registrada) está no topo de `docs/historico.md`.
 
 #### O que foi feito
-- **A NFS-e da OS 15 demorou mais que a espera** do sistema, saiu autorizada na Focus logo
-  depois, e a OS ficou com "falta NFS-e" sem caminho pra registrar. **Conserto** (#421, `v0.9.48`):
-  botão "Conferir de novo" depois da demora, e o link "A nota já saiu na Focus NFe, mas não
-  apareceu aqui?" pra registrar pela referência. A NFS-e espera ~60s agora (`docs/licoes.md`,
-  item 80). **Usado na loja em 1º/10 e funcionou**: a OS 15 tem as duas notas.
-- **A alíquota de outubro está certa**: essa foi a primeira NFS-e do mês e saiu autorizada (o
-  "Replicar" cadastra as três atividades; seção 8, parte fiscal).
-- **Aprovar no celular**: o app do GitHub não mostra o "Review deployments". Abrir o link da
-  rodada no **Safari** (ou no computador). E **nunca tocar em "Cancelar workflow"**.
+- **Painel: tarefa 1 (#350) aprovada e mesclada por ela** (PR #424 do Gustavo; conferido o CI, o
+  código e o "Pronto quando"). A **tarefa 2** já pode começar, e o Gustavo foi avisado.
+- **Cloudflare ligada**: o painel está no ar em
+  **https://sakura-painel.caranovavidanova.workers.dev**, publicando só da `main` e só quando muda
+  `painel/`. Como ficou, e o que a tarefa 3 precisa saber, está em `docs/painel.md`
+  ("Andamento") e num comentário na #352.
+- **Tela larga cortada à direita** (visto na loja, na lista de OS): virou a tarefa **#425**, já
+  planejada. Ela pediu **só anotar**, sem fazer agora.
+- **6 testes de `test:fusos` reprovam no Windows** (achado do Gustavo; não afeta o app): anotado
+  na seção 8.
 
 #### Por onde a próxima sessão começa
-1. **CNPJ**: quando chegar o texto do **objeto social** (ou os documentos pra assinar), conferir
+1. **PR da tarefa 2 do Gustavo (#351)**, quando ele abrir: conferir o CI, o código e o "Pronto
+   quando", explicar em português, e guiar ela a aprovar e mesclar (`docs/painel.md`, "O que a
+   Sofia faz"). **Antes da tarefa 4**, ela cria os dois GitHub Apps com o Claude dela.
+2. **CNPJ**: quando chegar o texto do **objeto social** (ou os documentos pra assinar), conferir
    com ela **antes de ela assinar**. O resto da abertura está no privado.
-2. **"Revisa o PR da tarefa 350"** (do Gustavo): conferir o CI, o código e o "Pronto quando" da
-   #350, explicar em português, e ela decide (`docs/painel.md`, "O que a Sofia faz").
 3. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
-   CNPJ depois de 16/10 (no privado). Liberar a `v0.9.48` quando ela quiser. Sugestão de começo,
-   se ela perguntar: **trocar as três credenciais fiscais expostas**.
+   CNPJ depois de 16/10 (no privado). Liberar a `v0.9.48` quando ela quiser; a #425 quando ela
+   quiser. Sugestão de começo, se ela perguntar: **trocar as três credenciais fiscais expostas**.

@@ -45,7 +45,11 @@ export const DIVIDA_DE_CONTRASTE = [
     // a sobra do mês anterior e os primeiros dias do seguinte em cinza, pra
     // não competir com o mês corrente. Clarear resolve o número e estraga a
     // ideia. Fica aqui como decisão consciente, não como esquecimento.
-    quando: (g) => g.tipo === "texto" && g.frente === "#5a5059",
+    // O #60545e é o mesmo dia apagado quando ele é feriado: o fundo rosa do
+    // feriado muda a mistura do cinza. Só aparece quando um feriado cai na
+    // sobra visível (Finados, 2/11, no calendário de outubro; 1º/1 no de
+    // dezembro), por isso a varredura reprovou pela primeira vez em 1º/10/2026.
+    quando: (g) => g.tipo === "texto" && (g.frente === "#5a5059" || g.frente === "#60545e"),
   },
 ];
 

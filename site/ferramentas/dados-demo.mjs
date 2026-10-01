@@ -9,9 +9,19 @@ const OP2 = "20000000-0000-0000-0000-000000000002";
 const OP3 = "20000000-0000-0000-0000-000000000003";
 
 const hoje = new Date();
+// `dia(-3)` é três dias atrás. Fração (`dia(-0.1)`) quer dizer "hoje, um pouco
+// mais cedo": vai pra uma hora entre a meia-noite e agora, mais cedo quanto
+// maior a fração. Antes ia pro `setDate`, que joga a fração fora e caía em
+// ONTEM: no dia 1º do mês a venda de balcão de "hoje" ia pro mês passado,
+// sumia da lista (que mostra o mês corrente) e a varredura de telas quebrava.
 const dia = (n) => {
+  const inteiro = Math.trunc(n);
+  const fracao = n - inteiro; // de -1 a 0: as frações usadas aqui são todas pra trás
   const d = new Date(hoje);
-  d.setDate(d.getDate() + n);
+  const meiaNoite = new Date(hoje);
+  meiaNoite.setHours(0, 0, 0, 0);
+  d.setTime(d.getTime() + (hoje.getTime() - meiaNoite.getTime()) * fracao);
+  d.setDate(d.getDate() + inteiro);
   return d.toISOString();
 };
 const diaCurto = (n) => dia(n).slice(0, 10);

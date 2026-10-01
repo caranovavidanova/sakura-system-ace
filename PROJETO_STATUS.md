@@ -221,6 +221,6 @@ falta virou tarefa, #361 a #412) está no topo de `docs/historico.md`.
    Sofia?" antes de começar, e o PR fecha a issue (`Closes #N`); a linha sai da tabela da seção 8.
    Sugestão de ordem, se ela perguntar: os ajustes rápidos (#361 a #363) e depois o
    `docs/comparativo-anexar.md`, "Sugestão de ordem".
-4. **A lista "O que depende dela"** (seção 8). Com data: **1º/10, a alíquota de 10/2026** no
-   portal da prefeitura; a fatura da Focus em 10/10; o que vem do CNPJ depois de 16/10 (no
+4. **A lista "O que depende dela"** (seção 8). Com data (a alíquota de 10/2026
+   foi cadastrada em 1º/10): a fatura da Focus em 10/10; o que vem do CNPJ depois de 16/10 (no
    privado).

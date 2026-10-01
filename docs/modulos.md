@@ -950,3 +950,4 @@ Quatro coisas que valem saber:
   | `v0.9.45` | 26/09 (liberada 27/09) | Venda de balcão (`0064`) |
   | `v0.9.46` | 27/09 | Ficha do veículo |
   | `v0.9.47` | 29/09 | Só o endereço novo do atualizador (`sakura-corp/sakura-system-ace`) |
+  | `v0.9.48` | 01/10 (só no teste) | NFS-e: "Conferir de novo" quando a prefeitura demora, e registrar nota pela referência (`docs/licoes.md`, item 80) |

@@ -98,7 +98,8 @@ cheque (só se uma loja pedir).
   desde 03/09; conversa com a devolução, #399);
 - os três ajustes que ela pediu em 28/09, **já planejados como tarefas no GitHub** (30/09): as
   janelas com o fundo vazando (#361), a situação da nota na lista de Notas Fiscais (#362) e o
-  texto velho no topo de Notas Fiscais (#363). Pra ela fazer comigo quando quiser;
+  texto velho no topo de Notas Fiscais (#363). Pra ela fazer comigo quando quiser. Mais um, de
+  01/10: as placas na coluna Veículos da lista de Clientes viram um botão "Ver veículos" (#417);
 - o repositório só de versões e fechar o código (item 12).
 
 **Segurança, fora do código:**

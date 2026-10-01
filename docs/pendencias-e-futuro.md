@@ -17,12 +17,11 @@ antiga porque outros arquivos citam "item N da seção 8".
 Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs/historico.md`.
 **Manter aqui**: quando uma sair, riscar ou apagar; quando surgir outra, acrescentar.
 
-**Testes na loja que faltam** (lista de 28/09; nada disso dá pra testar daqui):
+**Testes na loja que faltam** (lista de 28/09; nada disso dá pra testar daqui; o Balcão chegou na
+`0.9.47`, conferido em 1º/10):
 - venda de balcão com o leitor, a NFC-e dela e o caixa do dia batendo;
 - ficha do veículo; Fechamento do Caixa; "Registrar pagamento" de comissão; a trava do desconto;
 - pagar e desfazer uma conta; faturar OS "recebido agora" e "a receber";
-- conferir que o Balcão chegou na `0.9.47` (se não, reinstalar pelo
-  `releases/latest/download/SakuraSystem-Setup.exe` do endereço novo);
 - confirmar que o `DESKTOP-PKJ2A3B` (`0.9.44`, canal de teste) é o PC da casa dela e dar um
   apelido (senão, esquecer esse computador).
 

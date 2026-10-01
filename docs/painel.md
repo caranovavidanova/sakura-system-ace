@@ -222,9 +222,26 @@ Quando a última tarefa da leva é aprovada:
 
 ## Como rodar no PC
 
-*Ainda não existe código.* O primeiro PR do painel escreve aqui os comandos, que devem ser algo
-como `cd painel`, `npm install`, `npm run dev`, e também o que precisa estar configurado pro
-login funcionar no PC.
+Precisa do **Node 22**. Todos os comandos rodam **dentro da pasta `painel`**, que tem as
+dependências dela, separadas das do programa das lojas:
+
+| Comando | O que faz |
+|---|---|
+| `cd painel` | entra na pasta do painel |
+| `npm install` | instala as dependências (só na primeira vez, ou quando o `package.json` mudar) |
+| `npm run dev` | abre o painel em `http://localhost:5173`, e a página se atualiza sozinha a cada mudança. `Ctrl+C` no terminal para |
+| `npm run build` | confere os tipos e monta a versão final na pasta `painel/dist` |
+| `npm run typecheck` | só confere os tipos |
+| `npm test` | roda os testes do painel |
+
+- **No Windows (PowerShell)**, se aparecer *"a execução de scripts foi desabilitada neste
+  sistema"*, trocar `npm` por **`npm.cmd`** em todos os comandos (ex: `npm.cmd run dev`). Não
+  precisa mexer na trava de segurança do Windows.
+- O **Vitest está fixo na versão `4.1.10`**, inclusive em `overrides`. Não trocar por `^4...`:
+  um complemento opcional dele puxa o Vitest 5, e o `npm install` quebra com o erro
+  `Cannot read properties of null (reading 'edgesOut')`.
+- A configuração do login no PC entra aqui na tarefa 4 (o arquivo `painel/.dev.vars`, que o Git
+  já ignora).
 
 ## Andamento
 
@@ -236,3 +253,6 @@ login criados", "webhook ligado"), com a data. É onde quem programa confere se 
 - **30/09/2026, à noite**: **Gustavo (`kalendoscope`) convidado e dentro**: membro da `sakura-corp`
   e **Write** no `sakura-system-ace`, convite aceito. Ele está seguindo o "Primeiro dia" (Claude
   Code no PC). **A tarefa #350 já pode começar.**
+- **30/09/2026**: tarefa 1 (#350) feita pelo Gustavo: o projeto do painel existe em `painel/`
+  (Vite + React + TypeScript + Tailwind), com uma página "Painel da Sakura" e um teste. PR
+  esperando a revisão da Sofia.

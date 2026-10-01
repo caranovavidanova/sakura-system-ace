@@ -6,6 +6,12 @@
 /dist-electron
 /release
 
+# painel da equipe (projeto separado, docs/painel.md). O .dev.vars guarda a
+# senha de teste do login no PC e nunca pode subir.
+painel/node_modules
+painel/dist
+painel/.dev.vars
+
 # env files (copie .env.example para .env e preencha localmente)
 .env
 .env.*

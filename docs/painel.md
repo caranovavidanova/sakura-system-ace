@@ -253,6 +253,7 @@ login criados", "webhook ligado"), com a data. É onde quem programa confere se 
 - **30/09/2026, à noite**: **Gustavo (`kalendoscope`) convidado e dentro**: membro da `sakura-corp`
   e **Write** no `sakura-system-ace`, convite aceito. Ele está seguindo o "Primeiro dia" (Claude
   Code no PC). **A tarefa #350 já pode começar.**
-- **30/09/2026**: tarefa 1 (#350) feita pelo Gustavo: o projeto do painel existe em `painel/`
-  (Vite + React + TypeScript + Tailwind), com uma página "Painel da Sakura" e um teste. PR
-  esperando a revisão da Sofia.
+- **01/10/2026**: tarefa 1 (#350) feita pelo Gustavo: o projeto do painel existe em `painel/`
+  (Vite + React + TypeScript + Tailwind), com uma página "Painel da Sakura" e um teste.
+  **Aprovada e mesclada pela Sofia em 01/10 (PR #424). A tarefa 2 já pode começar.** A parte da
+  Sofia na Cloudflare só é necessária antes da tarefa 3.

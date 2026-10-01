@@ -26,7 +26,7 @@ Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs
 - confirmar que o `DESKTOP-PKJ2A3B` (`0.9.44`, canal de teste) é o PC da casa dela e dar um
   apelido (senão, esquecer esse computador).
 
-**Com data**: **1º/10** a alíquota de 10/2026 no portal da prefeitura; o **CNPJ** (contratado em
+**Com data** (a alíquota de 10/2026 foi cadastrada em 1º/10): o **CNPJ** (contratado em
 30/09, sai em 10 a 20 dias); **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
 (os três últimos estão no repositório privado).
 
@@ -146,9 +146,11 @@ aqui está no histórico do Git; o que uma sessão nova precisa saber é isto:
     Alíquota**. Mês/Ano (ex: `10/2026`), Alíquota (`3`), Atividade, e **"Replicar Alíquota"** (é o
     botão de salvar).
   - A empresa tem **três atividades** (CNAE 452000100 mecânica, 452000400 alinhamento e
-    balanceamento, 452000600 borracharia), todas a 3%. Cadastrar só a primeira bastou pra
-    destravar uma nota de alinhamento; não ficou claro se o "Replicar" cadastra as três. Conferir
-    no "Relatório Alíquota" da mesma tela.
+    balanceamento, 452000600 borracharia), todas a 3%. **O "Replicar" cadastra as três de uma
+    vez** (provável, visto em 1º/10/2026): no relatório, abril tinha uma linha por atividade, todas
+    do mesmo dia e usuário; e depois de salvar uma só, o portal não mostrou mais a tela de
+    cadastro (ela só aparece quando falta cadastrar a competência). Prova final: a primeira NFS-e
+    do mês sair sem a recusa.
   - **Mudar o valor**: se a contabilidade mandar outro percentual, trocar **também** em
     Configurações → Dados fiscais, senão a nota sai com um valor e a prefeitura tem outro.
 - **Duas coisas do portal da prefeitura, que são com a prefeitura** (o suporte da Focus confirmou;

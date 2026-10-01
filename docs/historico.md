@@ -33,6 +33,35 @@ deles envelhecem** ("falta", "ainda não"). O que continua valendo foi levado pr
 `docs/`; o que depende dela está em "O que depende dela", na seção 8. Na dúvida, vale o arquivo de
 `docs/`, não o marco.
 
+### 30/09/2026, fim da noite: Gustavo dentro, CNPJ encaminhado
+
+Sessão **sem código de app**. **Estado do código**: não mudou. `main` na **`v0.9.47`**
+(publicada e liberada), banco na **`0064`**. O marco anterior (faxina da memória e tudo o que
+falta virou tarefa, #361 a #412) está no topo de `docs/historico.md`.
+
+#### O que foi feito
+- **Gustavo (`kalendoscope`) entrou**: membro da `sakura-corp`, **Write** no repositório, convite
+  aceito, Claude Code no PC dele (pelo "Primeiro dia" do `docs/painel.md`). Já pegou a **#350**
+  (o nome dele está na tarefa); o PR ainda não tinha sido aberto.
+- **Empresa e financeiro** (tudo no repositório privado, caranovavidanova/sakura-corp#8 a #11): o
+  empréstimo do pai, a contratação da contabilidade e o cadastro da abertura do CNPJ, enviado em
+  30/09. Detalhe e pendências no `EMPRESA.md` de lá.
+
+#### Por onde a próxima sessão começa
+1. **"Revisa o PR da tarefa 350"**: quando o Gustavo abrir o PR, conferir o CI, o código e o
+   "Pronto quando" da #350, explicar em português, e ela decide. Se ela aprovar, eu mesclo. A
+   parte dela no painel vem depois (`docs/painel.md`, "O que a Sofia faz"): Cloudflare antes da
+   #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
+2. **CNPJ**: ela está esperando a resposta da contabilidade por e-mail. Quando chegar o texto do
+   **objeto social**, conferir com ela **antes de ela assinar** (o resto está no privado).
+3. **Quando ela disser "faz a tarefa N"**: ler a issue inteira, fazer as perguntas do "Precisa da
+   Sofia?" antes de começar, e o PR fecha a issue (`Closes #N`); a linha sai da tabela da seção 8.
+   Sugestão de ordem, se ela perguntar: os ajustes rápidos (#361 a #363) e depois o
+   `docs/comparativo-anexar.md`, "Sugestão de ordem".
+4. **A lista "O que depende dela"** (seção 8). Com data (a alíquota de 10/2026
+   foi cadastrada em 1º/10): a fatura da Focus em 10/10; o que vem do CNPJ depois de 16/10 (no
+   privado).
+
 ### 30/09/2026, à noite: faxina da memória e tudo o que falta virou tarefa
 
 Sessão de arrumação, **sem código de app**. **Estado do código**: não mudou. `main` na

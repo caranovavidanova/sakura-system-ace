@@ -1575,3 +1575,15 @@
       4. só então apagar os segredos soltos e os tokens antigos;
       5. rodar o backup de novo.
 
+79. **A varredura de telas quebrou no dia 1º do mês, sem ninguém ter mexido no app (01/10/2026,
+    PR #419).** Duas armadilhas de data nos testes, que só aparecem na virada do mês:
+    - **Fração de dia some no `setDate`**: nos dados de demonstração, `dia(-0.1)` queria dizer
+      "hoje, mais cedo", mas `setDate` joga a fração fora e caía em **ontem**. No dia 1º, ontem é
+      o mês passado, e a venda de balcão sumiu da lista (que mostra o mês corrente). Corrigido no
+      próprio `dia()` de `site/ferramentas/dados-demo.mjs`.
+    - **Dívida de contraste por cor exata**: o dia apagado do mês vizinho no calendário muda de
+      cor quando é feriado (o fundo rosa entra na mistura). Só aparece quando um feriado cai na
+      sobra visível (Finados no calendário de outubro, 1º/1 no de dezembro).
+    - **Lição de processo**: PR "só de documentação" também roda o CI inteiro, e o CI depende da
+      data. **Esperar o verde antes de mesclar, sempre**; nesse dia dois PRs de texto foram
+      mesclados com o CI ainda rodando, e a quebra só apareceu por e-mail depois.

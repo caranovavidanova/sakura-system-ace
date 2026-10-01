@@ -53,7 +53,7 @@ sessão. O resto mora em `docs/` e **só é aberto quando o assunto pede**:
 | `docs/decisoes.md` | o que é o projeto, plano de expansão (fases 1-3), identidade visual, **tabela de decisões técnicas** (antiga seção 2 e 3) | antes de qualquer decisão estrutural |
 | `docs/estrutura.md` | pastas, padrão de código, **padrão de formulário** (react-hook-form + zod) (antiga seção 4) | antes de criar arquivo/módulo novo |
 | `docs/banco.md` | as migrations `0001`-`0064`, cada tabela, multi-loja, RLS (antiga seção 5) | antes de mexer em banco/migration |
-| `docs/licoes.md` | as dívidas técnicas e os 78 **padrões de bug** já vividos (antiga seção 6) | ao investigar bug, e antes de mexer em área sensível |
+| `docs/licoes.md` | as dívidas técnicas e os 79 **padrões de bug** já vividos (antiga seção 6) | ao investigar bug, e antes de mexer em área sensível |
 | `docs/modulos.md` | estado de cada tela/módulo hoje (antiga seção 7) | antes de mexer num módulo |
 | `docs/pendencias-e-futuro.md` | **"O que depende dela", numa lista só**; o que não existe; parte fiscal (playbook por loja nova); linha do tempo (antiga seção 8) | ao planejar próximo passo, e quando ela perguntar "o que falta?" |
 | `docs/operacao.md` | rodar, instalar empresa nova, **publicar/liberar versão**, backup, atualizar bancos, voltar versão (antigas seções 9 e 11) | ao publicar, rodar migration ou instalar loja |
@@ -196,31 +196,30 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 
 
-### 30/09/2026, fim da noite: Gustavo dentro, CNPJ encaminhado
+### 01/10/2026: alíquota de outubro, CI do dia 1º, CNPJ andando
 
-Sessão **sem código de app**. **Estado do código**: não mudou. `main` na **`v0.9.47`**
-(publicada e liberada), banco na **`0064`**. O marco anterior (faxina da memória e tudo o que
-falta virou tarefa, #361 a #412) está no topo de `docs/historico.md`.
+Sessão **sem código de app**. **Estado do código**: o app não mudou. `main` na **`v0.9.47`**
+(publicada e liberada; o Balcão da loja conferido nela em 1º/10), banco na **`0064`**. O marco
+anterior (Gustavo dentro, CNPJ encaminhado) está no topo de `docs/historico.md`.
 
 #### O que foi feito
-- **Gustavo (`kalendoscope`) entrou**: membro da `sakura-corp`, **Write** no repositório, convite
-  aceito, Claude Code no PC dele (pelo "Primeiro dia" do `docs/painel.md`). Já pegou a **#350**
-  (o nome dele está na tarefa); o PR ainda não tinha sido aberto.
-- **Empresa e financeiro** (tudo no repositório privado, caranovavidanova/sakura-corp#8 a #11): o
-  empréstimo do pai, a contratação da contabilidade e o cadastro da abertura do CNPJ, enviado em
-  30/09. Detalhe e pendências no `EMPRESA.md` de lá.
+- **Alíquota de 10/2026 cadastrada** no portal da prefeitura. O "Replicar" provavelmente cadastra
+  as três atividades de uma vez (seção 8, parte fiscal). A primeira NFS-e de outubro confirma.
+- **Tarefa #417**: na lista de Clientes, as placas viram um "Ver veículos" no estilo do "Ver DANFE"
+  (e carro sem placa deixa de virar caixa vazia). Pra ela fazer comigo, junto da #361 a #363.
+- **CI quebrado no dia 1º, consertado** (#419): duas armadilhas de data nos testes, não no app
+  (`docs/licoes.md`, item 79). **Esperar o CI verde antes de mesclar, mesmo PR só de texto.**
+- **CNPJ** (detalhe no privado, `EMPRESA.md`): a prefeitura aprovou a abertura; a conta gov.br
+  dela já é nível Ouro; falta o certificado digital do CPF e assinar os documentos.
 
 #### Por onde a próxima sessão começa
-1. **"Revisa o PR da tarefa 350"**: quando o Gustavo abrir o PR, conferir o CI, o código e o
-   "Pronto quando" da #350, explicar em português, e ela decide. Se ela aprovar, eu mesclo. A
-   parte dela no painel vem depois (`docs/painel.md`, "O que a Sofia faz"): Cloudflare antes da
-   #352, os dois GitHub Apps antes da #353, o webhook antes da #355.
-2. **CNPJ**: ela está esperando a resposta da contabilidade por e-mail. Quando chegar o texto do
-   **objeto social**, conferir com ela **antes de ela assinar** (o resto está no privado).
-3. **Quando ela disser "faz a tarefa N"**: ler a issue inteira, fazer as perguntas do "Precisa da
-   Sofia?" antes de começar, e o PR fecha a issue (`Closes #N`); a linha sai da tabela da seção 8.
-   Sugestão de ordem, se ela perguntar: os ajustes rápidos (#361 a #363) e depois o
-   `docs/comparativo-anexar.md`, "Sugestão de ordem".
-4. **A lista "O que depende dela"** (seção 8). Com data (a alíquota de 10/2026
-   foi cadastrada em 1º/10): a fatura da Focus em 10/10; o que vem do CNPJ depois de 16/10 (no
-   privado).
+1. **CNPJ**: quando chegar o texto do **objeto social** (ou os documentos pra assinar), conferir
+   com ela **antes de ela assinar**. O resto da abertura está no privado.
+2. **"Revisa o PR da tarefa 350"**: o Gustavo ainda não tinha aberto o PR em 1º/10. Conferir o
+   CI, o código e o "Pronto quando" da #350, explicar em português, e ela decide. A parte dela no
+   painel vem depois (`docs/painel.md`, "O que a Sofia faz").
+3. **Se a primeira NFS-e de outubro for recusada** por alíquota, cadastrar as outras duas
+   atividades no portal e corrigir a nota da seção 8.
+4. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
+   CNPJ depois de 16/10 (no privado). Sugestão de começo, se ela perguntar: **trocar as três
+   credenciais fiscais expostas**.

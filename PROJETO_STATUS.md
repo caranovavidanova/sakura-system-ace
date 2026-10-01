@@ -196,30 +196,28 @@ Focus NFe. Fase atual: preparar a venda pra outras empresas (fase 2). Detalhe em
 
 
 
-### 01/10/2026: alíquota de outubro, CI do dia 1º, CNPJ andando
+### 01/10/2026, à tarde: NFS-e que demorou, consertada e registrada (v0.9.48)
 
-Sessão **sem código de app**. **Estado do código**: o app não mudou. `main` na **`v0.9.47`**
-(publicada e liberada; o Balcão da loja conferido nela em 1º/10), banco na **`0064`**. O marco
-anterior (Gustavo dentro, CNPJ encaminhado) está no topo de `docs/historico.md`.
+**Estado do código**: `main` na **`v0.9.48`**, **publicada só no canal de teste** (o Balcão da
+loja já está nela, conferido em 1º/10); as outras lojas seguem na `0.9.47`. Banco na **`0064`**. O
+marco anterior (alíquota, CI do dia 1º, CNPJ) está no topo de `docs/historico.md`.
 
 #### O que foi feito
-- **Alíquota de 10/2026 cadastrada** no portal da prefeitura. O "Replicar" provavelmente cadastra
-  as três atividades de uma vez (seção 8, parte fiscal). A primeira NFS-e de outubro confirma.
-- **Tarefa #417**: na lista de Clientes, as placas viram um "Ver veículos" no estilo do "Ver DANFE"
-  (e carro sem placa deixa de virar caixa vazia). Pra ela fazer comigo, junto da #361 a #363.
-- **CI quebrado no dia 1º, consertado** (#419): duas armadilhas de data nos testes, não no app
-  (`docs/licoes.md`, item 79). **Esperar o CI verde antes de mesclar, mesmo PR só de texto.**
-- **CNPJ** (detalhe no privado, `EMPRESA.md`): a prefeitura aprovou a abertura; a conta gov.br
-  dela já é nível Ouro; falta o certificado digital do CPF e assinar os documentos.
+- **A NFS-e da OS 15 demorou mais que a espera** do sistema, saiu autorizada na Focus logo
+  depois, e a OS ficou com "falta NFS-e" sem caminho pra registrar. **Conserto** (#421, `v0.9.48`):
+  botão "Conferir de novo" depois da demora, e o link "A nota já saiu na Focus NFe, mas não
+  apareceu aqui?" pra registrar pela referência. A NFS-e espera ~60s agora (`docs/licoes.md`,
+  item 80). **Usado na loja em 1º/10 e funcionou**: a OS 15 tem as duas notas.
+- **A alíquota de outubro está certa**: essa foi a primeira NFS-e do mês e saiu autorizada (o
+  "Replicar" cadastra as três atividades; seção 8, parte fiscal).
+- **Aprovar no celular**: o app do GitHub não mostra o "Review deployments". Abrir o link da
+  rodada no **Safari** (ou no computador). E **nunca tocar em "Cancelar workflow"**.
 
 #### Por onde a próxima sessão começa
 1. **CNPJ**: quando chegar o texto do **objeto social** (ou os documentos pra assinar), conferir
    com ela **antes de ela assinar**. O resto da abertura está no privado.
-2. **"Revisa o PR da tarefa 350"**: o Gustavo ainda não tinha aberto o PR em 1º/10. Conferir o
-   CI, o código e o "Pronto quando" da #350, explicar em português, e ela decide. A parte dela no
-   painel vem depois (`docs/painel.md`, "O que a Sofia faz").
-3. **Se a primeira NFS-e de outubro for recusada** por alíquota, cadastrar as outras duas
-   atividades no portal e corrigir a nota da seção 8.
-4. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
-   CNPJ depois de 16/10 (no privado). Sugestão de começo, se ela perguntar: **trocar as três
-   credenciais fiscais expostas**.
+2. **"Revisa o PR da tarefa 350"** (do Gustavo): conferir o CI, o código e o "Pronto quando" da
+   #350, explicar em português, e ela decide (`docs/painel.md`, "O que a Sofia faz").
+3. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
+   CNPJ depois de 16/10 (no privado). Liberar a `v0.9.48` quando ela quiser. Sugestão de começo,
+   se ela perguntar: **trocar as três credenciais fiscais expostas**.

@@ -212,6 +212,9 @@ saídas:
 2. Disparar o **Release** na `main`: pela tela (Actions → Release → Run workflow) ou por API
    (`mcp__github__actions_run_trigger`, `method: "run_workflow"`, `workflow_id: "release.yml"`,
    `ref: "main"`). A rodada **para em "Waiting" até ela aprovar** (cofre `lojas`): avisar.
+   **Pelo celular**, o app do GitHub não mostra o botão "Review deployments": mandar ela abrir o
+   link da rodada no **Safari** (ou no computador), e avisar pra **não tocar em "Cancelar
+   workflow"**, que é o único botão que o app mostra ali (aconteceu em 1º/10/2026).
 3. Conferir com `mcp__github__get_release_by_tag` (`tag: "vX.Y.Z"`) até aparecerem o `.exe` **e** o
    `latest.yml` (5 a 10 minutos). `prerelease: true` é o certo: é o canal de teste.
 

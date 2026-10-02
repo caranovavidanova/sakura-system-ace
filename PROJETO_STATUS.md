@@ -218,8 +218,8 @@ NFS-e que demorou, consertada e registrada) está no topo de `docs/historico.md`
 1. **PR da tarefa 2 do Gustavo (#351)**, quando ele abrir: conferir o CI, o código e o "Pronto
    quando", explicar em português, e guiar ela a aprovar e mesclar (`docs/painel.md`, "O que a
    Sofia faz"). **Antes da tarefa 4**, ela cria os dois GitHub Apps com o Claude dela.
-2. **CNPJ**: quando chegar o texto do **objeto social** (ou os documentos pra assinar), conferir
-   com ela **antes de ela assinar**. O resto da abertura está no privado.
+2. **CNPJ**: em 02/10 o contrato social foi **conferido com ela, assinado pelo gov.br e enviado**
+   à Contabilizei. Agora é esperar o registro na Junta e o CNPJ. O detalhe está no privado.
 3. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
    CNPJ depois de 16/10 (no privado). Liberar a `v0.9.48` quando ela quiser; a #425 quando ela
    quiser. Sugestão de começo, se ela perguntar: **trocar as três credenciais fiscais expostas**.

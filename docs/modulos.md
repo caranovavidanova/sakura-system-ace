@@ -72,6 +72,17 @@ Funcionários, Contas a Pagar, Notas Fiscais e Operadores. **Ela viu a tela rend
 manter o ícone** (11/09/2026) — "Editar" e "Inativar" ficam como lápis e afins, com o nome no
 balãozinho do mouse. Assunto fechado, não reabrir.
 
+**Tabela larga rola de lado, dentro da própria caixa** (03/10/2026, #425): numa janela de 1366
+(o Balcão) a lista de OS passava do lado direito, e "Faturar"/"Fechamento" ficavam fora da tela,
+sem barra pra chegar neles. Duas causas: o `<main>` do `App.tsx` não tinha `min-w-0` (numa linha
+flex, ele crescia até a largura da tabela mais larga), e toda tabela morava num `overflow-hidden
+sakura-card`, que corta. Agora o `<main>` tem `min-w-0` e o envoltório das tabelas é
+`overflow-x-auto sakura-card`: o que não couber rola dentro da caixa da tabela. **Tabela nova usa
+`overflow-x-auto`, nunca `overflow-hidden`.** O item da OS (Quantidade, Preço, Desconto, Técnico)
+virou grade de 2 ou 4 colunas conforme a largura do cartão (`@container`): em 1024 o Técnico saía
+pra fora. Quem confere é o `npm run largura:telas` (todas as telas em 1024, 1280 e 1366), que
+roda no CI.
+
 **Modal com foco preso** (11/09/2026, item `TR-02.3` do guia): o `Modal.tsx` — usado em
 confirmação de dinheiro e de documento fiscal — deixava o Tab escapar pra tela de trás. Agora
 prende o Tab, fecha no `Esc`, devolve o foco pro botão que abriu e marca o fundo como inerte. O
@@ -172,7 +183,12 @@ Quatro coisas que valem saber:
   mas Placa em branco era descartado em silêncio ao salvar (ver item 26 da seção 6); campo "Marca"
   agora sugere uma lista de ~80 montadoras via Combobox, mas aceita digitar qualquer coisa que não
   esteja na lista (`permitirLivre`, ver seção 4); "Modelo" continua texto livre sem sugestão (tem
-  modelo demais no mundo pra listar, pedido explícito da usuária).
+  modelo demais no mundo pra listar, pedido explícito da usuária). **"Ver veículos" (03/10/2026,
+  #417)**: a lista não tem mais a coluna Veículos (uma caixinha de placa por carro, poluída, e
+  carro sem placa virava caixinha vazia). No lugar, um botão "Ver veículos" nas ações da linha,
+  igual ao "Ver DANFE", só em cliente com carro; abre uma janela com os carros
+  (`VeiculosDoClienteModal.tsx`), cada um levando pra ficha. Carro sem placa aparece como "sem
+  placa", com marca e modelo.
 - **Estoque**: 4 abas — Produtos (cadastro completo com campos fiscais NCM/CFOP/CST-CSOSN/ICMS,
   categoria, garantia em dias, margem calculada nos dois sentidos), Movimentações (com filtro por
   produto e campo/coluna de Depósito), Contagem (inventário físico, agora
@@ -601,8 +617,13 @@ Quatro coisas que valem saber:
   continua sabendo quais OS o cliente ainda não pagou (quem tem Funcionários lê a lista). Se o
   banco recusar uma gravação por permissão, a tela diz em português a quem pedir, em vez de
   "violates row-level security policy" (`MENSAGEM_SEM_PERMISSAO`, `src/lib/errors.ts`).
-- **Notas Fiscais**: upload manual de XML (NFe/NFS-e) organizado por mês de competência
-  (Supabase Storage), vínculo opcional com uma OS. **Baixar o mês inteiro (02/09/2026)**: cada
+- **Notas Fiscais**: as notas de cada mês — as emitidas pelo sistema entram sozinhas, e as feitas
+  por fora entram por upload manual do XML (NFe/NFS-e), organizado por mês de competência
+  (Supabase Storage), vínculo opcional com uma OS. **Coluna "Situação" (03/10/2026, #362)**: cada
+  linha diz se a nota está **Autorizada** (verde), **Cancelada** (vermelho) ou **Enviada à mão**
+  (XML que alguém subiu: o sistema não sabe o que a SEFAZ disse dele); outro status da Focus
+  aparece escrito como veio. A regra é `situacaoDaNota` (`src/schemas/situacaoFiscal.ts`). O
+  texto do topo da tela dizia que a emissão automática "ainda não existe" até 03/10 (#363). **Baixar o mês inteiro (02/09/2026)**: cada
   faixa de mês tem um botão "Baixar XMLs do mês (N)" que junta os XMLs daquela competência num
   `.zip` só (`nfse-2026-08.zip`) — é o formato que a contabilidade pede, e evita clicar nota por
   nota. O `.zip` é montado sem biblioteca externa (`src/lib/zip.ts`, formato "stored", sem

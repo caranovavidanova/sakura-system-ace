@@ -19,8 +19,12 @@
 //    propósito e fica de fora. Num campo vazio, conta a dica (placeholder)
 //    que não cabe.
 // 3. Alguma janela (modal) passa do lado direito da janela?
+// 4. Só nas telas que pedem (`semRolar`): alguma caixa precisa rolar de lado?
+//    A lista de OS tem que caber inteira em 1366, sem rolar (#425): a barra
+//    de rolar de lado fica no pé da tabela, e com a lista comprida ninguém
+//    chega nela.
 
-export const MEDIR_LARGURA = () => {
+export const MEDIR_LARGURA = ({ semRolar = false } = {}) => {
   const larguraJanela = document.documentElement.clientWidth;
   const FOLGA = 2; // arredondamento de subpixel não é defeito
   const achados = [];
@@ -66,7 +70,17 @@ export const MEDIR_LARGURA = () => {
     const rolaSemBarra =
       (estilo.overflowX === "auto" || estilo.overflowX === "scroll") &&
       estilo.scrollbarWidth === "none";
+    const rolaComBarra =
+      (estilo.overflowX === "auto" || estilo.overflowX === "scroll") && !rolaSemBarra;
     if (corta && estilo.textOverflow === "ellipsis") continue;
+    if (rolaComBarra && semRolar) {
+      achados.push({
+        tipo: "precisa rolar de lado (esta tela tem que caber inteira)",
+        caminho: caminho(elemento),
+        excesso,
+      });
+      continue;
+    }
     if (!corta && !rolaSemBarra) continue;
     // Campo de texto rola por dentro desde sempre: um nome comprido digitado
     // nele não é defeito. Defeito é a DICA (placeholder) não caber no campo

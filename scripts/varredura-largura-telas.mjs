@@ -6,8 +6,10 @@
 // da varredura de contraste) e, em cada uma, mede em três larguras de
 // janela: 1024 (o mínimo que o Electron deixa a janela ficar), 1280 e 1366
 // (a tela de notebook mais comum, e a do computador do Balcão). Reprova se
-// algum conteúdo passar da janela sem dar pra rolar até ele. O que a medição
-// procura está explicado em scripts/medir-largura.mjs.
+// algum conteúdo passar da janela sem dar pra rolar até ele. Cena com
+// `semRolarAPartirDe: N` (em cenas.mjs) também reprova, a partir de N de
+// largura, se precisar rolar de lado. O que a medição procura está explicado
+// em scripts/medir-largura.mjs.
 //
 // Por que existe: a lista de OS passou meses com "Faturar" e "Fechamento"
 // fora da tela em 1366 e ninguém viu, porque as telas sempre foram olhadas
@@ -34,7 +36,8 @@ async function varrer() {
         // Dá tempo pros ResizeObserver da tela (a barra da AreaRolavel, os
         // gráficos) reagirem antes de medir.
         await pagina.waitForTimeout(250);
-        for (const achado of await pagina.evaluate(MEDIR_LARGURA)) {
+        const semRolar = cena.semRolarAPartirDe !== undefined && largura >= cena.semRolarAPartirDe;
+        for (const achado of await pagina.evaluate(MEDIR_LARGURA, { semRolar })) {
           achados.push({ tela: cena.titulo, largura, ...achado });
         }
       }

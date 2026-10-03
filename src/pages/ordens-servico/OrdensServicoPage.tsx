@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarJurosParcelas } from "@/lib/configuracoes";
+import { dataCurta } from "@/lib/datas";
 import { mensagemDeErro } from "@/lib/errors";
 import {
   custoDosItens,
@@ -89,6 +90,10 @@ function hojeStr(): string {
 function paraDataLocal(dataIso: string): string {
   return new Date(dataIso).toLocaleDateString("sv-SE");
 }
+
+// Coluna que só aparece em tela larga (2xl = 1536px ou mais). Ver o
+// comentário em cima da tabela.
+const SO_EM_TELA_GRANDE = "hidden 2xl:table-cell";
 
 function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -681,19 +686,31 @@ export function OrdensServicoPage() {
         </p>
       ) : (
         <div className="overflow-x-auto sakura-card">
+          {/* A lista precisa caber numa janela de 1366, a do Balcão (#425, versão
+              "B", escolhida por ela pela imagem em 03/10/2026): em tela até
+              1536, Peças e Serviços somem (o Total e o Lucro ficam, e o
+              detalhe está dentro da OS); a data perde o ano quando é do ano
+              corrente; e as células têm um respiro menor que o das outras
+              listas. Medido: a tabela mínima ficou em 1002px pra uma caixa
+              de 1028. Coluna nova aqui precisa caber nessa folga —
+              `npm run largura:telas` confere. */}
           <table className="w-full text-left text-corpo">
             <thead className="bg-sakura-pink-soft text-sakura-purple-dark">
               <tr>
-                <th className="px-4 py-3 font-medium">Nº</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                {lista === "os" && <th className="px-4 py-3 font-medium">Veículo</th>}
-                <th className="px-4 py-3 font-medium">{lista === "os" ? "Aberta em" : "Data"}</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                {lista === "os" && <th className="px-4 py-3 font-medium">Peças</th>}
-                {lista === "os" && <th className="px-4 py-3 font-medium">Serviços</th>}
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Lucro</th>
-                <th className="px-4 py-3" />
+                <th className="px-2.5 py-3 font-medium">Nº</th>
+                <th className="px-2.5 py-3 font-medium">Cliente</th>
+                {lista === "os" && <th className="px-2.5 py-3 font-medium">Veículo</th>}
+                <th className="px-2.5 py-3 font-medium">{lista === "os" ? "Abertura" : "Data"}</th>
+                <th className="px-2.5 py-3 font-medium">Status</th>
+                {lista === "os" && (
+                  <th className={`${SO_EM_TELA_GRANDE} px-2.5 py-3 font-medium`}>Peças</th>
+                )}
+                {lista === "os" && (
+                  <th className={`${SO_EM_TELA_GRANDE} px-2.5 py-3 font-medium`}>Serviços</th>
+                )}
+                <th className="px-2.5 py-3 font-medium">Total</th>
+                <th className="px-2.5 py-3 font-medium">Lucro</th>
+                <th className="px-2.5 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -711,12 +728,12 @@ export function OrdensServicoPage() {
                   }}
                   className="cursor-pointer border-t border-sakura-gray/20 hover:bg-sakura-pink-soft/30"
                 >
-                  <td className="whitespace-nowrap px-4 py-3 text-sakura-muted">
+                  <td className="whitespace-nowrap px-2.5 py-3 text-sakura-muted">
                     {nomeOrdem(ordem.numero, ordem.tipo)}
                   </td>
-                  <td className="px-4 py-3">{ordem.cliente?.nome ?? "—"}</td>
+                  <td className="px-2.5 py-3">{ordem.cliente?.nome ?? "—"}</td>
                   {lista === "os" && (
-                    <td className="px-4 py-3">
+                    <td className="whitespace-nowrap px-2.5 py-3">
                       {ordem.veiculo_id && ordem.veiculo?.placa ? (
                         <LinkPlaca veiculoId={ordem.veiculo_id} placa={ordem.veiculo.placa} />
                       ) : (
@@ -724,25 +741,23 @@ export function OrdensServicoPage() {
                       )}
                     </td>
                   )}
-                  <td className="px-4 py-3">
-                    {new Date(ordem.data_abertura).toLocaleDateString("pt-BR")}
-                  </td>
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-2.5 py-3">{dataCurta(ordem.data_abertura)}</td>
+                  <td className="px-2.5 py-3">
                     <StatusOrdem ordem={ordem} notas={notasPorOrdem.get(ordem.id) ?? []} />
                   </td>
                   {lista === "os" && (
-                    <td className="px-4 py-3">
+                    <td className={`${SO_EM_TELA_GRANDE} px-2.5 py-3`}>
                       {formatarMoeda(totalPorTipo(ordem.itens ?? [], "peca"))}
                     </td>
                   )}
                   {lista === "os" && (
-                    <td className="px-4 py-3">
+                    <td className={`${SO_EM_TELA_GRANDE} px-2.5 py-3`}>
                       {formatarMoeda(totalPorTipo(ordem.itens ?? [], "servico"))}
                     </td>
                   )}
-                  <td className="px-4 py-3">{formatarMoeda(totalOrdem(ordem.itens ?? []))}</td>
-                  <td className="px-4 py-3">{formatarMoeda(lucroOrdem(ordem))}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2.5 py-3">{formatarMoeda(totalOrdem(ordem.itens ?? []))}</td>
+                  <td className="px-2.5 py-3">{formatarMoeda(lucroOrdem(ordem))}</td>
+                  <td className="px-2.5 py-3 text-right">
                     <div
                       onClick={(e) => e.stopPropagation()}
                       className="flex items-center justify-end gap-2"

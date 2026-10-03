@@ -33,6 +33,35 @@ deles envelhecem** ("falta", "ainda não"). O que continua valendo foi levado pr
 `docs/`; o que depende dela está em "O que depende dela", na seção 8. Na dúvida, vale o arquivo de
 `docs/`, não o marco.
 
+### 01/10/2026, à noite: painel no ar, tarefa 1 do Gustavo aprovada, tela larga anotada
+
+**Estado do código**: `main` na **`v0.9.48`**, **publicada só no canal de teste**. O Balcão da
+loja já está nela; as outras lojas seguem na `0.9.47`. Banco na **`0064`**. O marco da tarde (a
+NFS-e que demorou, consertada e registrada) está no topo de `docs/historico.md`.
+
+#### O que foi feito
+- **Painel: tarefa 1 (#350) aprovada e mesclada por ela** (PR #424 do Gustavo; conferido o CI, o
+  código e o "Pronto quando"). A **tarefa 2** já pode começar, e o Gustavo foi avisado.
+- **Cloudflare ligada**: o painel está no ar em
+  **https://sakura-painel.caranovavidanova.workers.dev**, publicando só da `main` e só quando muda
+  `painel/`. Como ficou, e o que a tarefa 3 precisa saber, está em `docs/painel.md`
+  ("Andamento") e num comentário na #352.
+- **Tela larga cortada à direita** (visto na loja, na lista de OS): virou a tarefa **#425**, já
+  planejada. Ela pediu **só anotar**, sem fazer agora.
+- **6 testes de `test:fusos` reprovam no Windows** (achado do Gustavo; não afeta o app): anotado
+  na seção 8.
+
+#### Por onde a próxima sessão começa
+1. **PR da tarefa 2 do Gustavo (#351)**, quando ele abrir: conferir o CI, o código e o "Pronto
+   quando", explicar em português, e guiar ela a aprovar e mesclar (`docs/painel.md`, "O que a
+   Sofia faz"). **Antes da tarefa 4**, ela cria os dois GitHub Apps com o Claude dela.
+2. **CNPJ: saiu em 02/10**, já no Simples Nacional (contrato e Módulo Tributário conferidos com
+   ela antes de assinar). Próximos passos: cartão CNPJ, conta PJ, licença da prefeitura depois de
+   16/10 e a 1ª NFS-e da Pneus Amigão. Número e detalhes no privado.
+3. **A lista "O que depende dela"** (seção 8). Com data: a fatura da Focus em 10/10; o que vem do
+   CNPJ depois de 16/10 (no privado). Liberar a `v0.9.48` quando ela quiser; a #425 quando ela
+   quiser. Sugestão de começo, se ela perguntar: **trocar as três credenciais fiscais expostas**.
+
 ### 01/10/2026, à tarde: NFS-e que demorou, consertada e registrada (v0.9.48)
 
 **Estado do código**: `main` na **`v0.9.48`**, **publicada só no canal de teste** (o Balcão da

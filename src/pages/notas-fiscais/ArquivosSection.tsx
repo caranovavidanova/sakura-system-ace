@@ -284,73 +284,75 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                   : `Baixar XMLs do mês (${arquivosDoMes.length})`}
               </button>
             </div>
-            <table className="w-full text-left text-corpo">
-              <thead className="text-sakura-purple-dark/90">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Arquivo</th>
-                  <th className="px-4 py-2 font-medium">Situação</th>
-                  <th className="px-4 py-2 font-medium">Ordem de Serviço</th>
-                  <th className="px-4 py-2 font-medium">Enviado por</th>
-                  <th className="px-4 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {arquivosDoMes.map((arquivo) => (
-                  <tr key={arquivo.id} className="border-t border-sakura-gray/20">
-                    <td className="px-4 py-3">{arquivo.nome_arquivo}</td>
-                    <td className="px-4 py-3">
-                      <EtiquetaSituacao arquivo={arquivo} />
-                    </td>
-                    <td className="px-4 py-3">
-                      {arquivo.ordem_servico?.cliente?.nome ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">{arquivo.operador?.nome ?? "—"}</td>
-                    <td className="px-4 py-3 text-right">
-                      <AcoesDaLinha
-                        descricao={`a nota ${arquivo.nome_arquivo}`}
-                        acoes={[
-                          ...(arquivo.origem === "automatica"
-                            ? [
-                                {
-                                  tipo: "texto" as const,
-                                  rotulo: tipo === "nfe" ? "Ver DANFE" : "Ver PDF",
-                                  aoClicar: () => setArquivoDanfe(arquivo),
-                                },
-                              ]
-                            : []),
-                          {
-                            tipo: "menu",
-                            rotulo: "Versão para o cliente",
-                            aoClicar: () => setArquivoVisualizando(arquivo),
-                          },
-                          {
-                            tipo: "menu",
-                            rotulo: "Baixar XML",
-                            aoClicar: () => handleBaixar(arquivo),
-                          },
-                          ...(arquivo.origem === "automatica" && arquivo.status === "autorizado"
-                            ? [
-                                {
-                                  tipo: "menu" as const,
-                                  rotulo: "Cancelar nota",
-                                  perigosa: true,
-                                  aoClicar: () => setArquivoCancelando(arquivo),
-                                },
-                              ]
-                            : []),
-                          {
-                            tipo: "menu",
-                            rotulo: "Excluir nota",
-                            perigosa: true,
-                            aoClicar: () => handleExcluir(arquivo),
-                          },
-                        ]}
-                      />
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-corpo">
+                <thead className="text-sakura-purple-dark/90">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Arquivo</th>
+                    <th className="px-4 py-2 font-medium">Situação</th>
+                    <th className="px-4 py-2 font-medium">Ordem de Serviço</th>
+                    <th className="px-4 py-2 font-medium">Enviado por</th>
+                    <th className="px-4 py-2" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {arquivosDoMes.map((arquivo) => (
+                    <tr key={arquivo.id} className="border-t border-sakura-gray/20">
+                      <td className="px-4 py-3">{arquivo.nome_arquivo}</td>
+                      <td className="px-4 py-3">
+                        <EtiquetaSituacao arquivo={arquivo} />
+                      </td>
+                      <td className="px-4 py-3">
+                        {arquivo.ordem_servico?.cliente?.nome ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">{arquivo.operador?.nome ?? "—"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <AcoesDaLinha
+                          descricao={`a nota ${arquivo.nome_arquivo}`}
+                          acoes={[
+                            ...(arquivo.origem === "automatica"
+                              ? [
+                                  {
+                                    tipo: "texto" as const,
+                                    rotulo: tipo === "nfe" ? "Ver DANFE" : "Ver PDF",
+                                    aoClicar: () => setArquivoDanfe(arquivo),
+                                  },
+                                ]
+                              : []),
+                            {
+                              tipo: "menu",
+                              rotulo: "Versão para o cliente",
+                              aoClicar: () => setArquivoVisualizando(arquivo),
+                            },
+                            {
+                              tipo: "menu",
+                              rotulo: "Baixar XML",
+                              aoClicar: () => handleBaixar(arquivo),
+                            },
+                            ...(arquivo.origem === "automatica" && arquivo.status === "autorizado"
+                              ? [
+                                  {
+                                    tipo: "menu" as const,
+                                    rotulo: "Cancelar nota",
+                                    perigosa: true,
+                                    aoClicar: () => setArquivoCancelando(arquivo),
+                                  },
+                                ]
+                              : []),
+                            {
+                              tipo: "menu",
+                              rotulo: "Excluir nota",
+                              perigosa: true,
+                              aoClicar: () => handleExcluir(arquivo),
+                            },
+                          ]}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ))
       )}

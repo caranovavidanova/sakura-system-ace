@@ -90,7 +90,7 @@ export function ItemOSRow({
   const avisoCusto = avisoPecaSemCusto(pecaEscolhida);
 
   return (
-    <div className="space-y-2 rounded-lg border border-sakura-gray/30 p-3">
+    <div className="@container space-y-2 rounded-lg border border-sakura-gray/30 p-3">
       <div className="flex gap-2">
         <select
           value={tipo}
@@ -139,8 +139,13 @@ export function ItemOSRow({
         />
       )}
 
-      <div className="flex gap-2">
-        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
+      {/* Quatro colunas quando o cartão do item tem espaço; duas quando
+          não tem (janela de 1024, #425). Era uma linha flex, e o campo
+          Técnico ficava espremido e saía pra fora do cartão. A medida é do
+          CARTÃO, não da janela, porque o mesmo item aparece em lugares de
+          larguras diferentes. */}
+      <div className="grid grid-cols-2 gap-2 @2xl:grid-cols-4">
+        <label className="flex min-w-0 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Quantidade
           <input
             type="number"
@@ -151,7 +156,7 @@ export function ItemOSRow({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
+        <label className="flex min-w-0 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Preço unitário
           <input
             type="number"
@@ -162,7 +167,7 @@ export function ItemOSRow({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
+        <label className="flex min-w-0 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Desconto
           <input
             type="number"
@@ -173,7 +178,7 @@ export function ItemOSRow({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
+        <label className="flex min-w-0 flex-col gap-0.5 text-rotulo text-sakura-purple-dark/90">
           Técnico
           <Combobox
             opcoes={funcionarios.map((funcionario) => ({

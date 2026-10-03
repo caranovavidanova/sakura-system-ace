@@ -29,9 +29,14 @@ Antes desta lista, essas coisas estavam espalhadas pelos marcos antigos do `docs
 1º/10 só no canal de teste; o Balcão já está nela). Hoje a Pneus Amigão é a única empresa, então
 não tem pressa.
 
-**Com data** (a alíquota de 10/2026 foi cadastrada em 1º/10 e conferida): o **CNPJ** (contratado em
-30/09, sai em 10 a 20 dias); **10/10** a primeira fatura da Focus; trocar a Focus do Solo pro Start **antes do 2º CNPJ**
-(os três últimos estão no repositório privado).
+**Com data** (a alíquota de 10/2026 foi cadastrada em 1º/10 e conferida): **10/10** a primeira
+fatura da Focus; a partir de **16/10** o que depende do dinheiro da empresa (licença da prefeitura,
+capital, Claude Team); trocar a Focus do Solo pro Start **antes do 2º CNPJ** (esses estão no
+repositório privado).
+
+**Abertura da empresa**: o **CNPJ saiu em 02/10**, já no Simples. O que falta (conta da empresa,
+certificado digital, procuração no gov.br, inscrição na prefeitura e a 1ª NFS-e da Pneus Amigão)
+está no privado, `EMPRESA.md`, seção "Abertura: o que falta".
 
 **O que falta do guia de melhorias e o que o concorrente tem e nós não** (`docs/comparativo-anexar.md`)
 **viraram tarefa no GitHub** (30/09, etiqueta `guia`, #365 a #385 e #386 a #412), cada uma com o que fazer, onde, "Pronto quando", o que não fazer e, quando depende dela, a

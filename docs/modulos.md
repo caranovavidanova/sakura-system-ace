@@ -83,6 +83,24 @@ virou grade de 2 ou 4 colunas conforme a largura do cartão (`@container`): em 1
 pra fora. Quem confere é o `npm run largura:telas` (todas as telas em 1024, 1280 e 1366), que
 roda no CI.
 
+**Lista de OS cabe inteira em 1366** (03/10/2026, #425, **versão "B", escolhida por ela pela
+imagem**; a outra opção juntava Total e Lucro numa coluna só): em tela até 1536px, **Peças e
+Serviços somem** (Total e Lucro ficam; em monitor maior as duas voltam); a coluna "Abertura" mostra
+a data **sem o ano quando é do ano corrente** ("03/10"; `dataCurta` em `src/lib/datas.ts`); a
+placa não quebra linha; e as células têm `px-2.5` em vez de `px-4`. A tabela mínima ficou em
+1002px pra uma caixa de 1028. A cena `07-ordens` tem `semRolarAPartirDe: 1366`, então o
+`largura:telas` **reprova se a lista voltar a precisar rolar de lado** em 1366 (coluna nova aqui
+precisa caber nessa folga).
+
+**Janela (modal) opaca** (03/10/2026, #361, **versão "sólida", escolhida por ela pela imagem**; a
+outra opção borrava a tela de trás): o painel era o vidro do `sakura-card` e o texto da tela de
+trás aparecia através dele. Agora as três janelas (`Modal.tsx`, `ImportarNotaFiscalXmlModal.tsx`,
+`ImportarNotasFiscaisModal.tsx`) usam `sakura-modal-fundo` (tela de trás nítida, escurecida a
+60%) e `sakura-modal` (painel opaco, mesma borda, brilho e sombra do card), em
+`src/styles/globals.css`. **Janela nova usa esses dois**, nunca `sakura-card` +
+`bg-black/40`. O `sakura-modal-fundo` zera a margem: dentro de um `space-y-*`, a margem do filho
+encurtava o fundo fixo (a janela de importar XML deixava 24px sem escurecer no pé da tela).
+
 **Modal com foco preso** (11/09/2026, item `TR-02.3` do guia): o `Modal.tsx` — usado em
 confirmação de dinheiro e de documento fiscal — deixava o Tab escapar pra tela de trás. Agora
 prende o Tab, fecha no `Esc`, devolve o foco pro botão que abriu e marca o fundo como inerte. O
@@ -438,8 +456,8 @@ Quatro coisas que valem saber:
     estoque, nas comissões, no recibo de comissão e na garantia.
 - **Ficha do veículo** (27/09/2026, item `FN-04`, sem migration, `v0.9.46` — **ainda não
   testada por ela na loja**): tudo que já foi feito num carro,
-  por placa. Rota `/veiculos/:id`, sem entrada no menu — abre **clicando na placa** em
-  Clientes, na lista de OS e em Garantias. É a pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
+  por placa. Rota `/veiculos/:id`, sem entrada no menu — abre pelo **"Ver veículos"** em
+  Clientes, ou **clicando na placa** na lista de OS e em Garantias. É a pergunta que chega no balcão junto com o carro ("quando foi a última troca?", "esse pneu ainda
   está na garantia?"), e é a base do lembrete de revisão (`FN-06`). O que a tela mostra:
   - **Dono atual** (o cliente em cujo cadastro o carro está hoje) e telefone;
   - **KM mais recente** — o da OS mais recente, nunca o maior já digitado (mesma regra do

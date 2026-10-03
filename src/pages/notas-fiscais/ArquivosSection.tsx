@@ -10,12 +10,34 @@ import {
   listarArquivos,
 } from "@/lib/notasFiscais";
 import { listarOrdens } from "@/lib/ordensServico";
+import { situacaoDaNota, type TomSituacaoNota } from "@/schemas/situacaoFiscal";
 import type { NotaFiscalArquivo, TipoNotaFiscal } from "@/types/notaFiscal";
 import type { OrdemServico } from "@/types/os";
 import { CancelarNotaModal } from "./CancelarNotaModal";
 import { NotaFiscalVisualModal } from "./NotaFiscalVisualModal";
 import { VerDanfeModal } from "./VerDanfeModal";
 import { AcoesDaLinha } from "@/components/AcoesDaLinha";
+
+// Verde no mesmo tom do "Finalizada" da lista de OS; vermelho no mesmo tom
+// do "cancelada" da janela da nota (VerDanfeModal), pra a mesma situação ter
+// a mesma cara nos dois lugares.
+const COR_SITUACAO: Record<TomSituacaoNota, string> = {
+  autorizada: "bg-emerald-100 text-emerald-900",
+  cancelada: "bg-red-500/15 text-red-400",
+  manual: "bg-white/10 text-sakura-purple-dark",
+  outra: "bg-white/10 text-sakura-purple-dark",
+};
+
+function EtiquetaSituacao({ arquivo }: { arquivo: NotaFiscalArquivo }) {
+  const situacao = situacaoDaNota(arquivo);
+  return (
+    <span
+      className={`whitespace-nowrap rounded-full px-2.5 py-1 text-rotulo font-medium ${COR_SITUACAO[situacao.tom]}`}
+    >
+      {situacao.rotulo}
+    </span>
+  );
+}
 
 interface ArquivosSectionProps {
   tipo: TipoNotaFiscal;
@@ -266,6 +288,7 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
               <thead className="text-sakura-purple-dark/90">
                 <tr>
                   <th className="px-4 py-2 font-medium">Arquivo</th>
+                  <th className="px-4 py-2 font-medium">Situação</th>
                   <th className="px-4 py-2 font-medium">Ordem de Serviço</th>
                   <th className="px-4 py-2 font-medium">Enviado por</th>
                   <th className="px-4 py-2" />
@@ -275,6 +298,9 @@ export function ArquivosSection({ tipo }: ArquivosSectionProps) {
                 {arquivosDoMes.map((arquivo) => (
                   <tr key={arquivo.id} className="border-t border-sakura-gray/20">
                     <td className="px-4 py-3">{arquivo.nome_arquivo}</td>
+                    <td className="px-4 py-3">
+                      <EtiquetaSituacao arquivo={arquivo} />
+                    </td>
                     <td className="px-4 py-3">
                       {arquivo.ordem_servico?.cliente?.nome ?? "—"}
                     </td>
